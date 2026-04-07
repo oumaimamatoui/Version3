@@ -73,10 +73,6 @@
             <span>Toutes les évaluations</span>
             <span class="badge-yellow-image ms-auto">12</span>
           </router-link>
-          <router-link to="/test-builder" class="nav-item nav-link-tech">
-            <div class="icon-shell"><i class="fa-regular fa-file-lines"></i></div>
-            <span>Créer une évaluation</span>
-          </router-link>
 
           <label class="group-header">QUESTIONS</label>
           <router-link to="/ai-generator" class="nav-item nav-link-tech highlight-yellow-image">
@@ -169,10 +165,7 @@
             <div class="icon-shell primary shadow-sm"><i class="fa-solid fa-users-gear"></i></div>
             <span>Gérer Utilisateurs</span>
           </router-link>
-          <router-link to="/audit-log" class="nav-item nav-link-tech">
-            <div class="icon-shell secondary shadow-sm"><i class="fa-solid fa-fingerprint"></i></div>
-            <span>Journal d'Audit</span>
-          </router-link>
+    
           <router-link to="/platform-analytics" class="nav-item nav-link-tech">
             <div class="icon-shell success shadow-sm"><i class="fa-solid fa-chart-line"></i></div>
             <span>Analytique</span>
@@ -342,4 +335,5 @@ const logout = () => { authStore.logout(); router.push('/login'); };
 .custom-scrollbar::-webkit-scrollbar { width: 0; }
 .mobile-toggle-btn { position: fixed; top: 15px; left: 15px; z-index: 2000; width: 44px; height: 44px; border-radius: 12px; background: white; border: 1px solid #f1f5f9; color: #0f172a; display: flex; align-items: center; justify-content: center; }
 .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.1); backdrop-filter: blur(2px); z-index: 999; }
+
 </style>
