@@ -1,44 +1,28 @@
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace NeoEvaluation.API.Models
 {
-    public class Question : IMultiTenant
+    public class Question
     {
-        public Guid? EntrepriseId { get; set; }
-        
-        [Key]
+        [Key] 
         public Guid Id { get; set; } = Guid.NewGuid();
 
-        [Required]
-        public string Enonce { get; set; } = string.Empty;
+        [Required] 
+        public string Texte { get; set; } = string.Empty;
 
-        public TypeQuestion Type { get; set; } = TypeQuestion.QCM;
-        public NiveauComplexite Niveau { get; set; } = NiveauComplexite.INTERMEDIAIRE;
-        public int Points { get; set; } = 1;
-        public int? DureeSecondes { get; set; } // Durée individuelle pour cette question
-        [Column("Categorie")]
-        public string? Theme { get; set; }
+        public int Type { get; set; } // 0: QCM, 1: Texte, 2: Code, 3: Fichier
 
-        public string? SousTheme { get; set; }
+        public double Poids { get; set; }
 
-        // Stocké en JSON dans la DB
-        public List<string> Choix { get; set; } = new List<string>();
         public string BonneReponse { get; set; } = string.Empty;
-        public List<string> Prerequis { get; set; } = new List<string>();
 
-        public DateTime CreeLe { get; set; } = DateTime.UtcNow;
+        [Required]
+        public Guid QuestionnaireId { get; set; }
 
-        // Relation Many-to-Many via table de jointure
-        [JsonIgnore]
-        public ICollection<QuestionnaireQuestion> QuestionnaireQuestions { get; set; } = new List<QuestionnaireQuestion>();
-
-        // Relation: Un utilisateur crée plusieurs questions
-        public Guid? CreateurId { get; set; }
-        public Utilisateur? Createur { get; set; }
- 
+        [JsonIgnore] // Empêche les erreurs de validation et les cycles JSON
+        [ForeignKey("QuestionnaireId")]
+        public Questionnaire? Questionnaire { get; set; }
     }
 }

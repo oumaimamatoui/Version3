@@ -37,37 +37,39 @@
           </div>
 
        
-          <!-- SECTION INFOS -->
           <div class="col-lg-8">
-            <div class="glass-card p-4 rounded-5 shadow-sm border-0 animate__animated animate__fadeInRight h-100">
-              <h6 class="fw-bold text-slate-800 mb-4 border-bottom pb-2">
-                <i class="fa fa-info-circle text-indigo me-2"></i>Informations Générales
+            <div class="glass-card p-4 rounded-5 shadow-sm border-0 animate__animated animate__fadeInRight">
+              <h6 class="fw-bold text-slate-800 mb-4">
+                <i class="fa fa-award text-warning me-2"></i>Compétences validées par EvaluaTech IA
               </h6>
               
+              <div class="d-flex flex-wrap gap-3 mb-5">
+                <div v-for="badge in badges" :key="badge.name" class="badge-card text-center p-3 rounded-4 border border-light">
+                  <div class="icon-badge mb-2"><i :class="badge.icon"></i></div>
+                  <div class="fw-bold tiny text-slate-700">{{ badge.name }}</div>
+                  <div class="text-success tiny fw-bold mt-1">
+                    <i class="fa fa-check-circle small"></i> Validé
+                  </div>
+                </div>
+              </div>
+
+              <h6 class="fw-bold text-slate-800 mb-3 border-bottom pb-2">Informations Générales</h6>
               <div class="row g-4">
                 <div class="col-md-6">
                   <label class="tiny text-muted uppercase d-block mb-1">Email Professionnel</label>
-                  <span class="fw-semibold text-slate-700">{{ user.email || 'Chargement...' }}</span>
+                  <span class="fw-semibold">{{ user.email }}</span>
                 </div>
                 <div class="col-md-6">
                   <label class="tiny text-muted uppercase d-block mb-1">Inscrit depuis</label>
-                  <span class="fw-semibold text-slate-700">{{ user.joinDate || '...' }}</span>
+                  <span class="fw-semibold">{{ user.joinDate }}</span>
                 </div>
-                <div class="col-md-12" v-if="user.bio">
-                  <label class="tiny text-muted uppercase d-block mb-1">Description / Bio</label>
-                  <p class="text-black fw-semibold mt-2 leading-relaxed whitespace-pre-line" style="font-size: 15px; letter-spacing: -0.2px;">{{ user.bio }}</p>
+                <div class="col-md-12">
+                  <label class="tiny text-muted uppercase d-block mb-1">Bio Technique (Analyse IA)</label>
+                  <p class="small text-muted mt-1 leading-relaxed">
+                    Passionnée par l'écosystème .NET 10 et Vue.js 3. Expertise démontrée lors des tests en architecture micro-services et gestion d'état Pinia. 
+                    L'IA suggère un fort potentiel pour des rôles de <strong>Lead Developer</strong>.
+                  </p>
                 </div>
-                
-                <div class="col-md-12" v-if="user.entrepriseNom && authStore.role !== 'Candidat'">
-                  <div class="alert alert-info border-0 rounded-4 d-flex align-items-center mt-2" style="background-color: #eef2ff;">
-                    <i class="fa fa-building fs-4 me-3 text-indigo"></i>
-                    <div>
-                      <span class="d-block tiny text-muted uppercase">Organisation</span>
-                      <strong class="text-slate-800 fs-6">Vous appartenez à l'entreprise : {{ user.entrepriseNom }}</strong>
-                    </div>
-                  </div>
-                </div>
-                <!-- Vous pourrez ajouter d'autres champs réels ici (Téléphone, Poste, etc.) -->
               </div>
             </div>
           </div>
@@ -89,25 +91,24 @@ import AppNavbar from '../components/AppNavbar.vue';
 const router = useRouter();
 const authStore = useAuthStore();
 
-const user = ref({ nom: '', prenom: '', email: '', photoUrl: '', joinDate: '', entrepriseNom: '' });
+const user = ref({ nom: '', prenom: '', email: '', photoUrl: '', joinDate: '' });
 const loading = ref(true);
 
 const profileDisplayUrl = computed(() => {
   if (user.value.photoUrl) {
     return `http://localhost:5172${user.value.photoUrl}`;
   }
-  // Remplacer l'image de la démo par un avatar neutre basé sur le nom
-  return `https://ui-avatars.com/api/?name=${user.value.prenom}+${user.value.nom}&background=4f46e5&color=fff&size=128`;
+  return 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80';
 });
 
 const roleDisplay = computed(() => {
   const map = { 
-    'SuperAdmin': 'SuperAdmin', 
+    'SuperAdmin': 'Master Platform Admin', 
     'AdminEntreprise': 'Administrateur Organisation', 
-    'Evaluateur': 'Évaluateur Expert', 
+    'Formateur': 'Évaluateur Expert', 
     'Candidat': 'Candidat' 
   };
-  return map[authStore.role] || authStore.role || 'Chargement...';
+  return map[authStore.role] || 'Chargement...';
 });
 
 const fetchProfile = async () => {
@@ -124,37 +125,15 @@ const fetchProfile = async () => {
 onMounted(fetchProfile);
 
 
-const uploading = ref(false);
-
 const triggerFileInput = () => {
   fileInput.value.click();
 };
 
-const onFileChange = async (e) => {
+const onFileChange = (e) => {
   const file = e.target.files[0];
-  if (!file) return;
-
-  const formData = new FormData();
-  formData.append('file', file);
-
-  try {
-    uploading.value = true;
-    const res = await api.post('/Settings/upload-photo', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    
-    user.value.photoUrl = res.data.photoUrl;
-    
-    // Mise à jour du store pour que la photo change partout (Navbar, etc.)
-    authStore.user.photoUrl = res.data.photoUrl;
-    localStorage.setItem('user', JSON.stringify(authStore.user));
-    
-    alert("Photo de profil mise à jour !");
-  } catch (error) {
-    console.error("Erreur upload :", error);
-    alert("Échec de l'upload de l'image.");
-  } finally {
-    uploading.value = false;
+  if (file) {
+    profileImage.value = URL.createObjectURL(file);
+    alert("Photo mise à jour localement pour la démo !");
   }
 };
 

@@ -2,9 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NeoEvaluation.API.Data;
 using NeoEvaluation.API.Models;
-using Microsoft.AspNetCore.Authorization;
-using NeoEvaluation.API.Services;
-using NeoEvaluation.API.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,145 +11,108 @@ namespace NeoEvaluation.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
     public class StaffController : ControllerBase
     {
         private readonly AppDbContext _context;
-        private readonly ITenantService _tenantService;
 
-        public StaffController(AppDbContext context, ITenantService tenantService)
+        public StaffController(AppDbContext context)
         {
             _context = context;
-            _tenantService = tenantService;
         }
 
-        // 1. OBTENIR TOUT LE PERSONNEL
+        // 1. OBTENIR TOUT LE PERSONNEL (Exclut les candidats)
+        // GET: api/staff
         [HttpGet]
-        [RequirePermission("view_staff")]
         public async Task<ActionResult> GetStaff()
         {
             try
             {
-                // -- DEBUG MULTI-TENANCY --
-                var tenantId = _tenantService.GetTenantId();
-                var userRole = _tenantService.GetUserRole();
-                var isSuperAdminContext = _context.IsSuperAdmin;
-                var currentTenantIdContext = _context.CurrentTenantId;
-                Console.WriteLine("\n=== [DEBUG MULTI-TENANCY STAFF] ===");
-                Console.WriteLine($"Service TenantId : {tenantId}");
-                Console.WriteLine($"Service UserRole : {userRole}");
-                Console.WriteLine($"DbContext IsSuperAdmin : {isSuperAdminContext}");
-                Console.WriteLine($"DbContext CurrentTenantId : {currentTenantIdContext}");
-                Console.WriteLine("=====================================\n");
-
-                // Diagnostic : On compte tout d'abord TOUS les utilisateurs
-                var totalAll = await _context.Utilisateurs.CountAsync();
-                Console.WriteLine($"[DIAGNOSTIC] Total Utilisateurs Database: {totalAll}");
-
+                // Note : On filtre pour ne prendre que les AdminEntreprise, SuperAdmin, etc.
+                // On se base sur la colonne RoleNom ou UserType vue dans votre PostgreSQL
                 var staff = await _context.Utilisateurs
-                    .Where(u => u.RoleNom != "Candidat") // On prend TOUT sauf Candidat
+                    .Where(u => u.RoleNom != "Candidat" && u.RoleNom != null && u.RoleNom != "")
+                    .Select(u => new
+                    {
+                        u.Id,
+                        // Utilisation du NomComplet calculé ou concaténation manuelle pour sécurité
+                        NomComplet = (u.Prenom ?? "") + " " + (u.Nom ?? ""),
+                        u.Email,
+                        u.PhotoUrl,
+                        RoleNom = u.RoleNom ?? "Membre",
+                        u.EstActif,
+                        u.CreeLe,
+                        // Assurer que Privileges n'est jamais null pour le Frontend
+                        Privileges = u.Privileges ?? new List<string>()
+                    })
                     .OrderByDescending(u => u.CreeLe)
                     .ToListAsync();
 
-                Console.WriteLine($"[DIAGNOSTIC] Staff Trouvés (Non-Candidat): {staff.Count}");
-
-                var result = staff.Select(u => new
-                {
-                    u.Id,
-                    u.Prenom,
-                    NomFamille = u.Nom,
-                    u.Email,
-                    PhotoUrl = string.IsNullOrEmpty(u.PhotoUrl) ? null : u.PhotoUrl,
-                    RoleNom = u.RoleNom ?? "Membre",
-                    u.EstActif,
-                    u.CreeLe,
-                    EntrepriseId = u.EntrepriseId
-                }).ToList();
-
-                return Ok(result);
+                return Ok(staff);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERREUR] GetStaff: {ex.Message}");
-                return StatusCode(500, new { message = "Erreur", error = ex.Message });
+                return StatusCode(500, new { message = "Erreur lors de la récupération du personnel", error = ex.Message });
             }
         }
 
-        // 2. STATISTIQUES
+        // 2. OBTENIR LES STATISTIQUES DU PERSONNEL
+        // GET: api/staff/stats
         [HttpGet("stats")]
-        [RequirePermission("view_staff")]
         public async Task<ActionResult> GetStaffStats()
         {
             try
             {
-                var total = await _context.Utilisateurs.CountAsync(u => u.RoleNom != "Candidat" && u.RoleNom != null);
-                var actifs = await _context.Utilisateurs.CountAsync(u => u.RoleNom != "Candidat" && u.EstActif == true);
-                return Ok(new { totalPersonnel = total, actifs = actifs, rolesPersonnalises = 3 });
+                // On compte uniquement les membres qui ne sont pas des candidats
+                var total = await _context.Utilisateurs
+                    .CountAsync(u => u.RoleNom != "Candidat" && u.RoleNom != null && u.RoleNom != "");
+
+                var actifs = await _context.Utilisateurs
+                    .CountAsync(u => u.RoleNom != "Candidat" && u.RoleNom != null && u.RoleNom != "" && u.EstActif == true);
+
+                // Nombre de rôles différents créés dans l'organisation
+                var rolesCount = await _context.Roles.CountAsync();
+
+                return Ok(new
+                {
+                    totalPersonnel = total,
+                    actifs = actifs,
+                    rolesPersonnalises = rolesCount
+                });
             }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erreur lors du calcul des statistiques", error = ex.Message });
+            }
         }
 
-        // 3. TOGGLE STATUS
+        // 3. CHANGER LE STATUT (ACTIF / INACTIF)
+        // PATCH: api/staff/{id}/toggle-status
         [HttpPatch("{id}/toggle-status")]
-        [RequirePermission("add_staff")]
         public async Task<IActionResult> ToggleStatus(Guid id)
         {
-            var user = await _context.Utilisateurs.FindAsync(id);
-            if (user == null) return NotFound();
-            user.EstActif = !user.EstActif;
-            await _context.SaveChangesAsync();
-            return Ok(new { status = user.EstActif });
-        }
-
-        // 4. METTRE À JOUR UN MEMBRE
-        // PUT: api/staff/{id}
-        [HttpPut("{id}")]
-        [RequirePermission("add_staff")]
-        public async Task<IActionResult> UpdateStaff(Guid id, [FromBody] Utilisateur updateDto)
-        {
             try
             {
                 var user = await _context.Utilisateurs.FindAsync(id);
-                if (user == null) return NotFound(new { message = "Utilisateur non trouvé" });
+                
+                if (user == null)
+                    return NotFound(new { message = "Utilisateur non trouvé" });
 
-                user.Prenom = updateDto.Prenom;
-                user.Nom = updateDto.Nom; // Note: on utilise Nom dans la DB
-                user.RoleNom = updateDto.RoleNom;
-                // On peut aussi mettre à jour d'autres champs si nécessaire
+                // Inversion du booléen
+                user.EstActif = !user.EstActif;
 
+                _context.Entry(user).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
-                return Ok(new { message = "Mise à jour réussie" });
+
+                return Ok(new { 
+                    id = user.Id, 
+                    status = user.EstActif, 
+                    message = $"Statut mis à jour : {(user.EstActif ? "Actif" : "Inactif")}" 
+                });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Erreur mise à jour", error = ex.Message });
-            }
-        }
-
-        // 5. SUPPRIMER DÉFINITIVEMENT UN MEMBRE
-        // DELETE: api/staff/{id}
-        [HttpDelete("{id}")]
-        [RequirePermission("add_staff")]
-        public async Task<IActionResult> DeleteStaff(Guid id)
-        {
-            try
-            {
-                var user = await _context.Utilisateurs.FindAsync(id);
-                if (user == null) return NotFound(new { message = "Utilisateur non trouvé" });
-
-                // On supprime également les données liées si nécessaire (Tokens, etc)
-                var relatedTokens = _context.TokensActivation.Where(t => t.UtilisateurId == id);
-                _context.TokensActivation.RemoveRange(relatedTokens);
-
-                _context.Utilisateurs.Remove(user);
-                await _context.SaveChangesAsync();
-
-                return Ok(new { message = "Membre supprimé définitivement de la base de données" });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Erreur lors de la suppression", error = ex.Message });
+                return StatusCode(500, new { message = "Erreur lors de la mise à jour du statut", error = ex.Message });
             }
         }
     }
-}
+}

@@ -15,7 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers()
     .AddJsonOptions(options => {
-        // CRITIQUE : Force le format camelCase pour correspondre au JavaScript
+        // ✅ CRITIQUE : Force le format camelCase pour correspondre au JavaScript
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
         options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
@@ -24,28 +24,21 @@ builder.Services.AddControllers()
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-//  MODIFICATION : Configuration de SendGrid
+// ✅ MODIFICATION : Configuration de SendGrid
 builder.Services.AddSendGrid(options => {
     options.ApiKey = builder.Configuration["SendGridSettings:ApiKey"];
 });
 
-//  MODIFICATION : Utilisation de GmailApiService (Senior Architecture)
-builder.Services.AddScoped<IEmailService, GmailApiService>();
+// ✅ MODIFICATION : Utilisation de SendGridEmailService au lieu de EmailService
+builder.Services.AddScoped<IEmailService, SendGridEmailService>();
 
 builder.Services.AddSingleton<IAuditLogService, AuditLogService>();
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ITenantService, TenantService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// OPTIMISATION : Compression des réponses pour réduire la taille des transferts
-builder.Services.AddResponseCompression(options => {
-    options.EnableForHttps = true;
-});
-
 builder.Services.AddCors(options => {
     options.AddPolicy("VueCorsPolicy", policy => {
-        policy.WithOrigins("http://localhost:5173", "http://127.0.0.1:5173") 
+        policy.WithOrigins("http://localhost:5173") 
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
@@ -78,15 +71,6 @@ if (app.Environment.IsDevelopment()) {
 }
 
 app.UseCors("VueCorsPolicy");
-app.UseResponseCompression();
-
-// Fix for Google Auth COOP warnings
-app.Use(async (context, next) =>
-{
-    context.Response.Headers.Append("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
-    await next();
-});
-
 app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -101,48 +85,31 @@ using (var scope = app.Services.CreateScope()) {
 
         // 1. Seed Roles
         var rolesToSeed = new List<Role> {
-            new Role { 
-                Nom = "SuperAdmin", 
-                Description = "Administrateur Global",
-                Permissions = new List<string> { "ALL" }
-            },
-            new Role { 
-                Nom = "AdminEntreprise", 
-                Description = "Administrateur d'organisation",
-                Permissions = new List<string> { "MANAGE_USERS", "MANAGE_CAMPAIGNS", "VIEW_RESULTS", "MANAGE_BRANDING" }
-            }
+            new Role { Nom = "SuperAdmin", Description = "Administrateur Global" },
+            new Role { Nom = "AdminEntreprise", Description = "Administrateur d'organisation" },
+            new Role { Nom = "Evaluateur", Description = "Correcteur technique" },
+            new Role { Nom = "Candidat", Description = "Participant aux tests" }
         };
 
         foreach (var r in rolesToSeed) {
-            var existingRole = context.Roles.IgnoreQueryFilters().FirstOrDefault(x => x.Nom == r.Nom && x.EntrepriseId == null);
-            if (existingRole == null) {
+            if (!context.Roles.Any(x => x.Nom == r.Nom)) {
                 context.Roles.Add(r);
-            } else {
-                existingRole.Permissions = r.Permissions; // Sync permissions
             }
         }
-        
-        // Remove old static roles Evaluateur and Candidat if they exist
-        var oldEvaluateur = context.Roles.IgnoreQueryFilters().FirstOrDefault(x => x.Nom == "Evaluateur" && x.EntrepriseId == null);
-        if (oldEvaluateur != null) context.Roles.Remove(oldEvaluateur);
-        
-        var oldCandidat = context.Roles.IgnoreQueryFilters().FirstOrDefault(x => x.Nom == "Candidat" && x.EntrepriseId == null);
-        if (oldCandidat != null) context.Roles.Remove(oldCandidat);
-
         context.SaveChanges();
 
         // 2. Admin Seed
-        if (!context.Utilisateurs.IgnoreQueryFilters().Any(u => u.Email == "admin@evaluatech.tn")) {
-            context.Utilisateurs.Add(new Utilisateur {
+        var superAdminRole = context.Roles.FirstOrDefault(r => r.Nom == "SuperAdmin");
+        if (!context.Utilisateurs.Any(u => u.Email == "admin@evaluatech.tn")) {
+            context.Utilisateurs.Add(new SuperAdmin {
                 Id = Guid.NewGuid(),
                 Email = "admin@evaluatech.tn", Prenom = "Admin", Nom = "Evaluatech",
                 RoleNom = "SuperAdmin", 
                 EstActif = true, CreeLe = DateTime.UtcNow,
                 MotDePasseHash = BCrypt.Net.BCrypt.HashPassword("Admin123"),
-                Privileges = new List<string> { "ALL" }
+                Privileges = new List<string> { "ADMIN_GLOBAL" }
             });
         }
-
 
         // 3. Questionnaire Seed
         if (!context.Questionnaires.Any()) {

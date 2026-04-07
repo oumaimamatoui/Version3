@@ -130,7 +130,7 @@ const chargerDonnees = async () => {
 
 const validerPlanning = async () => {
   if (!form.value.campagneId || !form.value.dateOuverture) {
-    alert("Veuillez remplir tout le formulaire de planification.");
+    alert("Kamel ammar el form sa7bi !");
     return;
   }
 
@@ -144,13 +144,13 @@ const validerPlanning = async () => {
     };
 
     await axios.post(`${API_BASE}/Plannings`, payload);
-    alert("La planification a été enregistrée avec succès.");
+    alert("Ya m3alem! Planning mriguel.");
     
     // Refresh
     form.value.campagneId = '';
     chargerDonnees();
   } catch (err) {
-    alert("Erreur système. Veuillez vérifier la connexion au serveur.");
+    alert("Erreur Backend ! Thabet fil Port wala f Database.");
   } finally {
     loading.value = false;
   }

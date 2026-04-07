@@ -19,8 +19,8 @@ namespace NeoEvaluation.API.Models
 
         public bool EstVerifie { get; set; } = false;
 
-        // Relation avec le Utilisateur (Candidat)
+        // Relation avec le Candidat
         public Guid CandidatId { get; set; }
-        public Utilisateur Candidat { get; set; } = null!;
+        public Candidat Candidat { get; set; } = null!;
     }
 }

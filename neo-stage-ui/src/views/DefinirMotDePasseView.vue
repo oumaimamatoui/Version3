@@ -127,7 +127,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import api from '@/services/api';
+import axios from 'axios';
 
 const pass = ref('');
 const conf = ref('');
@@ -171,17 +171,13 @@ const finalize = async () => {
   try {
     isLoading.value = true;
     errorMessage.value = "";
-    
-    const t = route.query.token;
-    const cleanToken = Array.isArray(t) ? t[0] : t;
-
-    await api.post('/Activation/complete', {
-        token: cleanToken,
+    await axios.post('http://localhost:5172/api/Activation/complete', {
+        token: token.value,
         password: pass.value
     });
     router.push({ path: '/login', query: { activated: 'true' } });
   } catch (error) {
-    errorMessage.value = error.response?.data?.message || error.response?.data || "Erreur de finalisation.";
+    errorMessage.value = error.response?.data || "Erreur de finalisation.";
   } finally {
     isLoading.value = false;
   }

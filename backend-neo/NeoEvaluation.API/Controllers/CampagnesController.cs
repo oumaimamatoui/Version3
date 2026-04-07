@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using NeoEvaluation.API.Data;
 using NeoEvaluation.API.Models;
-using NeoEvaluation.API.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,159 +11,151 @@ namespace NeoEvaluation.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class CampagnesController : ControllerBase
     {
         private readonly AppDbContext _context;
-        private readonly ITenantService _tenantService;
 
-        public CampagnesController(AppDbContext context, ITenantService tenantService) 
-        { 
-            _context = context; 
-            _tenantService = tenantService;
+        public CampagnesController(AppDbContext context)
+        {
+            _context = context;
+        }
+
+        // GET: api/Campagnes/stats
+        [HttpGet("stats")]
+        public async Task<ActionResult> GetStats()
+        {
+            var total = await _context.Campagnes.CountAsync();
+            var active = await _context.Campagnes.CountAsync(c => c.Statut == 1);
+            var questionnaires = await _context.Questionnaires.CountAsync();
+            var capacite = await _context.Campagnes.SumAsync(c => (int?)c.MaxCandidats) ?? 0;
+
+            return Ok(new
+            {
+                totalCampaigns = total,
+                activeCampaigns = active,
+                totalTests = questionnaires,
+                totalCapacity = capacite
+            });
         }
 
         // GET: api/Campagnes
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<object>>> GetCampagnes()
+        public async Task<ActionResult<IEnumerable<Campagne>>> GetCampagnes()
         {
-            try
-            {
-                var userRole = _tenantService.GetUserRole();
-                var userId = _tenantService.GetUserId();
+            return await _context.Campagnes
+                .Include(c => c.Questionnaire)
+                .OrderByDescending(c => c.DateDebut)
+                .ToListAsync();
+        }
 
-                IQueryable<Campagne> query = _context.Campagnes
-                    .Include(c => c.CampagneQuestionnaires)
-                        .ThenInclude(cq => cq.Questionnaire)
-                    .Include(c => c.Candidatures);
+        // GET: api/Campagnes/{id}
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Campagne>> GetCampagne(Guid id)
+        {
+            var campagne = await _context.Campagnes
+                .Include(c => c.Questionnaire)
+                .FirstOrDefaultAsync(c => c.Id == id);
 
-                // --- Filtrage Candidat ---
-                if (userRole == "Candidat" && userId.HasValue)
-                {
-                    var currentUser = await _context.Utilisateurs.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId.Value);
-                    if (currentUser == null) return Unauthorized();
-                    
-                    var email = currentUser.Email.ToLower();
-                    var campaignIds = await _context.Candidatures
-                        .IgnoreQueryFilters()
-                        .Where(c => c.Candidat != null && c.Candidat.Email.ToLower() == email)
-                        .Select(c => c.CampagneId)
-                        .ToListAsync();
-
-                    query = query.IgnoreQueryFilters().Where(c => campaignIds.Contains(c.Id));
-                }
-
-                // --- Projection pour le Frontend Vue.js ---
-                var list = await query
-                    .Select(c => new {
-                        c.Id,
-                        c.Nom,
-                        c.Description,
-                        Statut = (int)c.Statut, 
-                        c.DateDebut,
-                        c.DateFin,
-                        c.DureeMinutes,
-                        c.CreeLe,
-                        // ✅ Renvoie la valeur à Vue.js
-                        c.MaxCandidats, 
-                        QuestionnaireId = c.CampagneQuestionnaires
-                                            .Select(cq => cq.QuestionnaireId)
-                                            .FirstOrDefault(),
-                        NbCandidats = c.Candidatures.Count,
-                        CandidatureId = c.Candidatures
-                                         .Where(cand => cand.CandidatId == userId)
-                                         .Select(cand => cand.Id)
-                                         .FirstOrDefault()
-                    })
-                    .OrderByDescending(c => c.DateDebut)
-                    .ToListAsync();
-
-                return Ok(list);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Erreur interne", details = ex.Message });
-            }
+            if (campagne == null) return NotFound();
+            return campagne;
         }
 
         // POST: api/Campagnes
         [HttpPost]
-        public async Task<ActionResult<Campagne>> PostCampagne([FromBody] CampagneCreateDto dto)
+        public async Task<ActionResult<Campagne>> PostCampagne([FromBody] Campagne campagne)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (campagne == null) return BadRequest("Données invalides.");
 
-            var entId = _tenantService.GetTenantId();
-            if (entId == null) return Unauthorized("Entreprise non identifiée.");
+            // 1. Initialisation de l'ID
+            campagne.Id = Guid.NewGuid();
 
-            using var trans = await _context.Database.BeginTransactionAsync();
-            try {
-                if (!dto.QuestionnaireId.HasValue || dto.QuestionnaireId == Guid.Empty)
-                {
-                    return BadRequest(new { message = "Un questionnaire est requis." });
-                }
+            // 2. CORRECTION POSTGRESQL (CRITIQUE) : Forcer les dates en UTC
+            // PostgreSQL refuse les dates "Unspecified" envoyées par le frontend
+            campagne.DateDebut = DateTime.SpecifyKind(campagne.DateDebut, DateTimeKind.Utc);
+            campagne.DateFin = DateTime.SpecifyKind(campagne.DateFin, DateTimeKind.Utc);
 
-                var nouvelle = new Campagne {
-                    Id = Guid.NewGuid(),
-                    Nom = dto.Nom, 
-                    Description = dto.Description,
-                    Statut = (StatutCampagne)dto.Statut, 
-                    EntrepriseId = entId.Value,
-                    DateDebut = dto.DateDebut.ToUniversalTime(), 
-                    DateFin = dto.DateFin.ToUniversalTime(),
-                    DureeMinutes = dto.DureeMinutes,
-                    // ✅ Sauvegarde la valeur reçue du DTO
-                    MaxCandidats = dto.MaxCandidats, 
-                    ModeNotation = dto.ModeNotation ?? "STRICT",
-                    CreeLe = DateTime.UtcNow
-                };
+            // 3. SÉCURITÉ ENTREPRISE : Récupérer une entreprise réelle si l'ID est vide
+            if (campagne.EntrepriseId == Guid.Empty)
+            {
+                var premiereEntreprise = await _context.Entreprises.Select(e => e.Id).FirstOrDefaultAsync();
+                if (premiereEntreprise == Guid.Empty)
+                    return BadRequest("Erreur : Aucune entreprise n'existe dans la base de données.");
                 
-                _context.Campagnes.Add(nouvelle);
+                campagne.EntrepriseId = premiereEntreprise;
+            }
 
-                // Liaison M2M Questionnaire
-                _context.CampagneQuestionnaires.Add(new CampagneQuestionnaire {
-                    CampagneId = nouvelle.Id,
-                    QuestionnaireId = dto.QuestionnaireId.Value
-                });
+            // 4. Nettoyage de l'objet Questionnaire pour éviter les conflits d'insertion
+            campagne.Questionnaire = null;
 
-                // Ajout des candidats
-                if (dto.SelectedCandidatesIds != null) {
-                    foreach (var candId in dto.SelectedCandidatesIds) {
-                        _context.Candidatures.Add(new Candidature {
-                            Id = Guid.NewGuid(), 
-                            CampagneId = nouvelle.Id, 
-                            CandidatId = candId
-                        });
-                    }
-                }
-
+            try
+            {
+                _context.Campagnes.Add(campagne);
                 await _context.SaveChangesAsync();
-                await trans.CommitAsync();
-                
-                return Ok(nouvelle);
-            } catch (Exception ex) {
-                await trans.RollbackAsync();
-                return StatusCode(500, ex.Message);
+                return CreatedAtAction(nameof(GetCampagne), new { id = campagne.Id }, campagne);
+            }
+            catch (Exception ex)
+            {
+                // Capture le message d'erreur précis pour le débogage
+                var message = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return StatusCode(500, $"Erreur base de données : {message}");
             }
         }
 
+        // PUT: api/Campagnes/{id}
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutCampagne(Guid id, [FromBody] Campagne campagne)
+        {
+            if (id != campagne.Id) return BadRequest("L'ID ne correspond pas.");
+
+            var existing = await _context.Campagnes.FindAsync(id);
+            if (existing == null) return NotFound();
+
+            // Mise à jour des propriétés
+            existing.Nom = campagne.Nom;
+            existing.Description = campagne.Description;
+            existing.QuestionnaireId = campagne.QuestionnaireId;
+            existing.DureeMinutes = campagne.DureeMinutes;
+            existing.ScorePassage = campagne.ScorePassage;
+            existing.MaxCandidats = campagne.MaxCandidats;
+            existing.Statut = campagne.Statut;
+
+            // CORRECTION POSTGRESQL : Toujours forcer UTC lors de la modification
+            existing.DateDebut = DateTime.SpecifyKind(campagne.DateDebut, DateTimeKind.Utc);
+            existing.DateFin = DateTime.SpecifyKind(campagne.DateFin, DateTimeKind.Utc);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                var message = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return StatusCode(500, $"Erreur lors de la mise à jour : {message}");
+            }
+        }
+
+        // DELETE: api/Campagnes/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCampagne(Guid id)
         {
-            var c = await _context.Campagnes
-                .Include(x => x.CampagneQuestionnaires)
-                .Include(x => x.Candidatures)
-                .FirstOrDefaultAsync(x => x.Id == id);
+            var campagne = await _context.Campagnes.FindAsync(id);
+            if (campagne == null) return NotFound();
 
-            if (c == null) return NotFound();
+            // Sécurité : Vérifier s'il y a des candidatures liées
+            var hasCandidatures = await _context.Candidatures.AnyAsync(c => c.CampagneId == id);
+            if (hasCandidatures)
+                return BadRequest("Action refusée : cette campagne possède des candidats.");
 
-            _context.CampagneQuestionnaires.RemoveRange(c.CampagneQuestionnaires);
-            _context.Candidatures.RemoveRange(c.Candidatures);
-            _context.Campagnes.Remove(c);
-
+            _context.Campagnes.Remove(campagne);
             await _context.SaveChangesAsync();
-            return Ok(new { message = "Campagne supprimée." });
+
+            return NoContent();
+        }
+
+        private bool CampagneExists(Guid id)
+        {
+            return _context.Campagnes.Any(e => e.Id == id);
         }
     }
-
-
 }

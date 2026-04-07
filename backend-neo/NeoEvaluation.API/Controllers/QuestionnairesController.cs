@@ -2,122 +2,119 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NeoEvaluation.API.Data;
 using NeoEvaluation.API.Models;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-
-using Microsoft.AspNetCore.Authorization;
-using NeoEvaluation.API.Services;
 
 namespace NeoEvaluation.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class QuestionnairesController : ControllerBase
     {
         private readonly AppDbContext _context;
-        private readonly ITenantService _tenantService;
 
-        public QuestionnairesController(AppDbContext context, ITenantService tenantService) 
-        { 
-            _context = context; 
-            _tenantService = tenantService;
+        public QuestionnairesController(AppDbContext context)
+        {
+            _context = context;
         }
 
-        // 1. Lister tous les questionnaires
+        // READ: Liste tous les questionnaires avec leurs questions
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Questionnaire>>> Get() 
+        public async Task<ActionResult<IEnumerable<Questionnaire>>> GetQuestionnaires()
         {
-            return await _context.Questionnaires.OrderByDescending(q => q.CreeLe).ToListAsync();
+            return await _context.Questionnaires
+                .Include(q => q.Questions) 
+                .AsNoTracking() // Optimisation pour la lecture seule
+                .ToListAsync();
         }
 
-        // 2. Créer un questionnaire
-        [HttpPost]
-        public async Task<ActionResult<Questionnaire>> Post([FromBody] QuestionnaireCreateDto dto)
+        // READ: Un questionnaire spécifique
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Questionnaire>> GetQuestionnaire(Guid id)
         {
-            if (dto == null || string.IsNullOrWhiteSpace(dto.Titre))
-            {
-                return BadRequest(new { message = "Le titre du questionnaire est obligatoire." });
-            }
+            var questionnaire = await _context.Questionnaires
+                .Include(q => q.Questions)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(q => q.Id == id);
 
-            try 
-            {
-                var questionnaire = new Questionnaire
-                {
-                    Id = Guid.NewGuid(),
-                    EntrepriseId = _tenantService.GetTenantId(),
-                    Titre = dto.Titre,
-                    Description = dto.Description ?? "",
-                    DureeMinutes = dto.DureeMinutes,
-                    AntitricheActif = dto.AntitricheActif,
-                    RandomiserQuestions = dto.RandomiserQuestions,
-                    EstPublie = dto.EstPublie,
-                    CreeLe = DateTime.UtcNow
-                };
+            if (questionnaire == null) 
+                return NotFound(new { message = "Architecture introuvable dans la base SQL." });
 
-                _context.Questionnaires.Add(questionnaire);
-                
-                // Lie les questions existantes si fournies
-                if (dto.QuestionIds != null && dto.QuestionIds.Any())
+            return questionnaire;
+        }
+
+        // CREATE: Déploiement complet (Questionnaire + Questions imbriquées)
+        [HttpPost]
+        public async Task<ActionResult<Questionnaire>> CreateQuestionnaire([FromBody] Questionnaire questionnaire)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                // Initialisation du Questionnaire
+                questionnaire.Id = Guid.NewGuid();
+                questionnaire.CreeLe = DateTime.UtcNow;
+
+                // On s'assure que chaque question est liée au questionnaire
+                if (questionnaire.Questions != null && questionnaire.Questions.Any())
                 {
-                    int ordre = 1;
-                    foreach (var qIdstr in dto.QuestionIds)
+                    foreach (var q in questionnaire.Questions)
                     {
-                        if (Guid.TryParse(qIdstr, out Guid qId))
-                        {
-                            _context.QuestionnaireQuestions.Add(new QuestionnaireQuestion {
-                                QuestionnaireId = questionnaire.Id,
-                                QuestionId = qId,
-                                Ordre = ordre++
-                            });
-                        }
+                        q.Id = Guid.NewGuid();
+                        q.QuestionnaireId = questionnaire.Id; // Liaison obligatoire
                     }
                 }
 
+                _context.Questionnaires.Add(questionnaire);
                 await _context.SaveChangesAsync();
 
-                return Ok(questionnaire);
+                return CreatedAtAction(nameof(GetQuestionnaire), new { id = questionnaire.Id }, questionnaire);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Erreur interne", details = ex.Message });
+                return StatusCode(500, new { message = "Erreur lors de la transaction SQL", detail = ex.Message });
             }
         }
 
-        // 3. Supprimer un questionnaire
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(Guid id)
+        // UPDATE: Mise à jour du système
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateQuestionnaire(Guid id, [FromBody] Questionnaire questionnaire)
         {
-            var q = await _context.Questionnaires.FindAsync(id);
-            if (q == null) return NotFound();
+            if (id != questionnaire.Id) 
+                return BadRequest(new { message = "ID mismatch" });
 
-            // Supprimer les liens M2M (QuestionnaireQuestion) avant de supprimer le questionnaire
-            var linkedQQ = _context.QuestionnaireQuestions.Where(x => x.QuestionnaireId == id);
-            _context.QuestionnaireQuestions.RemoveRange(linkedQQ);
+            _context.Entry(questionnaire).State = EntityState.Modified;
 
-            // Supprimer les liens M2M (CampagneQuestionnaire)
-            var linkedCQ = _context.CampagneQuestionnaires.Where(x => x.QuestionnaireId == id);
-            _context.CampagneQuestionnaires.RemoveRange(linkedCQ);
+            // Si vous envoyez aussi les questions lors de l'Update, 
+            // la logique de synchronisation EF Core plus complexe est requise ici.
 
-            _context.Questionnaires.Remove(q);
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!await _context.Questionnaires.AnyAsync(e => e.Id == id))
+                    return NotFound();
+                else throw;
+            }
+
+            return Ok(new { message = "Terminal mis à jour avec succès", data = questionnaire });
+        }
+
+        // DELETE: Suppression définitive
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteQuestionnaire(Guid id)
+        {
+            var questionnaire = await _context.Questionnaires
+                .Include(q => q.Questions) // Charge les questions pour les supprimer proprement
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            if (questionnaire == null) return NotFound();
+
+            _context.Questionnaires.Remove(questionnaire);
             await _context.SaveChangesAsync();
-            return Ok(new { message = "Supprimé avec succès" });
+
+            return Ok(new { message = "Banque d'examen et ses actifs supprimés définitivement." });
         }
     }
-
-    // DTO pour la création
-    public class QuestionnaireCreateDto {
-        public string Titre { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public int DureeMinutes { get; set; } = 60;
-        public bool AntitricheActif { get; set; }
-        public bool RandomiserQuestions { get; set; }
-        public bool EstPublie { get; set; } = true;
-        
-        public string Categorie { get; set; } = "TECHNIQUE";
-        public int? ScoreReussite { get; set; }
-
-        public List<string>? QuestionIds { get; set; } // Liste d'IDs pour lier les questions existantes
-    }
-}
+}

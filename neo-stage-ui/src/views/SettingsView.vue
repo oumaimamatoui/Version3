@@ -74,10 +74,6 @@
                       <label class="cyber-label">Email de liaison</label>
                       <input type="email" class="cyber-input" v-model="userForm.email">
                     </div>
-                    <div class="col-md-12">
-                      <label class="cyber-label">Ma Description / Bio</label>
-                      <textarea class="cyber-input" v-model="userForm.bio" rows="4" placeholder="Parlez-nous de vous..."></textarea>
-                    </div>
                   </div>
                 </div>
 
@@ -101,7 +97,7 @@
                 </div>
 
                 <!-- SECTION : BRANDING (ADMIN) -->
-                <div v-if="activeTab === 'branding' && role.toLowerCase() === 'adminentreprise'" class="settings-section">
+                <div v-if="activeTab === 'branding' && role === 'AdminEntreprise'" class="settings-section">
                   <h5 class="label-heading mb-4 text-dark">Identité Visuelle Entreprise</h5>
                   <div class="mb-4">
                     <label class="cyber-label">Raison sociale (Entreprise)</label>
@@ -113,25 +109,6 @@
                       <input type="color" class="color-picker-neural" v-model="brandForm.color">
                       <code class="text-indigo fw-800">{{ brandForm.color }}</code>
                     </div>
-                  </div>
-                </div>
-
-                <!-- SECTION : INTÉGRATIONS -->
-                <div v-if="activeTab === 'integrations'" class="settings-section">
-                  <h5 class="label-heading mb-4 text-dark">Connexions Externes</h5>
-                  <div class="glass-surface p-4 border rounded-4 bg-light d-flex align-items-center justify-content-between">
-                    <div class="d-flex align-items-center gap-3">
-                      <div class="icon-shell bg-white shadow-sm">
-                        <i class="fa-brands fa-google text-danger" style="font-size: 20px;"></i>
-                      </div>
-                      <div>
-                        <h6 class="fw-800 m-0">Google Gmail API</h6>
-                        <p class="text-muted small m-0">Envoyez vos emails via votre propre compte professionnel.</p>
-                      </div>
-                    </div>
-                    <button @click="connectGmail" class="btn-primary-gradient px-4 py-2">
-                        <i class="fa-solid fa-link me-2"></i> CONNECTER
-                    </button>
                   </div>
                 </div>
 
@@ -171,7 +148,7 @@ const authStore = useAuthStore();
 // États
 const loading = ref(true);
 const saving = ref(false);
-const role = ref('');
+const role = ref(localStorage.getItem('role') || 'AdminEntreprise');
 const activeTab = ref('profile');
 
 // État du sélecteur de fichier
@@ -191,28 +168,15 @@ const profileDisplayUrl = computed(() => {
 
 // Navigation
 const allTabs = [
-  { id: 'profile', label: 'Profil', icon: 'fa-solid fa-user-gear', roles: ['SuperAdmin', 'AdminEntreprise', 'Recruteur', 'Evaluateur', 'Candidat'] },
-  { id: 'security', label: 'Sécurité', icon: 'fa-solid fa-shield-halved', roles: ['SuperAdmin', 'AdminEntreprise', 'Recruteur', 'Evaluateur', 'Candidat'] },
+  { id: 'profile', label: 'Profil', icon: 'fa-solid fa-user-gear', roles: ['SuperAdmin', 'AdminEntreprise', 'Formateur', 'Candidat'] },
+  { id: 'security', label: 'Sécurité', icon: 'fa-solid fa-shield-halved', roles: ['SuperAdmin', 'AdminEntreprise', 'Formateur', 'Candidat'] },
   { id: 'branding', label: 'Branding', icon: 'fa-solid fa-palette', roles: ['AdminEntreprise'] },
-  { id: 'integrations', label: 'Intégrations', icon: 'fa-solid fa-plug', roles: ['AdminEntreprise', 'SuperAdmin'] },
 ];
 
-const filteredTabs = computed(() => {
-  const currentRole = (role.value || '').toLowerCase();
-  return allTabs.filter(tab => {
-    if (tab.id === 'profile' || tab.id === 'security') return true; // Toujours visible
-    return tab.roles.some(r => r.toLowerCase() === currentRole);
-  });
-});
-
+const filteredTabs = computed(() => allTabs.filter(tab => tab.roles.includes(role.value)));
 const roleDisplay = computed(() => {
-  const map = { 
-    'superadmin': 'Master', 
-    'adminentreprise': 'Organisation', 
-    'evaluateur': 'Évaluateur', 
-    'candidat': 'Candidat' 
-  };
-  return map[(role.value || '').toLowerCase()] || role.value || 'User';
+  const map = { 'SuperAdmin': 'Master', 'AdminEntreprise': 'Organisation', 'Formateur': 'Evaluateur', 'Candidat': 'Candidat' };
+  return map[role.value] || 'User';
 });
 
 // --- ACTIONS BACKEND ---
@@ -220,10 +184,12 @@ const roleDisplay = computed(() => {
 const fetchInitialData = async () => {
   loading.value = true;
   try {
+    // 1. Charger le profil
     const resUser = await api.get('/Settings/me');
     userForm.value = resUser.data;
 
-    if (role.value.toLowerCase() === 'adminentreprise') {
+    // 2. Charger le branding si Admin
+    if (role.value === 'AdminEntreprise') {
       const resBrand = await api.get('/Settings/branding');
       brandForm.value = resBrand.data;
     }
@@ -243,7 +209,8 @@ const saveChanges = async () => {
     if (activeTab.value === 'profile') {
       endpoint = `/Settings/update-profile`;
       payload = userForm.value;
-    } else if (activeTab.value === 'security') {
+    } 
+    else if (activeTab.value === 'security') {
       if (securityForm.value.newPassword !== securityForm.value.confirmPassword) {
         alert("Les mots de passe ne correspondent pas.");
         saving.value = false;
@@ -251,7 +218,8 @@ const saveChanges = async () => {
       }
       endpoint = `/Settings/change-password`;
       payload = securityForm.value;
-    } else if (activeTab.value === 'branding') {
+    } 
+    else if (activeTab.value === 'branding') {
       endpoint = `/Settings/update-branding`;
       payload = brandForm.value;
     }
@@ -293,6 +261,8 @@ const handlePhotoChange = async (e) => {
     });
     
     userForm.value.photoUrl = res.data.photoUrl;
+    
+    // Synchro avec authStore (si on stocke la photo là aussi)
     authStore.user.photoUrl = res.data.photoUrl;
     localStorage.setItem('user', JSON.stringify(authStore.user));
     
@@ -305,22 +275,7 @@ const handlePhotoChange = async (e) => {
   }
 };
 
-const connectGmail = async () => {
-  try {
-    const res = await api.get('/GoogleAuth/auth-url');
-    window.location.href = res.data.url;
-  } catch (err) {
-    console.error("Erreur Auth URL:", err);
-    alert("Impossible de joindre le service d'authentification Google.");
-  }
-};
-
-onMounted(() => {
-  // S'assurer que le rôle est bien chargé depuis le store ou localStorage
-  role.value = authStore.role || localStorage.getItem('role') || 'Candidat';
-  console.log("DEBUG - Current Role:", role.value);
-  fetchInitialData();
-});
+onMounted(fetchInitialData);
 </script>
 
 <style scoped>
@@ -379,8 +334,7 @@ onMounted(() => {
 .cyber-input:focus { border-color: #eab308; background: white; }
 
 /* --- AVATAR --- */
-.profile-neural-upload { display: flex; align-items: center; }
-.avatar-vessel { position: relative; width: 90px; height: 90px; cursor: pointer; }
+.avatar-vessel { position: relative; width: 90px; height: 90px; }
 .avatar-vessel img { width: 100%; height: 100%; border-radius: 22px; object-fit: cover; }
 .btn-edit-neural {
   position: absolute; bottom: -5px; right: -5px; width: 30px; height: 30px;
@@ -402,5 +356,4 @@ onMounted(() => {
 .pulse-dot { width: 6px; height: 6px; background: #eab308; border-radius: 50%; animation: blink 1s infinite; }
 @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 .btn-link-tech { background: none; border: none; color: #94a3b8; font-weight: 700; font-size: 11px; cursor: pointer; }
-.label-heading { font-weight: 800; font-size: 16px; letter-spacing: -0.5px; }
 </style>

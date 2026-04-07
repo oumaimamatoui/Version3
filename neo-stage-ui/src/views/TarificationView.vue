@@ -1,5 +1,6 @@
 <template>
-  <div class="pricing-wrapper"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <div class="pricing-wrapper">
+
     <div class="background-overlay"></div>
     <div class="glow-orb orb-amber"></div>
     <div class="glow-orb orb-blue"></div>

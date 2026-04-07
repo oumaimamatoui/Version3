@@ -29,6 +29,6 @@
 const staff = [
   { id: 1, name: "Ahmed Manager", role: "Manager RH" },
   { id: 2, name: "Dr. Slimane", role: "Professeur" },
-  { id: 3, name: "Karim Evaluateur", role: "Évaluateur Tech" }
+  { id: 3, name: "Karim Formateur", role: "Formateur Tech" }
 ];
 </script>

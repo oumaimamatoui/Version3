@@ -1,155 +1,141 @@
 <template>
-  <div class="aura-dashboard-final">
-    <!-- Iconographie Pro -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-
-    <!-- Fond Immersif Signature (Optimisé pour la profondeur) -->
-    <div class="luxury-bg">
-      <div class="aura-sphere sphere-amber"></div>
-      <div class="aura-sphere sphere-blue"></div>
-      <div class="aura-sphere sphere-rose"></div>
-      <div class="mesh-grain"></div>
-      <div class="vignette-overlay"></div>
-    </div>
+  <div class="admin-layout">
+    <!-- COUCHES DÉCORATIVES (Identiques au Login pour la cohérence) -->
+    <div class="background-overlay"></div>
+    <div class="glow-orb orb-amber"></div>
+    <div class="glow-orb orb-blue"></div>
+    <div class="tech-grid-subtle"></div>
 
     <AppSidebar />
-
-    <div class="main-viewport">
+    
+    <div class="main-viewport animate__animated animate__fadeIn">
       <AppNavbar />
 
-      <div class="container-fluid px-xl-5 pt-4 content-z">
+      <div class="container-fluid px-4 pt-3">
         
-        <!-- 1. NAVIGATION TERMINAL (Look Precision Tech) -->
-        <header class="terminal-container mb-4 animate__animated animate__fadeInDown">
-          <div class="d-flex justify-content-between align-items-center px-4 w-100">
-            <div class="terminal-path">
-              <span class="path-prefix">SYSTEM_OS</span>
-              <span class="path-sep"></span>
-              <span class="path-current">{{ authStore.role?.toUpperCase() }}</span>
+        <!-- 1. TERMINAL STATUS BAR (Style Apple/Linear) -->
+        <div class="terminal-status-bar mb-4">
+          <div class="d-flex justify-content-between align-items-center px-3">
+            <div class="breadcrumb-cyber">
+              <span class="root">EVALUATECH</span>
+              <span class="sep">//</span>
+              <span class="current">{{ roleLabel }}</span>
             </div>
-            <div class="terminal-metrics d-none d-md-flex align-items-center">
-              <div class="metric-pill">
-                <span class="live-indicator"></span>
-                <span class="metric-label">LATENCY:</span>
-                <span class="metric-value">24MS</span>
-              </div>
-              <div class="ms-3 user-badge-premium">
-                <i class="fa-solid fa-circle-user me-2"></i>
-                {{ authStore.user?.name.split(' ')[0] }}
-              </div>
+            <div class="system-tag">
+              <span class="pulse-dot"></span>
+              <span class="tag-text">LOGGED_AS: {{ authStore.user?.name.toUpperCase() }}</span>
             </div>
           </div>
-        </header>
+        </div>
 
-        <!-- 2. HERO BENTO : AI INTELLIGENCE (Look Signature) -->
-        <div class="hero-signature-card mb-5 animate__animated animate__fadeIn">
-          <div class="card-glass-reflection"></div>
-          <div class="scanner-sweep"></div>
-          <div class="row align-items-center g-0">
-            <div class="col-lg-8 p-5 hero-text-content">
-              <div class="premium-tag mb-3">
-                <i class="fa-solid fa-wand-magic-sparkles me-2"></i> COGNITIVE ENGINE ACTIVE
+        <!-- 2. HERO SECTION : INTERFACE IA CENTRALISÉE -->
+        <div class="hero-cyber-card mb-5">
+          <div class="row align-items-center">
+            <div class="col-lg-8 p-5">
+              <div class="badge-amber-glow mb-3">
+                <i class="fa-solid fa-shield-halved me-2"></i> SESSION SÉCURISÉE : {{ roleContext }}
               </div>
-              <h1 class="hero-display-title">
+              <h1 class="display-title-cyber">
                 Ravi de vous revoir, <br>
-                <span class="text-gradient-gold">{{ authStore.user?.name || 'Expert' }}</span>
+                <span class="text-amber">{{ authStore.user?.name || 'Utilisateur' }}</span>
               </h1>
-              <p class="hero-lead">Analyse systémique terminée. Votre périmètre technique est à jour.</p>
-              
-              <div class="ia-insight-module mt-4">
-                <div class="ia-orb-container">
-                  <div class="ia-orb-ring"></div>
-                  <div class="ia-orb-core"></div>
-                  <i class="fa-solid fa-brain"></i>
+              <div class="ai-insight-box mt-4">
+                <div class="ai-box-icon">
+                  <i class="fa-solid fa-microchip"></i>
                 </div>
-                <div class="ia-data-wrap">
-                  <div class="ia-header-row">
-                    <span class="ia-title">AURA_ANALYST v5.0</span>
-                    <span class="ia-status">SYNCHRONIZED</span>
-                  </div>
-                  <p v-if="loading" class="shimmer-text"></p>
-                  <p v-else class="ia-message">{{ dashboardData.insight || 'Prêt pour l\'extraction des données...' }}</p>
-                </div>
+                <p class="ai-insight-text">
+                  <strong>SYSTÈME IA :</strong> {{ aiInsight }}
+                </p>
+              </div>
+              <div class="hero-action-group mt-4">
+                <button v-if="userRole === 'Candidat'" @click="$router.push('/exam-lobby')" class="btn-cyber-primary">
+                  Lancer l'évaluation <i class="fa-solid fa-rocket ms-2"></i>
+                </button>
+                <button v-if="userRole === 'AdminEntreprise'" @click="$router.push('/invite')" class="btn-cyber-primary">
+                  Inviter des Talents <i class="fa-solid fa-user-plus ms-2"></i>
+                </button>
+                <button class="btn-cyber-outline">Archives de bord</button>
               </div>
             </div>
-
-            <!-- ROBOT STATION LUXE -->
-            <div class="col-lg-4 d-none d-lg-flex justify-content-center">
-              <div class="bot-chamber">
-                <div class="chamber-rings">
-                  <div class="ring r1"></div>
-                  <div class="ring r2"></div>
-                  <div class="ring r3"></div>
+            
+            <!-- Robot identique au Login -->
+            <div class="col-lg-4 text-center d-none d-lg-block">
+              <div class="ai-robot-dashboard">
+                <div class="robot-float">
+                  <svg class="modern-robot" viewBox="0 0 200 200" width="220">
+                    <defs>
+                      <linearGradient id="botGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#ffffff" />
+                        <stop offset="100%" style="stop-color:#f1f5f9" />
+                      </linearGradient>
+                    </defs>
+                    <rect x="55" y="50" width="90" height="85" rx="28" fill="url(#botGrad)" stroke="#e2e8f0" stroke-width="2"/>
+                    <rect x="65" y="65" width="70" height="32" rx="16" fill="#1e293b" />
+                    <g class="eyes-anim">
+                      <circle cx="85" cy="81" r="5" fill="#eab308" />
+                      <circle cx="115" cy="81" r="5" fill="#eab308" />
+                    </g>
+                    <path d="M85 110 Q100 118 115 110" stroke="#cbd5e1" stroke-width="2" fill="none" stroke-linecap="round" />
+                  </svg>
                 </div>
-                <svg class="bot-svg-elite" viewBox="0 0 200 200">
-                  <circle cx="100" cy="40" r="10" fill="none" stroke="#fbbf24" stroke-width="1.5" class="signal-ping" />
-                  <rect x="55" y="55" width="90" height="90" rx="42" fill="white" stroke="#f1f5f9" stroke-width="0.5"/>
-                  <rect x="65" y="75" width="70" height="42" rx="18" fill="#0f172a" />
-                  <circle cx="85" cy="95" r="4.5" fill="#fbbf24" class="led-blink" />
-                  <circle cx="115" cy="95" r="4.5" fill="#fbbf24" class="led-blink" />
-                </svg>
+                <div class="robot-glow-base"></div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 3. KPI GRID (High-Contrast Bento) -->
+        <!-- 3. KPI BENTO GRID -->
         <div class="row g-4 mb-5">
-          <div v-for="(stat, i) in kpiCards" :key="i" class="col-xl-3 col-md-6">
-            <div class="luxury-bento-card" :style="{'--accent-color': stat.color}">
-              <div class="card-glow"></div>
+          <div class="col-md-6 col-xl-3" v-for="stat in dynamicStats" :key="stat.label">
+            <div class="kpi-cyber-card">
               <div class="d-flex justify-content-between align-items-start">
-                <div class="bento-icon-wrapper" :style="{background: stat.bg, color: stat.color}">
+                <div class="kpi-icon-box" :style="{ color: stat.color, backgroundColor: stat.bg }">
                   <i :class="stat.icon"></i>
                 </div>
-                <div class="bento-trend-tag">
-                  <i class="fa-solid fa-arrow-trend-up"></i> +{{ 10 + i }}%
+                <div class="kpi-trend" :class="stat.trendUp ? 'up' : 'down'">
+                  {{ stat.trend }} <i :class="stat.trendUp ? 'fa-solid fa-caret-up' : 'fa-solid fa-caret-down'"></i>
                 </div>
               </div>
-              <div class="bento-body mt-4">
-                <h2 class="bento-value">{{ loading ? '---' : (stat.value || '0') }}</h2>
-                <span class="bento-label">{{ stat.label }}</span>
+              <div class="mt-4">
+                <h2 class="kpi-value">{{ stat.value }}</h2>
+                <span class="kpi-label">{{ stat.label }}</span>
               </div>
-              <div class="bento-footer-progress">
-                <div class="track"></div>
-                <div class="fill" :style="{width: '65%', background: stat.color}"></div>
+              <div class="kpi-progress mt-3">
+                <div class="kpi-progress-bar" :style="{ width: '70%', background: stat.color }"></div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 4. PERFORMANCE & LOGS -->
+        <!-- 4. ANALYTICS AREA -->
         <div class="row g-4 pb-5">
           <div class="col-lg-8">
-            <div class="panel-luxe p-4">
+            <div class="glass-panel">
               <div class="d-flex justify-content-between align-items-center mb-4">
-                <h5 class="fw-black text-slate-800 m-0">Performance_Matrix</h5>
-                <div class="panel-pill-tabs">
-                  <button class="tab-btn active">REALTIME</button>
-                  <button class="tab-btn">HISTORY</button>
+                <h5 class="panel-title">COURBE DE PERFORMANCE GLOBAL</h5>
+                <div class="chart-filter">
+                  <button class="active">LIVE</button>
+                  <button>7J</button>
                 </div>
               </div>
-              <div class="chart-container-luxe">
-                <canvas id="auraMainChart"></canvas>
+              <div class="chart-height">
+                <canvas id="mainActivityChart"></canvas>
               </div>
             </div>
           </div>
-          
           <div class="col-lg-4">
-            <div class="panel-luxe p-4 h-100">
-              <h5 class="fw-black text-slate-800 mb-4">Activity_Logs</h5>
-              <div class="activity-feed-luxe">
-                <div v-for="act in dashboardData.recentActivities" :key="act.id" class="activity-row-pill">
-                  <div class="row-indicator" :style="{background: act.color}"></div>
-                  <div class="row-content">
-                    <span class="user-name">{{ act.user }}</span>
-                    <span class="action-desc">{{ act.action }}</span>
-                    <div class="campagne-chip" :style="{color: act.color, borderColor: act.color}">
-                      {{ act.campagne }}
-                    </div>
+            <div class="glass-panel">
+              <h5 class="panel-title mb-4">FLUX D'ACTIVITÉS</h5>
+              <div class="cyber-timeline">
+                <div class="timeline-entry" v-for="act in recentActs" :key="act.id">
+                  <div class="entry-dot" :style="{ background: act.color }"></div>
+                  <div class="entry-content">
+                    <p class="entry-title">{{ act.title }}</p>
+                    <span class="entry-info">{{ act.time }} • {{ act.user }}</span>
                   </div>
                 </div>
               </div>
+              <button class="btn-view-all mt-4">ACCÉDER AUX LOGS <i class="fa-solid fa-arrow-right ms-2"></i></button>
             </div>
           </div>
         </div>
@@ -160,49 +146,78 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, nextTick } from 'vue';
+/* Logique identique à ta version précédente pour la gestion des rôles */
+import { computed, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
-import Chart from 'chart.js/auto';
-import api from '@/services/api';
 import AppSidebar from '../components/AppSidebar.vue';
 import AppNavbar from '../components/AppNavbar.vue';
+import Chart from 'chart.js/auto';
 
 const authStore = useAuthStore();
-const loading = ref(true);
-const dashboardData = ref({ kpis: {}, recentActivities: [], chartData: [], insight: "" });
+const userRole = computed(() => authStore.role);
 
-const kpiCards = computed(() => [
-  { label: 'TALENTS_TOTAL', value: dashboardData.value.kpis.talentsActifs, icon: 'fa-solid fa-user-group', color: '#fbbf24', bg: '#fef3c7' },
-  { label: 'SUCCESS_INDEX', value: dashboardData.value.kpis.tauxReussite, icon: 'fa-solid fa-circle-check', color: '#10b981', bg: '#ecfdf5' },
-  { label: 'ACTIVE_SESSIONS', value: dashboardData.value.kpis.testsEnCours, icon: 'fa-solid fa-bolt-lightning', color: '#3b82f6', bg: '#eff6ff' },
-  { label: 'AURA_CORE_SCORE', value: dashboardData.value.kpis.iaScore, icon: 'fa-solid fa-brain', color: '#8b5cf6', bg: '#f5f3ff' },
-]);
+const roleLabel = computed(() => {
+  const map = { 'SuperAdmin': 'ADMINISTRATEUR MAÎTRE', 'AdminEntreprise': 'ESPACE CORPORATE', 'Candidat': 'PORTAIL CANDIDAT' };
+  return map[userRole.value] || 'TABLEAU DE BORD';
+});
 
-const initChart = (data) => {
-  const canvas = document.getElementById('auraMainChart');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  
-  const grad = ctx.createLinearGradient(0, 0, 0, 350);
-  grad.addColorStop(0, 'rgba(251, 191, 36, 0.2)');
-  grad.addColorStop(1, 'rgba(251, 191, 36, 0)');
+const roleContext = computed(() => {
+  if (userRole.value === 'SuperAdmin') return 'CORE SYSTEM INFRA';
+  if (userRole.value === 'AdminEntreprise') return 'CORP METRICS';
+  return 'EVAL_PROCESS';
+});
+
+const aiInsight = computed(() => {
+  if (userRole.value === 'Candidat') return "VOTRE PROFIL EST OPTIMISÉ À 94% POUR L'EXAMEN ACTUEL.";
+  return "ANALYSE COMPLÉTÉE : 12 NOUVELLES INSCRIPTIONS DÉTECTÉES CE MATIN.";
+});
+
+const dynamicStats = computed(() => {
+  const stats = {
+    AdminEntreprise: [
+      { label: 'TALENTS', value: '12', icon: 'fa-solid fa-users-viewfinder', bg: '#eff6ff', color: '#3b82f6', trend: '+4', trendUp: true },
+      { label: 'ÉVALUATIONS', value: '284', icon: 'fa-solid fa-file-signature', bg: '#fffbeb', color: '#f59e0b', trend: '+15%', trendUp: true },
+      { label: 'TAUX SUCCÈS', value: '78%', icon: 'fa-solid fa-chart-pie', bg: '#f5f3ff', color: '#8b5cf6', trend: '+2%', trendUp: true },
+      { label: 'ALERTES IA', value: '02', icon: 'fa-solid fa-bolt-lightning', bg: '#fef2f2', color: '#ef4444', trend: 'BAS', trendUp: false }
+    ],
+    Candidat: [
+        { label: 'À PASSER', value: '01', icon: 'fa-solid fa-hourglass-half', bg: '#fffbeb', color: '#f59e0b', trend: 'Urg.', trendUp: false },
+        { label: 'TERMINÉS', value: '04', icon: 'fa-solid fa-check-double', bg: '#ecfdf5', color: '#10b981', trend: '+1', trendUp: true },
+        { label: 'SCORE MOY.', value: '82%', icon: 'fa-solid fa-brain', bg: '#f5f3ff', color: '#8b5cf6', trend: '+5%', trendUp: true },
+        { label: 'RANG', value: '#12', icon: 'fa-solid fa-trophy', bg: '#eff6ff', color: '#3b82f6', trend: '+2', trendUp: true }
+    ]
+  };
+  return stats[userRole.value] || stats.AdminEntreprise;
+});
+
+const recentActs = [
+  { id: 1, title: 'Évaluation Cloud finie', time: '5 min', user: 'Admin', color: '#10b981' },
+  { id: 2, title: 'Nouvelle règle de sécurité', time: '1h', user: 'System', color: '#8b5cf6' },
+  { id: 3, title: 'Échec authentification', time: '2h', user: 'Anonyme', color: '#ef4444' }
+];
+
+onMounted(() => {
+  const ctx = document.getElementById('mainActivityChart').getContext('2d');
+  const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+  gradient.addColorStop(0, 'rgba(234, 179, 8, 0.3)');
+  gradient.addColorStop(1, 'rgba(234, 179, 8, 0)');
 
   new Chart(ctx, {
     type: 'line',
     data: {
-      labels: data.map(d => d.day),
+      labels: ['LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM', 'DIM'],
       datasets: [{
-        data: data.map(d => d.count),
-        borderColor: '#fbbf24',
-        borderWidth: 4,
-        tension: 0.45,
+        label: 'Activité',
+        data: [40, 60, 45, 90, 75, 110, 95],
+        borderColor: '#eab308',
+        backgroundColor: gradient,
         fill: true,
-        backgroundColor: grad,
-        pointRadius: 0,
-        pointHoverRadius: 8,
-        pointHoverBackgroundColor: '#fbbf24',
-        pointHoverBorderColor: '#fff',
-        pointHoverBorderWidth: 3,
+        tension: 0.4,
+        borderWidth: 4,
+        pointRadius: 6,
+        pointBackgroundColor: '#fff',
+        pointBorderColor: '#eab308',
+        pointBorderWidth: 2
       }]
     },
     options: {
@@ -210,133 +225,132 @@ const initChart = (data) => {
       maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
-        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { weight: '700', size: 10 } } },
-        y: { display: false }
+        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { weight: '700' } } },
+        y: { grid: { color: 'rgba(226, 232, 240, 0.5)' }, ticks: { color: '#94a3b8' } }
       }
     }
   });
-};
-
-onMounted(async () => {
-  try {
-    const res = await api.get('/Analytics/overview');
-    dashboardData.value = res.data;
-    loading.value = false;
-    await nextTick();
-    if (res.data.chartData) initChart(res.data.chartData);
-  } catch (err) {
-    console.error("Critical Dashboard Failure", err);
-    loading.value = false;
-  }
 });
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
-/* --- LAYOUT --- */
-.aura-dashboard-final {
-  min-height: 100vh; background: #fdfdfd;
+/* --- LAYOUT CONFIG (Coherent with Login) --- */
+.admin-layout {
+  min-height: 100vh;
+  background-color: #f8fafc;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  display: flex; position: relative; overflow-x: hidden;
+  display: flex;
+  position: relative;
+  overflow-x: hidden;
 }
-.main-viewport { flex: 1; position: relative; z-index: 10; }
-.content-z { position: relative; z-index: 20; }
 
-/* --- LUXURY BACKGROUND --- */
-.luxury-bg { position: fixed; inset: 0; z-index: 0; }
-.aura-sphere { position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.15; animation: orbit 25s infinite linear; }
-.sphere-amber { width: 700px; height: 700px; background: #fbbf24; top: -15%; left: -10%; }
-.sphere-blue { width: 500px; height: 500px; background: #60a5fa; bottom: -10%; right: -5%; }
-.sphere-rose { width: 400px; height: 400px; background: #fda4af; top: 35%; right: 15%; opacity: 0.1; }
-.vignette-overlay { position: absolute; inset: 0; background: radial-gradient(circle, transparent 50%, rgba(255,255,255,0.8) 100%); }
-.mesh-grain { position: absolute; inset: 0; opacity: 0.02; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3e%3cfilter id='n'%3e%3cfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3'/%3e%3c/filter%3e%3crect width='100%25' height='100%25' filter='url(%23n)'/%3e%3c/svg%3e"); }
-
-/* --- TERMINAL HEADER --- */
-.terminal-container {
-  background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px);
-  border-radius: 20px; border: 1px solid rgba(255,255,255,0.8);
-  padding: 12px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+.main-viewport {
+  flex-grow: 1;
+  position: relative;
+  z-index: 5;
+  padding-left: 20px;
 }
-.terminal-path { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; color: #94a3b8; display: flex; align-items: center; }
-.path-sep { width: 20px; height: 1px; background: #e2e8f0; margin: 0 12px; }
-.path-current { color: #0f172a; }
 
-.metric-pill { background: #f1f5f9; padding: 6px 14px; border-radius: 100px; font-size: 9px; font-weight: 800; display: flex; align-items: center; gap: 8px; color: #64748b; }
-.live-indicator { width: 6px; height: 6px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; }
-.user-badge-premium { background: #0f172a; color: white; padding: 6px 16px; border-radius: 100px; font-size: 10px; font-weight: 700; }
+/* --- DECO LAYERS (Copied from Login) --- */
+.background-overlay { position: absolute; inset: 0; background: radial-gradient(circle at 30% 30%, #ffffff 0%, #f1f5f9 100%); z-index: 0; }
+.tech-grid-subtle { position: absolute; inset: 0; background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px); background-size: 40px 40px; opacity: 0.4; z-index: 1; }
+.glow-orb { position: absolute; border-radius: 50%; filter: blur(130px); opacity: 0.15; z-index: 1; }
+.orb-amber { width: 600px; height: 600px; background: #fbbf24; top: -100px; right: -100px; }
+.orb-blue { width: 500px; height: 500px; background: #60a5fa; bottom: -100px; left: -100px; }
 
-/* --- HERO SIGNATURE --- */
-.hero-signature-card {
-  background: white; border-radius: 40px; border: 1px solid #f1f5f9;
-  box-shadow: 0 40px 80px rgba(0,0,0,0.03); position: relative; overflow: hidden;
+/* --- TERMINAL STATUS BAR --- */
+.terminal-status-bar {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.5);
+  padding: 10px 0;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
 }
-.scanner-sweep {
-  position: absolute; top: 0; left: -100%; width: 40%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.05), transparent);
-  animation: sweep 4s linear infinite;
+.breadcrumb-cyber .root { font-size: 11px; font-weight: 800; color: #94a3b8; letter-spacing: 2px; }
+.breadcrumb-cyber .sep { color: #eab308; margin: 0 10px; font-weight: 800; }
+.breadcrumb-cyber .current { font-size: 11px; font-weight: 800; color: #0f172a; letter-spacing: 1px; }
+
+.system-tag { display: flex; align-items: center; gap: 8px; background: #0f172a; padding: 6px 15px; border-radius: 100px; }
+.tag-text { color: white; font-size: 9px; font-weight: 800; letter-spacing: 0.5px; }
+.pulse-dot { width: 6px; height: 6px; background: #eab308; border-radius: 50%; animation: blink 2s infinite; }
+
+/* --- HERO CARD --- */
+.hero-cyber-card {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #fff;
+  border-radius: 40px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(20px);
+  position: relative;
+  overflow: hidden;
 }
-.hero-display-title { font-weight: 800; font-size: 3rem; letter-spacing: -2px; line-height: 1.1; color: #0f172a; }
-.text-gradient-gold { background: linear-gradient(135deg, #fbbf24, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.premium-tag { display: inline-flex; align-items: center; background: #fef3c7; color: #fbbf24; padding: 6px 16px; border-radius: 100px; font-size: 10px; font-weight: 800; }
-
-/* --- IA MODULE --- */
-.ia-insight-module {
-  background: #f8fafc; border-radius: 28px; padding: 25px;
-  display: flex; align-items: center; gap: 24px; max-width: 600px;
-  border: 1px solid #f1f5f9; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+.display-title-cyber { font-weight: 800; font-size: 46px; letter-spacing: -2px; color: #0f172a; line-height: 1.1; }
+.text-amber { color: #eab308; }
+.badge-amber-glow {
+  display: inline-block; padding: 8px 18px; background: #0f172a; color: #fff;
+  border-radius: 100px; font-size: 11px; font-weight: 800; letter-spacing: 1px;
 }
-.ia-orb-container {
-  width: 54px; height: 54px; background: #fbbf24; color: #0f172a;
-  border-radius: 18px; display: flex; align-items: center; justify-content: center;
-  font-size: 24px; position: relative; box-shadow: 0 10px 20px rgba(251,191,36,0.2);
+.ai-insight-box {
+  background: #f8fafc; border-left: 5px solid #eab308; padding: 20px; border-radius: 20px;
+  display: flex; align-items: center; gap: 20px;
 }
-.ia-orb-ring { position: absolute; inset: -6px; border: 2px solid rgba(251,191,36,0.2); border-radius: 22px; animation: rotate 10s linear infinite; }
-.ia-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
-.ia-title { font-size: 10px; font-weight: 800; color: #fbbf24; letter-spacing: 1px; }
-.ia-status { font-size: 8px; font-weight: 800; background: #ecfdf5; color: #10b981; padding: 2px 8px; border-radius: 4px; }
-.ia-message { font-size: 14px; font-weight: 500; color: #475569; margin: 0; line-height: 1.5; }
+.ai-box-icon { font-size: 24px; color: #eab308; }
+.ai-insight-text { margin: 0; font-size: 14px; color: #475569; font-weight: 500; }
 
-/* --- CHAMBER & BOT --- */
-.bot-chamber { position: relative; width: 250px; height: 250px; }
-.chamber-rings .ring { position: absolute; border: 1px solid rgba(251, 191, 36, 0.1); border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); }
-.ring.r1 { width: 200px; height: 200px; animation: rotate 20s linear infinite; border-style: dashed; }
-.ring.r2 { width: 260px; height: 260px; animation: rotate 30s linear infinite reverse; }
-.bot-svg-elite { width: 100%; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.06)); animation: float 5s infinite ease-in-out; }
-
-/* --- BENTO CARDS --- */
-.luxury-bento-card {
-  background: white; border-radius: 35px; padding: 30px;
-  border: 1px solid #f1f5f9; transition: all 0.5s cubic-bezier(0.2, 1, 0.3, 1);
-  position: relative; overflow: hidden;
+/* --- ROBOT DANS LE DASHBOARD --- */
+.ai-robot-dashboard { position: relative; }
+.robot-float { animation: float 4s ease-in-out infinite; }
+.eyes-anim { animation: blinkEyes 4s infinite; }
+.robot-glow-base {
+  width: 120px; height: 15px; background: #eab308; opacity: 0.2;
+  filter: blur(15px); border-radius: 50%; margin: 0 auto;
 }
-.luxury-bento-card:hover { transform: translateY(-12px); border-color: var(--accent-color); box-shadow: 0 30px 60px rgba(0,0,0,0.04); }
-.card-glow { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, var(--accent-color) 0%, transparent 70%); opacity: 0; transition: 0.5s; pointer-events: none; filter: blur(60px); }
-.luxury-bento-card:hover .card-glow { opacity: 0.03; }
 
-.bento-icon-wrapper { width: 56px; height: 56px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
-.bento-trend-tag { background: #ecfdf5; color: #10b981; padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 800; }
-.bento-value { font-size: 2.2rem; font-weight: 800; color: #0f172a; letter-spacing: -2px; }
-.bento-label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+/* --- BENTO KPI --- */
+.kpi-cyber-card {
+  background: white; border-radius: 30px; padding: 25px; border: 1px solid #f1f5f9;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.kpi-cyber-card:hover { transform: translateY(-10px); box-shadow: 0 20px 30px rgba(0,0,0,0.05); border-color: #eab308; }
+.kpi-icon-box { width: 50px; height: 50px; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+.kpi-value { font-size: 32px; font-weight: 800; color: #0f172a; margin: 10px 0 0; }
+.kpi-label { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+.kpi-trend { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 100px; }
+.kpi-trend.up { background: #ecfdf5; color: #10b981; }
+.kpi-trend.down { background: #fef2f2; color: #ef4444; }
+.kpi-progress { height: 6px; background: #f1f5f9; border-radius: 10px; }
+.kpi-progress-bar { height: 100%; border-radius: 10px; }
 
-/* --- PANELS --- */
-.panel-luxe { background: white; border-radius: 40px; border: 1px solid #f1f5f9; box-shadow: 0 10px 30px rgba(0,0,0,0.02); }
-.panel-pill-tabs { background: #f8fafc; padding: 4px; border-radius: 100px; display: flex; gap: 5px; }
-.tab-btn { border: none; background: transparent; padding: 6px 18px; border-radius: 100px; font-size: 10px; font-weight: 800; color: #94a3b8; transition: 0.3s; }
-.tab-btn.active { background: #0f172a; color: white; }
+/* --- GLASS PANELS --- */
+.glass-panel {
+  background: white; border: 1px solid #f1f5f9; border-radius: 35px; padding: 30px; height: 100%;
+}
+.panel-title { font-size: 12px; font-weight: 800; letter-spacing: 1px; color: #0f172a; }
 
-/* --- ACTIVITY ROW --- */
-.activity-row-pill { display: flex; gap: 18px; padding: 16px; border-radius: 24px; margin-bottom: 8px; transition: 0.3s; }
-.activity-row-pill:hover { background: #f8fafc; transform: translateX(5px); }
-.row-indicator { width: 4px; height: 35px; border-radius: 10px; flex-shrink: 0; }
-.user-name { display: block; font-weight: 800; font-size: 14px; color: #0f172a; }
-.action-desc { display: block; font-size: 12px; color: #64748b; margin-top: 1px; }
-.campagne-chip { font-size: 9px; font-weight: 800; border: 1px solid; padding: 2px 10px; border-radius: 6px; margin-top: 6px; display: inline-block; text-transform: uppercase; }
+/* --- TIMELINE --- */
+.cyber-timeline { display: flex; flex-direction: column; gap: 20px; }
+.timeline-entry { display: flex; gap: 15px; align-items: flex-start; }
+.entry-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; }
+.entry-title { font-size: 13px; font-weight: 700; color: #1e293b; margin: 0; }
+.entry-info { font-size: 11px; color: #94a3b8; }
+
+/* --- BUTTONS --- */
+.btn-cyber-primary {
+  background: #eab308; color: #0f172a; border: none; padding: 14px 28px;
+  border-radius: 18px; font-weight: 800; font-size: 14px; transition: 0.3s;
+}
+.btn-cyber-primary:hover { box-shadow: 0 10px 20px rgba(234, 179, 8, 0.3); transform: translateY(-2px); }
+.btn-cyber-outline {
+  background: transparent; border: 2px solid #0f172a; color: #0f172a; padding: 14px 28px;
+  border-radius: 18px; font-weight: 800; margin-left: 12px;
+}
+.btn-view-all { width: 100%; background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 15px; font-weight: 700; font-size: 11px; color: #64748b; }
 
 /* --- ANIMATIONS --- */
-@keyframes orbit { from { transform: rotate(0) translate(20px) rotate(0); } to { transform: rotate(360deg) translate(20px) rotate(-360deg); } }
-@keyframes sweep { 0% { left: -100%; } 100% { left: 200%; } }
-@keyframes rotate { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
-@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
-@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(251, 191, 36, 0); } }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+@keyframes blinkEyes { 0%, 45%, 55%, 100% { transform: scaleY(1); } 50% { transform: scaleY(0.1); } }
 </style>
