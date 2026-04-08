@@ -30,7 +30,7 @@ import InviteView from '../views/InviteView.vue'
 import PlanningView from '../views/PlanningView.vue'
 import RapportsView from '../views/RapportsView.vue'
 import AIGeneratorView from '../views/AIGeneratorView.vue'
-import ConstructeurTestView from '../views/ConstructeurTestView.vue'
+
 import AnalyseComportementaleView from '../views/AnalyseComportementaleView.vue'
 import StatsView from '../views/StatsView.vue'
 
@@ -40,7 +40,6 @@ import RolesManagementView from '../views/RolesManagementView.vue'
 import StaffMembersView from '../views/StaffMembersView.vue'
 
 import SuperAdminView from '../views/SuperAdminView.vue'
-import JournalAuditView from '../views/JournalAuditView.vue'
 import GestionAbonnementsView from '../views/GestionAbonnementsView.vue'
 import PlatformUsersView from '../views/PlatformUsersView.vue'
 import AnalyticsView from '../views/AnalyticsView.vue'
@@ -79,7 +78,7 @@ const routes = [
    * ESPACE FORMATEUR / RH
    */
   { path: '/questions', name: 'questions', component: BanqueQuestionsView, meta: { requiresAuth: true, role: ['Formateur', 'AdminEntreprise'] } },
-  { path: '/test-builder', name: 'test-builder', component: ConstructeurTestView, meta: { requiresAuth: true, role: ['Formateur', 'AdminEntreprise'] } },
+
   { path: '/ai-generator', name: 'ai-generator', component: AIGeneratorView, meta: { requiresAuth: true, role: ['Formateur', 'AdminEntreprise'] } },
   { path: '/analyse-comportementale', name: 'analyse-comportementale', component: AnalyseComportementaleView, meta: { requiresAuth: true, role: ['Formateur', 'AdminEntreprise'] } },
   { path: '/sessions', name: 'sessions', component: PlanningView, meta: { requiresAuth: true, role: 'Formateur' } },
@@ -102,7 +101,6 @@ const routes = [
    */
   { path: '/super-admin', name: 'super-admin', component: SuperAdminView, meta: { requiresAuth: true, role: 'SuperAdmin' } },
   { path: '/gestion-abonnements', name: 'gestion-abonnements', component: GestionAbonnementsView, meta: { requiresAuth: true, role: 'SuperAdmin' } },
-  { path: '/audit-log', name: 'audit-log', component: JournalAuditView, meta: { requiresAuth: true, role: 'SuperAdmin' } },
   { path: '/platform-users', name: 'platform-users', component: PlatformUsersView, meta: { requiresAuth: true, role: 'SuperAdmin' } },
   { path: '/platform-analytics', name: 'platform-analytics', component: AnalyticsView, meta: { requiresAuth: true, role: 'SuperAdmin' } },
 

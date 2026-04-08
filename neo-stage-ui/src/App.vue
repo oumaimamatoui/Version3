@@ -61,4 +61,10 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-
 .text-amber { color: #eab308 !important; }
 .btn-amber { background-color: #eab308; color: #0f172a; border: none; }
 .bg-success-soft { background-color: #dcfce7; }
+#app {
+  zoom: 0.85; /* Chrome & Safari */
+  -moz-transform: scale(0.85); /* Firefox */
+  -moz-transform-origin: 0 0;
+}
+
 </style>
