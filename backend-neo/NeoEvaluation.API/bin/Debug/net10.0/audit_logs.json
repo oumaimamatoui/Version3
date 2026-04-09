@@ -1,5 +1,69 @@
 [
   {
+    "Id": "6d62ffe5-2786-4cd8-9862-4e41ff51957f",
+    "Action": "DELETE_USER",
+    "Utilisateur": "SuperAdmin",
+    "Details": "Suppression de l\u0027utilisateur : rabehsamia033@gmail.com",
+    "Statut": "Succ\u00E8s",
+    "Date": "2026-04-08T22:23:37.701565Z"
+  },
+  {
+    "Id": "6b032658-7900-4398-ab34-1d9c00bc6a2b",
+    "Action": "DELETE_USER",
+    "Utilisateur": "SuperAdmin",
+    "Details": "Suppression de l\u0027utilisateur : rabehsamia033@gmail.com",
+    "Statut": "Succ\u00E8s",
+    "Date": "2026-04-08T22:23:32.9380757Z"
+  },
+  {
+    "Id": "4eedbc96-9888-4229-8da0-4703831edaa6",
+    "Action": "TOGGLE_USER_STATUS",
+    "Utilisateur": "SuperAdmin",
+    "Details": "Statut de rabehsamia033@gmail.com chang\u00E9 en : Actif",
+    "Statut": "Succ\u00E8s",
+    "Date": "2026-04-08T22:23:24.0791981Z"
+  },
+  {
+    "Id": "aa14705b-34cd-4bd6-a179-a4ceb45332a5",
+    "Action": "DELETE_USER",
+    "Utilisateur": "SuperAdmin",
+    "Details": "Suppression de l\u0027utilisateur : oumaidmamatoui@gmail.com",
+    "Statut": "Succ\u00E8s",
+    "Date": "2026-04-08T22:23:12.6795922Z"
+  },
+  {
+    "Id": "7bc8b8ab-01f7-4689-a880-6482197a4dea",
+    "Action": "APPROVE_ORG",
+    "Utilisateur": "SuperAdmin",
+    "Details": "Approbation de l\u0027entreprise : oooooooooooo",
+    "Statut": "Succ\u00E8s",
+    "Date": "2026-04-08T20:07:59.6506793Z"
+  },
+  {
+    "Id": "73892291-5709-40c3-88fc-91630f227cb5",
+    "Action": "APPROVE_ORG",
+    "Utilisateur": "SuperAdmin",
+    "Details": "Approbation de l\u0027entreprise : oooooooooooo",
+    "Statut": "Succ\u00E8s",
+    "Date": "2026-04-08T20:07:51.7510053Z"
+  },
+  {
+    "Id": "fb889acf-0cb4-4296-9c93-5171ce40e1dc",
+    "Action": "APPROVE_ORG",
+    "Utilisateur": "SuperAdmin",
+    "Details": "Approbation de l\u0027entreprise : ggggggggg",
+    "Statut": "Succ\u00E8s",
+    "Date": "2026-04-08T20:03:59.9498498Z"
+  },
+  {
+    "Id": "148c2556-1ebb-4746-a71e-606ebc17f22c",
+    "Action": "APPROVE_ORG",
+    "Utilisateur": "SuperAdmin",
+    "Details": "Approbation de l\u0027entreprise : f",
+    "Statut": "Succ\u00E8s",
+    "Date": "2026-04-08T20:03:03.7527775Z"
+  },
+  {
     "Id": "ed48a2ad-6e5b-4b3a-91de-78a0ad9baaa1",
     "Action": "APPROVE_ORG",
     "Utilisateur": "SuperAdmin",
