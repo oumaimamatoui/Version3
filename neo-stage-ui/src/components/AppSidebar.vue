@@ -165,23 +165,16 @@
             <div class="icon-shell warning shadow-sm"><i class="fa-solid fa-building-circle-check"></i></div>
             <span>Voir Organisations</span>
           </router-link>
+          <!-- GESTION UTILISATEURS -->
           <router-link to="/platform-users" class="nav-item nav-link-tech">
             <div class="icon-shell primary shadow-sm"><i class="fa-solid fa-users-gear"></i></div>
             <span>Gérer Utilisateurs</span>
           </router-link>
-          <router-link to="/audit-log" class="nav-item nav-link-tech">
-            <div class="icon-shell secondary shadow-sm"><i class="fa-solid fa-fingerprint"></i></div>
-            <span>Journal d'Audit</span>
-          </router-link>
+
+          <!-- ANALYTIQUE -->
           <router-link to="/platform-analytics" class="nav-item nav-link-tech">
             <div class="icon-shell success shadow-sm"><i class="fa-solid fa-chart-line"></i></div>
             <span>Analytique</span>
-          </router-link>
-
-          <label class="group-header mt-4">SYSTÈME</label>
-          <router-link to="/settings" class="nav-item nav-link-tech">
-            <div class="icon-shell info shadow-sm"><i class="fa-solid fa-gears"></i></div>
-            <span>Paramètres</span>
           </router-link>
         </div>
 
@@ -214,7 +207,8 @@
 
       <!-- 4. FOOTER -->
       <div class="sidebar-footer shadow-sm">
-        <div class="demo-switcher">
+        <!-- MODE TEST (PFE) -->
+        <div class="demo-switcher mb-3">
           <div class="demo-label">RÔLES PFE (MODE TEST)</div>
           <div class="custom-select-wrapper">
             <select @change="changeRole($event)" class="role-select-custom">
@@ -233,17 +227,31 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import api from '@/services/api';
 
 const router = useRouter();
 const authStore = useAuthStore();
 const userRole = computed(() => authStore.role);
 const isSidebarActive = ref(false);
 
+const branding = ref({
+  companyName: 'NeoEvaluation',
+  color: '#ffa000',
+  logoUrl: null
+});
+
+const fetchBranding = async () => {
+  try {
+    const res = await api.get('/Settings/branding');
+    branding.value = res.data;
+  } catch (e) { /* Fallback */ }
+};
+
 const roleLabel = computed(() => {
-  const roles = { 'SuperAdmin': 'Master', 'AdminEntreprise': 'Administrateur', 'Formateur': 'Expert IA', 'Candidat': 'Candidat' };
+  const roles = { 'SuperAdmin': 'SuperAdmin', 'AdminEntreprise': 'Administrateur', 'Formateur': 'Évaluateur', 'Candidat': 'Candidat' };
   return roles[userRole.value] || 'Utilisateur';
 });
 
@@ -253,6 +261,8 @@ const changeRole = (e) => {
   router.push('/dashboard').then(() => window.location.reload()); 
 };
 const logout = () => { authStore.logout(); router.push('/login'); };
+
+onMounted(fetchBranding);
 </script>
 
 <style scoped>

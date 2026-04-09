@@ -40,7 +40,6 @@ import RolesManagementView from '../views/RolesManagementView.vue'
 import StaffMembersView from '../views/StaffMembersView.vue'
 
 import SuperAdminView from '../views/SuperAdminView.vue'
-import JournalAuditView from '../views/JournalAuditView.vue'
 import GestionAbonnementsView from '../views/GestionAbonnementsView.vue'
 import PlatformUsersView from '../views/PlatformUsersView.vue'
 import AnalyticsView from '../views/AnalyticsView.vue'
@@ -102,7 +101,6 @@ const routes = [
    */
   { path: '/super-admin', name: 'super-admin', component: SuperAdminView, meta: { requiresAuth: true, role: 'SuperAdmin' } },
   { path: '/gestion-abonnements', name: 'gestion-abonnements', component: GestionAbonnementsView, meta: { requiresAuth: true, role: 'SuperAdmin' } },
-  { path: '/audit-log', name: 'audit-log', component: JournalAuditView, meta: { requiresAuth: true, role: 'SuperAdmin' } },
   { path: '/platform-users', name: 'platform-users', component: PlatformUsersView, meta: { requiresAuth: true, role: 'SuperAdmin' } },
   { path: '/platform-analytics', name: 'platform-analytics', component: AnalyticsView, meta: { requiresAuth: true, role: 'SuperAdmin' } },
 

@@ -3467,19 +3467,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\User\\.nuget\\packages\\": {}
+    "C:\\Users\\amedm\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\User\\Desktop\\Plateforme SAAS d’évaluation des candidats assistée par IA\\SAAS\\SAAS\\backend-neo\\NeoEvaluation.API\\NeoEvaluation.API.csproj",
+      "projectUniqueName": "C:\\Users\\amedm\\OneDrive\\Bureau\\Version3\\backend-neo\\NeoEvaluation.API\\NeoEvaluation.API.csproj",
       "projectName": "NeoEvaluation.API",
-      "projectPath": "C:\\Users\\User\\Desktop\\Plateforme SAAS d’évaluation des candidats assistée par IA\\SAAS\\SAAS\\backend-neo\\NeoEvaluation.API\\NeoEvaluation.API.csproj",
-      "packagesPath": "C:\\Users\\User\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\User\\Desktop\\Plateforme SAAS d’évaluation des candidats assistée par IA\\SAAS\\SAAS\\backend-neo\\NeoEvaluation.API\\obj\\",
+      "projectPath": "C:\\Users\\amedm\\OneDrive\\Bureau\\Version3\\backend-neo\\NeoEvaluation.API\\NeoEvaluation.API.csproj",
+      "packagesPath": "C:\\Users\\amedm\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\amedm\\OneDrive\\Bureau\\Version3\\backend-neo\\NeoEvaluation.API\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\User\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\amedm\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net10.0"
@@ -3579,7 +3579,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.102/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.104/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.AspNetCore": "(,10.0.32767]",
           "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",

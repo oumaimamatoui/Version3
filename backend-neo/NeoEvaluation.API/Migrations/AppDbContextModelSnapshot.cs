@@ -145,11 +145,18 @@ namespace NeoEvaluation.API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("CouleurSignature")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("CreeLe")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("EstActif")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("LogoUrl")
+                        .HasColumnType("text");
 
                     b.Property<string>("MatriculeFiscale")
                         .HasColumnType("text");
@@ -165,6 +172,62 @@ namespace NeoEvaluation.API.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Entreprises");
+                });
+
+            modelBuilder.Entity("NeoEvaluation.API.Models.EntrepriseParSA", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Adresse")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CodePostal")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreeLe")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Domaine")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmailResponsable")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("EntrepriseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Industrie")
+                        .HasColumnType("text");
+
+                    b.Property<string>("NomResponsable")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Pays")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PrenomResponsable")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SiteWeb")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TelephoneResponsable")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Ville")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EntrepriseId")
+                        .IsUnique();
+
+                    b.ToTable("EntrepriseParSA");
                 });
 
             modelBuilder.Entity("NeoEvaluation.API.Models.Evaluation", b =>
@@ -217,8 +280,15 @@ namespace NeoEvaluation.API.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("PrenomResponsable")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<int>("Statut")
                         .HasColumnType("integer");
+
+                    b.Property<string>("TelephoneResponsable")
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -407,6 +477,9 @@ namespace NeoEvaluation.API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Bio")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("CreeLe")
                         .HasColumnType("timestamp with time zone");
 
@@ -557,6 +630,15 @@ namespace NeoEvaluation.API.Migrations
                     b.Navigation("Candidat");
                 });
 
+            modelBuilder.Entity("NeoEvaluation.API.Models.EntrepriseParSA", b =>
+                {
+                    b.HasOne("NeoEvaluation.API.Models.Entreprise", "Entreprise")
+                        .WithOne("DetailsSA")
+                        .HasForeignKey("NeoEvaluation.API.Models.EntrepriseParSA", "EntrepriseId");
+
+                    b.Navigation("Entreprise");
+                });
+
             modelBuilder.Entity("NeoEvaluation.API.Models.Evaluation", b =>
                 {
                     b.HasOne("NeoEvaluation.API.Models.Candidature", "Candidature")
@@ -658,6 +740,8 @@ namespace NeoEvaluation.API.Migrations
             modelBuilder.Entity("NeoEvaluation.API.Models.Entreprise", b =>
                 {
                     b.Navigation("Campagnes");
+
+                    b.Navigation("DetailsSA");
 
                     b.Navigation("Staff");
                 });

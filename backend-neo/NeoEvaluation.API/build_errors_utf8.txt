@@ -1,0 +1,17 @@
+﻿  Identification des projets ├á restaurer...
+  Tous les projets sont ├á jour pour la restauration.
+C:\Users\amedm\OneDrive\Bureau\Version3\backend-neo\NeoEvaluation.API\Controllers\ExamenController.cs(34,43): warning CS8602: D├®r├®f├®rencement d'une ├®ventuelle r├®f├®rence null. [C:\Users\amedm\OneDrive\Bureau\Version3\backend-neo\NeoEvaluation.API\NeoEvaluation.API.csproj]
+C:\Users\amedm\OneDrive\Bureau\Version3\backend-neo\NeoEvaluation.API\Controllers\SuperAdminController.cs(104,27): error CS9035: Le membre obligatoire 'InscriptionsEntreprise.PrenomResponsable' doit ├¬tre d├®fini dans lÔÇÖinitialiseur dÔÇÖobjet ou le constructeur dÔÇÖattribut. [C:\Users\amedm\OneDrive\Bureau\Version3\backend-neo\NeoEvaluation.API\NeoEvaluation.API.csproj]
+C:\Users\amedm\OneDrive\Bureau\Version3\backend-neo\NeoEvaluation.API\Controllers\DashboardController.cs(40,62): warning CS8602: D├®r├®f├®rencement d'une ├®ventuelle r├®f├®rence null. [C:\Users\amedm\OneDrive\Bureau\Version3\backend-neo\NeoEvaluation.API\NeoEvaluation.API.csproj]
+C:\Users\amedm\OneDrive\Bureau\Version3\backend-neo\NeoEvaluation.API\Controllers\RegistrationController.cs(25,36): error CS9035: Le membre obligatoire 'InscriptionsEntreprise.PrenomResponsable' doit ├¬tre d├®fini dans lÔÇÖinitialiseur dÔÇÖobjet ou le constructeur dÔÇÖattribut. [C:\Users\amedm\OneDrive\Bureau\Version3\backend-neo\NeoEvaluation.API\NeoEvaluation.API.csproj]
+
+├ëCHEC de la build.
+
+C:\Users\amedm\OneDrive\Bureau\Version3\backend-neo\NeoEvaluation.API\Controllers\ExamenController.cs(34,43): warning CS8602: D├®r├®f├®rencement d'une ├®ventuelle r├®f├®rence null. [C:\Users\amedm\OneDrive\Bureau\Version3\backend-neo\NeoEvaluation.API\NeoEvaluation.API.csproj]
+C:\Users\amedm\OneDrive\Bureau\Version3\backend-neo\NeoEvaluation.API\Controllers\DashboardController.cs(40,62): warning CS8602: D├®r├®f├®rencement d'une ├®ventuelle r├®f├®rence null. [C:\Users\amedm\OneDrive\Bureau\Version3\backend-neo\NeoEvaluation.API\NeoEvaluation.API.csproj]
+C:\Users\amedm\OneDrive\Bureau\Version3\backend-neo\NeoEvaluation.API\Controllers\SuperAdminController.cs(104,27): error CS9035: Le membre obligatoire 'InscriptionsEntreprise.PrenomResponsable' doit ├¬tre d├®fini dans lÔÇÖinitialiseur dÔÇÖobjet ou le constructeur dÔÇÖattribut. [C:\Users\amedm\OneDrive\Bureau\Version3\backend-neo\NeoEvaluation.API\NeoEvaluation.API.csproj]
+C:\Users\amedm\OneDrive\Bureau\Version3\backend-neo\NeoEvaluation.API\Controllers\RegistrationController.cs(25,36): error CS9035: Le membre obligatoire 'InscriptionsEntreprise.PrenomResponsable' doit ├¬tre d├®fini dans lÔÇÖinitialiseur dÔÇÖobjet ou le constructeur dÔÇÖattribut. [C:\Users\amedm\OneDrive\Bureau\Version3\backend-neo\NeoEvaluation.API\NeoEvaluation.API.csproj]
+    2 Avertissement(s)
+    2 Erreur(s)
+
+Temps ├®coul├® 00:00:01.77

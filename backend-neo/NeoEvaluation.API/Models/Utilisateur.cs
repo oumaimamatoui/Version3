@@ -28,6 +28,7 @@ namespace NeoEvaluation.API.Models
 
         public DateTime CreeLe { get; set; } = DateTime.UtcNow;
         public string? PhotoUrl { get; set; }
+        public string? Bio { get; set; }
 
         // ✅ AJOUTEZ CETTE PROPRIÉTÉ CI-DESSOUS
         public List<string> Privileges { get; set; } = new List<string>();
