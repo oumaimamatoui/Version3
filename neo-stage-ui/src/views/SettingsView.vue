@@ -74,6 +74,10 @@
                       <label class="cyber-label">Email de liaison</label>
                       <input type="email" class="cyber-input" v-model="userForm.email">
                     </div>
+                    <div class="col-md-12">
+                      <label class="cyber-label">Ma Description / Bio</label>
+                      <textarea class="cyber-input" v-model="userForm.bio" rows="4" placeholder="Parlez-nous de vous..."></textarea>
+                    </div>
                   </div>
                 </div>
 

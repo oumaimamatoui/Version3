@@ -15,7 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers()
     .AddJsonOptions(options => {
-        // ✅ CRITIQUE : Force le format camelCase pour correspondre au JavaScript
+        // CRITIQUE : Force le format camelCase pour correspondre au JavaScript
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
         options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
@@ -24,12 +24,12 @@ builder.Services.AddControllers()
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// ✅ MODIFICATION : Configuration de SendGrid
+//  MODIFICATION : Configuration de SendGrid
 builder.Services.AddSendGrid(options => {
     options.ApiKey = builder.Configuration["SendGridSettings:ApiKey"];
 });
 
-// ✅ MODIFICATION : Utilisation de SendGridEmailService au lieu de EmailService
+//  MODIFICATION : Utilisation de SendGridEmailService au lieu de EmailService
 builder.Services.AddScoped<IEmailService, SendGridEmailService>();
 
 builder.Services.AddSingleton<IAuditLogService, AuditLogService>();

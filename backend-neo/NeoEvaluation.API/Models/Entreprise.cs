@@ -18,6 +18,13 @@ namespace NeoEvaluation.API.Models
 
         public bool EstActif { get; set; } = true;
 
+        // Branding & Personnalisation
+        public string CouleurSignature { get; set; } = "#6366f1";
+        public string? LogoUrl { get; set; }
+
+        // Relation optionnelle vers les détails du SuperAdmin
+        public virtual EntrepriseParSA? DetailsSA { get; set; }
+
         // Relations
         public ICollection<Personnel> Staff { get; set; } = new List<Personnel>();
         public ICollection<Campagne> Campagnes { get; set; } = new List<Campagne>();

@@ -26,6 +26,7 @@ namespace NeoEvaluation.API.Data
         public DbSet<Personnel> Personnels { get; set; } = null!;
         public DbSet<Candidat> Candidats { get; set; } = null!;
         public DbSet<Planning> Plannings { get; set; } = null!;
+        public DbSet<EntrepriseParSA> EntrepriseParSA { get; set; } = null!;
        
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

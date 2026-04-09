@@ -52,7 +52,9 @@ namespace NeoEvaluation.API.Controllers
                         Id = u.Id,
                         Name = ((u.Prenom ?? "") + " " + (u.Nom ?? "")).Trim(),
                         Email = u.Email,
-                        Org = u.Entreprise != null ? u.Entreprise.Nom : "Plateforme Neo",
+                        Org = u.EntrepriseId != null 
+                              ? _context.Entreprises.Where(e => e.Id == u.EntrepriseId).Select(e => e.Nom).FirstOrDefault() ?? "Plateforme Neo"
+                              : "Plateforme Neo",
                         Role = u.RoleNom,
                         IsActive = u.EstActif,
                         LastLogin = "Récemment"
@@ -105,6 +107,7 @@ namespace NeoEvaluation.API.Controllers
                 Id = Guid.NewGuid(),
                 NomEntreprise = "Administration Neo",
                 NomResponsable = dto.Name,
+                PrenomResponsable = "Admin", // Valeur par défaut pour une invitation
                 EmailResponsable = dto.Email,
                 Statut = 1, // Immédiatement approuvé pour un admin
                 CreeLe = DateTime.UtcNow
@@ -217,13 +220,34 @@ namespace NeoEvaluation.API.Controllers
         [HttpPost("create-org")]
         public async Task<IActionResult> CreateOrg([FromBody] AdminCreateOrgDto dto)
         {
+            // 1. Création de l'inscription (pour le flux d'activation)
             var reg = new InscriptionsEntreprise {
                 Id = Guid.NewGuid(),
                 NomEntreprise = dto.Name,
-                MatriculeFiscale = dto.MatriculeFiscale,
-                NomResponsable = $"{dto.AdminFirstName} {dto.AdminLastName}",
+                NomResponsable = dto.AdminLastName,
+                PrenomResponsable = dto.AdminFirstName,
                 EmailResponsable = dto.AdminEmail,
+                TelephoneResponsable = dto.AdminPhone,
+                MatriculeFiscale = dto.MatriculeFiscale,
                 Statut = 1,
+                CreeLe = DateTime.UtcNow
+            };
+
+            // 2. Création des métadonnées détaillées (Table Propre)
+            var details = new EntrepriseParSA {
+                Id = Guid.NewGuid(),
+                Domaine = dto.Domaine,
+                Industrie = dto.Industrie,
+                SiteWeb = dto.SiteWeb,
+                Adresse = dto.Adresse,
+                Ville = dto.Ville,
+                Pays = dto.Pays,
+                CodePostal = dto.CodePostal,
+                Description = dto.Description,
+                NomResponsable = dto.AdminLastName,
+                PrenomResponsable = dto.AdminFirstName,
+                EmailResponsable = dto.AdminEmail,
+                TelephoneResponsable = dto.AdminPhone,
                 CreeLe = DateTime.UtcNow
             };
 
@@ -235,6 +259,7 @@ namespace NeoEvaluation.API.Controllers
             };
 
             _context.InscriptionsEntreprises.Add(reg);
+            _context.EntrepriseParSA.Add(details);
             _context.TokensActivation.Add(token);
             await _context.SaveChangesAsync();
 
@@ -243,7 +268,7 @@ namespace NeoEvaluation.API.Controllers
             try {
                 var link = $"http://localhost:5173/definir-mot-de-passe?token={token.Token}";
 
-                // ✅ LOG CONSOLE POUR DÉVELOPPEMENT (si l'email tarde)
+                // ✅ LOG CONSOLE POUR DÉVELOPPEMENT
                 Console.WriteLine("\n--------------------------------------------------");
                 Console.WriteLine($"[DEBUG] MANUAL CREATION LINK FOR: {dto.AdminEmail}");
                 Console.WriteLine($"LINK: {link}");
@@ -252,7 +277,7 @@ namespace NeoEvaluation.API.Controllers
                 await _emailService.SendEmailAsync(dto.AdminEmail, "Accès Admin NeoEvaluation", $"Votre organisation a été créée. Définissez votre accès ici : {link}");
             } catch { }
 
-            return Ok(new { message = "Organisation créée avec succès" });
+            return Ok(new { message = "Organisation créée avec succès", profileId = details.Id });
         }
     }
 }
