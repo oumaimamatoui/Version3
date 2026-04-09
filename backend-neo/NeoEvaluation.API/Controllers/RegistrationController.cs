@@ -22,10 +22,17 @@ namespace NeoEvaluation.API.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
+            // Splitting logic pour obtenir un prénom par défaut si possible
+            var fullName = dto.NomResponsable ?? "Responsable";
+            var parts = fullName.Trim().Split(' ');
+            var prenom = parts.Length > 1 ? parts[0] : "Responsable";
+            var nom = parts.Length > 1 ? string.Join(" ", parts.Skip(1)) : fullName;
+
             var registration = new InscriptionsEntreprise
             {
                 NomEntreprise = dto.NomEntreprise,
-                NomResponsable = dto.NomResponsable,
+                NomResponsable = nom,
+                PrenomResponsable = prenom,
                 EmailResponsable = dto.EmailResponsable,
                 MatriculeFiscale = dto.MatriculeFiscale,
                 Statut = 0 // En attente

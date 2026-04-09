@@ -60,8 +60,8 @@
                 <small class="text-muted">{{ n.time }}</small>
               </a>
             </div>
-            <div class="p-2 border-top text-center">
-              <a href="#" class="btn-link-sm text-amber fw-bold">Voir tout l'audit</a>
+            <div class="p-2 border-top text-center text-muted tiny">
+              NeoEvaluation Platform
             </div>
           </div>
         </div>
@@ -79,8 +79,8 @@
             </div>
           </a>
           <div class="dropdown-menu dropdown-menu-end shadow-premium profile-dropdown animate-slide-in">
-            <router-link to="/profile" class="dropdown-item"><i class="fa-regular fa-user me-2 text-amber"></i>Mon Profil</router-link>
-            <router-link to="/settings" class="dropdown-item"><i class="fa-regular fa-gear me-2 text-amber"></i>Paramètres</router-link>
+            <router-link to="/profile" class="dropdown-item"><i class="fa-solid fa-circle-user me-2 text-amber"></i>Mon Profil</router-link>
+            <router-link to="/settings" class="dropdown-item"><i class="fa-solid fa-user-gear me-2 text-amber"></i>Paramètres</router-link>
             <div class="dropdown-divider"></div>
             <router-link to="/login" class="dropdown-item text-danger fw-bold"><i class="fa-solid fa-power-off me-2"></i>Déconnexion</router-link>
           </div>
@@ -102,7 +102,7 @@ const searchInput = ref(null);
 
 const roleDisplay = computed(() => {
   const map = { 
-    'SuperAdmin': 'Master Admin', 
+    'SuperAdmin': 'SuperAdmin', 
     'AdminEntreprise': 'Administrateur', 
     'Formateur': 'Évaluateur', 
     'Candidat': 'Candidat' 

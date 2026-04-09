@@ -114,15 +114,36 @@ const errorMessage = ref("");
 const requestSent = ref(false);
 const showPassword = ref(false);
 const loginForm = reactive({ email: '', password: '', remember: false });
+const client_id = "387387561163-i1qqrq1mtuqrmkj3vl978ed9j4o392bk.apps.googleusercontent.com";
 
 onMounted(() => {
-  if (window.google) {
-    google.accounts.id.initialize({
-      client_id: 'VOTRE_CLIENT_ID.apps.googleusercontent.com',
-      callback: handleGoogleLogin,
-    });
-    google.accounts.id.renderButton(document.getElementById("googleButtonPlaceholder"), { theme: "outline", size: "large", shape: "pill" });
-  }
+  // On attend un court instant pour que le script Google soit bien chargé globalement
+  const interval = setInterval(() => {
+    if (window.google) {
+      clearInterval(interval);
+      try {
+        google.accounts.id.initialize({
+          client_id: client_id,
+          callback: handleGoogleLogin,
+          auto_select: false,
+          cancel_on_tap_outside: true
+        });
+        
+        google.accounts.id.renderButton(
+          document.getElementById("googleButtonPlaceholder"),
+          { 
+            theme: "outline", 
+            size: "large", 
+            width: "100%",
+            text: "signin_with",
+            shape: "pill"
+          }
+        );
+      } catch (e) {
+        console.warn("Google GIS already initialized or error:", e);
+      }
+    }
+  }, 100);
 });
 
 const handleClassicLogin = async () => {
@@ -132,18 +153,17 @@ const handleClassicLogin = async () => {
     const res = await axios.post('http://localhost:5172/api/Auth/login', loginForm);
     handleAuthSuccess(res.data);
   } catch (err) {
-    errorMessage.value = "Identifiants invalides.";
+    errorMessage.value = err.response?.data?.message || "Identifiants invalides.";
   } finally { isLoading.value = false; }
 };
 
 const handleAuthSuccess = (data) => {
-  const { token, role, nom } = data;
+  const { token, role, nom, email } = data;
   // Stockage store
-  authStore.setUser({ email: loginForm.email, name: nom }, role, token);
+  authStore.setUser({ email: email || loginForm.email, name: nom }, role, token);
   requestSent.value = true;
   
   setTimeout(() => {
-    // Redirection basée sur votre router.js
     if (role?.toUpperCase() === 'SUPERADMIN') {
       router.push('/super-admin');
     } else {
@@ -152,7 +172,21 @@ const handleAuthSuccess = (data) => {
   }, 1500);
 };
 
-const handleGoogleLogin = async (response) => { /* Votre logique google */ };
+const handleGoogleLogin = async (response) => {
+  isLoading.value = true;
+  errorMessage.value = "";
+  try {
+    const res = await axios.post('http://localhost:5172/api/Auth/google-login', {
+      idToken: response.credential
+    });
+    handleAuthSuccess(res.data);
+  } catch (err) {
+    errorMessage.value = err.response?.data?.message || "Échec de la connexion Google.";
+    console.error("Google Login Error:", err);
+  } finally {
+    isLoading.value = false;
+  }
+};
 </script>
 
 <style scoped>

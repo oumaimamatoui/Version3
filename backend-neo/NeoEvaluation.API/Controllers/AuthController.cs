@@ -37,13 +37,20 @@ namespace NeoEvaluation.API.Controllers
 
             // Nettoyage des entrées
             var email = loginDto.Email.Trim().ToLower();
-            var password = loginDto.Password?.Trim();
+            var password = loginDto.Password; // Ne pas utiliser Trim() ici pour autoriser les mots de passe avec espace
 
-            // Recherche de l'utilisateur (Utilisateur est abstract, on cherche dans le DbSet global)
-            var user = await _context.Utilisateurs.FirstOrDefaultAsync(u => u.Email == email);
+            Console.WriteLine($"[AUTH DEBUG] Tentative de connexion pour l'email: '{email}'");
+
+            // Recherche de l'utilisateur en ignorant la casse ET les espaces superflus dans la BDD
+            var user = await _context.Utilisateurs.FirstOrDefaultAsync(u => u.Email.Trim().ToLower() == email);
             
             if (user == null) 
+            {
+                Console.WriteLine($"[AUTH DEBUG] Utilisateur introuvable pour '{email}'");
                 return Unauthorized(new { message = "Email incorrect ou compte inexistant." });
+            }
+
+            Console.WriteLine($"[AUTH DEBUG] Utilisateur trouvé: {user.Id} - Type: {user.GetType().Name}");
 
             // CAS SPÉCIAL : Admin de test (Hardcoded pour faciliter le développement)
             if (email == "admin@evaluatech.tn" && password == "Admin123")
@@ -53,16 +60,26 @@ namespace NeoEvaluation.API.Controllers
 
             // Vérification du mot de passe via BCrypt pour les autres comptes
             if (string.IsNullOrEmpty(user.MotDePasseHash))
+            {
+                Console.WriteLine($"[AUTH DEBUG] Aucun mot de passe configuré pour '{email}'");
                 return Unauthorized(new { message = "Ce compte n'a pas de mot de passe configuré (Connexion Google uniquement ?)." });
+            }
 
             bool isValid = BCrypt.Net.BCrypt.Verify(password, user.MotDePasseHash);
 
             if (!isValid) 
+            {
+                Console.WriteLine($"[AUTH DEBUG] Mot de passe incorrect pour '{email}'");
                 return Unauthorized(new { message = "Mot de passe incorrect." });
+            }
 
             if (!user.EstActif) 
+            {
+                Console.WriteLine($"[AUTH DEBUG] Compte inactif pour '{email}'");
                 return BadRequest(new { message = "Votre compte est désactivé. Veuillez contacter l'administrateur." });
+            }
 
+            Console.WriteLine($"[AUTH DEBUG] Connexion RÉUSSIE pour '{email}'");
             return Ok(GenerateJwtResponse(user));
         }
 
@@ -83,10 +100,10 @@ namespace NeoEvaluation.API.Controllers
                 var user = await _context.Utilisateurs.FirstOrDefaultAsync(u => u.Email == payload.Email.ToLower());
 
                 if (user == null) 
-                    return BadRequest(new { message = "Compte introuvable. Veuillez vous inscrire d'abord." });
+                    return BadRequest(new { message = "Compte introuvable. Veuillez d'abord vous inscrire via le formulaire." });
 
                 if (!user.EstActif) 
-                    return BadRequest(new { message = "Votre compte est en attente d'approbation." });
+                    return BadRequest(new { message = "Votre compte est en attente d'approbation par le SuperAdmin." });
 
                 return Ok(GenerateJwtResponse(user));
             }
@@ -107,8 +124,11 @@ namespace NeoEvaluation.API.Controllers
 
             var key = Encoding.UTF8.GetBytes(secretKey);
 
-            // Gestion sécurisée du rôle (Accès direct via la classe abstract Utilisateur)
+            // Gestion sécurisée du rôle
             string userRole = string.IsNullOrEmpty(user.RoleNom) ? "Candidat" : user.RoleNom;
+            
+            // Correction pour le frontend : Admin -> AdminEntreprise
+            if (userRole == "Admin") userRole = "AdminEntreprise";
 
             // Préparation des Claims (Identité de l'utilisateur)
             var claims = new List<Claim> {

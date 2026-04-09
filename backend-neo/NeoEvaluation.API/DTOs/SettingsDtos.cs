@@ -6,6 +6,7 @@ namespace NeoEvaluation.API.Dtos
         public string Prenom { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string? PhotoUrl { get; set; }
+        public string? Bio { get; set; }
         public string? JoinDate { get; set; } // Formaté pour l'affichage
     }
 
@@ -19,6 +20,13 @@ namespace NeoEvaluation.API.Dtos
     public class BrandingDto
     {
         public string CompanyName { get; set; } = string.Empty;
-        public string Color { get; set; } = "#eab308";
+        public string Color { get; set; } = "#6366f1";
+        public string? LogoUrl { get; set; }
+    }
+
+    public class BrandingUpdateDto
+    {
+        public string CompanyName { get; set; } = string.Empty;
+        public string Color { get; set; } = "#6366f1";
     }
 }
