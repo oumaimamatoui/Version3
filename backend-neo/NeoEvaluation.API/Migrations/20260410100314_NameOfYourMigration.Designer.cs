@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NeoEvaluation.API.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NeoEvaluation.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260410100314_NameOfYourMigration")]
+    partial class NameOfYourMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -334,7 +337,7 @@ namespace NeoEvaluation.API.Migrations
                     b.Property<double>("Poids")
                         .HasColumnType("double precision");
 
-                    b.Property<Guid?>("QuestionnaireId")
+                    b.Property<Guid>("QuestionnaireId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Texte")
@@ -665,7 +668,9 @@ namespace NeoEvaluation.API.Migrations
                 {
                     b.HasOne("NeoEvaluation.API.Models.Questionnaire", "Questionnaire")
                         .WithMany("Questions")
-                        .HasForeignKey("QuestionnaireId");
+                        .HasForeignKey("QuestionnaireId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Questionnaire");
                 });
