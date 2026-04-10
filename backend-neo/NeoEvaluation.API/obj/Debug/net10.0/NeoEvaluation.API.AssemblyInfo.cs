@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("NeoEvaluation.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+58d5852747f2be081c058158b434ba01f8051288")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c2989c260c2f7c46b99fb6da81d93d85c57cf391")]
 [assembly: System.Reflection.AssemblyProductAttribute("NeoEvaluation.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("NeoEvaluation.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
