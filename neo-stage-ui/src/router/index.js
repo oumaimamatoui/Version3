@@ -27,7 +27,6 @@ import CampagnesView from '../views/CampagnesView.vue'
 import ListeCandidatsView from '../views/ListeCandidatsView.vue'
 import DetailsCandidatView from '../views/DetailsCandidatView.vue' 
 import InviteView from '../views/InviteView.vue'
-import PlanningView from '../views/PlanningView.vue'
 import RapportsView from '../views/RapportsView.vue'
 import AIGeneratorView from '../views/AIGeneratorView.vue'
 
@@ -81,7 +80,7 @@ const routes = [
 
   { path: '/ai-generator', name: 'ai-generator', component: AIGeneratorView, meta: { requiresAuth: true, role: ['Formateur', 'AdminEntreprise'] } },
   { path: '/analyse-comportementale', name: 'analyse-comportementale', component: AnalyseComportementaleView, meta: { requiresAuth: true, role: ['Formateur', 'AdminEntreprise'] } },
-  { path: '/sessions', name: 'sessions', component: PlanningView, meta: { requiresAuth: true, role: 'Formateur' } },
+ 
   { path: '/stats', name: 'stats', component: StatsView, meta: { requiresAuth: true, role: ['Formateur', 'AdminEntreprise'] } },
 
   /**
