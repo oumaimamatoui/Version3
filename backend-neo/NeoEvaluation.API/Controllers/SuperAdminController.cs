@@ -136,7 +136,9 @@ namespace NeoEvaluation.API.Controllers
 
             try {
                 await _emailService.SendEmailAsync(dto.Email, "Invitation SuperAdmin - NeoEvaluation", $"Bonjour {dto.Name}, vous avez été invité à administrer la plateforme NeoEvaluation. Activez votre compte ici : {link}");
-            } catch { }
+            } catch (Exception ex) {
+                return BadRequest(new { message = "Erreur d'envoi d'email : " + ex.Message });
+            }
 
             return Ok(new { message = "Invitation envoyée", token = token.Token });
         }
@@ -198,7 +200,9 @@ namespace NeoEvaluation.API.Controllers
 
                 await _emailService.SendEmailAsync(reg.EmailResponsable, "Compte Approuvé", 
                     $"Félicitations ! Votre compte NeoEvaluation a été approuvé. Cliquez ici pour définir votre mot de passe : {link}");
-            } catch { }
+            } catch (Exception ex) {
+                return BadRequest(new { message = "Erreur d'envoi d'email d'approbation : " + ex.Message });
+            }
 
             return Ok(new { message = "Entreprise approuvée avec succès" });
         }
@@ -275,7 +279,9 @@ namespace NeoEvaluation.API.Controllers
                 Console.WriteLine("--------------------------------------------------\n");
 
                 await _emailService.SendEmailAsync(dto.AdminEmail, "Accès Admin NeoEvaluation", $"Votre organisation a été créée. Définissez votre accès ici : {link}");
-            } catch { }
+            } catch (Exception ex) {
+                return BadRequest(new { message = "Erreur d'envoi d'email de création : " + ex.Message });
+            }
 
             return Ok(new { message = "Organisation créée avec succès", profileId = details.Id });
         }

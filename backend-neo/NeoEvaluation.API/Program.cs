@@ -29,7 +29,7 @@ builder.Services.AddSendGrid(options => {
     options.ApiKey = builder.Configuration["SendGridSettings:ApiKey"];
 });
 
-//  MODIFICATION : Utilisation de SendGridEmailService au lieu de EmailService
+//  MODIFICATION : Utilisation de SendGridEmailService
 builder.Services.AddScoped<IEmailService, SendGridEmailService>();
 
 builder.Services.AddSingleton<IAuditLogService, AuditLogService>();

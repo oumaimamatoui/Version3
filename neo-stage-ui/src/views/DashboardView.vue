@@ -157,13 +157,14 @@ const authStore = useAuthStore();
 const userRole = computed(() => authStore.role);
 
 const roleLabel = computed(() => {
-  const map = { 'SuperAdmin': 'ADMINISTRATEUR MAÎTRE', 'AdminEntreprise': 'ESPACE CORPORATE', 'Candidat': 'PORTAIL CANDIDAT' };
+  const map = { 'SuperAdmin': 'ADMINISTRATEUR MAÎTRE', 'AdminEntreprise': 'ESPACE CORPORATE', 'Evaluateur': 'ESPACE ÉVALUATEUR', 'Candidat': 'PORTAIL CANDIDAT' };
   return map[userRole.value] || 'TABLEAU DE BORD';
 });
 
 const roleContext = computed(() => {
   if (userRole.value === 'SuperAdmin') return 'CORE SYSTEM INFRA';
   if (userRole.value === 'AdminEntreprise') return 'CORP METRICS';
+  if (userRole.value === 'Evaluateur') return 'EVAL_METRICS';
   return 'EVAL_PROCESS';
 });
 
@@ -179,6 +180,12 @@ const dynamicStats = computed(() => {
       { label: 'ÉVALUATIONS', value: '284', icon: 'fa-solid fa-file-signature', bg: '#fffbeb', color: '#f59e0b', trend: '+15%', trendUp: true },
       { label: 'TAUX SUCCÈS', value: '78%', icon: 'fa-solid fa-chart-pie', bg: '#f5f3ff', color: '#8b5cf6', trend: '+2%', trendUp: true },
       { label: 'ALERTES IA', value: '02', icon: 'fa-solid fa-bolt-lightning', bg: '#fef2f2', color: '#ef4444', trend: 'BAS', trendUp: false }
+    ],
+    Evaluateur: [
+      { label: 'SESSIONS', value: '05', icon: 'fa-solid fa-calendar-check', bg: '#fffbeb', color: '#f59e0b', trend: '+1', trendUp: true },
+      { label: 'QUESTIONS', value: '248', icon: 'fa-solid fa-database', bg: '#eff6ff', color: '#3b82f6', trend: '+12', trendUp: true },
+      { label: 'À CORRIGER', value: '03', icon: 'fa-solid fa-pen-nib', bg: '#fef2f2', color: '#ef4444', trend: 'Urgent', trendUp: false },
+      { label: 'SCORE MOY.', value: '14.5', icon: 'fa-solid fa-star', bg: '#f5f3ff', color: '#8b5cf6', trend: '+0.5', trendUp: true }
     ],
     Candidat: [
         { label: 'À PASSER', value: '01', icon: 'fa-solid fa-hourglass-half', bg: '#fffbeb', color: '#f59e0b', trend: 'Urg.', trendUp: false },

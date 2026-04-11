@@ -105,9 +105,9 @@
         </div>
 
         <!-- ============================================= -->
-        <!-- SECTION ÉVALUATEUR / FORMATEUR (ORIGINAL)    -->
+        <!-- SECTION ÉVALUATEUR (OUTILS ÉVALUATION)       -->
         <!-- ============================================= -->
-        <div v-if="userRole === 'Formateur'" class="nav-group">
+        <div v-if="userRole === 'Evaluateur'" class="nav-group">
           <label class="group-header">OUTILS ÉVALUATION</label>
           <router-link to="/questions" class="nav-item nav-link-tech">
             <div class="icon-shell"><i class="fa-solid fa-database"></i></div>
@@ -209,7 +209,7 @@
           <div class="custom-select-wrapper">
             <select @change="changeRole($event)" class="role-select-custom">
               <option value="Candidat" :selected="userRole === 'Candidat'">Candidat</option>
-              <option value="Formateur" :selected="userRole === 'Formateur'">Évaluateur</option>
+              <option value="Evaluateur" :selected="userRole === 'Evaluateur'">Évaluateur</option>
               <option value="AdminEntreprise" :selected="userRole === 'AdminEntreprise'">Admin Entreprise</option>
               <option value="SuperAdmin" :selected="userRole === 'SuperAdmin'">Super Admin</option>
             </select>
@@ -247,7 +247,7 @@ const fetchBranding = async () => {
 };
 
 const roleLabel = computed(() => {
-  const roles = { 'SuperAdmin': 'SuperAdmin', 'AdminEntreprise': 'Administrateur', 'Formateur': 'Évaluateur', 'Candidat': 'Candidat' };
+  const roles = { 'SuperAdmin': 'SuperAdmin', 'AdminEntreprise': 'Administrateur', 'Evaluateur': 'Évaluateur', 'Candidat': 'Candidat' };
   return roles[userRole.value] || 'Utilisateur';
 });
 
