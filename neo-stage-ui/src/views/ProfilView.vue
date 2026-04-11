@@ -94,7 +94,7 @@ const roleDisplay = computed(() => {
   const map = { 
     'SuperAdmin': 'SuperAdmin', 
     'AdminEntreprise': 'Administrateur Organisation', 
-    'Formateur': 'Évaluateur Expert', 
+    'Evaluateur': 'Évaluateur Expert', 
     'Candidat': 'Candidat' 
   };
   return map[authStore.role] || 'Chargement...';

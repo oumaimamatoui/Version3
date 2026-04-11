@@ -10,6 +10,8 @@ import RegisterView from '../views/RegisterView.vue'
 import TarificationView from '../views/TarificationView.vue'
 import DefinirMotDePasseView from '../views/DefinirMotDePasseView.vue'
 import ActivationView from '../views/Activation.vue' // Votre vue avec le Robot AI
+import ForgotPasswordView from '../views/ForgotPasswordView.vue'
+import ResetPasswordView from '../views/ResetPasswordView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
 
 import DashboardView from '../views/DashboardView.vue'
@@ -55,6 +57,8 @@ const routes = [
   
   // ✅ SYNCHRONISATION : Cette route correspond maintenant au lien envoyé par l'email du backend
   { path: '/activate-role', name: 'activation', component: ActivationView }, 
+  { path: '/forgot-password', name: 'forgot-password', component: ForgotPasswordView },
+  { path: '/reset-password', name: 'reset-password', component: ResetPasswordView },
   
   { path: '/definir-mot-de-passe', name: 'definir-mot-de-passe', component: DefinirMotDePasseView },
 
@@ -75,21 +79,21 @@ const routes = [
   { path: '/history', name: 'history', component: HistoryView, meta: { requiresAuth: true, role: 'Candidat' } },
 
   /**
-   * ESPACE FORMATEUR / RH
+   * ESPACE ÉVALUATEUR / RH
    */
-  { path: '/questions', name: 'questions', component: BanqueQuestionsView, meta: { requiresAuth: true, role: ['Formateur', 'AdminEntreprise'] } },
+  { path: '/questions', name: 'questions', component: BanqueQuestionsView, meta: { requiresAuth: true, role: ['Evaluateur', 'AdminEntreprise'] } },
 
-  { path: '/ai-generator', name: 'ai-generator', component: AIGeneratorView, meta: { requiresAuth: true, role: ['Formateur', 'AdminEntreprise'] } },
-  { path: '/analyse-comportementale', name: 'analyse-comportementale', component: AnalyseComportementaleView, meta: { requiresAuth: true, role: ['Formateur', 'AdminEntreprise'] } },
-  { path: '/sessions', name: 'sessions', component: PlanningView, meta: { requiresAuth: true, role: 'Formateur' } },
-  { path: '/stats', name: 'stats', component: StatsView, meta: { requiresAuth: true, role: ['Formateur', 'AdminEntreprise'] } },
+  { path: '/ai-generator', name: 'ai-generator', component: AIGeneratorView, meta: { requiresAuth: true, role: ['Evaluateur', 'AdminEntreprise'] } },
+  { path: '/analyse-comportementale', name: 'analyse-comportementale', component: AnalyseComportementaleView, meta: { requiresAuth: true, role: ['Evaluateur', 'AdminEntreprise'] } },
+  { path: '/sessions', name: 'sessions', component: PlanningView, meta: { requiresAuth: true, role: 'Evaluateur' } },
+  { path: '/stats', name: 'stats', component: StatsView, meta: { requiresAuth: true, role: ['Evaluateur', 'AdminEntreprise'] } },
 
   /**
    * ESPACE ADMINISTRATION ENTREPRISE
    */
   { path: '/roles', name: 'roles', component: RolesManagementView, meta: { requiresAuth: true, role: 'AdminEntreprise' } },
   { path: '/groups', name: 'groups', component: GroupsView, meta: { requiresAuth: true, role: 'AdminEntreprise' } },
-  { path: '/campaigns', name: 'campaigns', component: CampagnesView, meta: { requiresAuth: true, role: ['Formateur', 'AdminEntreprise'] } },
+  { path: '/campaigns', name: 'campaigns', component: CampagnesView, meta: { requiresAuth: true, role: ['Evaluateur', 'AdminEntreprise'] } },
   { path: '/candidates-list', name: 'candidates-list', component: ListeCandidatsView, meta: { requiresAuth: true, role: 'AdminEntreprise' } },
   { path: '/details-candidat/:id', name: 'details-candidat', component: DetailsCandidatView, meta: { requiresAuth: true, role: 'AdminEntreprise' } },
   { path: '/invite', name: 'invite', component: InviteView, meta: { requiresAuth: true, role: 'AdminEntreprise' } },
