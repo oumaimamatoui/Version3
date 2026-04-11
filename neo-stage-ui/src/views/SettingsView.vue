@@ -172,14 +172,14 @@ const profileDisplayUrl = computed(() => {
 
 // Navigation
 const allTabs = [
-  { id: 'profile', label: 'Profil', icon: 'fa-solid fa-user-gear', roles: ['SuperAdmin', 'AdminEntreprise', 'Formateur', 'Candidat'] },
-  { id: 'security', label: 'Sécurité', icon: 'fa-solid fa-shield-halved', roles: ['SuperAdmin', 'AdminEntreprise', 'Formateur', 'Candidat'] },
+  { id: 'profile', label: 'Profil', icon: 'fa-solid fa-user-gear', roles: ['SuperAdmin', 'AdminEntreprise', 'Evaluateur', 'Candidat'] },
+  { id: 'security', label: 'Sécurité', icon: 'fa-solid fa-shield-halved', roles: ['SuperAdmin', 'AdminEntreprise', 'Evaluateur', 'Candidat'] },
   { id: 'branding', label: 'Branding', icon: 'fa-solid fa-palette', roles: ['AdminEntreprise'] },
 ];
 
 const filteredTabs = computed(() => allTabs.filter(tab => tab.roles.includes(role.value)));
 const roleDisplay = computed(() => {
-  const map = { 'SuperAdmin': 'Master', 'AdminEntreprise': 'Organisation', 'Formateur': 'Evaluateur', 'Candidat': 'Candidat' };
+  const map = { 'SuperAdmin': 'Master', 'AdminEntreprise': 'Organisation', 'Evaluateur': 'Évaluateur', 'Candidat': 'Candidat' };
   return map[role.value] || 'User';
 });
 
