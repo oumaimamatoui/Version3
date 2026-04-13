@@ -32,6 +32,7 @@ import InviteView from '../views/InviteView.vue'
 import RapportsView from '../views/RapportsView.vue'
 import AIGeneratorView from '../views/AIGeneratorView.vue'
 import EvaluateurAssessments from '../views/EvaluateurAssessments.vue'
+import PlanningView from '../views/PlanningView.vue'
 
 import AnalyseComportementaleView from '../views/AnalyseComportementaleView.vue'
 import StatsView from '../views/StatsView.vue'

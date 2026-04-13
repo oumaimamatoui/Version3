@@ -44,9 +44,16 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-
 
 .clean-input {
   width: 100%; padding: 14px 18px; border-radius: 14px;
-  border: 1.5px solid #e2e8f0; background: white; outline: none; transition: 0.2s;
+  border: 1.5px solid var(--primary); background: white; outline: none; transition: 0.2s;
+  color: var(--secondary);
 }
 .clean-input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1); }
+
+/* Unified Input Borders across platform */
+input[type="text"], input[type="password"], input[type="email"], input[type="number"], input[type="tel"], input[type="url"],
+select, textarea {
+  border-color: #f59e0b !important;
+}
 
 /* Status Pills */
 .status-pill { padding: 6px 14px; border-radius: 10px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
@@ -61,6 +68,5 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-
 .text-amber { color: #eab308 !important; }
 .btn-amber { background-color: #eab308; color: #0f172a; border: none; }
 .bg-success-soft { background-color: #dcfce7; }
-
 
 </style>
