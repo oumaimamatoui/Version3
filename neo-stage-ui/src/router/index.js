@@ -32,6 +32,7 @@ import InviteView from '../views/InviteView.vue'
 import PlanningView from '../views/PlanningView.vue'
 import RapportsView from '../views/RapportsView.vue'
 import AIGeneratorView from '../views/AIGeneratorView.vue'
+import EvaluateurAssessments from '../views/EvaluateurAssessments.vue'
 
 import AnalyseComportementaleView from '../views/AnalyseComportementaleView.vue'
 import StatsView from '../views/StatsView.vue'
@@ -87,6 +88,7 @@ const routes = [
   { path: '/analyse-comportementale', name: 'analyse-comportementale', component: AnalyseComportementaleView, meta: { requiresAuth: true, role: ['Evaluateur', 'AdminEntreprise'] } },
   { path: '/sessions', name: 'sessions', component: PlanningView, meta: { requiresAuth: true, role: 'Evaluateur' } },
   { path: '/stats', name: 'stats', component: StatsView, meta: { requiresAuth: true, role: ['Evaluateur', 'AdminEntreprise'] } },
+  { path: '/test-builder', name: 'test-builder', component: EvaluateurAssessments, meta: { requiresAuth: true, role: 'Evaluateur' } },
 
   /**
    * ESPACE ADMINISTRATION ENTREPRISE

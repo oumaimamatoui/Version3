@@ -97,68 +97,166 @@
       </main>
     </div>
 
-    <!-- MODALE DE CRÉATION D'ÉVALUATION -->
-    <Transition name="fade">
-      <div v-if="showCreateModal" class="modal-overlay" @click.self="showCreateModal = false">
-        <div class="modal-card animate-zoom-in">
-          <div class="modal-header border-bottom p-4">
-            <h5 class="fw-800 text-navy m-0">Créer une nouvelle évaluation</h5>
-            <button class="btn-close" @click="showCreateModal = false"></button>
-          </div>
-          <div class="modal-body p-4">
-            <div class="row g-3">
-              <div class="col-12">
-                <label class="form-label fw-bold small">Titre de l'évaluation</label>
-                <input type="text" class="form-control-pro" placeholder="ex: Développeur FullStack Senior">
-              </div>
-              <div class="col-12">
-                <label class="form-label fw-bold small">Description</label>
-                <textarea class="form-control-pro" rows="3" placeholder="Objectifs du test..."></textarea>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label fw-bold small">Durée (minutes)</label>
-                <input type="number" class="form-control-pro" value="60">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label fw-bold small">Nombre de questions</label>
-                <input type="number" class="form-control-pro" value="20">
+      <!-- MODALE DE CRÉATION D'ÉVALUATION -->
+      <Transition name="fade">
+        <div v-if="showCreateModal" class="modal-overlay" @click.self="showCreateModal = false">
+          <div class="modal-card animate-zoom-in">
+            <div class="modal-header border-bottom p-4">
+              <h5 class="fw-800 text-navy m-0">Créer une nouvelle évaluation</h5>
+              <button class="btn-close" @click="showCreateModal = false"></button>
+            </div>
+            <div class="modal-body p-4">
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label fw-bold small">Titre de l'évaluation</label>
+                  <input type="text" v-model="newCampagne.nom" class="form-control-pro" placeholder="ex: Développeur FullStack Senior" required>
+                </div>
+                <div class="col-12">
+                  <label class="form-label fw-bold small">Description</label>
+                  <textarea v-model="newCampagne.description" class="form-control-pro" rows="3" placeholder="Objectifs du test..." required></textarea>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold small">Durée (minutes)</label>
+                  <input type="number" v-model="newCampagne.dureeMinutes" class="form-control-pro" value="60">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold small">Nombre de questions estimé</label>
+                  <input type="number" class="form-control-pro" value="20" disabled> <!-- À lier au Questionnaire plus tard -->
+                </div>
               </div>
             </div>
-          </div>
-          <div class="modal-footer p-4 border-top">
-            <button class="btn btn-light-pro me-2" @click="showCreateModal = false">Annuler</button>
-            <button class="btn btn-primary-pro" @click="showCreateModal = false">Créer la campagne</button>
+            <div class="modal-footer p-4 border-top">
+              <button class="btn btn-light-pro me-2" @click="showCreateModal = false">Annuler</button>
+              <button class="btn btn-primary-pro" @click="createCampagne" :disabled="isSaving">
+                <span v-if="isSaving" class="spinner-border spinner-border-sm me-2"></span>
+                Créer la campagne
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    </Transition>
+      </Transition>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import axios from 'axios';
+import { useAuthStore } from '@/stores/auth';
 import AppSidebar from '../components/AppSidebar.vue';
 import AppNavbar from '../components/AppNavbar.vue';
 
+const authStore = useAuthStore();
 const activeTab = ref('Toutes');
 const showCreateModal = ref(false);
+const isSaving = ref(false);
 
-const kpis = [
-  { label: 'Total Évaluations', value: '12', icon: 'fa-solid fa-clipboard-list', color: '#EAB308', bg: '#FEFCE8' },
-  { label: 'Actives Now', value: '5', icon: 'fa-solid fa-play', color: '#22C55E', bg: '#F0FDF4' },
-  { label: 'Total Candidats', value: '284', icon: 'fa-solid fa-users', color: '#3B82F6', bg: '#EFF6FF' },
-  { label: 'Terminées', value: '1,234', icon: 'fa-solid fa-circle-check', color: '#06B6D4', bg: '#ECFEFF' },
-];
+const API_BASE = 'http://localhost:5172/api/Campagnes';
 
-const assessments = ref([
-  { id: 1, title: 'Senior Full Stack Developer', description: 'Évaluation complète couvrant React, Node.js, bases de données et conception système.', questions: 45, duration: 90, progress: 68, status: 'Actives', color: '#3B82F6', icon: 'fa-solid fa-code', iconBg: '#FEF9C3' },
-  { id: 2, title: 'Database Administrator', description: 'SQL, NoSQL, optimisation de performance et évaluation de l\'architecture.', questions: 30, duration: 60, progress: 42, status: 'Actives', color: '#10B981', icon: 'fa-solid fa-database', iconBg: '#E0F2FE' },
-  { id: 3, title: 'DevOps Engineer Assessment', description: 'CI/CD, conteneurisation, services cloud et automatisation d\'infrastructure.', questions: 35, duration: 75, progress: 0, status: 'Planifiées', color: '#94A3B8', icon: 'fa-solid fa-server', iconBg: '#FEF3C7' },
+// Formulaire nouvelle campagne
+const newCampagne = ref({
+  nom: '',
+  description: '',
+  dureeMinutes: 60,
+  maxCandidats: 100,
+  statut: 1, // 1 = Active
+  dateDebut: new Date().toISOString(),
+  dateFin: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString()
+});
+
+const kpis = ref([
+  { label: 'Total Évaluations', value: '0', icon: 'fa-solid fa-clipboard-list', color: '#EAB308', bg: '#FEFCE8' },
+  { label: 'Actives Now', value: '0', icon: 'fa-solid fa-play', color: '#22C55E', bg: '#F0FDF4' },
+  { label: 'Total Candidats', value: '0', icon: 'fa-solid fa-users', color: '#3B82F6', bg: '#EFF6FF' },
+  { label: 'Total Tests', value: '0', icon: 'fa-solid fa-database', color: '#06B6D4', bg: '#ECFEFF' },
 ]);
+
+const assessments = ref([]);
+
+// Configuration Axios avec Sécurité (Token JWT)
+const getAuthHeaders = () => {
+    return { headers: { Authorization: `Bearer ${authStore.token}` } };
+};
+
+// Récupérer les KPIs
+const fetchStats = async () => {
+    try {
+        const response = await axios.get(`${API_BASE}/stats`, getAuthHeaders());
+        const data = response.data;
+        kpis.value[0].value = data.totalCampaigns.toString();
+        kpis.value[1].value = data.activeCampaigns.toString();
+        kpis.value[2].value = data.totalCapacity.toString();
+        kpis.value[3].value = data.totalTests.toString();
+    } catch (error) {
+        console.error('Erreur KPIs:', error);
+    }
+};
+
+// Récupérer la liste des campagnes
+const fetchAssessments = async () => {
+    try {
+        const response = await axios.get(API_BASE, getAuthHeaders());
+        assessments.value = response.data.map(c => {
+            // Mapping du statut backend (0=Planifié, 1=Active, 2=Terminée)
+            let statusText = 'Actives';
+            let color = '#3B82F6';
+            if (c.statut === 0) { statusText = 'Planifiées'; color = '#94A3B8'; }
+            if (c.statut === 2) { statusText = 'Terminées'; color = '#10B981'; }
+
+            return {
+                id: c.id,
+                title: c.nom,
+                description: c.description || 'Description non disponible',
+                questions: 20, // Valeur par défaut pour l'instant
+                duration: c.dureeMinutes || 60,
+                progress: 0,
+                status: statusText,
+                color: color,
+                candidates: c.maxCandidats,
+                icon: 'fa-solid fa-code', 
+                iconBg: '#FEF9C3'
+            };
+        });
+    } catch (error) {
+        console.error('Erreur Campagnes:', error);
+    }
+};
+
+// Créer une nouvelle campagne
+const createCampagne = async () => {
+    if (!newCampagne.value.nom || !newCampagne.value.description) {
+        alert("Veuillez remplir le nom et la description.");
+        return;
+    }
+
+    isSaving.value = true;
+    try {
+        await axios.post(API_BASE, newCampagne.value, getAuthHeaders());
+        showCreateModal.value = false;
+        
+        // Reset form
+        newCampagne.value.nom = '';
+        newCampagne.value.description = '';
+        
+        // Refresh data
+        await fetchAssessments();
+        await fetchStats();
+    } catch (error) {
+        console.error('Erreur Création:', error);
+        alert(error.response?.data?.message || "Erreur lors de la création.");
+    } finally {
+        isSaving.value = false;
+    }
+};
 
 const filteredAssessments = computed(() => {
   if (activeTab.value === 'Toutes') return assessments.value;
   return assessments.value.filter(a => a.status === activeTab.value);
+});
+
+// Chargement initial
+onMounted(() => {
+    fetchStats();
+    fetchAssessments();
 });
 </script>
 
