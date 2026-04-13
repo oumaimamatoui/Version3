@@ -455,11 +455,11 @@ onMounted(async () => {
 
 .form-control-photo, .form-select-photo { 
     width: 100%; padding: 11px 15px; border-radius: 8px; 
-    border: 1px solid #d1d5db; font-size: 14px; color: #1e293b; 
+    border: 1px solid #f59e0b; font-size: 14px; color: #1e293b; 
     background: #fff; outline: none; transition: border 0.2s;
 }
 
-.form-control-photo:focus { border-color: #fbbf24; box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.1); }
+.form-control-photo:focus { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1); }
 
 .alert-info-photo { 
     background-color: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; 
@@ -491,7 +491,7 @@ onMounted(async () => {
 .trend-badge.up { background: #ecfdf5; color: #059669; }
 .filter-bar { padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
 .search-box { position: relative; flex-grow: 1; max-width: 400px; }
-.search-box input { width: 100%; padding: 10px 15px 10px 42px; border-radius: 10px; border: 1px solid #e2e8f0; background: #f8fafc; font-size: 14px; outline: none; }
+.search-box input { width: 100%; padding: 10px 15px 10px 42px; border-radius: 10px; border: 1px solid #f59e0b; background: #f8fafc; font-size: 14px; outline: none; }
 .avatar-letter { width: 38px; height: 38px; background: #eef2ff; color: #4f46e5; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; border: 1px solid #e0e7ff; }
 .btn-circle { width: 32px; height: 32px; border-radius: 8px; border: none; display: inline-flex; align-items: center; justify-content: center; transition: 0.2s; }
 .btn-circle.approve { background: #ecfdf5; color: #10b981; }

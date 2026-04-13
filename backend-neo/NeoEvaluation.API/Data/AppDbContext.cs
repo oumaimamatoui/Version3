@@ -27,7 +27,6 @@ namespace NeoEvaluation.API.Data
         public DbSet<Candidat> Candidats { get; set; } = null!;
         public DbSet<Planning> Plannings { get; set; } = null!;
         public DbSet<EntrepriseParSA> EntrepriseParSA { get; set; } = null!;
-       
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -68,12 +67,15 @@ namespace NeoEvaluation.API.Data
                 .Metadata.SetValueComparer(listComparer);
 
             // Application au champ Privileges de la table Utilisateurs
-            // IMPORTANT : Assurez-vous d'avoir ajouté "public List<string> Privileges { get; set; } = new();" 
-            // dans votre classe Utilisateur.cs comme indiqué précédemment.
             modelBuilder.Entity<Utilisateur>()
                 .Property(e => e.Privileges)
                 .HasConversion(listConverter)
                 .Metadata.SetValueComparer(listComparer);
+        }
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            return base.SaveChangesAsync(cancellationToken);
         }
     }
 }

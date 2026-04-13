@@ -1,3 +1,5 @@
+// Models/Question.cs
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
@@ -12,16 +14,17 @@ namespace NeoEvaluation.API.Models
         [Required] 
         public string Texte { get; set; } = string.Empty;
 
-        public int Type { get; set; } // 0: QCM, 1: Texte, 2: Code, 3: Fichier
+        public int Type { get; set; } 
 
         public double Poids { get; set; }
 
         public string BonneReponse { get; set; } = string.Empty;
 
-        [Required]
-        public Guid QuestionnaireId { get; set; }
+        // تم التغيير هنا: أزلنا [Required] وجعلنا الحقل يقبل Null
+        // هذا يحل مشكلة الـ 500 عند جلب الأسئلة التي ليس لها استبيان
+        public Guid? QuestionnaireId { get; set; } 
 
-        [JsonIgnore] // Empêche les erreurs de validation et les cycles JSON
+        [JsonIgnore] 
         [ForeignKey("QuestionnaireId")]
         public Questionnaire? Questionnaire { get; set; }
     }

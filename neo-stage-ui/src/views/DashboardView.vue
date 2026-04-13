@@ -1,6 +1,6 @@
 <template>
   <div class="admin-layout">
-    <!-- COUCHES DÉCORATIVES (Identiques au Login pour la cohérence) -->
+    <!-- COUCHES DÉCORATIVES -->
     <div class="background-overlay"></div>
     <div class="glow-orb orb-amber"></div>
     <div class="glow-orb orb-blue"></div>
@@ -13,7 +13,7 @@
 
       <div class="container-fluid px-4 pt-3">
         
-        <!-- 1. TERMINAL STATUS BAR (Style Apple/Linear) -->
+        <!-- 1. TERMINAL STATUS BAR -->
         <div class="terminal-status-bar mb-4">
           <div class="d-flex justify-content-between align-items-center px-3">
             <div class="breadcrumb-cyber">
@@ -28,7 +28,7 @@
           </div>
         </div>
 
-        <!-- 2. HERO SECTION : INTERFACE IA CENTRALISÉE -->
+        <!-- 2. HERO SECTION -->
         <div class="hero-cyber-card mb-5">
           <div class="row align-items-center">
             <div class="col-lg-8 p-5">
@@ -47,38 +47,18 @@
                   <strong>SYSTÈME IA :</strong> {{ aiInsight }}
                 </p>
               </div>
-              <div class="hero-action-group mt-4">
-                <button v-if="userRole === 'Candidat'" @click="$router.push('/exam-lobby')" class="btn-cyber-primary">
-                  Lancer l'évaluation <i class="fa-solid fa-rocket ms-2"></i>
-                </button>
-                <button v-if="userRole === 'AdminEntreprise'" @click="$router.push('/invite')" class="btn-cyber-primary">
-                  Inviter des Talents <i class="fa-solid fa-user-plus ms-2"></i>
-                </button>
-                <button class="btn-cyber-outline">Archives de bord</button>
-              </div>
             </div>
             
-            <!-- Robot identique au Login -->
             <div class="col-lg-4 text-center d-none d-lg-block">
               <div class="ai-robot-dashboard">
                 <div class="robot-float">
-                  <svg class="modern-robot" viewBox="0 0 200 200" width="220">
-                    <defs>
-                      <linearGradient id="botGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:#ffffff" />
-                        <stop offset="100%" style="stop-color:#f1f5f9" />
-                      </linearGradient>
-                    </defs>
-                    <rect x="55" y="50" width="90" height="85" rx="28" fill="url(#botGrad)" stroke="#e2e8f0" stroke-width="2"/>
+                  <svg class="modern-robot" viewBox="0 0 200 200" width="180">
+                    <rect x="55" y="50" width="90" height="85" rx="28" fill="#fff" stroke="#e2e8f0" stroke-width="2"/>
                     <rect x="65" y="65" width="70" height="32" rx="16" fill="#1e293b" />
-                    <g class="eyes-anim">
-                      <circle cx="85" cy="81" r="5" fill="#eab308" />
-                      <circle cx="115" cy="81" r="5" fill="#eab308" />
-                    </g>
-                    <path d="M85 110 Q100 118 115 110" stroke="#cbd5e1" stroke-width="2" fill="none" stroke-linecap="round" />
+                    <circle cx="85" cy="81" r="5" fill="#eab308" />
+                    <circle cx="115" cy="81" r="5" fill="#eab308" />
                   </svg>
                 </div>
-                <div class="robot-glow-base"></div>
               </div>
             </div>
           </div>
@@ -92,52 +72,72 @@
                 <div class="kpi-icon-box" :style="{ color: stat.color, backgroundColor: stat.bg }">
                   <i :class="stat.icon"></i>
                 </div>
-                <div class="kpi-trend" :class="stat.trendUp ? 'up' : 'down'">
-                  {{ stat.trend }} <i :class="stat.trendUp ? 'fa-solid fa-caret-up' : 'fa-solid fa-caret-down'"></i>
-                </div>
               </div>
               <div class="mt-4">
                 <h2 class="kpi-value">{{ stat.value }}</h2>
                 <span class="kpi-label">{{ stat.label }}</span>
               </div>
-              <div class="kpi-progress mt-3">
-                <div class="kpi-progress-bar" :style="{ width: '70%', background: stat.color }"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. SECTION CANDIDATS : LISTE DES CAMPAGNES -->
+        <div v-if="userRole === 'Candidat'" class="campaign-candidate-section mb-5">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="section-title-cyber"><i class="fa-solid fa-layer-group text-amber me-2"></i> VOS ÉVALUATIONS DISPONIBLES</h4>
+            <span class="badge bg-dark rounded-pill">{{ filteredCampaigns.length }} Tests Actifs</span>
+          </div>
+
+          <div v-if="loading" class="text-center py-5">
+            <div class="spinner-pro-premium"></div>
+            <p class="mt-2 text-muted fw-bold">Synchronisation des tests...</p>
+          </div>
+
+          <div v-else class="row g-4">
+            <div v-if="filteredCampaigns.length === 0" class="col-12 text-center py-5 glass-panel">
+              <i class="fa-solid fa-folder-open fa-3x text-muted mb-3"></i>
+              <p class="text-muted fw-bold">Aucune évaluation n'est disponible pour le moment.</p>
+            </div>
+
+            <div v-for="c in filteredCampaigns" :key="c.id" class="col-md-6 col-xl-4">
+              <div class="campaign-card-candidate">
+                <div class="card-status-strip active"></div>
+                <div class="p-4">
+                  <div class="d-flex justify-content-between mb-3">
+                    <span class="badge-tech">{{ c.categorie || 'TECHNIQUE' }}</span>
+                    <span class="time-limit"><i class="fa-regular fa-clock me-1"></i> {{ c.dureeMinutes }} min</span>
+                  </div>
+                  <h5 class="campaign-name">{{ c.nom }}</h5>
+                  <p class="campaign-desc text-muted small">{{ c.description || 'Évaluation des compétences techniques.' }}</p>
+                  
+                  <div class="campaign-meta-grid mb-4">
+                    <div class="meta-item">
+                      <span class="meta-label">SCORE MIN.</span>
+                      <span class="meta-value text-amber">{{ c.scorePassage }}%</span>
+                    </div>
+                    <div class="meta-item">
+                      <span class="meta-label">FINIT LE</span>
+                      <span class="meta-value">{{ formatDate(c.dateFin) }}</span>
+                    </div>
+                  </div>
+
+                  <button @click="startExam(c.id)" class="btn-start-exam w-100">
+                    LANCER LE TEST <i class="fa-solid fa-chevron-right ms-2"></i>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 4. ANALYTICS AREA -->
-        <div class="row g-4 pb-5">
-          <div class="col-lg-8">
-            <div class="glass-panel">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <h5 class="panel-title">COURBE DE PERFORMANCE GLOBAL</h5>
-                <div class="chart-filter">
-                  <button class="active">LIVE</button>
-                  <button>7J</button>
+        <!-- 5. ANALYTICS (Pour Admins) -->
+        <div v-if="userRole !== 'Candidat'" class="row g-4 pb-5">
+            <div class="col-lg-12">
+                <div class="glass-panel">
+                    <h5 class="panel-title mb-4">COURBE DE PERFORMANCE GLOBAL</h5>
+                    <div class="chart-height"><canvas id="mainActivityChart"></canvas></div>
                 </div>
-              </div>
-              <div class="chart-height">
-                <canvas id="mainActivityChart"></canvas>
-              </div>
             </div>
-          </div>
-          <div class="col-lg-4">
-            <div class="glass-panel">
-              <h5 class="panel-title mb-4">FLUX D'ACTIVITÉS</h5>
-              <div class="cyber-timeline">
-                <div class="timeline-entry" v-for="act in recentActs" :key="act.id">
-                  <div class="entry-dot" :style="{ background: act.color }"></div>
-                  <div class="entry-content">
-                    <p class="entry-title">{{ act.title }}</p>
-                    <span class="entry-info">{{ act.time }} • {{ act.user }}</span>
-                  </div>
-                </div>
-              </div>
-              <button class="btn-view-all mt-4">ACCÉDER AUX LOGS <i class="fa-solid fa-arrow-right ms-2"></i></button>
-            </div>
-          </div>
         </div>
 
       </div>
@@ -146,15 +146,36 @@
 </template>
 
 <script setup>
-/* Logique identique à ta version précédente pour la gestion des rôles */
-import { computed, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import { useRouter } from 'vue-router';
+import axios from 'axios';
 import AppSidebar from '../components/AppSidebar.vue';
 import AppNavbar from '../components/AppNavbar.vue';
-import Chart from 'chart.js/auto';
 
 const authStore = useAuthStore();
+const router = useRouter();
 const userRole = computed(() => authStore.role);
+const campaigns = ref([]);
+const loading = ref(true);
+
+const API_ENDPOINT = 'http://localhost:5172/api';
+
+const fetchCampaigns = async () => {
+  loading.value = true;
+  try {
+    const res = await axios.get(`${API_ENDPOINT}/Campagnes`);
+    campaigns.value = res.data;
+  } catch (err) { console.error(err); } 
+  finally { loading.value = false; }
+};
+
+const filteredCampaigns = computed(() => {
+  return userRole.value === 'Candidat' ? campaigns.value.filter(c => c.statut === 1) : campaigns.value;
+});
+
+const startExam = (id) => { router.push(`/exam-lobby/${id}`); };
+const formatDate = (d) => d ? new Date(d).toLocaleDateString() : 'Non définie';
 
 const roleLabel = computed(() => {
   const map = { 'SuperAdmin': 'ADMINISTRATEUR MAÎTRE', 'AdminEntreprise': 'ESPACE CORPORATE', 'Evaluateur': 'ESPACE ÉVALUATEUR', 'Candidat': 'PORTAIL CANDIDAT' };
@@ -197,167 +218,65 @@ const dynamicStats = computed(() => {
   return stats[userRole.value] || stats.AdminEntreprise;
 });
 
-const recentActs = [
-  { id: 1, title: 'Évaluation Cloud finie', time: '5 min', user: 'Admin', color: '#10b981' },
-  { id: 2, title: 'Nouvelle règle de sécurité', time: '1h', user: 'System', color: '#8b5cf6' },
-  { id: 3, title: 'Échec authentification', time: '2h', user: 'Anonyme', color: '#ef4444' }
-];
-
-onMounted(() => {
-  const ctx = document.getElementById('mainActivityChart').getContext('2d');
-  const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-  gradient.addColorStop(0, 'rgba(234, 179, 8, 0.3)');
-  gradient.addColorStop(1, 'rgba(234, 179, 8, 0)');
-
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: ['LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM', 'DIM'],
-      datasets: [{
-        label: 'Activité',
-        data: [40, 60, 45, 90, 75, 110, 95],
-        borderColor: '#eab308',
-        backgroundColor: gradient,
-        fill: true,
-        tension: 0.4,
-        borderWidth: 4,
-        pointRadius: 6,
-        pointBackgroundColor: '#fff',
-        pointBorderColor: '#eab308',
-        pointBorderWidth: 2
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { weight: '700' } } },
-        y: { grid: { color: 'rgba(226, 232, 240, 0.5)' }, ticks: { color: '#94a3b8' } }
-      }
-    }
-  });
-});
+onMounted(fetchCampaigns);
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
 
-/* --- LAYOUT CONFIG (Coherent with Login) --- */
-.admin-layout {
-  min-height: 100vh;
-  background-color: #f8fafc;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  display: flex;
-  position: relative;
-  overflow-x: hidden;
+.admin-layout { min-height: 100vh; background-color: #f8fafc; font-family: 'Plus Jakarta Sans', sans-serif; display: flex; position: relative; }
+.main-viewport { 
+  flex-grow: 1; 
+  z-index: 5; 
+  position: relative; 
 }
 
-.main-viewport {
-  flex-grow: 1;
-  position: relative;
-  z-index: 5;
-  padding-left: 20px;
-}
-
-/* --- DECO LAYERS (Copied from Login) --- */
+/* DECO ELEMENTS */
 .background-overlay { position: absolute; inset: 0; background: radial-gradient(circle at 30% 30%, #ffffff 0%, #f1f5f9 100%); z-index: 0; }
-.tech-grid-subtle { position: absolute; inset: 0; background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px); background-size: 40px 40px; opacity: 0.4; z-index: 1; }
-.glow-orb { position: absolute; border-radius: 50%; filter: blur(130px); opacity: 0.15; z-index: 1; }
+.tech-grid-subtle { position: absolute; inset: 0; background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px); background-size: 40px 40px; opacity: 0.4; }
+.glow-orb { position: absolute; border-radius: 50%; filter: blur(130px); opacity: 0.15; }
 .orb-amber { width: 600px; height: 600px; background: #fbbf24; top: -100px; right: -100px; }
 .orb-blue { width: 500px; height: 500px; background: #60a5fa; bottom: -100px; left: -100px; }
 
-/* --- TERMINAL STATUS BAR --- */
-.terminal-status-bar {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.5);
-  padding: 10px 0;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
-}
-.breadcrumb-cyber .root { font-size: 11px; font-weight: 800; color: #94a3b8; letter-spacing: 2px; }
-.breadcrumb-cyber .sep { color: #eab308; margin: 0 10px; font-weight: 800; }
-.breadcrumb-cyber .current { font-size: 11px; font-weight: 800; color: #0f172a; letter-spacing: 1px; }
-
+/* TERMINAL BAR */
+.terminal-status-bar { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border-radius: 16px; border: 1px solid #fff; padding: 10px 0; }
 .system-tag { display: flex; align-items: center; gap: 8px; background: #0f172a; padding: 6px 15px; border-radius: 100px; }
-.tag-text { color: white; font-size: 9px; font-weight: 800; letter-spacing: 0.5px; }
+.tag-text { color: white; font-size: 9px; font-weight: 800; }
 .pulse-dot { width: 6px; height: 6px; background: #eab308; border-radius: 50%; animation: blink 2s infinite; }
 
-/* --- HERO CARD --- */
-.hero-cyber-card {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid #fff;
-  border-radius: 40px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.04);
-  backdrop-filter: blur(20px);
-  position: relative;
-  overflow: hidden;
-}
-.display-title-cyber { font-weight: 800; font-size: 46px; letter-spacing: -2px; color: #0f172a; line-height: 1.1; }
+/* HERO CARD */
+.hero-cyber-card { background: rgba(255, 255, 255, 0.85); border: 1px solid #fff; border-radius: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.03); backdrop-filter: blur(20px); overflow: hidden; position: relative; }
+.display-title-cyber { font-weight: 800; font-size: 42px; letter-spacing: -1.5px; color: #0f172a; }
 .text-amber { color: #eab308; }
-.badge-amber-glow {
-  display: inline-block; padding: 8px 18px; background: #0f172a; color: #fff;
-  border-radius: 100px; font-size: 11px; font-weight: 800; letter-spacing: 1px;
-}
-.ai-insight-box {
-  background: #f8fafc; border-left: 5px solid #eab308; padding: 20px; border-radius: 20px;
-  display: flex; align-items: center; gap: 20px;
-}
+.badge-amber-glow { display: inline-block; padding: 8px 18px; background: #0f172a; color: #fff; border-radius: 100px; font-size: 11px; font-weight: 800; }
+.ai-insight-box { background: #f8fafc; border-left: 5px solid #eab308; padding: 20px; border-radius: 20px; display: flex; align-items: center; gap: 20px; }
 .ai-box-icon { font-size: 24px; color: #eab308; }
-.ai-insight-text { margin: 0; font-size: 14px; color: #475569; font-weight: 500; }
 
-/* --- ROBOT DANS LE DASHBOARD --- */
-.ai-robot-dashboard { position: relative; }
-.robot-float { animation: float 4s ease-in-out infinite; }
-.eyes-anim { animation: blinkEyes 4s infinite; }
-.robot-glow-base {
-  width: 120px; height: 15px; background: #eab308; opacity: 0.2;
-  filter: blur(15px); border-radius: 50%; margin: 0 auto;
-}
+/* CAMPAIGN CARDS */
+.campaign-card-candidate { background: white; border-radius: 24px; border: 1px solid #f1f5f9; transition: 0.3s; position: relative; overflow: hidden; height: 100%; }
+.campaign-card-candidate:hover { transform: translateY(-8px); box-shadow: 0 20px 30px rgba(0,0,0,0.05); border-color: #eab308; }
+.card-status-strip { height: 6px; width: 100%; background: #eab308; }
+.badge-tech { background: #f8fafc; color: #64748b; padding: 4px 12px; border-radius: 8px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.campaign-name { font-weight: 800; color: #0f172a; margin: 15px 0 10px; }
+.campaign-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: #f8fafc; padding: 15px; border-radius: 16px; }
+.meta-label { display: block; font-size: 9px; font-weight: 800; color: #94a3b8; margin-bottom: 4px; }
+.meta-value { font-size: 13px; font-weight: 800; color: #0f172a; }
 
-/* --- BENTO KPI --- */
-.kpi-cyber-card {
-  background: white; border-radius: 30px; padding: 25px; border: 1px solid #f1f5f9;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-.kpi-cyber-card:hover { transform: translateY(-10px); box-shadow: 0 20px 30px rgba(0,0,0,0.05); border-color: #eab308; }
-.kpi-icon-box { width: 50px; height: 50px; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
-.kpi-value { font-size: 32px; font-weight: 800; color: #0f172a; margin: 10px 0 0; }
-.kpi-label { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
-.kpi-trend { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 100px; }
-.kpi-trend.up { background: #ecfdf5; color: #10b981; }
-.kpi-trend.down { background: #fef2f2; color: #ef4444; }
-.kpi-progress { height: 6px; background: #f1f5f9; border-radius: 10px; }
-.kpi-progress-bar { height: 100%; border-radius: 10px; }
+.btn-start-exam { background: #0f172a; color: white; border: none; padding: 14px; border-radius: 14px; font-weight: 800; font-size: 13px; transition: 0.3s; }
+.btn-start-exam:hover { background: #eab308; color: #0f172a; }
 
-/* --- GLASS PANELS --- */
-.glass-panel {
-  background: white; border: 1px solid #f1f5f9; border-radius: 35px; padding: 30px; height: 100%;
-}
-.panel-title { font-size: 12px; font-weight: 800; letter-spacing: 1px; color: #0f172a; }
+/* KPI */
+.kpi-cyber-card { background: white; border-radius: 24px; padding: 25px; border: 1px solid #f1f5f9; }
+.kpi-icon-box { width: 45px; height: 45px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.kpi-value { font-size: 28px; font-weight: 800; color: #0f172a; margin-top: 10px; }
+.kpi-label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; }
 
-/* --- TIMELINE --- */
-.cyber-timeline { display: flex; flex-direction: column; gap: 20px; }
-.timeline-entry { display: flex; gap: 15px; align-items: flex-start; }
-.entry-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; }
-.entry-title { font-size: 13px; font-weight: 700; color: #1e293b; margin: 0; }
-.entry-info { font-size: 11px; color: #94a3b8; }
+.glass-panel { background: white; border-radius: 30px; padding: 30px; border: 1px solid #f1f5f9; }
 
-/* --- BUTTONS --- */
-.btn-cyber-primary {
-  background: #eab308; color: #0f172a; border: none; padding: 14px 28px;
-  border-radius: 18px; font-weight: 800; font-size: 14px; transition: 0.3s;
-}
-.btn-cyber-primary:hover { box-shadow: 0 10px 20px rgba(234, 179, 8, 0.3); transform: translateY(-2px); }
-.btn-cyber-outline {
-  background: transparent; border: 2px solid #0f172a; color: #0f172a; padding: 14px 28px;
-  border-radius: 18px; font-weight: 800; margin-left: 12px;
-}
-.btn-view-all { width: 100%; background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 15px; font-weight: 700; font-size: 11px; color: #64748b; }
-
-/* --- ANIMATIONS --- */
-@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+/* UTILS */
+.spinner-pro-premium { width: 50px; height: 50px; border: 4px solid #f1f5f9; border-top: 4px solid #eab308; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
+@keyframes spin { to { transform: rotate(360deg); } }
 @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-@keyframes blinkEyes { 0%, 45%, 55%, 100% { transform: scaleY(1); } 50% { transform: scaleY(0.1); } }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.robot-float { animation: float 4s ease-in-out infinite; }
 </style>
