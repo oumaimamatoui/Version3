@@ -612,9 +612,7 @@ onMounted(fetchData);
 .cyber-spinner { width: 50px; height: 50px; border: 4px solid #f1f5f9; border-top: 4px solid #eab308; border-radius: 50%; animation: spin 1s linear infinite; margin: auto; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* SCROLLBAR */
-.custom-scrollbar::-webkit-scrollbar { width: 6px; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+
 
 /* STAGGER */
 .stagger-enter-active { animation: fadeInUp 0.5s ease forwards; }

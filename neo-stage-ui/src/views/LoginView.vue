@@ -223,8 +223,8 @@ const handleGoogleLogin = async (response) => {
 .brand-title span { color: #eab308; }
 .brand-subtitle { color: #94a3b8; font-size: 11px; font-weight: 700; letter-spacing: 1px; }
 
-.input-group-cyber { position: relative; display: flex; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; }
-.input-group-cyber:focus-within { border-color: #eab308; background: #fff; box-shadow: 0 0 0 4px rgba(234, 179, 8, 0.08); }
+.input-group-cyber { position: relative; display: flex; align-items: center; background: #f8fafc; border: 1px solid #f59e0b; border-radius: 16px; }
+.input-group-cyber:focus-within { border-color: #f59e0b; background: #fff; box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1); }
 .input-icon { padding-left: 15px; color: #94a3b8; }
 .cyber-input { width: 100%; background: transparent; border: none; padding: 12px; outline: none; font-size: 14px; }
 

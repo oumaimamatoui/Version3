@@ -6,7 +6,7 @@
     <div class="content flex-grow-1 p-4">
       <AppNavbar />
 
-      <div class="main-viewport mt-4 animate__animated animate__fadeIn">
+      <div class="mt-4 animate__animated animate__fadeIn">
         
         <!-- EN-TÊTE -->
         <div class="d-flex justify-content-between align-items-end mb-5">
@@ -281,7 +281,10 @@ onMounted(fetchData);
 onUnmounted(() => abortController.abort());
 
 const filteredRoles = computed(() => {
-  return roles.value.filter(r => r.nom.toLowerCase().includes(searchQuery.value.toLowerCase()));
+  return roles.value.filter(r => 
+    r.nom !== 'SuperAdmin' && 
+    r.nom.toLowerCase().includes(searchQuery.value.toLowerCase())
+  );
 });
 
 const applyTemplate = () => {

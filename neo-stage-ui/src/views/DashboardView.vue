@@ -225,7 +225,11 @@ onMounted(fetchCampaigns);
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
 
 .admin-layout { min-height: 100vh; background-color: #f8fafc; font-family: 'Plus Jakarta Sans', sans-serif; display: flex; position: relative; }
-.main-viewport { flex-grow: 1; z-index: 5; position: relative; }
+.main-viewport { 
+  flex-grow: 1; 
+  z-index: 5; 
+  position: relative; 
+}
 
 /* DECO ELEMENTS */
 .background-overlay { position: absolute; inset: 0; background: radial-gradient(circle at 30% 30%, #ffffff 0%, #f1f5f9 100%); z-index: 0; }

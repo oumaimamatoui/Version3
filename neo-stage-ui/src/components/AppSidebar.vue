@@ -189,7 +189,6 @@
               <option value="Candidat" :selected="userRole === 'Candidat'">Candidat</option>
               <option value="Evaluateur" :selected="userRole === 'Evaluateur'">Évaluateur</option>
               <option value="AdminEntreprise" :selected="userRole === 'AdminEntreprise'">Admin Entreprise</option>
-              <option value="SuperAdmin" :selected="userRole === 'SuperAdmin'">Super Admin</option>
             </select>
             <i class="fa-solid fa-chevron-up"></i>
           </div>
@@ -327,8 +326,10 @@ const logout = () => { authStore.logout(); router.push('/login'); };
 .premium-logout-btn:hover { background: #ffe4e6; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(225, 29, 72, 0.1); }
 
 /* --- UTILS --- */
-.custom-scrollbar::-webkit-scrollbar { width: 4px; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+.custom-scrollbar {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
 
 @keyframes pulse-ring {
   0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }

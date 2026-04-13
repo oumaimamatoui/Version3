@@ -1412,7 +1412,7 @@ onUnmounted(() => {
 
 /* FORMS */
 .enigma-card { background: white; border-radius: 32px; border: 1px solid #eef2f6; }
-.enigma-field { width: 100%; padding: 15px 20px; background: #f8fafc; border: 2px solid #eef2f6; border-radius: 16px; font-weight: 700; outline: none; font-family: inherit; transition: border-color 0.2s; font-size: 0.9rem; }
+.enigma-field { width: 100%; padding: 15px 20px; background: #f8fafc; border: 2px solid #f59e0b; border-radius: 16px; font-weight: 700; outline: none; font-family: inherit; transition: border-color 0.2s; font-size: 0.9rem; color: #0f172a; }
 .enigma-field:focus { border-color: #f59e0b; background: white; }
 .enigma-field.field-error { border-color: #f43f5e !important; }
 .field-error-msg { font-size: 0.7rem; color: #f43f5e; font-weight: 700; margin-top: 4px; display: block; }
@@ -1578,8 +1578,7 @@ kbd { background: #0f172a; color: white; padding: 4px 10px; border-radius: 8px; 
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* SCROLLBAR */
-.custom-scrollbar::-webkit-scrollbar { width: 6px; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
 
 /* MISC */
 .text-amber   { color: #f59e0b !important; }

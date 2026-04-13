@@ -330,8 +330,7 @@ const deleteQuestion = (id) => {
 .q-actions-mini button:hover { color: #0f172a; }
 
 .custom-scrollbar { max-height: 70vh; overflow-y: auto; padding-right: 10px; }
-.custom-scrollbar::-webkit-scrollbar { width: 4px; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+
 
 .animate-fade-in { animation: fadeIn 0.5s ease-out; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
