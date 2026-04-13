@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NeoEvaluation.API.Data;
 using NeoEvaluation.API.Models;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace NeoEvaluation.API.Controllers
 {
@@ -10,111 +13,66 @@ namespace NeoEvaluation.API.Controllers
     public class QuestionnairesController : ControllerBase
     {
         private readonly AppDbContext _context;
+        public QuestionnairesController(AppDbContext context) { _context = context; }
 
-        public QuestionnairesController(AppDbContext context)
-        {
-            _context = context;
-        }
-
-        // READ: Liste tous les questionnaires avec leurs questions
+        // 1. جلب الكل
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Questionnaire>>> GetQuestionnaires()
+        public async Task<ActionResult<IEnumerable<Questionnaire>>> Get() 
         {
-            return await _context.Questionnaires
-                .Include(q => q.Questions) 
-                .AsNoTracking() // Optimisation pour la lecture seule
-                .ToListAsync();
+            return await _context.Questionnaires.OrderByDescending(q => q.CreeLe).ToListAsync();
         }
 
-        // READ: Un questionnaire spécifique
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Questionnaire>> GetQuestionnaire(Guid id)
-        {
-            var questionnaire = await _context.Questionnaires
-                .Include(q => q.Questions)
-                .AsNoTracking()
-                .FirstOrDefaultAsync(q => q.Id == id);
-
-            if (questionnaire == null) 
-                return NotFound(new { message = "Architecture introuvable dans la base SQL." });
-
-            return questionnaire;
-        }
-
-        // CREATE: Déploiement complet (Questionnaire + Questions imbriquées)
+        // 2. إنشاء استبيان جديد (حل مشكلة الـ 400)
         [HttpPost]
-        public async Task<ActionResult<Questionnaire>> CreateQuestionnaire([FromBody] Questionnaire questionnaire)
+        public async Task<ActionResult<Questionnaire>> Post([FromBody] QuestionnaireCreateDto dto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            try
+            // التحقق من البيانات لمنع طلبات فارغة
+            if (dto == null || string.IsNullOrWhiteSpace(dto.Titre))
             {
-                // Initialisation du Questionnaire
-                questionnaire.Id = Guid.NewGuid();
-                questionnaire.CreeLe = DateTime.UtcNow;
+                return BadRequest(new { message = "Le titre du questionnaire est obligatoire." });
+            }
 
-                // On s'assure que chaque question est liée au questionnaire
-                if (questionnaire.Questions != null && questionnaire.Questions.Any())
+            try 
+            {
+                var questionnaire = new Questionnaire
                 {
-                    foreach (var q in questionnaire.Questions)
-                    {
-                        q.Id = Guid.NewGuid();
-                        q.QuestionnaireId = questionnaire.Id; // Liaison obligatoire
-                    }
-                }
+                    Id = Guid.NewGuid(), // نولد الـ ID هنا في السيرفر
+                    Titre = dto.Titre,
+                    Description = dto.Description ?? "",
+                    CreeLe = DateTime.UtcNow
+                };
 
                 _context.Questionnaires.Add(questionnaire);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction(nameof(GetQuestionnaire), new { id = questionnaire.Id }, questionnaire);
+                return Ok(questionnaire);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Erreur lors de la transaction SQL", detail = ex.Message });
+                return StatusCode(500, new { error = "Erreur interne", details = ex.Message });
             }
         }
 
-        // UPDATE: Mise à jour du système
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateQuestionnaire(Guid id, [FromBody] Questionnaire questionnaire)
-        {
-            if (id != questionnaire.Id) 
-                return BadRequest(new { message = "ID mismatch" });
-
-            _context.Entry(questionnaire).State = EntityState.Modified;
-
-            // Si vous envoyez aussi les questions lors de l'Update, 
-            // la logique de synchronisation EF Core plus complexe est requise ici.
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!await _context.Questionnaires.AnyAsync(e => e.Id == id))
-                    return NotFound();
-                else throw;
-            }
-
-            return Ok(new { message = "Terminal mis à jour avec succès", data = questionnaire });
-        }
-
-        // DELETE: Suppression définitive
+        // 3. حذف استبيان
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteQuestionnaire(Guid id)
+        public async Task<IActionResult> Delete(Guid id)
         {
-            var questionnaire = await _context.Questionnaires
-                .Include(q => q.Questions) // Charge les questions pour les supprimer proprement
-                .FirstOrDefaultAsync(x => x.Id == id);
+            var q = await _context.Questionnaires.FindAsync(id);
+            if (q == null) return NotFound();
 
-            if (questionnaire == null) return NotFound();
+            // حذف الأسئلة المرتبطة به أولاً لتجنب مشاكل الـ Foreign Key
+            var linkedQuestions = _context.Questions.Where(x => x.QuestionnaireId == id);
+            _context.Questions.RemoveRange(linkedQuestions);
 
-            _context.Questionnaires.Remove(questionnaire);
+            _context.Questionnaires.Remove(q);
             await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Banque d'examen et ses actifs supprimés définitivement." });
+            return Ok(new { message = "Supprimé avec succès" });
         }
+    }
+
+    // الـ DTO المطلوب لاستقبال البيانات من Vue
+    public class QuestionnaireCreateDto {
+        public string Titre { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
     }
 }

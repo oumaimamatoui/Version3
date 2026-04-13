@@ -1,8 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 
 namespace NeoEvaluation.API.Models
-{
-    public class Questionnaire
+{public class Questionnaire
     {
         [Key]
         public Guid Id { get; set; } = Guid.NewGuid();
@@ -17,4 +16,5 @@ namespace NeoEvaluation.API.Models
         // Relation avec les questions
         public ICollection<Question> Questions { get; set; } = new List<Question>();
     }
+
 }
