@@ -6,34 +6,33 @@
     <div class="glow-orb orb-blue"></div>
     <div class="tech-grid-subtle"></div>
 
-    <!-- ROBOT IA FLOTTANT -->
-    <div class="ai-robot-wrapper">
-      <div class="robot-float">
-        <svg class="modern-robot" viewBox="0 0 200 200" width="160">
-          <defs>
-            <linearGradient id="botGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#ffffff" />
-              <stop offset="100%" style="stop-color:#f1f5f9" />
-            </linearGradient>
-          </defs>
-          <rect x="55" y="50" width="90" height="85" rx="28" fill="url(#botGrad)" stroke="#e2e8f0" stroke-width="2"/>
-          <rect x="65" y="65" width="70" height="32" rx="16" fill="#1e293b" />
-          <g>
-            <circle cx="85" cy="81" r="5" fill="#eab308">
-              <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite" />
-            </circle>
-            <circle cx="115" cy="81" r="5" fill="#eab308">
-              <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite" />
-            </circle>
-          </g>
-        </svg>
-      </div>
-      <div class="robot-shadow"></div>
-    </div>
-
     <!-- CARTE DE CONNEXION -->
     <div class="login-box animate__animated animate__fadeInUp">
-      
+
+      <!-- ROBOT IA FLOTTANT (ancré au-dessus de la carte) -->
+      <div class="ai-robot-wrapper">
+        <div class="robot-float">
+          <svg class="modern-robot" viewBox="0 0 200 200" width="100">
+            <defs>
+              <linearGradient id="botGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#cbd5e1" />
+                <stop offset="100%" style="stop-color:#94a3b8" />
+              </linearGradient>
+            </defs>
+            <rect x="55" y="50" width="90" height="85" rx="28" fill="url(#botGrad)" stroke="#94a3b8" stroke-width="2"/>
+            <rect x="65" y="65" width="70" height="32" rx="16" fill="#1e293b" />
+            <g>
+              <circle cx="85" cy="81" r="5" fill="#eab308">
+                <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite" />
+              </circle>
+              <circle cx="115" cy="81" r="5" fill="#eab308">
+                <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite" />
+              </circle>
+            </g>
+          </svg>
+        </div>
+      </div>
+
       <div class="text-center mb-5">
         <h3 class="brand-title">Evalua<span>Tech</span></h3>
         <p class="brand-subtitle">SYSTÈME D'ACCÈS INTELLIGENT</p>
@@ -93,6 +92,13 @@
               Pas encore de compte ? 
               <router-link to="/register" class="link-amber fw-bold">S'enregistrer</router-link>
             </p>
+          </div>
+
+          <!-- LIEN RETOUR HOME -->
+          <div class="text-center mt-3">
+            <router-link to="/" class="back-home-link">
+              <i class="fa fa-arrow-left me-2"></i> Retour à l'accueil
+            </router-link>
           </div>
         </div>
       </Transition>
@@ -206,8 +212,11 @@ const handleGoogleLogin = async (response) => {
 
 .login-box {
   width: 100%; max-width: 420px; background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(20px); border-radius: 32px; padding: 40px; z-index: 5;
+  backdrop-filter: blur(20px); border-radius: 32px; padding: 20px 40px 40px;
+  padding-top: 20px;
   box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.08); border: 1px solid white;
+  overflow: visible;
+  z-index: 5; position: relative;
 }
 
 .brand-title { font-weight: 800; color: #0f172a; font-size: 30px; margin: 0; }
@@ -235,7 +244,20 @@ const handleGoogleLogin = async (response) => {
 .alert-cyber { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 10px; border-radius: 12px; font-size: 13px; }
 .success-icon { font-size: 3rem; color: #eab308; margin-bottom: 10px; }
 
-.ai-robot-wrapper { position: absolute; top: 5%; z-index: 10; display: flex; flex-direction: column; align-items: center; }
+.ai-robot-wrapper {
+  display: flex; justify-content: center; align-items: center;
+  margin-top: -60px;
+  margin-bottom: 8px;
+}
 .robot-float { animation: robotFloat 4s ease-in-out infinite; }
-@keyframes robotFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes robotFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+.back-home-link {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 600;
+  color: #94a3b8; text-decoration: none;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+.back-home-link:hover { color: #eab308; transform: translateX(-3px); }
+
 </style>

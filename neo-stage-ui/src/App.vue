@@ -14,7 +14,7 @@
 :root {
   --primary: #f59e0b; /* Amber */
   --secondary: #0f172a; /* Navy */
-  --bg-light: #f8fafc;
+  --bg-light: #e3e8ef; /* Slightly darker gray for better contrast with white inputs */
   --text-muted: #64748b;
   --glass: rgba(255, 255, 255, 0.85);
   --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
@@ -22,7 +22,7 @@
 
 body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-light); color: var(--secondary); }
 .admin-layout { min-height: 100vh; display: flex; }
-.main-content { flex-grow: 1; padding: 2rem; background: radial-gradient(circle at top right, #fff9e6 0%, #f8fafc 40%); }
+.main-content { flex-grow: 1; padding: 2rem; background: var(--bg-light); }
 
 /* Global Components */
 .brand-title { font-weight: 800; font-size: 2rem; color: var(--secondary); }
