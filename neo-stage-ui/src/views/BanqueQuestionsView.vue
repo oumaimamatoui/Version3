@@ -91,7 +91,7 @@
                 </div>
               </div>
               <div class="card-main">
-                <h5 class="question-text">{{ q.texte }}</h5>
+                <h5 class="question-text">{{ q.enonce }}</h5>
                 <div class="type-badge-sm">
                   <i :class="getTypeInfo(q.type).icon"></i> {{ getTypeInfo(q.type).label }}
                 </div>
@@ -100,10 +100,10 @@
                 <div class="poids-group">
                   <div class="d-flex justify-content-between mb-1">
                     <span class="poids-label">Complexité</span>
-                    <span class="poids-val">{{ q.poids }}/5</span>
+                    <span class="poids-val">{{ q.points }}/5</span>
                   </div>
                   <div class="cyber-progress-container">
-                    <div class="fill" :style="{ width: (q.poids * 20) + '%', background: getWeightColor(q.poids) }"></div>
+                    <div class="fill" :style="{ width: (q.points * 20) + '%', background: getWeightColor(q.points) }"></div>
                   </div>
                 </div>
               </div>
@@ -168,21 +168,21 @@
                 <!-- TEXTE -->
                 <div class="col-12">
                   <label class="label-cyber">ÉNONCÉ DE LA QUESTION *</label>
-                  <textarea v-model="form.texte" class="cyber-input-area" rows="3" placeholder="Saisir la problématique technique..."></textarea>
-                  <span v-if="validationErrors.texte" class="field-error-msg">{{ validationErrors.texte }}</span>
+                  <textarea v-model="form.enonce" class="cyber-input-area" rows="3" placeholder="Saisir la problématique technique..."></textarea>
+                  <span v-if="validationErrors.enonce" class="field-error-msg">{{ validationErrors.enonce }}</span>
                 </div>
 
-                <!-- CATÉGORIE + POIDS -->
+                <!-- THÈME + POINTS -->
                 <div class="col-md-6">
-                  <label class="label-cyber">CATÉGORIE / DOMAINE</label>
-                  <select v-model="form.categorie" class="cyber-select-field">
+                  <label class="label-cyber">THÈME / DOMAINE</label>
+                  <select v-model="form.theme" class="cyber-select-field">
                     <option value="">— Choisir —</option>
                     <option v-for="cat in categoriesList" :key="cat" :value="cat">{{ cat }}</option>
                   </select>
                 </div>
                 <div class="col-md-6">
-                  <label class="label-cyber">NIVEAU DE COMPLEXITÉ : <span class="text-amber fw-bold">{{ form.poids }} PTS</span></label>
-                  <input type="range" min="1" max="5" step="1" v-model.number="form.poids" class="cyber-range">
+                  <label class="label-cyber">NIVEAU DE COMPLEXITÉ : <span class="text-amber fw-bold">{{ form.points }} PTS</span></label>
+                  <input type="range" min="1" max="5" step="1" v-model.number="form.points" class="cyber-range">
                   <div class="d-flex justify-content-between small text-muted px-1 mt-1">
                     <span>Junior</span><span>Senior</span>
                   </div>
@@ -303,15 +303,15 @@ const activeFilter   = ref(-1);
 const selectedCat    = ref('All');
 const newCatName     = ref('');
 const categoriesList = ref(['Backend', 'Frontend', 'Cyber-Sécurité', 'Architecte UML', 'DevOps']);
-const validationErrors = reactive({ texte: '', reponses: '' });
+const validationErrors = reactive({ enonce: '', reponses: '' });
 
 const toast = reactive({ active: false, message: '', type: '', icon: '' });
 const confirmDialog = reactive({ show: false, title: '', message: '', icon: '', _resolve: null });
 
 /* ─── FORM ────────────────────────────────────────────────────── */
 const form = reactive({
-  id: '', texte: '', type: 0, poids: 1,
-  categorie: '', reponses: [], bonneReponse: '',
+  id: '', enonce: '', type: 0, points: 1,
+  theme: '', sousTheme: '', reponses: [], bonneReponse: '',
   questionnaireId: null,
 });
 
@@ -391,8 +391,9 @@ const openModal = (q = null) => {
   } else {
     Object.assign(form, {
       id: '00000000-0000-0000-0000-000000000000',
-      texte: '', type: 0, poids: 1,
-      categorie: categoriesList.value[0] || '',
+      enonce: '', type: 0, points: 1,
+      theme: categoriesList.value[0] || '',
+      sousTheme: '',
       reponses: [
         { texte: '', estCorrecte: true  },
         { texte: '', estCorrecte: false },
@@ -409,8 +410,8 @@ const validate = () => {
   validationErrors.texte    = '';
   validationErrors.reponses = '';
 
-  if (!form.texte.trim()) {
-    validationErrors.texte = 'L\'énoncé est obligatoire.';
+  if (!form.enonce.trim()) {
+    validationErrors.enonce = 'L\'énoncé est obligatoire.';
     ok = false;
   }
   if ([0, 1].includes(form.type)) {
@@ -431,10 +432,17 @@ const save = async () => {
   if (!validate()) return;
   isSaving.value = true;
   try {
+    // Transformer reponses -> Choix + BonneReponse pour l'API
+    const payload = {
+      ...form,
+      Choix: form.reponses.map(r => r.texte),
+      BonneReponse: form.reponses.find(r => r.estCorrecte)?.texte || ''
+    };
+
     if (isEdit.value) {
-      await axios.put(`${API_QUESTIONS}/${form.id}`, form);
+      await axios.put(`${API_QUESTIONS}/${form.id}`, payload);
     } else {
-      await axios.post(API_QUESTIONS, form);
+      await axios.post(API_QUESTIONS, payload);
     }
     showModal.value = false;
     showToast('Actif enregistré avec succès.', 'success', 'fa-solid fa-check-circle');
@@ -474,9 +482,9 @@ const runConfirm = async () => {
 /* ─── COMPUTED ────────────────────────────────────────────────── */
 const filteredQuestions = computed(() =>
   questions.value.filter(q => {
-    const matchSearch = q.texte?.toLowerCase().includes(searchQuery.value.toLowerCase());
+    const matchSearch = q.enonce?.toLowerCase().includes(searchQuery.value.toLowerCase());
     const matchType   = activeFilter.value === -1 || q.type === activeFilter.value;
-    const matchCat    = selectedCat.value === 'All' || q.categorie === selectedCat.value;
+    const matchCat    = selectedCat.value === 'All' || q.theme === selectedCat.value;
     return matchSearch && matchType && matchCat;
   })
 );
@@ -485,7 +493,7 @@ const quickStats = computed(() => [
   { label: 'Actifs Totaux',   value: questions.value.length,                                          icon: 'fa-solid fa-vault',       color: '#eab308', bg: 'rgba(234,179,8,0.1)'   },
   { label: 'Types de Question', value: new Set(questions.value.map(x => x.type)).size,                icon: 'fa-solid fa-shapes',      color: '#60a5fa', bg: 'rgba(96,165,250,0.1)'  },
   { label: 'Catégories',      value: categoriesList.value.length,                                     icon: 'fa-solid fa-folder-tree', color: '#c084fc', bg: 'rgba(192,132,252,0.1)' },
-  { label: 'Haut Niveau (4+)', value: questions.value.filter(x => x.poids >= 4).length,              icon: 'fa-solid fa-fire',        color: '#f87171', bg: 'rgba(248,113,113,0.1)' },
+  { label: 'Haut Niveau (4+)', value: questions.value.filter(x => x.points >= 4).length,              icon: 'fa-solid fa-fire',        color: '#f87171', bg: 'rgba(248,113,113,0.1)' },
 ]);
 
 /* ─── HELPERS ─────────────────────────────────────────────────── */

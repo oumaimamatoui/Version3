@@ -26,21 +26,66 @@ namespace NeoEvaluation.API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> PostQuestion([FromBody] Question question)
+        public async Task<IActionResult> PostQuestion([FromBody] NeoEvaluation.API.DTOs.QuestionCreateDto dto)
         {
-            // SI ERREUR 400 : Ce bloc renverra la liste exacte des champs qui posent problème
             if (!ModelState.IsValid)
             {
                 var details = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
                 return BadRequest(new { Message = "Données invalides", Errors = details });
             }
 
-            if (question.Id == Guid.Empty) question.Id = Guid.NewGuid();
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                // 1. Création de la Question
+                var question = new Question
+                {
+                    Id = Guid.NewGuid(),
+                    Enonce = dto.Enonce,
+                    Type = dto.Type,
+                    Niveau = dto.Niveau,
+                    Points = dto.Points,
+                    Theme = dto.Theme,
+                    SousTheme = dto.SousTheme,
+                    Choix = dto.Choix ?? new List<string>(),
+                    BonneReponse = dto.BonneReponse ?? string.Empty,
+                    Prerequis = dto.Prerequis ?? new List<string>()
+                };
 
-            _context.Questions.Add(question);
-            await _context.SaveChangesAsync();
+                _context.Questions.Add(question);
 
-            return CreatedAtAction(nameof(GetQuestion), new { id = question.Id }, question);
+                // 2. Liaison avec le Questionnaire via la table de jointure (si renseigné)
+                if (dto.QuestionnaireId.HasValue && dto.QuestionnaireId.Value != Guid.Empty)
+                {
+                    // Vérifier si le questionnaire existe
+                    var questionnaireExiste = await _context.Questionnaires.AnyAsync(q => q.Id == dto.QuestionnaireId.Value);
+                    if (!questionnaireExiste)
+                    {
+                        return NotFound(new { message = "Le questionnaire spécifié n'existe pas." });
+                    }
+
+                    var liaison = new QuestionnaireQuestion
+                    {
+                        QuestionnaireId = dto.QuestionnaireId.Value,
+                        QuestionId = question.Id,
+                        Ordre = dto.Ordre,
+                        Ponderation = dto.Ponderation,
+                        EstObligatoire = dto.EstObligatoire
+                    };
+                    
+                    _context.QuestionnaireQuestions.Add(liaison);
+                }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return CreatedAtAction(nameof(GetQuestion), new { id = question.Id }, question);
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return StatusCode(500, new { message = "Erreur lors de la création de la question", details = ex.Message });
+            }
         }
 
         [HttpDelete("{id}")]

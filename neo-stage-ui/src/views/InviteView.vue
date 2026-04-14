@@ -38,7 +38,7 @@
                   <i class="fa-solid fa- rocket icon-left-gold"></i>
                   <select v-model="form.campagneId" class="cyber-select ps-5">
                     <option value="">— Sélectionner une campagne d'excellence —</option>
-                    <option v-for="c in campagnes" :key="c.id" :value="c.id">{{ c.nom || c.titre }}</option>
+                    <option v-for="c in campagnes" :key="c.id" :value="c.id">{{ c.nom }}</option>
                   </select>
                 </div>
               </div>

@@ -161,7 +161,8 @@ namespace NeoEvaluation.API.Controllers
                 Nom = user.NomComplet, 
                 Role = userRole,
                 Email = user.Email,
-                Photo = user.PhotoUrl
+                Photo = user.PhotoUrl,
+                EntrepriseId = user.EntrepriseId
             };
         }
 

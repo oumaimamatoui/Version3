@@ -8,30 +8,27 @@ namespace NeoEvaluation.API.Models
     public class Campagne 
     {
         [Key] 
-        public Guid? Id { get; set; } // Nullable est correct ici
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Required(ErrorMessage = "Le nom est obligatoire")]
         public string Nom { get; set; } = string.Empty;
 
         public string? Description { get; set; }
-        public string? Categorie { get; set; }
-        public string? NiveauDifficulte { get; set; } = "Mixed Levels";
-
-        public int DureeMinutes { get; set; } = 60;
-        public int ScorePassage { get; set; } = 70;
-        public int NbTentativesMax { get; set; } = 1;
-
         public DateTime DateDebut { get; set; } = DateTime.UtcNow;
         public DateTime DateFin { get; set; } = DateTime.UtcNow.AddDays(30);
-        
-        public int Statut { get; set; }
-        public int MaxCandidats { get; set; }
+        public StatutCampagne Statut { get; set; } = StatutCampagne.BROUILLON;
+        public DateTime CreeLe { get; set; } = DateTime.UtcNow;
 
-        public Guid? QuestionnaireId { get; set; }
-        public Questionnaire? Questionnaire { get; set; }
-        
         [Required]
         public Guid EntrepriseId { get; set; }
+        public Entreprise? Entreprise { get; set; }
+
+        // Relations
+        public ICollection<CampagneQuestionnaire> CampagneQuestionnaires { get; set; } = new List<CampagneQuestionnaire>();
         public virtual ICollection<Candidature> Candidatures { get; set; } = new List<Candidature>();
+
+        // Relation: Un utilisateur planifie plusieurs campagnes
+        public Guid? PlanificateurId { get; set; }
+        public Utilisateur? Planificateur { get; set; }
     }
-}
+}

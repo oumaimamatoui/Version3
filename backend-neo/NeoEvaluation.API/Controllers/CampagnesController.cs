@@ -15,15 +15,37 @@ namespace NeoEvaluation.API.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetCampagnes()
         {
-            return await _context.Campagnes
-                .Include(c => c.Questionnaire)
-                .OrderByDescending(c => c.DateDebut)
-                .Select(c => new {
-                    c.Id, c.Nom, c.Description, c.Categorie, c.Statut,
-                    c.DateDebut, c.DateFin, c.MaxCandidats, c.ScorePassage,
-                    c.DureeMinutes, c.QuestionnaireId,
-                    QuestionnaireTitre = c.Questionnaire != null ? c.Questionnaire.Titre : "Non lié"
-                }).ToListAsync();
+            try
+            {
+                var list = await _context.Campagnes
+                    .Include(c => c.CampagneQuestionnaires)
+                        .ThenInclude(cq => cq.Questionnaire)
+                    .Select(c => new {
+                        c.Id,
+                        c.Nom,
+                        c.Description,
+                        c.Statut,
+                        c.DateDebut,
+                        c.DateFin,
+                        c.CreeLe,
+                        Questionnaires = c.CampagneQuestionnaires.Select(cq => new {
+                            Id = cq.Questionnaire != null ? cq.Questionnaire.Id : Guid.Empty,
+                            Titre = cq.Questionnaire != null ? cq.Questionnaire.Titre : "Sans Titre",
+                            DureeMinutes = cq.Questionnaire != null ? cq.Questionnaire.DureeMinutes : 60,
+                            AntitricheActif = cq.Questionnaire != null ? cq.Questionnaire.AntitricheActif : false,
+                            RandomiserQuestions = cq.Questionnaire != null ? cq.Questionnaire.RandomiserQuestions : false,
+                            Description = cq.Questionnaire != null ? cq.Questionnaire.Description : ""
+                        })
+                    })
+                    .OrderByDescending(c => c.DateDebut)
+                    .ToListAsync();
+
+                return Ok(list);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erreur interne", details = ex.Message });
+            }
         }
 
         [HttpGet("{id}")]
@@ -45,13 +67,23 @@ namespace NeoEvaluation.API.Controllers
             try {
                 var nouvelle = new Campagne {
                     Id = newCampagneId,
-                    Nom = dto.Nom, Description = dto.Description, Categorie = dto.Categorie,
-                    Statut = dto.Statut, MaxCandidats = dto.MaxCandidats,
-                    DureeMinutes = dto.DureeMinutes, ScorePassage = dto.ScorePassage,
-                    QuestionnaireId = dto.QuestionnaireId, EntrepriseId = entId,
-                    DateDebut = dto.DateDebut.ToUniversalTime(), DateFin = dto.DateFin.ToUniversalTime()
+                    Nom = dto.Nom, 
+                    Description = dto.Description,
+                    Statut = dto.Statut,
+                    EntrepriseId = entId,
+                    DateDebut = dto.DateDebut.ToUniversalTime(), 
+                    DateFin = dto.DateFin.ToUniversalTime()
                 };
                 _context.Campagnes.Add(nouvelle);
+
+                // Lier le questionnaire via la table M2M
+                if (dto.QuestionnaireId.HasValue)
+                {
+                    _context.CampagneQuestionnaires.Add(new CampagneQuestionnaire {
+                        CampagneId = newCampagneId,
+                        QuestionnaireId = dto.QuestionnaireId.Value
+                    });
+                }
 
                 if (dto.SelectedCandidatesIds != null) {
                     foreach (var candId in dto.SelectedCandidatesIds) {
@@ -69,4 +101,4 @@ namespace NeoEvaluation.API.Controllers
             }
         }
     }
-}
+}

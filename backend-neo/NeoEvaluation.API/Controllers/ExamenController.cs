@@ -21,24 +21,27 @@ namespace NeoEvaluation.API.Controllers
         [HttpGet("setup/{candidatureId}")]
         public async Task<IActionResult> GetSetup(string candidatureId)
         {
-            // Validation de l'ID pour éviter l'erreur 400 automatique
             if (string.IsNullOrEmpty(candidatureId) || candidatureId == "undefined" || !Guid.TryParse(candidatureId, out Guid guidId))
             {
                 return BadRequest(new { message = "L'ID de candidature est invalide ou absent." });
             }
 
-            // Récupération de la candidature et de toute la chaîne de relations
+            // Récupération via les nouvelles relations M2M
             var cand = await _context.Candidatures
                 .Include(c => c.Campagne)
-                    .ThenInclude(cp => cp.Questionnaire)
-                        .ThenInclude(q => q.Questions)
+                    .ThenInclude(cp => cp.CampagneQuestionnaires)
+                        .ThenInclude(cq => cq.Questionnaire)
+                            .ThenInclude(q => q.QuestionnaireQuestions)
+                                .ThenInclude(qq => qq.Question)
                 .Include(c => c.Evaluation)
                 .FirstOrDefaultAsync(c => c.Id == guidId);
 
             if (cand == null) 
                 return NotFound(new { message = "Candidature introuvable." });
 
-            if (cand.Campagne?.Questionnaire == null)
+            // Récupérer le premier questionnaire de la campagne
+            var premierQuestionnaire = cand.Campagne?.CampagneQuestionnaires?.FirstOrDefault()?.Questionnaire;
+            if (premierQuestionnaire == null)
                 return BadRequest(new { message = "Aucun questionnaire n'est configuré pour cette campagne." });
 
             // Initialisation de l'évaluation
@@ -47,22 +50,26 @@ namespace NeoEvaluation.API.Controllers
                 cand.Evaluation = new Evaluation {
                     Id = Guid.NewGuid(),
                     CandidatureId = cand.Id,
-                    Statut = EvaluationStatus.NON_COMMENCE,
-                    LimiteTemps = 30 // 30 minutes
+                    Statut = StatutPassage.NON_COMMENCE,
                 };
                 _context.Evaluations.Add(cand.Evaluation);
                 await _context.SaveChangesAsync();
             }
 
-            // Mapping vers le DTO (Sécurité : on ne renvoie pas les bonnes réponses)
+            // Récupérer les questions ordonnées via la table de jointure
+            var questions = premierQuestionnaire.QuestionnaireQuestions
+                .OrderBy(qq => qq.Ordre)
+                .Select(qq => qq.Question)
+                .ToList();
+
             var setup = new ExamSetupDto {
                 EvaluationId = cand.Evaluation.Id,
                 CampagneNom = cand.Campagne.Nom,
-                TempsLimite = cand.Evaluation.LimiteTemps * 60, // En secondes pour le frontend
-                Questions = cand.Campagne.Questionnaire.Questions.Select(q => new QuestionItemDto {
+                TempsLimite = premierQuestionnaire.DureeMinutes * 60,
+                Questions = questions.Select(q => new QuestionItemDto {
                     Id = q.Id,
-                    Texte = q.Texte.Split('|')[0], // On prend la question
-                    Options = q.Texte.Contains("|") ? q.Texte.Split('|').Skip(1).ToList() : new List<string> { "Choix A", "Choix B" }
+                    Enonce = q.Enonce,
+                    Options = q.Choix.Any() ? q.Choix : new List<string> { "Choix A", "Choix B" }
                 }).ToList()
             };
 
@@ -75,7 +82,8 @@ namespace NeoEvaluation.API.Controllers
         {
             var eval = await _context.Evaluations.FindAsync(dto.EvaluationId);
             if (eval == null) return NotFound();
-            eval.Statut = EvaluationStatus.EN_COURS;
+            eval.Statut = StatutPassage.EN_COURS;
+            if (eval.DateDebut == null) eval.DateDebut = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             return Ok(new { status = "SYNCED" });
         }
@@ -87,10 +95,11 @@ namespace NeoEvaluation.API.Controllers
             var eval = await _context.Evaluations.FindAsync(evaluationId);
             if (eval == null) return NotFound();
 
-            eval.Statut = EvaluationStatus.TERMINE;
-            eval.Score = new Random().Next(12, 19); // Simulation score
+            eval.Statut = StatutPassage.TERMINE;
+            eval.DateFin = DateTime.UtcNow;
+            eval.ScoreTotal = new Random().Next(12, 19); // Simulation score
             await _context.SaveChangesAsync();
-            return Ok(new { score = eval.Score });
+            return Ok(new { score = eval.ScoreTotal });
         }
     }
-}
+}

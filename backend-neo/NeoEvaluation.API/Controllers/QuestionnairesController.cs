@@ -15,18 +15,17 @@ namespace NeoEvaluation.API.Controllers
         private readonly AppDbContext _context;
         public QuestionnairesController(AppDbContext context) { _context = context; }
 
-        // 1. جلب الكل
+        // 1. Lister tous les questionnaires
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Questionnaire>>> Get() 
         {
             return await _context.Questionnaires.OrderByDescending(q => q.CreeLe).ToListAsync();
         }
 
-        // 2. إنشاء استبيان جديد (حل مشكلة الـ 400)
+        // 2. Créer un questionnaire
         [HttpPost]
         public async Task<ActionResult<Questionnaire>> Post([FromBody] QuestionnaireCreateDto dto)
         {
-            // التحقق من البيانات لمنع طلبات فارغة
             if (dto == null || string.IsNullOrWhiteSpace(dto.Titre))
             {
                 return BadRequest(new { message = "Le titre du questionnaire est obligatoire." });
@@ -36,9 +35,13 @@ namespace NeoEvaluation.API.Controllers
             {
                 var questionnaire = new Questionnaire
                 {
-                    Id = Guid.NewGuid(), // نولد الـ ID هنا في السيرفر
+                    Id = Guid.NewGuid(),
                     Titre = dto.Titre,
                     Description = dto.Description ?? "",
+                    DureeMinutes = dto.DureeMinutes,
+                    AntitricheActif = dto.AntitricheActif,
+                    RandomiserQuestions = dto.RandomiserQuestions,
+                    EstPublie = dto.EstPublie,
                     CreeLe = DateTime.UtcNow
                 };
 
@@ -53,16 +56,20 @@ namespace NeoEvaluation.API.Controllers
             }
         }
 
-        // 3. حذف استبيان
+        // 3. Supprimer un questionnaire
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
             var q = await _context.Questionnaires.FindAsync(id);
             if (q == null) return NotFound();
 
-            // حذف الأسئلة المرتبطة به أولاً لتجنب مشاكل الـ Foreign Key
-            var linkedQuestions = _context.Questions.Where(x => x.QuestionnaireId == id);
-            _context.Questions.RemoveRange(linkedQuestions);
+            // Supprimer les liens M2M (QuestionnaireQuestion) avant de supprimer le questionnaire
+            var linkedQQ = _context.QuestionnaireQuestions.Where(x => x.QuestionnaireId == id);
+            _context.QuestionnaireQuestions.RemoveRange(linkedQQ);
+
+            // Supprimer les liens M2M (CampagneQuestionnaire)
+            var linkedCQ = _context.CampagneQuestionnaires.Where(x => x.QuestionnaireId == id);
+            _context.CampagneQuestionnaires.RemoveRange(linkedCQ);
 
             _context.Questionnaires.Remove(q);
             await _context.SaveChangesAsync();
@@ -70,9 +77,13 @@ namespace NeoEvaluation.API.Controllers
         }
     }
 
-    // الـ DTO المطلوب لاستقبال البيانات من Vue
+    // DTO pour la création
     public class QuestionnaireCreateDto {
         public string Titre { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
+        public int DureeMinutes { get; set; } = 60;
+        public bool AntitricheActif { get; set; }
+        public bool RandomiserQuestions { get; set; }
+        public bool EstPublie { get; set; } = true;
     }
-}
+}
