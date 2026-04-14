@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NeoEvaluation.API.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NeoEvaluation.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260414112427_UpdateSchemaFromClassDiagram")]
+    partial class UpdateSchemaFromClassDiagram
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -50,9 +53,6 @@ namespace NeoEvaluation.API.Migrations
                     b.Property<Guid?>("PersonnelId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("PlanificateurId")
-                        .HasColumnType("uuid");
-
                     b.Property<int>("Statut")
                         .HasColumnType("integer");
 
@@ -61,8 +61,6 @@ namespace NeoEvaluation.API.Migrations
                     b.HasIndex("EntrepriseId");
 
                     b.HasIndex("PersonnelId");
-
-                    b.HasIndex("PlanificateurId");
 
                     b.ToTable("Campagnes");
                 });
@@ -243,9 +241,6 @@ namespace NeoEvaluation.API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("CandidatId")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid>("CandidatureId")
                         .HasColumnType("uuid");
 
@@ -272,8 +267,6 @@ namespace NeoEvaluation.API.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CandidatId");
 
                     b.HasIndex("CandidatureId")
                         .IsUnique();
@@ -360,9 +353,6 @@ namespace NeoEvaluation.API.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("CreateurId")
-                        .HasColumnType("uuid");
-
                     b.Property<DateTime>("CreeLe")
                         .HasColumnType("timestamp with time zone");
 
@@ -391,8 +381,6 @@ namespace NeoEvaluation.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreateurId");
-
                     b.ToTable("Questions");
                 });
 
@@ -404,9 +392,6 @@ namespace NeoEvaluation.API.Migrations
 
                     b.Property<bool>("AntitricheActif")
                         .HasColumnType("boolean");
-
-                    b.Property<Guid?>("CreateurId")
-                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreeLe")
                         .HasColumnType("timestamp with time zone");
@@ -441,8 +426,6 @@ namespace NeoEvaluation.API.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CreateurId");
 
                     b.ToTable("Questionnaires");
                 });
@@ -743,13 +726,7 @@ namespace NeoEvaluation.API.Migrations
                         .WithMany("CampagnesGerees")
                         .HasForeignKey("PersonnelId");
 
-                    b.HasOne("NeoEvaluation.API.Models.Utilisateur", "Planificateur")
-                        .WithMany()
-                        .HasForeignKey("PlanificateurId");
-
                     b.Navigation("Entreprise");
-
-                    b.Navigation("Planificateur");
                 });
 
             modelBuilder.Entity("NeoEvaluation.API.Models.CampagneQuestionnaire", b =>
@@ -812,17 +789,11 @@ namespace NeoEvaluation.API.Migrations
 
             modelBuilder.Entity("NeoEvaluation.API.Models.Evaluation", b =>
                 {
-                    b.HasOne("NeoEvaluation.API.Models.Utilisateur", "Candidat")
-                        .WithMany()
-                        .HasForeignKey("CandidatId");
-
                     b.HasOne("NeoEvaluation.API.Models.Candidature", "Candidature")
                         .WithOne("Evaluation")
                         .HasForeignKey("NeoEvaluation.API.Models.Evaluation", "CandidatureId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Candidat");
 
                     b.Navigation("Candidature");
                 });
@@ -836,24 +807,6 @@ namespace NeoEvaluation.API.Migrations
                         .IsRequired();
 
                     b.Navigation("Campagne");
-                });
-
-            modelBuilder.Entity("NeoEvaluation.API.Models.Question", b =>
-                {
-                    b.HasOne("NeoEvaluation.API.Models.Utilisateur", "Createur")
-                        .WithMany()
-                        .HasForeignKey("CreateurId");
-
-                    b.Navigation("Createur");
-                });
-
-            modelBuilder.Entity("NeoEvaluation.API.Models.Questionnaire", b =>
-                {
-                    b.HasOne("NeoEvaluation.API.Models.Utilisateur", "Createur")
-                        .WithMany()
-                        .HasForeignKey("CreateurId");
-
-                    b.Navigation("Createur");
                 });
 
             modelBuilder.Entity("NeoEvaluation.API.Models.QuestionnaireQuestion", b =>

@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic; // ✅ AJOUTEZ CECI pour List<string>
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -23,16 +23,16 @@ namespace NeoEvaluation.API.Models
         public Role? Role { get; set; }
 
         public Guid? EntrepriseId { get; set; } 
-
         public Entreprise? Entreprise { get; set; }
 
         public DateTime CreeLe { get; set; } = DateTime.UtcNow;
+        public DateTime? DerniereConnexion { get; set; }
         public string? PhotoUrl { get; set; }
         public string? Bio { get; set; }
 
-        // ✅ AJOUTEZ CETTE PROPRIÉTÉ CI-DESSOUS
         public List<string> Privileges { get; set; } = new List<string>();
 
+        [NotMapped]
         public string NomComplet => $"{Prenom} {Nom}";
     }
 }

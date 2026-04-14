@@ -26,3 +26,6 @@ dist/
 # Logs
 *.log
 audit_logs.json
+
+# Configuration
+appsettings.Development.json

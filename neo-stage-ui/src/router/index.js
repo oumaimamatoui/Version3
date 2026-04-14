@@ -80,27 +80,27 @@ const routes = [
   { path: '/history', name: 'history', component: HistoryView, meta: { requiresAuth: true, role: 'Candidat' } },
 
   /**
-   * ESPACE ÉVALUATEUR / RH
+   * ESPACE ÉVALUATEUR / RH / RECRUTEUR
    */
-  { path: '/questions', name: 'questions', component: BanqueQuestionsView, meta: { requiresAuth: true, role: ['Evaluateur', 'AdminEntreprise'] } },
+  { path: '/questions', name: 'questions', component: BanqueQuestionsView, meta: { requiresAuth: true, role: ['Evaluateur', 'AdminEntreprise', 'Recruteur'] } },
 
-  { path: '/ai-generator', name: 'ai-generator', component: AIGeneratorView, meta: { requiresAuth: true, role: ['Evaluateur', 'AdminEntreprise'] } },
-  { path: '/analyse-comportementale', name: 'analyse-comportementale', component: AnalyseComportementaleView, meta: { requiresAuth: true, role: ['Evaluateur', 'AdminEntreprise'] } },
+  { path: '/ai-generator', name: 'ai-generator', component: AIGeneratorView, meta: { requiresAuth: true, role: ['Evaluateur', 'AdminEntreprise', 'Recruteur'] } },
+  { path: '/analyse-comportementale', name: 'analyse-comportementale', component: AnalyseComportementaleView, meta: { requiresAuth: true, role: ['Evaluateur', 'AdminEntreprise', 'Recruteur'] } },
   { path: '/sessions', name: 'sessions', component: PlanningView, meta: { requiresAuth: true, role: 'Evaluateur' } },
-  { path: '/stats', name: 'stats', component: StatsView, meta: { requiresAuth: true, role: ['Evaluateur', 'AdminEntreprise'] } },
+  { path: '/stats', name: 'stats', component: StatsView, meta: { requiresAuth: true, role: ['Evaluateur', 'AdminEntreprise', 'Recruteur'] } },
   { path: '/test-builder', name: 'test-builder', component: EvaluateurAssessments, meta: { requiresAuth: true, role: 'Evaluateur' } },
 
   /**
-   * ESPACE ADMINISTRATION ENTREPRISE
+   * ESPACE ADMINISTRATION ENTREPRISE & RECRUTEMENT
    */
   { path: '/roles', name: 'roles', component: RolesManagementView, meta: { requiresAuth: true, role: 'AdminEntreprise' } },
   { path: '/groups', name: 'groups', component: GroupsView, meta: { requiresAuth: true, role: 'AdminEntreprise' } },
-  { path: '/campaigns', name: 'campaigns', component: CampagnesView, meta: { requiresAuth: true, role: ['Evaluateur', 'AdminEntreprise'] } },
-  { path: '/candidates-list', name: 'candidates-list', component: ListeCandidatsView, meta: { requiresAuth: true, role: 'AdminEntreprise' } },
-  { path: '/details-candidat/:id', name: 'details-candidat', component: DetailsCandidatView, meta: { requiresAuth: true, role: 'AdminEntreprise' } },
-  { path: '/invite', name: 'invite', component: InviteView, meta: { requiresAuth: true, role: 'AdminEntreprise' } },
-  { path: '/reporting', name: 'reporting', component: RapportsView, meta: { requiresAuth: true, role: 'AdminEntreprise' } },
-  { path: '/staff-members', name: 'staff-members', component: StaffMembersView, meta: { requiresAuth: true, role: 'AdminEntreprise' } },
+  { path: '/campaigns', name: 'campaigns', component: CampagnesView, meta: { requiresAuth: true, role: ['Evaluateur', 'AdminEntreprise', 'Recruteur'] } },
+  { path: '/candidates-list', name: 'candidates-list', component: ListeCandidatsView, meta: { requiresAuth: true, role: ['AdminEntreprise', 'Recruteur'] } },
+  { path: '/details-candidat/:id', name: 'details-candidat', component: DetailsCandidatView, meta: { requiresAuth: true, role: ['AdminEntreprise', 'Recruteur'] } },
+  { path: '/invite', name: 'invite', component: InviteView, meta: { requiresAuth: true, role: ['AdminEntreprise', 'Recruteur'] } },
+  { path: '/reporting', name: 'reporting', component: RapportsView, meta: { requiresAuth: true, role: ['AdminEntreprise', 'Recruteur'] } },
+  { path: '/staff-members', name: 'staff-members', component: StaffMembersView, meta: { requiresAuth: true, role: ['AdminEntreprise', 'Recruteur'] } },
 
   /**
    * ESPACE SUPER ADMIN (PLATEFORME)

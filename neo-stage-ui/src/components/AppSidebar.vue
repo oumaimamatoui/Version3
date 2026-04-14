@@ -61,8 +61,8 @@
           <i class="fa-solid fa-chevron-right arrow-indicator"></i>
         </router-link>
 
-        <!-- SECTION ADMIN ENTREPRISE -->
-        <div v-if="userRole === 'AdminEntreprise'" class="nav-group">
+        <!-- SECTION ADMIN ENTREPRISE / RECRUTEUR -->
+        <div v-if="userRole === 'AdminEntreprise' || userRole === 'Recruteur'" class="nav-group">
           <label class="group-label">Gestion Système</label>
           <router-link to="/dashboard" class="nav-link-tech">
             <div class="icon-shell"><i class="fa-solid fa-gauge-high"></i></div>
@@ -87,7 +87,7 @@
           <router-link to="/campaigns" class="nav-link-tech">
             <div class="icon-shell"><i class="fa-solid fa-rectangle-list"></i></div>
             <span>Campagnes</span>
-            <span class="nav-badge-count">12</span>
+            <span class="nav-badge-count">{{ campaignCount }}</span>
           </router-link>
 
           <label class="group-label">Intelligence Artificielle</label>
@@ -104,10 +104,6 @@
           <router-link to="/staff-members" class="nav-link-tech">
             <div class="icon-shell"><i class="fa-solid fa-user-gear"></i></div>
             <span>Membres du personnel</span>
-          </router-link>
-          <router-link to="/roles" class="nav-link-tech">
-            <div class="icon-shell"><i class="fa-solid fa-shield-halved"></i></div>
-            <span>Rôles & Permissions</span>
           </router-link>
           <router-link to="/settings" class="nav-link-tech">
             <div class="icon-shell"><i class="fa-solid fa-sliders"></i></div>
@@ -188,6 +184,7 @@
             <select @change="changeRole($event)">
               <option value="Candidat" :selected="userRole === 'Candidat'">Candidat</option>
               <option value="Evaluateur" :selected="userRole === 'Evaluateur'">Évaluateur</option>
+              <option value="Recruteur" :selected="userRole === 'Recruteur'">Recruteur</option>
               <option value="AdminEntreprise" :selected="userRole === 'AdminEntreprise'">Admin Entreprise</option>
             </select>
             <i class="fa-solid fa-chevron-up"></i>
@@ -213,13 +210,23 @@ const router = useRouter();
 const authStore = useAuthStore();
 const userRole = computed(() => authStore.role);
 const isSidebarActive = ref(false);
+const campaignCount = ref(0);
 
 const branding = ref({ companyName: 'EvaluaTech', color: '#f59e0b' });
 
 const roleLabel = computed(() => {
-  const roles = { 'SuperAdmin': 'SuperAdmin', 'AdminEntreprise': 'Administrateur', 'Evaluateur': 'Évaluateur', 'Candidat': 'Candidat' };
+  const roles = { 'SuperAdmin': 'SuperAdmin', 'AdminEntreprise': 'Administrateur', 'Recruteur': 'RH / Recruteur', 'Evaluateur': 'Évaluateur', 'Candidat': 'Candidat' };
   return roles[userRole.value] || 'Utilisateur';
 });
+
+const fetchCounts = async () => {
+  try {
+    const res = await api.get('/Campagnes');
+    campaignCount.value = res.data.length;
+  } catch (err) {
+    console.error("Erreur sidebar counts:", err);
+  }
+};
 
 const toggleSidebar = () => { isSidebarActive.value = !isSidebarActive.value; };
 const changeRole = (e) => { 
@@ -227,6 +234,10 @@ const changeRole = (e) => {
   router.push('/dashboard').then(() => window.location.reload()); 
 };
 const logout = () => { authStore.logout(); router.push('/login'); };
+
+onMounted(() => {
+  fetchCounts();
+});
 </script>
 
 <style scoped>

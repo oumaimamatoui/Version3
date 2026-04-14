@@ -1,17 +1,30 @@
-// DTOs/QuestionCreateDto.cs
-using System;
-using System.Collections.Generic;
+using NeoEvaluation.API.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace NeoEvaluation.API.DTOs
 {
     public class QuestionCreateDto
     {
-        public Guid? Id { get; set; }
-        public string Texte { get; set; } = string.Empty;
-        public double Poids { get; set; }
-        public int Type { get; set; }
-        public Guid? QuestionnaireId { get; set; } // Nullable هنا أيضاً
-        public List<object>? Reponses { get; set; } 
-        public string? BonneReponse { get; set; } 
+        [Required]
+        public string Enonce { get; set; } = string.Empty;
+        
+        public TypeQuestion Type { get; set; } = TypeQuestion.QCM;
+        public NiveauComplexite Niveau { get; set; } = NiveauComplexite.INTERMEDIAIRE;
+        public int Points { get; set; } = 1;
+        
+        public string? Theme { get; set; }
+        public string? SousTheme { get; set; }
+        
+        public List<string> Choix { get; set; } = new List<string>();
+        public string BonneReponse { get; set; } = string.Empty;
+        public List<string> Prerequis { get; set; } = new List<string>();
+
+        // Liaison (Many-to-Many)
+        public Guid? QuestionnaireId { get; set; }
+        
+        // Propriétés de la liaison
+        public int Ordre { get; set; } = 1;
+        public float Ponderation { get; set; } = 1.0f;
+        public bool EstObligatoire { get; set; } = true;
     }
 }

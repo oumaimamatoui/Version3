@@ -66,18 +66,24 @@
 
         <!-- 3. KPI BENTO GRID -->
         <div class="row g-4 mb-5">
-          <div class="col-md-6 col-xl-3" v-for="stat in dynamicStats" :key="stat.label">
-            <div class="kpi-cyber-card">
-              <div class="d-flex justify-content-between align-items-start">
-                <div class="kpi-icon-box" :style="{ color: stat.color, backgroundColor: stat.bg }">
+          <div class="col-xl-3 col-md-6" v-for="stat in dynamicStats" :key="stat.label">
+            <router-link :to="getStatLink(stat.label)" class="stat-card-premium animate__animated animate__fadeInUp d-block text-decoration-none">
+              <div class="d-flex justify-content-between">
+                <div class="stat-icon-box" :style="{ background: stat.bg, color: stat.color }">
                   <i :class="stat.icon"></i>
                 </div>
+                <div class="stat-trend" :class="{ up: stat.trendUp }">
+                  {{ stat.trend }} <i class="fa-solid" :class="stat.trendUp ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down'"></i>
+                </div>
               </div>
-              <div class="mt-4">
-                <h2 class="kpi-value">{{ stat.value }}</h2>
-                <span class="kpi-label">{{ stat.label }}</span>
+              <div class="stat-content mt-4">
+                <h3 class="m-0 fw-800 text-slate-900">{{ stat.value }}</h3>
+                <p class="m-0 tiny fw-800 text-slate-400 uppercase ls-1">{{ stat.label }}</p>
               </div>
-            </div>
+              <div class="stat-progress mt-3">
+                <div class="progress-bar-pro" :style="{ width: '70%', background: stat.color }"></div>
+              </div>
+            </router-link>
           </div>
         </div>
 
@@ -178,19 +184,37 @@ const startExam = (id) => { router.push(`/exam-lobby/${id}`); };
 const formatDate = (d) => d ? new Date(d).toLocaleDateString() : 'Non définie';
 
 const roleLabel = computed(() => {
-  const map = { 'SuperAdmin': 'ADMINISTRATEUR MAÎTRE', 'AdminEntreprise': 'ESPACE CORPORATE', 'Evaluateur': 'ESPACE ÉVALUATEUR', 'Candidat': 'PORTAIL CANDIDAT' };
+  const map = { 
+    'SuperAdmin': 'ADMINISTRATEUR MAÎTRE', 
+    'AdminEntreprise': 'ESPACE CORPORATE', 
+    'Recruteur': 'GESTION TALENTS (RH)',
+    'Evaluateur': 'ESPACE ÉVALUATEUR', 
+    'Candidat': 'PORTAIL CANDIDAT' 
+  };
   return map[userRole.value] || 'TABLEAU DE BORD';
 });
 
 const roleContext = computed(() => {
   if (userRole.value === 'SuperAdmin') return 'CORE SYSTEM INFRA';
-  if (userRole.value === 'AdminEntreprise') return 'CORP METRICS';
+  if (userRole.value === 'AdminEntreprise' || userRole.value === 'Recruteur') return 'CORP METRICS';
   if (userRole.value === 'Evaluateur') return 'EVAL_METRICS';
   return 'EVAL_PROCESS';
 });
 
+const getStatLink = (label) => {
+  const l = label.toLowerCase();
+  if (l.includes('candidat') || l.includes('talent')) return '/candidates-list';
+  if (l.includes('invitation')) return '/invite';
+  if (l.includes('entretien')) return '/dashboard';
+  if (l.includes('évaluation') || l.includes('campagne')) return '/campaigns';
+  if (l.includes('session')) return '/campaigns';
+  if (l.includes('question')) return '/questions';
+  return '/dashboard';
+};
+
 const aiInsight = computed(() => {
   if (userRole.value === 'Candidat') return "VOTRE PROFIL EST OPTIMISÉ À 94% POUR L'EXAMEN ACTUEL.";
+  if (userRole.value === 'Recruteur') return "OPTIMISATION HR : 3 NOUVEAUX PROFILS MATCHENT VOS CRITÈRES.";
   return "ANALYSE COMPLÉTÉE : 12 NOUVELLES INSCRIPTIONS DÉTECTÉES CE MATIN.";
 });
 
@@ -201,6 +225,12 @@ const dynamicStats = computed(() => {
       { label: 'ÉVALUATIONS', value: '284', icon: 'fa-solid fa-file-signature', bg: '#fffbeb', color: '#f59e0b', trend: '+15%', trendUp: true },
       { label: 'TAUX SUCCÈS', value: '78%', icon: 'fa-solid fa-chart-pie', bg: '#f5f3ff', color: '#8b5cf6', trend: '+2%', trendUp: true },
       { label: 'ALERTES IA', value: '02', icon: 'fa-solid fa-bolt-lightning', bg: '#fef2f2', color: '#ef4444', trend: 'BAS', trendUp: false }
+    ],
+    Recruteur: [
+      { label: 'CANDIDATS', value: '12', icon: 'fa-solid fa-users', bg: '#eff6ff', color: '#3b82f6', trend: '+4', trendUp: true },
+      { label: 'INVITATIONS', value: '45', icon: 'fa-solid fa-paper-plane', bg: '#fffbeb', color: '#f59e0b', trend: 'Actif', trendUp: true },
+      { label: 'ENTRETIENS', value: '08', icon: 'fa-solid fa-calendar-alt', bg: '#f5f3ff', color: '#8b5cf6', trend: 'Semaine', trendUp: true },
+      { label: 'SOURCING IA', value: '92%', icon: 'fa-solid fa-brain', bg: '#ecfdf5', color: '#10b981', trend: '+5%', trendUp: true }
     ],
     Evaluateur: [
       { label: 'SESSIONS', value: '05', icon: 'fa-solid fa-calendar-check', bg: '#fffbeb', color: '#f59e0b', trend: '+1', trendUp: true },

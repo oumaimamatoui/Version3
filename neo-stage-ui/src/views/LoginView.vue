@@ -49,7 +49,7 @@
         <!-- FORMULAIRE -->
         <div v-else key="form">
           <div class="google-wrapper mb-4 d-flex justify-content-center">
-            <div id="googleButtonPlaceholder"></div>
+            <GoogleLogin :callback="handleGoogleLogin" />
           </div>
 
           <div class="divider"><span>OU IDENTIFICATION MANUELLE</span></div>
@@ -107,9 +107,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { GoogleLogin } from 'vue3-google-login';
 import axios from 'axios';
 
 const router = useRouter();
@@ -120,37 +121,6 @@ const errorMessage = ref("");
 const requestSent = ref(false);
 const showPassword = ref(false);
 const loginForm = reactive({ email: '', password: '', remember: false });
-const client_id = "387387561163-i1qqrq1mtuqrmkj3vl978ed9j4o392bk.apps.googleusercontent.com";
-
-onMounted(() => {
-  // On attend un court instant pour que le script Google soit bien chargé globalement
-  const interval = setInterval(() => {
-    if (window.google) {
-      clearInterval(interval);
-      try {
-        google.accounts.id.initialize({
-          client_id: client_id,
-          callback: handleGoogleLogin,
-          auto_select: false,
-          cancel_on_tap_outside: true
-        });
-        
-        google.accounts.id.renderButton(
-          document.getElementById("googleButtonPlaceholder"),
-          { 
-            theme: "outline", 
-            size: "large", 
-            width: "100%",
-            text: "signin_with",
-            shape: "pill"
-          }
-        );
-      } catch (e) {
-        console.warn("Google GIS already initialized or error:", e);
-      }
-    }
-  }, 100);
-});
 
 const handleClassicLogin = async () => {
   isLoading.value = true;

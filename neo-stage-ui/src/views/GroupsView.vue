@@ -45,7 +45,7 @@
                     <i class="fa-solid fa-folder-tree icon-overlay"></i>
                     <select v-model="selectedCampagneId" class="modern-select ps-5">
                       <option value="">— Sélectionner une campagne active —</option>
-                      <option v-for="c in campagnes" :key="c.id" :value="c.id">{{ c.Titre || c.titre }}</option>
+                      <option v-for="c in campagnes" :key="c.id" :value="c.id">{{ c.nom || c.nom }}</option>
                     </select>
                   </div>
                   <button class="btn-outline-gold" @click="router.push('/campaigns')">

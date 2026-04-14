@@ -27,6 +27,10 @@ namespace NeoEvaluation.API.Data
         public DbSet<Candidat> Candidats { get; set; } = null!;
         public DbSet<Planning> Plannings { get; set; } = null!;
         public DbSet<EntrepriseParSA> EntrepriseParSA { get; set; } = null!;
+        // Nouvelles tables
+        public DbSet<Rapport> Rapports { get; set; } = null!;
+        public DbSet<QuestionnaireQuestion> QuestionnaireQuestions { get; set; } = null!;
+        public DbSet<CampagneQuestionnaire> CampagneQuestionnaires { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -45,32 +49,100 @@ namespace NeoEvaluation.API.Data
                 .WithOne(e => e.Candidature)
                 .HasForeignKey<Evaluation>(e => e.CandidatureId);
 
-            // 3. CONFIGURATION DES LISTES (List<string> vers PostgreSQL Text/JSON)
-            
-            // Convertisseur : Transforme List<string> en string JSON pour la DB et vice-versa
+            // 3. RELATION 1:1 (Evaluation <-> Rapport)
+            modelBuilder.Entity<Evaluation>()
+                .HasOne(e => e.Rapport)
+                .WithOne(r => r.Evaluation)
+                .HasForeignKey<Rapport>(r => r.EvaluationId);
+
+            // 4. MANY-TO-MANY : Questionnaire <-> Question (via QuestionnaireQuestion)
+            modelBuilder.Entity<QuestionnaireQuestion>()
+                .HasKey(qq => new { qq.QuestionnaireId, qq.QuestionId });
+
+            modelBuilder.Entity<QuestionnaireQuestion>()
+                .HasOne(qq => qq.Questionnaire)
+                .WithMany(q => q.QuestionnaireQuestions)
+                .HasForeignKey(qq => qq.QuestionnaireId);
+
+            modelBuilder.Entity<QuestionnaireQuestion>()
+                .HasOne(qq => qq.Question)
+                .WithMany(q => q.QuestionnaireQuestions)
+                .HasForeignKey(qq => qq.QuestionId);
+
+            // 5. MANY-TO-MANY : Campagne <-> Questionnaire (via CampagneQuestionnaire)
+            modelBuilder.Entity<CampagneQuestionnaire>()
+                .HasKey(cq => new { cq.CampagneId, cq.QuestionnaireId });
+
+            modelBuilder.Entity<CampagneQuestionnaire>()
+                .HasOne(cq => cq.Campagne)
+                .WithMany(c => c.CampagneQuestionnaires)
+                .HasForeignKey(cq => cq.CampagneId);
+
+            modelBuilder.Entity<CampagneQuestionnaire>()
+                .HasOne(cq => cq.Questionnaire)
+                .WithMany(q => q.CampagneQuestionnaires)
+                .HasForeignKey(cq => cq.QuestionnaireId);
+
+            // 6. CONFIGURATION DES LISTES (List<string> vers JSON)
             var listConverter = new ValueConverter<List<string>, string>(
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null) ?? "[]",
                 v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new List<string>()
             );
 
-            // Comparateur : Permet à EF Core de détecter si un élément a été ajouté/supprimé dans la liste
             var listComparer = new ValueComparer<List<string>>(
                 (c1, c2) => (c1 == null && c2 == null) || (c1 != null && c2 != null && c1.SequenceEqual(c2)),
                 c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
                 c => c.ToList()
             );
 
-            // Application au champ Permissions de la table Roles
+            // 7. CONFIGURATION DES DICTIONNAIRES (Dictionary<string,float> vers JSON)
+            var dictConverter = new ValueConverter<Dictionary<string, float>, string>(
+                v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null) ?? "{}",
+                v => JsonSerializer.Deserialize<Dictionary<string, float>>(v, (JsonSerializerOptions?)null) ?? new Dictionary<string, float>()
+            );
+
+            var dictComparer = new ValueComparer<Dictionary<string, float>>(
+                (c1, c2) => (c1 == null && c2 == null) || (c1 != null && c2 != null && c1.Count == c2.Count && !c1.Except(c2).Any()),
+                c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                c => new Dictionary<string, float>(c)
+            );
+
+            // Application aux champs List<string>
             modelBuilder.Entity<Role>()
                 .Property(e => e.Permissions)
                 .HasConversion(listConverter)
                 .Metadata.SetValueComparer(listComparer);
 
-            // Application au champ Privileges de la table Utilisateurs
             modelBuilder.Entity<Utilisateur>()
                 .Property(e => e.Privileges)
                 .HasConversion(listConverter)
                 .Metadata.SetValueComparer(listComparer);
+
+            modelBuilder.Entity<Question>()
+                .Property(e => e.Choix)
+                .HasConversion(listConverter)
+                .Metadata.SetValueComparer(listComparer);
+
+            modelBuilder.Entity<Question>()
+                .Property(e => e.Prerequis)
+                .HasConversion(listConverter)
+                .Metadata.SetValueComparer(listComparer);
+
+            // Application aux champs Dictionary<string, float>
+            modelBuilder.Entity<Evaluation>()
+                .Property(e => e.ScoresParTheme)
+                .HasConversion(dictConverter)
+                .Metadata.SetValueComparer(dictComparer);
+
+            modelBuilder.Entity<Rapport>()
+                .Property(r => r.ScoresParTheme)
+                .HasConversion(dictConverter)
+                .Metadata.SetValueComparer(dictComparer);
+
+            modelBuilder.Entity<Rapport>()
+                .Property(r => r.ScoresParNiveau)
+                .HasConversion(dictConverter)
+                .Metadata.SetValueComparer(dictComparer);
         }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -78,4 +150,4 @@ namespace NeoEvaluation.API.Data
             return base.SaveChangesAsync(cancellationToken);
         }
     }
-}
+}

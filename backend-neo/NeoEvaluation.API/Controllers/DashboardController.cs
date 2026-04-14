@@ -11,8 +11,6 @@ public class DashboardController : ControllerBase
 [HttpGet("download-report")]
 public IActionResult DownloadReport()
 {
-    // 1. Logique pour générer le PDF (exemple avec une lib comme QuestPDF ou iText)
-    // Ici, on crée un fichier vide ou un test pour vérifier que ça marche
     var fileContents = System.Text.Encoding.UTF8.GetBytes("Contenu du rapport PDF simulé");
     var contentType = "application/pdf";
     var fileName = "Rapport_Analytique.pdf";
@@ -26,9 +24,9 @@ public IActionResult DownloadReport()
         var evaluations = await _context.Evaluations.ToListAsync();
         
         int totalTests = evaluations.Count;
-        double moyenne = totalTests > 0 ? evaluations.Average(e => e.Score) : 0;
-        int iaProcessed = totalTests; // Dans votre logique UML, tout est traité par l'IA
-        double tauxEchec = totalTests > 0 ? (double)evaluations.Count(e => e.Score < 50) / totalTests * 100 : 0;
+        double moyenne = totalTests > 0 ? evaluations.Average(e => e.ScoreTotal) : 0;
+        int iaProcessed = totalTests;
+        double tauxEchec = totalTests > 0 ? (double)evaluations.Count(e => e.ScoreTotal < 50) / totalTests * 100 : 0;
 
         // 2. Données de l'histogramme (Moyenne par Campagne)
         var chartData = await _context.Campagnes
@@ -37,7 +35,7 @@ public IActionResult DownloadReport()
             .Select(c => new {
                 name = c.Nom.Length > 10 ? c.Nom.Substring(0, 10) : c.Nom,
                 score = c.Candidatures.Any(can => can.Evaluation != null) 
-                        ? (int)c.Candidatures.Average(can => can.Evaluation.Score) 
+                        ? (int)c.Candidatures.Where(can => can.Evaluation != null).Average(can => can.Evaluation!.ScoreTotal) 
                         : 0
             })
             .Take(5)
@@ -47,12 +45,12 @@ public IActionResult DownloadReport()
         var topPerformers = await _context.Evaluations
             .Include(e => e.Candidature)
                 .ThenInclude(c => c.Candidat)
-            .OrderByDescending(e => e.Score)
+            .OrderByDescending(e => e.ScoreTotal)
             .Take(4)
             .Select(e => new {
-                name = e.Candidature.Candidat.NomComplet,
-                test = e.Candidature.Campagne.Nom,
-                score = (int)e.Score
+                name = e.Candidature != null && e.Candidature.Candidat != null ? e.Candidature.Candidat.NomComplet : "Inconnu",
+                test = e.Candidature != null && e.Candidature.Campagne != null ? e.Candidature.Campagne.Nom : "N/A",
+                score = (int)e.ScoreTotal
             })
             .ToListAsync();
 
@@ -62,4 +60,4 @@ public IActionResult DownloadReport()
             leaders = topPerformers
         });
     }
-}
+}
