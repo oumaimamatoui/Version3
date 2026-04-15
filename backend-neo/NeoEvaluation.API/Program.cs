@@ -33,6 +33,8 @@ builder.Services.AddSendGrid(options => {
 builder.Services.AddScoped<IEmailService, SendGridEmailService>();
 
 builder.Services.AddSingleton<IAuditLogService, AuditLogService>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ITenantService, TenantService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

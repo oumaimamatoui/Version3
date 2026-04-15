@@ -1,16 +1,25 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using NeoEvaluation.API.Data;
 using NeoEvaluation.API.Models;
+using NeoEvaluation.API.Services;
 
 namespace NeoEvaluation.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class CampagnesController : ControllerBase
     {
         private readonly AppDbContext _context;
-        public CampagnesController(AppDbContext context) { _context = context; }
+        private readonly ITenantService _tenantService;
+
+        public CampagnesController(AppDbContext context, ITenantService tenantService) 
+        { 
+            _context = context; 
+            _tenantService = tenantService;
+        }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetCampagnes()
@@ -60,7 +69,10 @@ namespace NeoEvaluation.API.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var entId = await _context.Entreprises.Select(e => e.Id).FirstOrDefaultAsync();
+            var entId = _tenantService.GetTenantId();
+            if (entId == null || entId == Guid.Empty)
+                return Unauthorized("Impossible d'identifier votre entreprise.");
+
             Guid newCampagneId = Guid.NewGuid();
 
             using var trans = await _context.Database.BeginTransactionAsync();
@@ -70,7 +82,7 @@ namespace NeoEvaluation.API.Controllers
                     Nom = dto.Nom, 
                     Description = dto.Description,
                     Statut = dto.Statut,
-                    EntrepriseId = entId,
+                    EntrepriseId = entId.Value,
                     DateDebut = dto.DateDebut.ToUniversalTime(), 
                     DateFin = dto.DateFin.ToUniversalTime()
                 };

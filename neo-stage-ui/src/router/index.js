@@ -94,7 +94,7 @@ const routes = [
    * ESPACE ADMINISTRATION ENTREPRISE & RECRUTEMENT
    */
   { path: '/roles', name: 'roles', component: RolesManagementView, meta: { requiresAuth: true, role: 'AdminEntreprise' } },
-  { path: '/groups', name: 'groups', component: GroupsView, meta: { requiresAuth: true, role: 'AdminEntreprise' } },
+  { path: '/groups', name: 'groups', component: GroupsView, meta: { requiresAuth: true, role: ['AdminEntreprise', 'Recruteur'] } },
   { path: '/campaigns', name: 'campaigns', component: CampagnesView, meta: { requiresAuth: true, role: ['Evaluateur', 'AdminEntreprise', 'Recruteur'] } },
   { path: '/candidates-list', name: 'candidates-list', component: ListeCandidatsView, meta: { requiresAuth: true, role: ['AdminEntreprise', 'Recruteur'] } },
   { path: '/details-candidat/:id', name: 'details-candidat', component: DetailsCandidatView, meta: { requiresAuth: true, role: ['AdminEntreprise', 'Recruteur'] } },

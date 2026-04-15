@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using NeoEvaluation.API.Models;
+using NeoEvaluation.API.Services;
 using System.Text.Json;
 using System.Linq;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -9,7 +10,21 @@ namespace NeoEvaluation.API.Data
 {
     public class AppDbContext : DbContext
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+        public readonly Guid? CurrentTenantId;
+        public readonly bool IsSuperAdmin;
+
+        public AppDbContext(DbContextOptions<AppDbContext> options, ITenantService? tenantService = null) : base(options) 
+        { 
+            if (tenantService != null)
+            {
+                CurrentTenantId = tenantService.GetTenantId();
+                var role = tenantService.GetUserRole();
+                IsSuperAdmin = role == "SuperAdmin";
+                CurrentUserId = tenantService.GetUserId();
+            }
+        }
+
+        public Guid? CurrentUserId { get; }
 
         // --- TABLES ---
         public DbSet<Utilisateur> Utilisateurs { get; set; } = null!;
@@ -143,6 +158,50 @@ namespace NeoEvaluation.API.Data
                 .Property(r => r.ScoresParNiveau)
                 .HasConversion(dictConverter)
                 .Metadata.SetValueComparer(dictComparer);
+
+            // 8. MULTI-TENANCY GLOBAL QUERY FILTERS
+            modelBuilder.Entity<Campagne>()
+                .HasQueryFilter(e => IsSuperAdmin || e.EntrepriseId == CurrentTenantId);
+
+            modelBuilder.Entity<Utilisateur>()
+                .HasQueryFilter(e => IsSuperAdmin || e.EntrepriseId == CurrentTenantId || e.Id == CurrentUserId);
+
+            modelBuilder.Entity<Entreprise>()
+                .HasQueryFilter(e => IsSuperAdmin || e.Id == CurrentTenantId);
+
+            modelBuilder.Entity<Role>()
+                .HasQueryFilter(e => IsSuperAdmin || e.EntrepriseId == CurrentTenantId || e.EntrepriseId == null);
+
+            modelBuilder.Entity<Questionnaire>()
+                .HasQueryFilter(e => IsSuperAdmin || e.EntrepriseId == CurrentTenantId);
+
+            modelBuilder.Entity<Question>()
+                .HasQueryFilter(e => IsSuperAdmin || e.EntrepriseId == CurrentTenantId);
+
+            modelBuilder.Entity<Candidature>()
+                .HasQueryFilter(e => IsSuperAdmin || e.Campagne.EntrepriseId == CurrentTenantId);
+
+            modelBuilder.Entity<Evaluation>()
+                .HasQueryFilter(e => IsSuperAdmin || e.Candidature.Campagne.EntrepriseId == CurrentTenantId);
+
+            modelBuilder.Entity<Rapport>()
+                .HasQueryFilter(e => IsSuperAdmin || e.Evaluation.Candidature.Campagne.EntrepriseId == CurrentTenantId);
+
+            // Filtres secondaires pour supprimer les warnings EF
+            modelBuilder.Entity<QuestionnaireQuestion>()
+                .HasQueryFilter(e => IsSuperAdmin || e.Question.EntrepriseId == CurrentTenantId);
+
+            modelBuilder.Entity<CampagneQuestionnaire>()
+                .HasQueryFilter(e => IsSuperAdmin || e.Campagne.EntrepriseId == CurrentTenantId);
+
+            modelBuilder.Entity<Reponse>()
+                .HasQueryFilter(e => IsSuperAdmin || e.Evaluation.Candidature.Campagne.EntrepriseId == CurrentTenantId);
+
+            modelBuilder.Entity<DocumentCandidat>()
+                .HasQueryFilter(e => IsSuperAdmin || e.Candidat.EntrepriseId == CurrentTenantId);
+
+            modelBuilder.Entity<Planning>()
+                .HasQueryFilter(e => IsSuperAdmin || e.Campagne.EntrepriseId == CurrentTenantId);
         }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

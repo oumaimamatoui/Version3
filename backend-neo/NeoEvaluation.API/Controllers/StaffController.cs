@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NeoEvaluation.API.Data;
 using NeoEvaluation.API.Models;
+using Microsoft.AspNetCore.Authorization;
+using NeoEvaluation.API.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,13 +13,16 @@ namespace NeoEvaluation.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class StaffController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly ITenantService _tenantService;
 
-        public StaffController(AppDbContext context)
+        public StaffController(AppDbContext context, ITenantService tenantService)
         {
             _context = context;
+            _tenantService = tenantService;
         }
 
         // 1. OBTENIR TOUT LE PERSONNEL
@@ -26,6 +31,18 @@ namespace NeoEvaluation.API.Controllers
         {
             try
             {
+                // -- DEBUG MULTI-TENANCY --
+                var tenantId = _tenantService.GetTenantId();
+                var userRole = _tenantService.GetUserRole();
+                var isSuperAdminContext = _context.IsSuperAdmin;
+                var currentTenantIdContext = _context.CurrentTenantId;
+                Console.WriteLine("\n=== [DEBUG MULTI-TENANCY STAFF] ===");
+                Console.WriteLine($"Service TenantId : {tenantId}");
+                Console.WriteLine($"Service UserRole : {userRole}");
+                Console.WriteLine($"DbContext IsSuperAdmin : {isSuperAdminContext}");
+                Console.WriteLine($"DbContext CurrentTenantId : {currentTenantIdContext}");
+                Console.WriteLine("=====================================\n");
+
                 // Diagnostic : On compte tout d'abord TOUS les utilisateurs
                 var totalAll = await _context.Utilisateurs.CountAsync();
                 Console.WriteLine($"[DIAGNOSTIC] Total Utilisateurs Database: {totalAll}");

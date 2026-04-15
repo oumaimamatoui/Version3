@@ -155,7 +155,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
-import axios from 'axios';
+import api from '@/services/api';
 import AppSidebar from '../components/AppSidebar.vue';
 import AppNavbar from '../components/AppNavbar.vue';
 
@@ -170,7 +170,7 @@ const API_ENDPOINT = 'http://localhost:5172/api';
 const fetchCampaigns = async () => {
   loading.value = true;
   try {
-    const res = await axios.get(`${API_ENDPOINT}/Campagnes`);
+    const res = await api.get('/Campagnes');
     campaigns.value = res.data;
   } catch (err) { console.error(err); } 
   finally { loading.value = false; }

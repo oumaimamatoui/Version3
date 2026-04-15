@@ -277,9 +277,9 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue';
-import axios from 'axios';
+import api from '@/services/api';
 
-const API_QUESTIONS = 'http://localhost:5172/api/Questions';
+const API_QUESTIONS = '/Questions';
 
 /* ─── TYPE DEFINITIONS ────────────────────────────────────────── */
 const typeDefinitions = [
@@ -328,7 +328,7 @@ const correctRadioIndex = computed({
 const fetchData = async () => {
   loading.value = true;
   try {
-    const res = await axios.get(API_QUESTIONS);
+    const res = await api.get(API_QUESTIONS);
     questions.value = res.data;
   } catch (e) {
     showToast('Erreur de connexion à l\'API.', 'error', 'fa-solid fa-plug-circle-xmark');
@@ -440,9 +440,9 @@ const save = async () => {
     };
 
     if (isEdit.value) {
-      await axios.put(`${API_QUESTIONS}/${form.id}`, payload);
+      await api.put(`${API_QUESTIONS}/${form.id}`, payload);
     } else {
-      await axios.post(API_QUESTIONS, payload);
+      await api.post(API_QUESTIONS, payload);
     }
     showModal.value = false;
     showToast('Actif enregistré avec succès.', 'success', 'fa-solid fa-check-circle');
@@ -462,7 +462,7 @@ const handleDelete = (id) => {
   confirmDialog.show    = true;
   confirmDialog._resolve = async () => {
     try {
-      await axios.delete(`${API_QUESTIONS}/${id}`);
+      await api.delete(`${API_QUESTIONS}/${id}`);
       showToast('Actif supprimé.', 'warn', 'fa-solid fa-trash-can');
       await fetchData();
     } catch {

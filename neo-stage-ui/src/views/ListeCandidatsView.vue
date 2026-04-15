@@ -119,9 +119,8 @@
 </template>
 
 <script setup>
-/* الجزء البرمجي (Script) يبقى كما هو تماماً */
 import { ref, computed, onMounted } from 'vue';
-import axios from 'axios';
+import api from '@/services/api';
 import AppSidebar from '@/components/AppSidebar.vue';
 import AppNavbar from '@/components/AppNavbar.vue';
 
@@ -138,14 +137,14 @@ const kpiStats = computed(() => [
 
 const fetchCandidates = async () => {
   try {
-    const res = await axios.get('http://localhost:5172/api/Candidates');
+    const res = await api.get('/Candidates');
     candidates.value = Array.isArray(res.data) ? res.data : [];
   } catch (e) { console.error(e); }
 };
 
 const fetchCampaigns = async () => {
   try {
-    const res = await axios.get('http://localhost:5172/api/Invitations/campagnes');
+    const res = await api.get('/Invitations/campagnes');
     campaigns.value = res.data;
   } catch (e) { console.error(e); }
 };
