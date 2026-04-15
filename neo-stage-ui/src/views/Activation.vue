@@ -109,7 +109,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import axios from 'axios';
+import api from '@/services/api';
 
 const route = useRoute();
 const router = useRouter();
@@ -125,7 +125,7 @@ const form = ref({
   confirmPassword: ''
 });
 
-const API_URL = 'http://localhost:5172/api/Activation';
+const API_URL = '/Activation';
 
 onMounted(async () => {
   const token = route.query.token;
@@ -137,7 +137,7 @@ onMounted(async () => {
   }
   
   try {
-    const res = await axios.get(`${API_URL}/check/${token}`);
+    const res = await api.get(`${API_URL}/check/${token}`);
     if (!res.data.valide) {
       error.value = true;
       errorMessage.value = "Ce lien a expiré ou est invalide.";
@@ -156,7 +156,7 @@ const handleActivation = async () => {
 
   isSubmitting.value = true;
   try {
-    await axios.post(`${API_URL}/complete`, {
+    await api.post(`${API_URL}/complete`, {
       token: route.query.token,
       password: form.value.password
     });

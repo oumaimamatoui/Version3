@@ -20,7 +20,8 @@ namespace NeoEvaluation.API.Controllers
         [HttpGet("check/{token}")]
         public async Task<IActionResult> CheckToken(Guid token)
         {
-            var t = await _context.TokensActivation.FirstOrDefaultAsync(x => x.Token == token && !x.Utilise && x.DateExpiration > DateTime.UtcNow);
+            var t = await _context.TokensActivation.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(x => x.Token == token && !x.Utilise && x.DateExpiration > DateTime.UtcNow);
             return Ok(new { valide = (t != null) });
         }
 
@@ -28,7 +29,8 @@ namespace NeoEvaluation.API.Controllers
         public async Task<IActionResult> Complete([FromBody] CompleteActivationDto dto)
         {
             Console.WriteLine($"[ACTIVATION DEBUG] Tentative de finalisation pour le token: {dto.Token}");
-            var token = await _context.TokensActivation.FirstOrDefaultAsync(t => t.Token == dto.Token && !t.Utilise);
+            var token = await _context.TokensActivation.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(t => t.Token == dto.Token && !t.Utilise);
             
             if (token == null) {
                 Console.WriteLine("[ACTIVATION DEBUG] Token introuvable ou déjà utilisé.");
@@ -43,8 +45,9 @@ namespace NeoEvaluation.API.Controllers
             // CAS CANDIDAT
             if (token.UtilisateurId != null && token.UtilisateurId != Guid.Empty)
             {
-                Console.WriteLine($"[ACTIVATION DEBUG] Mode: CANDIDAT (User: {token.UtilisateurId})");
-                var user = await _context.Utilisateurs.FindAsync(token.UtilisateurId);
+                Console.WriteLine($"[ACTIVATION DEBUG] Mode: CANDIDAT / STAFF (User: {token.UtilisateurId})");
+                var user = await _context.Utilisateurs.IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(u => u.Id == token.UtilisateurId);
                 if (user == null) return NotFound(new { message = "Utilisateur non trouvé." });
 
                 user.MotDePasseHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
@@ -57,7 +60,8 @@ namespace NeoEvaluation.API.Controllers
 
             Console.WriteLine($"[ACTIVATION DEBUG] Mode: ENTREPRISE (Inscription: {token.IdInscription})");
             // CAS ENTREPRISE / SUPERADMIN
-            var reg = await _context.InscriptionsEntreprises.FindAsync(token.IdInscription);
+            var reg = await _context.InscriptionsEntreprises.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(i => i.Id == token.IdInscription);
             if (reg == null) {
                 Console.WriteLine("[ACTIVATION DEBUG] Inscription introuvable dans la DB.");
                 return BadRequest(new { message = "Inscription introuvable." });

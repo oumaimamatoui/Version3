@@ -1,16 +1,25 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using NeoEvaluation.API.Data;
 using NeoEvaluation.API.Models;
+using NeoEvaluation.API.Services;
 
 namespace NeoEvaluation.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class QuestionsController : ControllerBase
     {
         private readonly AppDbContext _context;
-        public QuestionsController(AppDbContext context) { _context = context; }
+        private readonly ITenantService _tenantService;
+
+        public QuestionsController(AppDbContext context, ITenantService tenantService) 
+        { 
+            _context = context; 
+            _tenantService = tenantService;
+        }
 
         [HttpGet]
         public async Task<IActionResult> GetQuestions()
@@ -41,10 +50,12 @@ namespace NeoEvaluation.API.Controllers
                 var question = new Question
                 {
                     Id = Guid.NewGuid(),
+                    EntrepriseId = _tenantService.GetTenantId(),
                     Enonce = dto.Enonce,
                     Type = dto.Type,
                     Niveau = dto.Niveau,
                     Points = dto.Points,
+                    DureeSecondes = dto.DureeSecondes,
                     Theme = dto.Theme,
                     SousTheme = dto.SousTheme,
                     Choix = dto.Choix ?? new List<string>(),

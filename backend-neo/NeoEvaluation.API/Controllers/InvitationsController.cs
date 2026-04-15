@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using NeoEvaluation.API.Data;
 using NeoEvaluation.API.Models;
@@ -9,15 +10,18 @@ namespace NeoEvaluation.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class InvitationsController : ControllerBase
     {
         private readonly AppDbContext _context;
         private readonly IEmailService _emailService; // Injection du service
+        private readonly ITenantService _tenantService;
 
-        public InvitationsController(AppDbContext context, IEmailService emailService)
+        public InvitationsController(AppDbContext context, IEmailService emailService, ITenantService tenantService)
         {
             _context = context;
             _emailService = emailService;
+            _tenantService = tenantService;
         }
 
         [HttpPost("invite-candidates")]
@@ -136,17 +140,21 @@ namespace NeoEvaluation.API.Controllers
                     return BadRequest("Un utilisateur avec cet email existe déjà.");
                 }
 
-                // 2. Récupérer le rôle réel depuis la DB pour avoir son ID
-                var dbRole = await _context.Roles.FirstOrDefaultAsync(r => r.Nom == request.Role);
-
-                // 2.5 Auto-résolution de l'EntrepriseId si manquant (HACK pour éviter le re-login)
+                // 2. Auto-résolution de l'EntrepriseId via le Token (TenantService)
                 var currentEntrepriseId = request.EntrepriseId;
                 if (!currentEntrepriseId.HasValue || currentEntrepriseId == Guid.Empty)
                 {
-                    // On cherche l'entreprise de l'admin qui fait l'action (via son propre compte)
-                    // Note: Dans un environnement PRO, on utiliserait User.Identity, ici on simplifie
-                    var authAdmin = await _context.Utilisateurs.FirstOrDefaultAsync(u => u.RoleNom == "AdminEntreprise");
-                    currentEntrepriseId = authAdmin?.EntrepriseId;
+                    currentEntrepriseId = _tenantService.GetTenantId();
+                }
+
+                // 2.5 Récupérer le rôle réel depuis la DB pour avoir son ID (ou le créer)
+                var dbRole = await _context.Roles.IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(r => r.Nom == request.Role && (r.EntrepriseId == currentEntrepriseId || r.EntrepriseId == null));
+
+                if (dbRole == null)
+                {
+                    dbRole = new Role { Id = Guid.NewGuid(), Nom = request.Role, EntrepriseId = currentEntrepriseId };
+                    _context.Roles.Add(dbRole);
                 }
 
                 // 3. Créer le membre du personnel
@@ -157,10 +165,10 @@ namespace NeoEvaluation.API.Controllers
                     Prenom = request.Prenom,
                     Nom = request.NomFamille,
                     RoleNom = request.Role, 
-                    RoleId = dbRole?.Id,
+                    RoleId = dbRole.Id,
                     EntrepriseId = currentEntrepriseId,
                     EstActif = false,
-                    MotDePasseHash = "PENDING_INVITATION_" + Guid.NewGuid().ToString("N") // Satisfait le NOT NULL
+                    MotDePasseHash = "INVITED_" + Guid.NewGuid().ToString("N")
                 };
                 
                 _context.Utilisateurs.Add(personnel);

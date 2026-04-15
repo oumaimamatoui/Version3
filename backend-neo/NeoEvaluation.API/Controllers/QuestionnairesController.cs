@@ -6,14 +6,24 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
+using Microsoft.AspNetCore.Authorization;
+using NeoEvaluation.API.Services;
+
 namespace NeoEvaluation.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class QuestionnairesController : ControllerBase
     {
         private readonly AppDbContext _context;
-        public QuestionnairesController(AppDbContext context) { _context = context; }
+        private readonly ITenantService _tenantService;
+
+        public QuestionnairesController(AppDbContext context, ITenantService tenantService) 
+        { 
+            _context = context; 
+            _tenantService = tenantService;
+        }
 
         // 1. Lister tous les questionnaires
         [HttpGet]
@@ -36,6 +46,7 @@ namespace NeoEvaluation.API.Controllers
                 var questionnaire = new Questionnaire
                 {
                     Id = Guid.NewGuid(),
+                    EntrepriseId = _tenantService.GetTenantId(),
                     Titre = dto.Titre,
                     Description = dto.Description ?? "",
                     DureeMinutes = dto.DureeMinutes,

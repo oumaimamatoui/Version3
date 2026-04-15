@@ -1,13 +1,22 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using NeoEvaluation.API.Data;
+using NeoEvaluation.API.Services;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class DashboardController : ControllerBase
 {
     private readonly AppDbContext _context;
-    public DashboardController(AppDbContext context) => _context = context;
+    private readonly ITenantService _tenantService;
+
+    public DashboardController(AppDbContext context, ITenantService tenantService)
+    {
+        _context = context;
+        _tenantService = tenantService;
+    }
 [HttpGet("download-report")]
 public IActionResult DownloadReport()
 {

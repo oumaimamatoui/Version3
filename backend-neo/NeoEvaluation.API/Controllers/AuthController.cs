@@ -45,7 +45,9 @@ namespace NeoEvaluation.API.Controllers
             Console.WriteLine($"[AUTH DEBUG] Tentative de connexion pour l'email: '{email}'");
             Console.WriteLine($"[AUTH DEBUG] Longueur du mot de passe saisi : {password?.Length ?? 0}");
 
-            var allUsers = await _context.Utilisateurs.Where(u => u.Email.ToLower() == email).ToListAsync();
+            var allUsers = await _context.Utilisateurs
+                .IgnoreQueryFilters()
+                .Where(u => u.Email.ToLower() == email).ToListAsync();
             Console.WriteLine($"[AUTH DEBUG] Tentative pour '{email}' - {allUsers.Count} comptes trouvés.");
 
             Utilisateur? user = null;
@@ -97,7 +99,9 @@ namespace NeoEvaluation.API.Controllers
                 var payload = await GoogleJsonWebSignature.ValidateAsync(googleDto.IdToken, settings);
                 
                 // Recherche de l'utilisateur par l'email renvoyé par Google
-                var user = await _context.Utilisateurs.FirstOrDefaultAsync(u => u.Email == payload.Email.ToLower());
+                var user = await _context.Utilisateurs
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(u => u.Email == payload.Email.ToLower());
 
                 if (user == null) 
                     return BadRequest(new { message = "Compte introuvable. Veuillez d'abord vous inscrire via le formulaire." });
@@ -138,6 +142,11 @@ namespace NeoEvaluation.API.Controllers
                 new Claim("nom", user.NomComplet ?? "")
             };
 
+            if (user.EntrepriseId.HasValue)
+            {
+                claims.Add(new Claim("entrepriseId", user.EntrepriseId.Value.ToString()));
+            }
+
             // AJOUT DES PRIVILÈGES (Utilise votre nouvelle List<string> Privileges)
             if (user.Privileges != null && user.Privileges.Any())
             {
@@ -172,7 +181,9 @@ namespace NeoEvaluation.API.Controllers
         {
             Console.WriteLine($"\n[DEBUG] Requête ForgotPassword reçue pour : {dto.Email}");
 
-            var user = await _context.Utilisateurs.FirstOrDefaultAsync(u => u.Email.ToLower() == dto.Email.ToLower());
+            var user = await _context.Utilisateurs
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == dto.Email.ToLower());
             if (user == null)
             {
                 Console.WriteLine($"[DEBUG] Utilisateur non trouvé pour l'email : {dto.Email}");

@@ -6,8 +6,10 @@ using System.Text.Json.Serialization;
 
 namespace NeoEvaluation.API.Models
 {
-    public class Question
+    public class Question : IMultiTenant
     {
+        public Guid? EntrepriseId { get; set; }
+        
         [Key]
         public Guid Id { get; set; } = Guid.NewGuid();
 
@@ -17,6 +19,7 @@ namespace NeoEvaluation.API.Models
         public TypeQuestion Type { get; set; } = TypeQuestion.QCM;
         public NiveauComplexite Niveau { get; set; } = NiveauComplexite.INTERMEDIAIRE;
         public int Points { get; set; } = 1;
+        public int? DureeSecondes { get; set; } // Durée individuelle pour cette question
         public string? Theme { get; set; }
         public string? SousTheme { get; set; }
 

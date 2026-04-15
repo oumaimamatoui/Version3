@@ -123,7 +123,7 @@
                   <div class="tiny text-slate-400 fw-800 uppercase">{{ formatDate(member.creeLe) }}</div>
                 </td>
                 <td class="text-end">
-                  <div class="d-flex justify-content-end gap-2" v-if="authStore.user?.role === 'AdminEntreprise' || authStore.user?.role === 'SuperAdmin'">
+                  <div class="d-flex justify-content-end gap-2" v-if="(authStore.user?.role || authStore.role || '').toLowerCase().includes('admin')">
                     <button @click="openEditModal(member)" class="btn-circle-action" title="Modifier">
                       <i class="fa-solid fa-pen-to-square"></i>
                     </button>
@@ -200,13 +200,11 @@
 
 <script setup>
 import { ref, onMounted, computed, reactive } from 'vue';
-import axios from 'axios';
-import AppSidebar from '@/components/AppSidebar.vue';
-import AppNavbar from '@/components/AppNavbar.vue';
-import { useAuthStore } from '@/stores/auth'; // Votre store Pinia pour l'utilisateur
+import { useAuthStore } from '@/stores/auth';
+import api from '@/services/api';
 
 const authStore = useAuthStore();
-const API_BASE = 'http://localhost:5172/api';
+// const API_BASE = 'http://localhost:5172/api'; // On utilise déjà api.js
 
 const staff = ref([]);
 const rolesList = ref([]);
@@ -256,12 +254,14 @@ const loadData = async () => {
   loading.value = true;
   try {
     const [resStaff, resRoles] = await Promise.all([
-      axios.get(`${API_BASE}/Staff`),
-      axios.get(`${API_BASE}/Roles`)
+      api.get('/Staff'),
+      api.get('/Roles')
     ]);
     staff.value = resStaff.data;
     rolesList.value = resRoles.data;
     console.log("[DEBUG] Membres reçus du backend:", staff.value);
+    const effectiveRole = authStore.user?.role || authStore.role || "";
+    console.log("[DEBUG] Role détecté:", effectiveRole);
   } catch (err) {
     console.error("Erreur de chargement :", err);
   } finally {
@@ -277,16 +277,14 @@ const handleSave = async () => {
     inviteForm.entrepriseId = authStore.user?.entrepriseId;
     
     if (isEditMode.value) {
-      // MISE À JOUR (PUT) : On utilise maintenant le Staff endpoint
-      await axios.put(`${API_BASE}/Staff/${currentEditId.value}`, {
+      await api.put(`/Staff/${currentEditId.value}`, {
         prenom: inviteForm.prenom,
-        nom: inviteForm.nomFamille, // On envoie nom car c'est ce qu'attend le DTO/Modèle
+        nom: inviteForm.nomFamille,
         roleNom: inviteForm.role
       });
       alert("Membre mis à jour avec succès !");
     } else {
-      // INVITATION (POST)
-      await axios.post(`${API_BASE}/Invitations/invite-staff`, inviteForm);
+      await api.post('/Invitations/invite-staff', inviteForm);
       alert("L'invitation a été envoyée avec succès !");
     }
     
@@ -303,7 +301,7 @@ const handleSave = async () => {
 const getPhotoUrl = (url) => {
   if (!url) return null;
   if (url.startsWith('http')) return url;
-  // On préfixe par l'URL du backend (Port 5172)
+  const API_BASE = 'http://localhost:5172/api';
   return `${API_BASE.replace('/api', '')}/${url.replace(/\\/g, '/')}`;
 };
 
@@ -313,12 +311,8 @@ const filteredStaff = computed(() => {
     // A. SUPPRIMER LE SUPER ADMIN : Jamais affiché dans cette liste
     if (member.roleNom === 'SuperAdmin') return false;
 
-    // B. FILTRER PAR ENTREPRISE (Multi-tenancy)
-    // NOTE: Désactivé temporairement pour diagnostic car 4 membres existent en DB
-    if (authStore.user?.role !== 'SuperAdmin') {
-       // On laisse tout passer pour l'instant pour que vous puissiez les voir
-       // if (member.entrepriseId && member.entrepriseId !== authStore.user?.entrepriseId) return false;
-    }
+    // B. FILTRAGE DÉJÀ FAIT PAR LE BACKEND (Multi-tenancy auto)
+    // On ne refiltre pas ici car le backend nous envoie déjà uniquement nos membres.
 
     // C. RECHERCHE TEXTUELLE
     const search = searchQuery.value.toLowerCase();
@@ -347,7 +341,7 @@ const filteredRolesList = computed(() => {
 const deleteMember = async (id) => {
   if (confirm("Supprimer ce collaborateur ?")) {
     try {
-      await axios.delete(`${API_BASE}/Staff/${id}`);
+      await api.delete(`/Staff/${id}`);
       loadData();
     } catch (err) {
       alert("Erreur lors de la suppression.");
