@@ -95,7 +95,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import axios from 'axios';
+import api from '@/services/api';
 
 const route = useRoute();
 const pass = ref('');
@@ -107,26 +107,39 @@ const requestSent = ref(false);
 const token = ref('');
 
 onMounted(() => {
-  token.value = route.query.token;
+  const t = route.query.token;
+  token.value = Array.isArray(t) ? t[0] : t;
+  
   if (!token.value) {
     errorMessage.value = "Le jeton de réinitialisation est manquant. Veuillez recommencer la procédure.";
+  } else {
+    console.log("[DEBUG] Reset Token detected:", token.value);
   }
 });
 
-const isFormValid = computed(() => pass.value && pass.value.length >= 6 && pass.value === conf.value);
+const isFormValid = computed(() => {
+  return token.value && pass.value && pass.value.length >= 6 && pass.value === conf.value;
+});
 
 const handleResetPassword = async () => {
   if (!isFormValid.value) return;
   
   isLoading.value = true;
   errorMessage.value = '';
+  
+  console.log("[DEBUG] Sending Reset Password Payload:", {
+    token: token.value,
+    newPassword: pass.value
+  });
+
   try {
-    await axios.post('http://localhost:5172/api/Auth/reset-password', {
+    await api.post('/Auth/reset-password', {
       token: token.value,
       newPassword: pass.value
     });
     requestSent.value = true;
   } catch (err) {
+    console.error("[DEBUG] Reset Password Error:", err.response?.data);
     errorMessage.value = err.response?.data?.message || "Échec de la réinitialisation.";
   } finally {
     isLoading.value = false;

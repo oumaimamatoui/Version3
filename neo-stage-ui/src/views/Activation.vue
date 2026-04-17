@@ -72,6 +72,34 @@
           <p class="text-center text-muted small mb-4">Initialisez votre mot de passe pour finaliser l'activation de votre compte.</p>
           
           <form @submit.prevent="handleActivation">
+            <!-- NOUVEAU : PRÉNOM & NOM -->
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <div class="input-group-cyber">
+                  <div class="input-icon"><i class="fa fa-user"></i></div>
+                  <input 
+                    v-model="form.prenom" 
+                    type="text" 
+                    class="cyber-input" 
+                    placeholder="Prénom" 
+                    required
+                  >
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="input-group-cyber">
+                  <div class="input-icon"><i class="fa fa-id-card"></i></div>
+                  <input 
+                    v-model="form.nom" 
+                    type="text" 
+                    class="cyber-input" 
+                    placeholder="Nom"
+                    required
+                  >
+                </div>
+              </div>
+            </div>
+
             <div class="input-group-cyber mb-3">
               <div class="input-icon"><i class="fa fa-lock"></i></div>
               <input 
@@ -121,6 +149,8 @@ const errorMessage = ref('');
 const isSubmitting = ref(false);
 
 const form = ref({
+  prenom: '',
+  nom: '',
   password: '',
   confirmPassword: ''
 });
@@ -128,13 +158,17 @@ const form = ref({
 const API_URL = '/Activation';
 
 onMounted(async () => {
-  const token = route.query.token;
+  const t = route.query.token;
+  const token = Array.isArray(t) ? t[0] : t;
+
   if (!token) {
     error.value = true;
     errorMessage.value = "Le jeton de sécurité est manquant.";
     loading.value = false;
     return;
   }
+  
+  console.log("[DEBUG] Activation Token detected:", token);
   
   try {
     const res = await api.get(`${API_URL}/check/${token}`);
@@ -155,10 +189,15 @@ const handleActivation = async () => {
   if (form.value.password !== form.value.confirmPassword) return alert("Les mots de passe divergent.");
 
   isSubmitting.value = true;
+  const t = route.query.token;
+  const cleanToken = Array.isArray(t) ? t[0] : t;
+  
   try {
     await api.post(`${API_URL}/complete`, {
-      token: route.query.token,
-      password: form.value.password
+      token: cleanToken,
+      password: form.value.password,
+      prenom: form.value.prenom,
+      nom: form.value.nom
     });
     success.value = true;
   } catch (err) {

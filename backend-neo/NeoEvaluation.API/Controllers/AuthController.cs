@@ -171,7 +171,8 @@ namespace NeoEvaluation.API.Controllers
                 Role = userRole,
                 Email = user.Email,
                 Photo = user.PhotoUrl,
-                EntrepriseId = user.EntrepriseId
+                EntrepriseId = user.EntrepriseId,
+                ThemePreference = user.ThemePreference
             };
         }
 
@@ -246,24 +247,24 @@ namespace NeoEvaluation.API.Controllers
             if (!Guid.TryParse(dto.Token, out Guid tokenGuid))
                 return BadRequest(new { message = "Token invalide." });
 
+            if (string.IsNullOrEmpty(dto.NewPassword))
+                return BadRequest(new { message = "Nouveau mot de passe requis." });
+
             var resetToken = await _context.TokensActivation.FirstOrDefaultAsync(t => t.Token == tokenGuid && !t.Utilise && t.DateExpiration > DateTime.UtcNow);
 
             if (resetToken == null)
                 return BadRequest(new { message = "Le lien est invalide ou a expiré." });
 
-            var user = await _context.Utilisateurs.FindAsync(resetToken.UtilisateurId);
+            var user = await _context.Utilisateurs.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.Id == resetToken.UtilisateurId);
             if (user == null)
                 return BadRequest(new { message = "Utilisateur introuvable." });
-
-            Console.WriteLine($"[RESET DEBUG] Réinitialisation pour : {user.Email}");
-            Console.WriteLine($"[RESET DEBUG] Longueur du nouveau mot de passe reçu : {dto.NewPassword.Length}");
 
             // Mise à jour du mot de passe
             user.MotDePasseHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
             resetToken.Utilise = true;
 
             await _context.SaveChangesAsync();
-            Console.WriteLine($"[RESET DEBUG] SUCCÈS : Mot de passe mis à jour en base pour {user.Email}");
 
             return Ok(new { message = "Votre mot de passe a été réinitialisé avec succès." });
         }
