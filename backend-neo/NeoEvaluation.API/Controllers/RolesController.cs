@@ -53,7 +53,7 @@ namespace NeoEvaluation.API.Controllers
                 _context.Roles.Add(role);
 
                 // B. Création de l'utilisateur (Classe concrète Personnel héritant de Utilisateur)
-                var newUser = new Personnel 
+                var newUser = new Utilisateur 
                 {
                     Id = Guid.NewGuid(),
                     EntrepriseId = role.EntrepriseId,

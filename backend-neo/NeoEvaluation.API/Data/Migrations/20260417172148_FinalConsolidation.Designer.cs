@@ -2,18 +2,21 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NeoEvaluation.API.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace NeoEvaluation.API.Migrations
+namespace NeoEvaluation.API.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260417172148_FinalConsolidation")]
+    partial class FinalConsolidation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -40,15 +43,8 @@ namespace NeoEvaluation.API.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
-                    b.Property<int>("DureeMinutes")
-                        .HasColumnType("integer");
-
                     b.Property<Guid>("EntrepriseId")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("ModeNotation")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<string>("Nom")
                         .IsRequired()
@@ -264,6 +260,32 @@ namespace NeoEvaluation.API.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("InscriptionsEntreprises");
+                });
+
+            modelBuilder.Entity("NeoEvaluation.API.Models.Planning", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CampagneId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("DateOuverture")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DureeMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ModeNotation")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CampagneId");
+
+                    b.ToTable("Plannings");
                 });
 
             modelBuilder.Entity("NeoEvaluation.API.Models.Question", b =>
@@ -713,6 +735,17 @@ namespace NeoEvaluation.API.Migrations
                     b.Navigation("Candidat");
 
                     b.Navigation("Candidature");
+                });
+
+            modelBuilder.Entity("NeoEvaluation.API.Models.Planning", b =>
+                {
+                    b.HasOne("NeoEvaluation.API.Models.Campagne", "Campagne")
+                        .WithMany()
+                        .HasForeignKey("CampagneId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Campagne");
                 });
 
             modelBuilder.Entity("NeoEvaluation.API.Models.Question", b =>

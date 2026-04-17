@@ -10,7 +10,7 @@ namespace NeoEvaluation.API.Models
         public DateTime PostuleLe { get; set; } = DateTime.UtcNow;
 
         public Guid CandidatId { get; set; }
-        public Candidat Candidat { get; set; } = null!;
+        public Utilisateur Candidat { get; set; } = null!;
 
         public Guid CampagneId { get; set; }
         public Campagne Campagne { get; set; } = null!;

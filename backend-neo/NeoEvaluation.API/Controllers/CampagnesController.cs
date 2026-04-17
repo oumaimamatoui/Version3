@@ -37,6 +37,8 @@ namespace NeoEvaluation.API.Controllers
                         c.DateDebut,
                         c.DateFin,
                         c.CreeLe,
+                        c.DureeMinutes,
+                        c.ModeNotation,
                         Questionnaires = c.CampagneQuestionnaires.Select(cq => new {
                             Id = cq.Questionnaire != null ? cq.Questionnaire.Id : Guid.Empty,
                             Titre = cq.Questionnaire != null ? cq.Questionnaire.Titre : "Sans Titre",
@@ -84,7 +86,9 @@ namespace NeoEvaluation.API.Controllers
                     Statut = dto.Statut,
                     EntrepriseId = entId.Value,
                     DateDebut = dto.DateDebut.ToUniversalTime(), 
-                    DateFin = dto.DateFin.ToUniversalTime()
+                    DateFin = dto.DateFin.ToUniversalTime(),
+                    DureeMinutes = dto.DureeMinutes,
+                    ModeNotation = dto.ModeNotation
                 };
                 _context.Campagnes.Add(nouvelle);
 
@@ -110,6 +114,25 @@ namespace NeoEvaluation.API.Controllers
             } catch (Exception ex) {
                 await trans.RollbackAsync();
                 return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpPut("{id}/planning")]
+        public async Task<IActionResult> PutPlanning(Guid id, [FromBody] dynamic dto)
+        {
+            var campagne = await _context.Campagnes.FindAsync(id);
+            if (campagne == null) return NotFound();
+
+            try {
+                // On extrait les valeurs dynamiquement (plus simple pour le DTO partiel)
+                campagne.DureeMinutes = (int)dto.dureeMinutes;
+                campagne.DateDebut = ((DateTime)dto.dateOuverture).ToUniversalTime();
+                campagne.ModeNotation = (string)dto.modeNotation;
+
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Planning mis à jour." });
+            } catch (Exception ex) {
+                return BadRequest(ex.Message);
             }
         }
     }

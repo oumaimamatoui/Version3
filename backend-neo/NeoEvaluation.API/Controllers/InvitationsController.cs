@@ -42,18 +42,18 @@ namespace NeoEvaluation.API.Controllers
                 {
                     // 1. Gérer l'utilisateur (Candidat)
                     var currentEntId = _tenantService.GetTenantId();
-                    var candidat = await _context.Candidats.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Email == email);
+                    var candidat = await _context.Utilisateurs.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Email == email);
                     
                     if (candidat == null)
                     {
-                        candidat = new Candidat { 
+                        candidat = new Utilisateur { 
                             Id = Guid.NewGuid(), 
                             Email = email, 
                             RoleNom = "Candidat", 
                             EstActif = false,
                             EntrepriseId = currentEntId
                         };
-                        _context.Candidats.Add(candidat);
+                        _context.Utilisateurs.Add(candidat);
                     }
                     else if (candidat.EntrepriseId == null)
                     {
@@ -166,7 +166,7 @@ namespace NeoEvaluation.API.Controllers
                 }
 
                 // 3. Créer le membre du personnel
-                var personnel = new Personnel 
+                var personnel = new Utilisateur 
                 { 
                     Id = Guid.NewGuid(), 
                     Email = request.Email.ToLower(),

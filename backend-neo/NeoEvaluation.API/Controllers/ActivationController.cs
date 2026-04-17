@@ -78,7 +78,7 @@ namespace NeoEvaluation.API.Controllers
             {
                 Console.WriteLine("[ACTIVATION DEBUG] Détection d'un SUPER ADMIN.");
                 
-                var superUser = new SuperAdmin {
+                var superUser = new Utilisateur {
                     Id = Guid.NewGuid(),
                     Nom = reg.NomResponsable,
                     Prenom = reg.PrenomResponsable ?? "Master",
@@ -111,14 +111,6 @@ namespace NeoEvaluation.API.Controllers
             };
             _context.Entreprises.Add(entreprise);
 
-            // 2. Liaison avec EntrepriseParSA (Métadonnées du SuperAdmin)
-            var detailsSA = await _context.EntrepriseParSA
-                .FirstOrDefaultAsync(d => d.EmailResponsable == reg.EmailResponsable && d.EntrepriseId == null);
-            
-            if (detailsSA != null)
-            {
-                detailsSA.EntrepriseId = entreprise.Id;
-            }
 
             // 3. Préparation de l'Admin (Personnel)
             var targetNom = reg.NomResponsable;
@@ -131,8 +123,8 @@ namespace NeoEvaluation.API.Controllers
                 targetPrenom = parts[0];
             }
 
-            // 2. Création de l'Administrateur (Personnel)
-            var adminUser = new Personnel {
+            // 2. Création de l'Administrateur
+            var adminUser = new Utilisateur {
                 Id = Guid.NewGuid(),
                 Nom = targetNom,
                 Prenom = targetPrenom,
@@ -141,7 +133,6 @@ namespace NeoEvaluation.API.Controllers
                 EntrepriseId = entreprise.Id,
                 RoleNom = "AdminEntreprise",
                 EstActif = true,
-                IdEmploye = "ADMIN-01",
                 Privileges = new List<string> { "ALL" }
             };
 
@@ -154,7 +145,7 @@ namespace NeoEvaluation.API.Controllers
                 adminUser.RoleId = roleAdmin.Id;
             }
 
-            _context.Personnels.Add(adminUser);
+            _context.Utilisateurs.Add(adminUser);
 
             token.Utilise = true;
             reg.Statut = 3; // "Activé / Terminé"
