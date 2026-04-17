@@ -29,6 +29,7 @@ namespace NeoEvaluation.API.Models
         public DateTime? DerniereConnexion { get; set; }
         public string? PhotoUrl { get; set; }
         public string? Bio { get; set; }
+        public string ThemePreference { get; set; } = "light";
 
         public List<string> Privileges { get; set; } = new List<string>();
 

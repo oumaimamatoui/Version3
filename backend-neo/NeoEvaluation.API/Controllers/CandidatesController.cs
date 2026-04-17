@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using NeoEvaluation.API.Data;
 using NeoEvaluation.API.DTOs;
@@ -9,15 +10,18 @@ namespace NeoEvaluation.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")] // Route de base : api/Candidates
+    [Authorize]
     public class CandidatesController : ControllerBase
     {
         private readonly AppDbContext _context;
         private readonly IEmailService _emailService;
+        private readonly ITenantService _tenantService;
 
-        public CandidatesController(AppDbContext context, IEmailService emailService)
+        public CandidatesController(AppDbContext context, IEmailService emailService, ITenantService tenantService)
         {
             _context = context;
             _emailService = emailService;
+            _tenantService = tenantService;
         }
 
         // URL: GET http://localhost:5172/api/Candidates/campagnes
@@ -60,20 +64,36 @@ namespace NeoEvaluation.API.Controllers
         public async Task<IActionResult> BulkInvite([FromBody] BulkInviteDto dto)
         {
             if (dto.Emails == null || !dto.Emails.Any()) return BadRequest("Emails manquants.");
-            var campagne = await _context.Campagnes.FindAsync(dto.CampagneId);
+            var campagne = await _context.Campagnes.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(c => c.Id == dto.CampagneId);
+
             if (campagne == null) return BadRequest("Campagne introuvable.");
+
+            var entId = _tenantService.GetTenantId();
 
             foreach (var email in dto.Emails)
             {
-                var cand = await _context.Set<Candidat>().FirstOrDefaultAsync(u => u.Email == email);
+                // Vérifier si le candidat existe déjà (on ignore les filtres pour éviter les doublons d'email)
+                var cand = await _context.Set<Candidat>().IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Email == email);
+                
                 if (cand == null) {
                     cand = new Candidat { 
-                        Id = Guid.NewGuid(), Email = email, Nom = "Candidat", 
-                        Prenom = email.Split('@')[0], RoleNom = "Candidat", 
-                        EstActif = false, CreeLe = DateTime.UtcNow,
+                        Id = Guid.NewGuid(), 
+                        Email = email, 
+                        Nom = "Candidat", 
+                        Prenom = email.Split('@')[0], 
+                        RoleNom = "Candidat", 
+                        EstActif = false, 
+                        CreeLe = DateTime.UtcNow,
+                        EntrepriseId = entId, // CRUCIAL : Lier à l'entreprise
                         Privileges = new List<string> { "AccèsExamen" } 
                     };
                     _context.Set<Candidat>().Add(cand);
+                }
+                else if (cand.EntrepriseId == null)
+                {
+                    // Si le candidat existait sans entreprise, on le lie à celle-ci
+                    cand.EntrepriseId = entId;
                 }
 
                 _context.Candidatures.Add(new Candidature { 
@@ -90,8 +110,8 @@ namespace NeoEvaluation.API.Controllers
                 await _context.SaveChangesAsync();
 
                 try {
-                    string link = $"http://localhost:5173/activer?token={token.Token}";
-                    await _emailService.SendEmailAsync(email, $"Invitation : {campagne.Nom}", $"Lien : {link}");
+                    string link = $"http://localhost:5173/activate-role?token={token.Token}";
+                    await _emailService.SendEmailAsync(email, $"Invitation : {campagne.Nom}", $"Lien d'activation : {link}");
                 } catch { }
             }
             return Ok(new { message = "Invitations envoyées avec succès." });

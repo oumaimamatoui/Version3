@@ -41,20 +41,28 @@ namespace NeoEvaluation.API.Controllers
                 try 
                 {
                     // 1. Gérer l'utilisateur (Candidat)
-                    var candidat = await _context.Candidats.FirstOrDefaultAsync(u => u.Email == email);
+                    var currentEntId = _tenantService.GetTenantId();
+                    var candidat = await _context.Candidats.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Email == email);
+                    
                     if (candidat == null)
                     {
                         candidat = new Candidat { 
                             Id = Guid.NewGuid(), 
                             Email = email, 
                             RoleNom = "Candidat", 
-                            EstActif = false 
+                            EstActif = false,
+                            EntrepriseId = currentEntId
                         };
                         _context.Candidats.Add(candidat);
                     }
+                    else if (candidat.EntrepriseId == null)
+                    {
+                        candidat.EntrepriseId = currentEntId;
+                    }
 
                     // 2. Créer la candidature si elle n'existe pas
-                    var exists = await _context.Candidatures.AnyAsync(c => c.CandidatId == candidat.Id && c.CampagneId == request.CampagneId);
+                    var exists = await _context.Candidatures.IgnoreQueryFilters()
+                        .AnyAsync(c => c.CandidatId == candidat.Id && c.CampagneId == request.CampagneId);
                     if (!exists)
                     {
                         _context.Candidatures.Add(new Candidature { 

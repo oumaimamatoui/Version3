@@ -8,6 +8,8 @@ namespace NeoEvaluation.API.Controllers
     public class CompleteActivationDto {
         public Guid Token { get; set; }
         public string Password { get; set; } = string.Empty;
+        public string? Prenom { get; set; }
+        public string? Nom { get; set; }
     }
 
     [Route("api/[controller]")]
@@ -42,7 +44,7 @@ namespace NeoEvaluation.API.Controllers
                 return BadRequest(new { message = "Lien expiré." });
             }
 
-            // CAS CANDIDAT
+            // CAS CANDIDAT / STAFF
             if (token.UtilisateurId != null && token.UtilisateurId != Guid.Empty)
             {
                 Console.WriteLine($"[ACTIVATION DEBUG] Mode: CANDIDAT / STAFF (User: {token.UtilisateurId})");
@@ -50,12 +52,16 @@ namespace NeoEvaluation.API.Controllers
                     .FirstOrDefaultAsync(u => u.Id == token.UtilisateurId);
                 if (user == null) return NotFound(new { message = "Utilisateur non trouvé." });
 
+                // Mise à jour du nom/prénom s'ils sont fournis (évite les profils vides)
+                if (!string.IsNullOrWhiteSpace(dto.Prenom)) user.Prenom = dto.Prenom;
+                if (!string.IsNullOrWhiteSpace(dto.Nom)) user.Nom = dto.Nom;
+
                 user.MotDePasseHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
                 user.EstActif = true;
                 token.Utilise = true;
                 await _context.SaveChangesAsync();
-                Console.WriteLine("[ACTIVATION DEBUG] Candidat activé avec succès.");
-                return Ok(new { message = "Candidat activé." });
+                Console.WriteLine("[ACTIVATION DEBUG] Utilisateur activé avec succès.");
+                return Ok(new { message = "Utilisateur activé." });
             }
 
             Console.WriteLine($"[ACTIVATION DEBUG] Mode: ENTREPRISE (Inscription: {token.IdInscription})");

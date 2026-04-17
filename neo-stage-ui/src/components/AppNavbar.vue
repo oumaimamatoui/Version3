@@ -95,6 +95,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useNotificationStore } from '@/stores/notification';
 import { useAuthStore } from '@/stores/auth';
+import api from '@/services/api';
 
 const notifStore = useNotificationStore();
 const authStore = useAuthStore();
@@ -118,17 +119,37 @@ const userPhotoUrl = computed(() => {
 });
 
 // --- THÈME ---
+const getThemeKey = () => authStore.user?.id ? `theme_${authStore.user.id}` : null;
 const isDark = ref(false);
+
 const applyTheme = (theme) => {
   document.documentElement.setAttribute('data-theme', theme);
   document.documentElement.classList.toggle('dark-mode', theme === 'dark');
 };
 
-const toggleTheme = () => {
+const toggleTheme = async () => {
   isDark.value = !isDark.value;
   const theme = isDark.value ? 'dark' : 'light';
-  localStorage.setItem('theme', theme);
   applyTheme(theme);
+  
+  const themeKey = getThemeKey();
+  if (themeKey) {
+    localStorage.setItem(themeKey, theme);
+  }
+
+  // Sauvegarde en DB si connecté
+  if (authStore.user) {
+    try {
+      await api.post('/Settings/theme', JSON.stringify(theme), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      // Mettre à jour l'objet user dans le store
+      authStore.user.themePreference = theme;
+      localStorage.setItem('user', JSON.stringify(authStore.user));
+    } catch (err) {
+      console.error("Erreur sauvegarde thème:", err);
+    }
+  }
 };
 
 // --- LANGUE ---
@@ -155,7 +176,11 @@ const handleKeyDown = (e) => {
 };
 
 onMounted(() => {
-  const savedTheme = localStorage.getItem('theme') || 'light';
+  // Priorité : Store (DB) > LocalStorage > Default (light)
+  const dbTheme = authStore.user?.themePreference;
+  const localTheme = localStorage.getItem(getThemeKey());
+  const savedTheme = dbTheme || localTheme || 'light';
+  
   isDark.value = savedTheme === 'dark';
   applyTheme(savedTheme);
   window.addEventListener('keydown', handleKeyDown);
@@ -173,6 +198,13 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeyDown));
   --navy: #0f172a;
   --bg-glass: rgba(255, 255, 255, 0.85);
   --border: #f1f5f9;
+}
+
+:host-context([data-theme="dark"]), 
+[data-theme="dark"] .navbar {
+  --bg-glass: rgba(15, 23, 42, 0.85);
+  --border: rgba(255, 255, 255, 0.1);
+  --navy: #f1f5f9;
 }
 
 /* --- NAVBAR --- */
@@ -210,7 +242,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeyDown));
 
 /* --- DROPDOWNS --- */
 .shadow-premium { box-shadow: 0 20px 50px rgba(15, 23, 42, 0.1); }
-.dropdown-menu { border: 1px solid #f1f5f9; border-radius: 18px; padding: 10px; margin-top: 15px; }
+.dropdown-menu { border: 1px solid var(--border); border-radius: 18px; padding: 10px; margin-top: 15px; background: var(--bg-glass); backdrop-filter: blur(20px); }
 .dropdown-item { border-radius: 10px; padding: 10px 15px; font-size: 14px; font-weight: 600; color: var(--navy); transition: 0.2s; }
 .dropdown-item:hover { background: #fefce8; color: var(--amber); transform: translateX(3px); }
 

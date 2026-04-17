@@ -56,7 +56,7 @@ const routes = [
   { path: '/register', name: 'register', component: RegisterView },
   { path: '/pricing', name: 'pricing', component: TarificationView },
   
-  // ✅ SYNCHRONISATION : Cette route correspond maintenant au lien envoyé par l'email du backend
+  //  SYNCHRONISATION : Cette route correspond maintenant au lien envoyé par l'email du backend
   { path: '/activate-role', name: 'activation', component: ActivationView }, 
   { path: '/forgot-password', name: 'forgot-password', component: ForgotPasswordView },
   { path: '/reset-password', name: 'reset-password', component: ResetPasswordView },

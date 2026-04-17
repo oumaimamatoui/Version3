@@ -17,6 +17,7 @@ namespace NeoEvaluation.API.Services
         {
             if (_httpContext == null || _httpContext.User == null)
                 return null;
+        //claims li fih entrepriseId  m3lomat jya mn token w n7awlo l guid        
 
             var tenantClaim = _httpContext.User.Claims.FirstOrDefault(c => c.Type == "entrepriseId");
             

@@ -262,7 +262,7 @@ onMounted(fetchCampaigns);
 }
 
 /* DECO ELEMENTS */
-.background-overlay { position: absolute; inset: 0; background: radial-gradient(circle at 30% 30%, #ffffff 0%, #f1f5f9 100%); z-index: 0; }
+.background-overlay { position: absolute; inset: 0; background: radial-gradient(circle at 30% 30%, #d2dae6 0%, #f1f5f9 100%); z-index: 0; }
 .tech-grid-subtle { position: absolute; inset: 0; background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px); background-size: 40px 40px; opacity: 0.4; }
 .glow-orb { position: absolute; border-radius: 50%; filter: blur(130px); opacity: 0.15; }
 .orb-amber { width: 600px; height: 600px; background: #fbbf24; top: -100px; right: -100px; }
