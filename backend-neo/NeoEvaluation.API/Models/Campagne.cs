@@ -18,6 +18,8 @@ namespace NeoEvaluation.API.Models
         public DateTime DateFin { get; set; } = DateTime.UtcNow.AddDays(30);
         public StatutCampagne Statut { get; set; } = StatutCampagne.BROUILLON;
         public DateTime CreeLe { get; set; } = DateTime.UtcNow;
+        public int DureeMinutes { get; set; } = 60;
+        public string ModeNotation { get; set; } = "STRICT";
 
         [Required]
         public Guid EntrepriseId { get; set; }

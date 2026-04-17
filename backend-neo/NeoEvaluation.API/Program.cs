@@ -103,7 +103,7 @@ using (var scope = app.Services.CreateScope()) {
         // 2. Admin Seed
         var superAdminRole = context.Roles.FirstOrDefault(r => r.Nom == "SuperAdmin");
         if (!context.Utilisateurs.Any(u => u.Email == "admin@evaluatech.tn")) {
-            context.Utilisateurs.Add(new SuperAdmin {
+            context.Utilisateurs.Add(new Utilisateur {
                 Id = Guid.NewGuid(),
                 Email = "admin@evaluatech.tn", Prenom = "Admin", Nom = "Evaluatech",
                 RoleNom = "SuperAdmin", 

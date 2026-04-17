@@ -30,7 +30,7 @@ namespace NeoEvaluation.API.Controllers
             _context.Entreprises.Add(entrepriseA);
 
             // Admin pour Entreprise A
-            var adminA = new Personnel
+            var adminA = new Utilisateur
             {
                 Id = Guid.NewGuid(),
                 Nom = "Alpha",
@@ -44,7 +44,7 @@ namespace NeoEvaluation.API.Controllers
             _context.Utilisateurs.Add(adminA);
 
             // Employé pour Entreprise A
-            var staffA = new Personnel
+            var staffA = new Utilisateur
             {
                 Id = Guid.NewGuid(),
                 Nom = "Alpha",
@@ -68,7 +68,7 @@ namespace NeoEvaluation.API.Controllers
             _context.Entreprises.Add(entrepriseB);
 
             // Admin pour Entreprise B
-            var adminB = new Personnel
+            var adminB = new Utilisateur
             {
                 Id = Guid.NewGuid(),
                 Nom = "Beta",
@@ -82,7 +82,7 @@ namespace NeoEvaluation.API.Controllers
             _context.Utilisateurs.Add(adminB);
 
             // Employé pour Entreprise B
-            var staffB = new Personnel
+            var staffB = new Utilisateur
             {
                 Id = Guid.NewGuid(),
                 Nom = "Beta",

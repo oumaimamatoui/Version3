@@ -1,6 +1,5 @@
 namespace NeoEvaluation.API.Models
 {
-    public enum DocumentType { DESCRIPTION_POSTE, SPECIFICATIONS_EXIGENCES, BRIEF_PROJET, AUTRE_REFERENCE }
     public enum TypeQuestion { QCU, QCM, VRAI_FAUX }
     public enum StatutCampagne { BROUILLON, PLANIFIEE, EN_COURS, TERMINEE, ARCHIVEE }
     public enum ApplicationStatus { POSTULE, EN_COURS_DE_REVISION, PRESELECTIONNE, REJETE, EMBAUCHE }

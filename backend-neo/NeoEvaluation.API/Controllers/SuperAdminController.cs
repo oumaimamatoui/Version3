@@ -271,24 +271,6 @@ namespace NeoEvaluation.API.Controllers
                 CreeLe = DateTime.UtcNow
             };
 
-            // 2. Création des métadonnées détaillées (Table Propre)
-            var details = new EntrepriseParSA {
-                Id = Guid.NewGuid(),
-                Domaine = dto.Domaine,
-                Industrie = dto.Industrie,
-                SiteWeb = dto.SiteWeb,
-                Adresse = dto.Adresse,
-                Ville = dto.Ville,
-                Pays = dto.Pays,
-                CodePostal = dto.CodePostal,
-                Description = dto.Description,
-                NomResponsable = dto.AdminLastName,
-                PrenomResponsable = dto.AdminFirstName,
-                EmailResponsable = dto.AdminEmail,
-                TelephoneResponsable = dto.AdminPhone,
-                CreeLe = DateTime.UtcNow
-            };
-
             var token = new TokensActivation {
                 IdInscription = reg.Id,
                 Token = Guid.NewGuid(),
@@ -297,7 +279,6 @@ namespace NeoEvaluation.API.Controllers
             };
 
             _context.InscriptionsEntreprises.Add(reg);
-            _context.EntrepriseParSA.Add(details);
             _context.TokensActivation.Add(token);
             await _context.SaveChangesAsync();
 
@@ -329,7 +310,7 @@ namespace NeoEvaluation.API.Controllers
                 Console.WriteLine("--------------------------------------------------\n");
 
                 await _emailService.SendEmailAsync(dto.AdminEmail, "Accès Admin NeoEvaluation", htmlBody);
-                return Ok(new { message = "Organisation créée avec succès", profileId = details.Id });
+                return Ok(new { message = "Organisation créée avec succès" });
             } catch (Exception ex) {
                 return BadRequest(new { message = "Erreur d'envoi d'email de création : " + ex.Message });
             }

@@ -7,5 +7,7 @@ public class CampagneCreateDto {
         public DateTime DateDebut { get; set; }
         public DateTime DateFin { get; set; }
         public Guid? QuestionnaireId { get; set; }
+        public int DureeMinutes { get; set; } = 60;
+        public string ModeNotation { get; set; } = "STRICT";
         public List<Guid>? SelectedCandidatesIds { get; set; }
     }

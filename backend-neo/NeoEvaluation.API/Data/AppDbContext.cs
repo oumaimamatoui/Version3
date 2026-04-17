@@ -38,10 +38,6 @@ namespace NeoEvaluation.API.Data
         public DbSet<Question> Questions { get; set; } = null!;
         public DbSet<Reponse> Reponses { get; set; } = null!;
         public DbSet<Role> Roles { get; set; } = null!;
-        public DbSet<Personnel> Personnels { get; set; } = null!;
-        public DbSet<Candidat> Candidats { get; set; } = null!;
-        public DbSet<Planning> Plannings { get; set; } = null!;
-        public DbSet<EntrepriseParSA> EntrepriseParSA { get; set; } = null!;
         // Nouvelles tables
         public DbSet<Rapport> Rapports { get; set; } = null!;
         public DbSet<QuestionnaireQuestion> QuestionnaireQuestions { get; set; } = null!;
@@ -51,12 +47,10 @@ namespace NeoEvaluation.API.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // 1. CONFIGURATION DE L'HÉRITAGE (Table-per-Hierarchy)
+            // 1. CONFIGURATION DE L'UTILISATEUR (Flat table)
             modelBuilder.Entity<Utilisateur>()
-                .HasDiscriminator<string>("UserType")
-                .HasValue<Personnel>("Personnel")
-                .HasValue<Candidat>("Candidat")
-                .HasValue<SuperAdmin>("SuperAdmin");
+                .HasIndex(u => u.Email)
+                .IsUnique();
 
             // 2. RELATION 1:1 (Candidature <-> Evaluation)
             modelBuilder.Entity<Candidature>()
@@ -200,8 +194,6 @@ namespace NeoEvaluation.API.Data
             modelBuilder.Entity<DocumentCandidat>()
                 .HasQueryFilter(e => IsSuperAdmin || e.Candidat.EntrepriseId == CurrentTenantId);
 
-            modelBuilder.Entity<Planning>()
-                .HasQueryFilter(e => IsSuperAdmin || e.Campagne.EntrepriseId == CurrentTenantId);
         }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -209,4 +201,4 @@ namespace NeoEvaluation.API.Data
             return base.SaveChangesAsync(cancellationToken);
         }
     }
-}
+}

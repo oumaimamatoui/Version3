@@ -29,10 +29,9 @@ namespace NeoEvaluation.API.Models
         public bool EstActif => AbonnementFin == null || AbonnementFin > DateTime.UtcNow;
 
         // Relation optionnelle vers les détails du SuperAdmin
-        public virtual EntrepriseParSA? DetailsSA { get; set; }
 
         // Relations
-        public ICollection<Personnel> Staff { get; set; } = new List<Personnel>();
+        public ICollection<Utilisateur> Staff { get; set; } = new List<Utilisateur>();
         public ICollection<Campagne> Campagnes { get; set; } = new List<Campagne>();
     }
 }

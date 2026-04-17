@@ -38,7 +38,8 @@ namespace NeoEvaluation.API.Controllers
         [HttpGet]
         public async Task<ActionResult> GetCandidates()
         {
-            var list = await _context.Set<Candidat>()
+            var list = await _context.Utilisateurs
+                .Where(u => u.RoleNom == "Candidat")
                 .OrderByDescending(u => u.CreeLe)
                 .Select(u => new {
                     id = u.Id,
@@ -74,10 +75,10 @@ namespace NeoEvaluation.API.Controllers
             foreach (var email in dto.Emails)
             {
                 // Vérifier si le candidat existe déjà (on ignore les filtres pour éviter les doublons d'email)
-                var cand = await _context.Set<Candidat>().IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Email == email);
+                var cand = await _context.Utilisateurs.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Email == email);
                 
                 if (cand == null) {
-                    cand = new Candidat { 
+                    cand = new Utilisateur { 
                         Id = Guid.NewGuid(), 
                         Email = email, 
                         Nom = "Candidat", 
@@ -88,7 +89,7 @@ namespace NeoEvaluation.API.Controllers
                         EntrepriseId = entId, // CRUCIAL : Lier à l'entreprise
                         Privileges = new List<string> { "AccèsExamen" } 
                     };
-                    _context.Set<Candidat>().Add(cand);
+                    _context.Utilisateurs.Add(cand);
                 }
                 else if (cand.EntrepriseId == null)
                 {
