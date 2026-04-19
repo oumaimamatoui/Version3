@@ -57,6 +57,24 @@ namespace NeoEvaluation.API.Controllers
                 };
 
                 _context.Questionnaires.Add(questionnaire);
+                
+                // Lie les questions existantes si fournies
+                if (dto.QuestionIds != null && dto.QuestionIds.Any())
+                {
+                    int ordre = 1;
+                    foreach (var qIdstr in dto.QuestionIds)
+                    {
+                        if (Guid.TryParse(qIdstr, out Guid qId))
+                        {
+                            _context.QuestionnaireQuestions.Add(new QuestionnaireQuestion {
+                                QuestionnaireId = questionnaire.Id,
+                                QuestionId = qId,
+                                Ordre = ordre++
+                            });
+                        }
+                    }
+                }
+
                 await _context.SaveChangesAsync();
 
                 return Ok(questionnaire);
@@ -96,5 +114,10 @@ namespace NeoEvaluation.API.Controllers
         public bool AntitricheActif { get; set; }
         public bool RandomiserQuestions { get; set; }
         public bool EstPublie { get; set; } = true;
+        
+        public string Categorie { get; set; } = "TECHNIQUE";
+        public int? ScoreReussite { get; set; }
+
+        public List<string>? QuestionIds { get; set; } // Liste d'IDs pour lier les questions existantes
     }
 }

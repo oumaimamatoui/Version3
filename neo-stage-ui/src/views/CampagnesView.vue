@@ -519,9 +519,8 @@
                     <h5 class="fw-900 mb-5"><i class="fa-solid fa-calendar-check text-amber me-3"></i>Matrix Planning</h5>
                     <div class="row g-5">
                       <div class="col-md-4"><div class="enigma-input-wrap"><label>OUVERTURE TERMINAL</label><input type="datetime-local" v-model="studio.campagne.dateDebut" class="enigma-field"></div></div>
-                      <div class="col-md-4"><div class="enigma-input-wrap"><label>DURÉE (MIN)</label><input type="number" v-model.number="studio.questionnaire.duree" class="enigma-field" min="1"></div></div>
                       <div class="col-md-4"><div class="enigma-input-wrap"><label>FERMETURE ACCÈS</label><input type="datetime-local" v-model="studio.campagne.dateFin" class="enigma-field"></div></div>
-                      <div class="col-md-6"><div class="enigma-input-wrap"><label>MAX CANDIDATS</label><input type="number" v-model.number="studio.campagne.maxCandidats" class="enigma-field" min="1"></div></div>
+                      <div class="col-md-4"><div class="enigma-input-wrap"><label>MAX CANDIDATS</label><input type="number" v-model.number="studio.campagne.maxCandidats" class="enigma-field" min="1"></div></div>
                       <div class="col-md-6">
                         <div class="enigma-input-wrap">
                           <label>FUSEAU HORAIRE</label>
@@ -841,10 +840,10 @@ const modals   = reactive({ bank: false, quickAdd: false, shortcuts: false });
 const globalToast = reactive({ active: false, message: '', type: '', icon: '' });
 const confirmDialog = reactive({ show: false, title: '', message: '', icon: '', _cb: null });
 
-const categories = ['Backend Specialist', 'Frontend Architect', 'Cybersecurity', 'DevOps', 'AI Logic'];
+const categories = ref([]);
 
 const studio = reactive({
-  questionnaire: { id: null, titre: '', categorie: categories[1], duree: 45, scoreReussite: 70, description: '', tags: [] },
+  questionnaire: { id: null, titre: '', categorie: '', duree: 45, scoreReussite: 70, description: '', tags: [] },
   campagne:      { id: null, nom: '', dateDebut: '', dateFin: '', maxCandidats: 100, anticheat: true, timerPerQuestion: false, sendNotifications: false, timezone: 'Europe/Paris' },
   questions:     [],
 });
@@ -872,15 +871,17 @@ const autoSaveTimer = ref(null);
 const fetchInitialData = async () => {
   loading.value = true;
   try {
-    const [resCamp, resQuest, resCand, resBank] = await Promise.all([
+    const [resCamp, resQuest, resCand, resBank, resCats] = await Promise.all([
       api.get(`/Campagnes`),
       api.get(`/Questionnaires`),
       api.get(`/Candidates`),
       api.get(`/Questions`),
+      api.get(`/Questions/categories`),
     ]);
     campaigns.value           = resCamp.data;
     questionnairesList.value  = resQuest.data;
     candidateMasterPool.value = resCand.data;
+    categories.value          = resCats.data;
     bankGlobalReference.value = resBank.data.map(q => ({ 
       ...q, 
       difficulty: q.difficulty || 'EXPERT', 
@@ -1104,34 +1105,50 @@ const publishToProduction = async () => {
   if (!isReadyToPublish.value) return;
   isPublishing.value = true;
   try {
-    // 1. Création du Questionnaire
+    // 1. Identification des questions (nouvelles vs existantes)
+    const existingQuestionIds = [];
+    const newQuestionsPayloads = [];
+
+    studio.questions.forEach(q => {
+      // Si l'id ressemble à un Guid généré par l'API (pas "custom-xxx")
+      if (typeof q.id === 'string' && q.id.includes('-') && !q.id.startsWith('custom')) {
+        existingQuestionIds.push(q.id);
+      } else {
+        newQuestionsPayloads.push(q);
+      }
+    });
+
+    // 2. Création du Questionnaire avec les métadonnées et la liaison des questions existantes
     const qResp = await api.post(`/Questionnaires`, {
       Titre: studio.questionnaire.titre,
       Description: studio.questionnaire.description || "",
       DureeMinutes: studio.questionnaire.duree || 60,
-      ScoreReussite: studio.questionnaire.scoreReussite || 70
+      ScoreReussite: studio.questionnaire.scoreReussite || 70,
+      Categorie: studio.questionnaire.categorie || "TECHNIQUE",
+      QuestionIds: existingQuestionIds
     });
     const qId = qResp.data.id;
 
-    // 2. Création des Questions (On retire les IDs temporaires pour laisser le Guid se générer)
-    await Promise.all(
-      studio.questions.map(q => {
-        const payload = {
-          Enonce: q.texte || "Question sans titre",
-          Points: Number(q.poids) || 1,
-          DureeSecondes: q.duree > 0 ? q.duree : null,
-          Type: 0, 
-          Niveau: 1, 
-          BonneReponse: q.explication || "",
-          QuestionnaireId: qId,
-          Choix: [],
-          Prerequis: []
-        };
-        return api.post(`/Questions`, payload);
-      })
-    );
+    // 3. Création des NOUVELLES questions dans la base et liaison au questionnaire
+    if (newQuestionsPayloads.length > 0) {
+      await Promise.all(
+        newQuestionsPayloads.map(q => {
+          return api.post(`/Questions`, {
+            Enonce: q.texte || "Question sans titre",
+            Points: Number(q.poids) || 1,
+            DureeSecondes: q.duree > 0 ? q.duree : null,
+            Type: 0, 
+            Niveau: 1, 
+            BonneReponse: q.explication || "",
+            QuestionnaireId: qId,
+            Choix: [],
+            Prerequis: []
+          });
+        })
+      );
+    }
 
-    // 3. Création de la Campagne
+    // 4. Création de la Campagne
     await api.post(`/Campagnes`, {
       Nom: studio.campagne.nom || `ARCHITECTE : ${studio.questionnaire.titre}`,
       Description: studio.questionnaire.description || "",

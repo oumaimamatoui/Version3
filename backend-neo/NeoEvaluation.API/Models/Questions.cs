@@ -20,7 +20,9 @@ namespace NeoEvaluation.API.Models
         public NiveauComplexite Niveau { get; set; } = NiveauComplexite.INTERMEDIAIRE;
         public int Points { get; set; } = 1;
         public int? DureeSecondes { get; set; } // Durée individuelle pour cette question
+        [Column("Categorie")]
         public string? Theme { get; set; }
+
         public string? SousTheme { get; set; }
 
         // Stocké en JSON dans la DB

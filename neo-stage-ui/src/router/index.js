@@ -22,12 +22,12 @@ import AideSupportView from '../views/AideSupportView.vue'
 import AccueilExamenView from '../views/AccueilExamenView.vue'
 import QuizView from '../views/QuizView.vue'
 import ResultsView from '../views/ResultsView.vue'
-import HistoryView from '../views/HistoryView.vue' 
+import HistoryView from '../views/HistoryView.vue'
 
 import BanqueQuestionsView from '../views/BanqueQuestionsView.vue'
 import CampagnesView from '../views/CampagnesView.vue'
 import ListeCandidatsView from '../views/ListeCandidatsView.vue'
-import DetailsCandidatView from '../views/DetailsCandidatView.vue' 
+import DetailsCandidatView from '../views/DetailsCandidatView.vue'
 import InviteView from '../views/InviteView.vue'
 import RapportsView from '../views/RapportsView.vue'
 import AIGeneratorView from '../views/AIGeneratorView.vue'
@@ -39,7 +39,7 @@ import StatsView from '../views/StatsView.vue'
 
 // Vues spécifiques Admin Entreprise
 import GroupsView from '../views/GroupsView.vue'
-import RolesManagementView from '../views/RolesManagementView.vue' 
+import RolesManagementView from '../views/RolesManagementView.vue'
 import StaffMembersView from '../views/StaffMembersView.vue'
 
 import SuperAdminView from '../views/SuperAdminView.vue'
@@ -55,12 +55,12 @@ const routes = [
   { path: '/login', name: 'login', component: LoginView },
   { path: '/register', name: 'register', component: RegisterView },
   { path: '/pricing', name: 'pricing', component: TarificationView },
-  
+
   //  SYNCHRONISATION : Cette route correspond maintenant au lien envoyé par l'email du backend
-  { path: '/activate-role', name: 'activation', component: ActivationView }, 
+  { path: '/activate-role', name: 'activation', component: ActivationView },
   { path: '/forgot-password', name: 'forgot-password', component: ForgotPasswordView },
   { path: '/reset-password', name: 'reset-password', component: ResetPasswordView },
-  
+
   { path: '/definir-mot-de-passe', name: 'definir-mot-de-passe', component: DefinirMotDePasseView },
 
   /**
@@ -74,9 +74,9 @@ const routes = [
   /**
    * ESPACE CANDIDAT
    */
-  { path: '/exam-lobby', name: 'exam-lobby', component: AccueilExamenView, meta: { requiresAuth: true, role: 'Candidat' } },
-  { path: '/quiz', name: 'quiz', component: QuizView, meta: { requiresAuth: true, role: 'Candidat' } },
-  { path: '/results', name: 'results', component: ResultsView, meta: { requiresAuth: true, role: 'Candidat' } },
+  { path: '/exam-lobby/:id', name: 'exam-lobby', component: AccueilExamenView, meta: { requiresAuth: true, role: 'Candidat' } },
+  { path: '/quiz/:id', name: 'quiz', component: QuizView, meta: { requiresAuth: true, role: 'Candidat' } },
+  { path: '/results/:id', name: 'results', component: ResultsView, meta: { requiresAuth: true, role: 'Candidat' } },
   { path: '/history', name: 'history', component: HistoryView, meta: { requiresAuth: true, role: 'Candidat' } },
 
   /**
@@ -142,7 +142,7 @@ router.beforeEach((to, from, next) => {
       return next({ name: 'dashboard' }) // Redirection si le rôle n'a pas accès
     }
   }
-  
+
   next()
 })
 

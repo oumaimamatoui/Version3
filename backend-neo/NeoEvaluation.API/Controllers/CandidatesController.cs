@@ -102,17 +102,26 @@ namespace NeoEvaluation.API.Controllers
                     PostuleLe = DateTime.UtcNow, Statut = ApplicationStatus.POSTULE 
                 });
 
-                var token = new TokensActivation { 
-                    Id = Guid.NewGuid(), Token = Guid.NewGuid(), UtilisateurId = cand.Id, 
-                    Email = email, DateCreation = DateTime.UtcNow, 
-                    DateExpiration = DateTime.UtcNow.AddDays(7), Utilise = false 
-                };
-                _context.TokensActivation.Add(token);
-                await _context.SaveChangesAsync();
+                string link = "http://localhost:5173/login"; // Par défaut, aller au login
+
+                if (!cand.EstActif)
+                {
+                    var token = new TokensActivation { 
+                        Id = Guid.NewGuid(), Token = Guid.NewGuid(), UtilisateurId = cand.Id, 
+                        Email = email, DateCreation = DateTime.UtcNow, 
+                        DateExpiration = DateTime.UtcNow.AddDays(7), Utilise = false 
+                    };
+                    _context.TokensActivation.Add(token);
+                    await _context.SaveChangesAsync();
+                    link = $"http://localhost:5173/activate-role?token={token.Token}";
+                }
+                else 
+                {
+                    await _context.SaveChangesAsync();
+                }
 
                 try {
-                    string link = $"http://localhost:5173/activate-role?token={token.Token}";
-                    await _emailService.SendEmailAsync(email, $"Invitation : {campagne.Nom}", $"Lien d'activation : {link}");
+                    await _emailService.SendEmailAsync(email, $"Invitation : {campagne.Nom}", $"Vous avez été assigné à une nouvelle évaluation. Connectez-vous ou activez votre compte via ce lien : {link}");
                 } catch { }
             }
             return Ok(new { message = "Invitations envoyées avec succès." });
