@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace NeoEvaluation.API.Models
 {
-    public class Campagne 
+    public class Campagne : IMultiTenant
     {
         [Key] 
         public Guid Id { get; set; } = Guid.NewGuid();
@@ -22,7 +22,7 @@ namespace NeoEvaluation.API.Models
         public string ModeNotation { get; set; } = "STRICT";
 
         [Required]
-        public Guid EntrepriseId { get; set; }
+        public Guid? EntrepriseId { get; set; }
         public Entreprise? Entreprise { get; set; }
 
         // Relations

@@ -170,8 +170,23 @@ const API_ENDPOINT = 'http://localhost:5172/api';
 const fetchCampaigns = async () => {
   loading.value = true;
   try {
-    const res = await api.get('/Campagnes');
-    campaigns.value = res.data;
+    if (userRole.value === 'Candidat') {
+      const res = await api.get('/Candidatures/mes-tests');
+      // Map to the format the UI expects for c.id, c.nom, c.statut, etc.
+      // Notice: c.id is set to candidatureId so router.push gets the correct ID
+      campaigns.value = res.data.map(t => ({
+        id: t.candidatureId, 
+        nom: t.campagneNom,
+        statut: (t.statut === 'NON_COMMENCE' || t.statut === 'POSTULE' || t.statut === 'EN_COURS') ? 1 : 0, // 1 = actif
+        categorie: 'TECHNIQUE',
+        dureeMinutes: 60,
+        scorePassage: 10,
+        dateFin: null
+      }));
+    } else {
+      const res = await api.get('/Campagnes');
+      campaigns.value = res.data;
+    }
   } catch (err) { console.error(err); } 
   finally { loading.value = false; }
 };

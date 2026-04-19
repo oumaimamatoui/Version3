@@ -25,6 +25,9 @@
           <button class="btn-manage-cat" @click="showCatManager = true" title="Gérer les catégories">
             <i class="fa-solid fa-folder-tree me-2"></i> CATÉGORIES
           </button>
+          <button class="btn-manage-cat" @click="showAiModal = true" title="Générateur AI">
+            <i class="fa-solid fa-wand-magic-sparkles text-amber"></i> IA
+          </button>
           <button class="btn-primary-gradient" @click="openModal()">
             <i class="fa-solid fa-plus-circle me-2"></i> NOUVELLE QUESTION
           </button>
@@ -84,7 +87,10 @@
           <div v-for="q in filteredQuestions" :key="q.id" class="col-xl-4 col-md-6">
             <div class="asset-card-cyber">
               <div class="card-header-actions">
-                <span class="badge-cat">{{ q.categorie || '—' }}</span>
+                <div class="badge-group">
+                  <span class="badge-cat">{{ q.theme || '—' }}</span>
+                  <span v-if="q.sousTheme" class="badge-sub">{{ q.sousTheme }}</span>
+                </div>
                 <div class="d-flex gap-2">
                   <button @click="openModal(q)" class="btn-card-action" title="Éditer"><i class="fa-solid fa-pen"></i></button>
                   <button @click="handleDelete(q.id)" class="btn-card-action text-danger" title="Supprimer"><i class="fa-solid fa-trash"></i></button>
@@ -174,14 +180,20 @@
 
                 <!-- THÈME + POINTS -->
                 <div class="col-md-6">
-                  <label class="label-cyber">THÈME / DOMAINE</label>
-                  <select v-model="form.theme" class="cyber-select-field">
-                    <option value="">— Choisir —</option>
-                    <option v-for="cat in categoriesList" :key="cat" :value="cat">{{ cat }}</option>
-                  </select>
-                </div>
-                <div class="col-md-6">
-                  <label class="label-cyber">NIVEAU DE COMPLEXITÉ : <span class="text-amber fw-bold">{{ form.points }} PTS</span></label>
+                    <label class="label-cyber">THÈME / CATÉGORIE</label>
+                    <select v-model="form.theme" class="cyber-select-field">
+                      <option value="">— Choisir —</option>
+                      <option v-for="cat in categoriesList" :key="cat" :value="cat">{{ cat }}</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="label-cyber">SOUS-THÈME (OPTIONNEL)</label>
+                    <input v-model="form.sousTheme" type="text" class="cyber-field-simple" placeholder="Ex: JWT, Flexbox, Neural...">
+                  </div>
+
+                  <!-- POINTS -->
+                  <div class="col-md-6">
+                    <label class="label-cyber">NIVEAU DE COMPLEXITÉ : <span class="text-amber fw-bold">{{ form.points }} PTS</span></label>
                   <input type="range" min="1" max="5" step="1" v-model.number="form.points" class="cyber-range">
                   <div class="d-flex justify-content-between small text-muted px-1 mt-1">
                     <span>Junior</span><span>Senior</span>
@@ -249,6 +261,60 @@
         </div>
       </transition>
 
+      <!-- AI GENERATION MODAL -->
+      <transition name="modal-fade">
+        <div v-if="showAiModal" class="modal-cyber-overlay" style="z-index: 9999" @click.self="showAiModal = false">
+          <div class="modal-cyber-card animate__animated animate__zoomIn animate__faster" style="max-width: 600px;">
+            <div class="modal-cyber-header">
+              <div>
+                <h4 class="fw-800 m-0"><i class="fa-solid fa-wand-magic-sparkles text-amber me-2"></i>Générateur IA</h4>
+                <p class="small text-muted m-0 mt-1">Créez des questions via l'intelligence artificielle Gemini.</p>
+              </div>
+              <button class="btn-icon-sm" @click="showAiModal = false"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="modal-cyber-body p-4 p-lg-5">
+              <div class="row g-4">
+                <div class="col-12">
+                  <label class="label-cyber">SUJET OU TECHNOLOGIE</label>
+                  <input type="text" v-model="aiPrompt" class="cyber-field-simple" placeholder="Ex: Reactivity in Vue 3, Docker volumes, SQL Joins...">
+                </div>
+                <div class="col-md-6">
+                  <label class="label-cyber">NIVEAU VISÉ</label>
+                  <select v-model="aiDifficulty" class="cyber-select-field">
+                    <option value="JUNIOR">Junior (1-2 pts)</option>
+                    <option value="INTERMEDIAIRE">Intermédiaire (3 pts)</option>
+                    <option value="SENIOR">Senior (4-5 pts)</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="label-cyber">FORMAT DE QUESTION</label>
+                  <select v-model="aiType" class="cyber-select-field">
+                    <option value="0">Choix Unique (QCM)</option>
+                    <option value="1">Choix Multiple</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Animating loading state -->
+              <div v-if="isAiGenerating" class="d-flex flex-column align-items-center justify-content-center p-4 mt-4 bg-light rounded-4 border">
+                <div class="cyber-spinner mb-3"></div>
+                <p class="fw-bold small text-muted animate__animated animate__pulse animate__infinite">Analyse de la singularité en cours...</p>
+              </div>
+            </div>
+
+            <div class="modal-cyber-footer">
+              <button @click="showAiModal = false" :disabled="isAiGenerating" class="btn-glass-cancel">ANNULER</button>
+              <button @click="generateQuestionAi" :disabled="isAiGenerating || !aiPrompt.trim()" class="btn-primary-gradient px-4 shadow">
+                <span v-if="isAiGenerating" class="spinner-border spinner-border-sm me-2"></span>
+                <i v-else class="fa-solid fa-bolt me-2"></i>
+                {{ isAiGenerating ? 'GÉNÉRATION...' : 'GÉNÉRER LA QUESTION' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </transition>
+
       <!-- TOAST -->
       <transition name="toast-slide">
         <div v-if="toast.active" class="enigma-toast" :class="toast.type">
@@ -302,8 +368,15 @@ const searchQuery    = ref('');
 const activeFilter   = ref(-1);
 const selectedCat    = ref('All');
 const newCatName     = ref('');
-const categoriesList = ref(['Backend', 'Frontend', 'Cyber-Sécurité', 'Architecte UML', 'DevOps']);
+const categoriesList = ref([]);
 const validationErrors = reactive({ enonce: '', reponses: '' });
+
+// AI State
+const showAiModal    = ref(false);
+const isAiGenerating = ref(false);
+const aiPrompt       = ref('');
+const aiDifficulty   = ref('INTERMEDIAIRE');
+const aiType         = ref("0");
 
 const toast = reactive({ active: false, message: '', type: '', icon: '' });
 const confirmDialog = reactive({ show: false, title: '', message: '', icon: '', _resolve: null });
@@ -328,8 +401,16 @@ const correctRadioIndex = computed({
 const fetchData = async () => {
   loading.value = true;
   try {
-    const res = await api.get(API_QUESTIONS);
-    questions.value = res.data;
+    const resQ = await api.get(API_QUESTIONS);
+    questions.value = resQ.data;
+    
+    // Chargement optionnel des catégories (ne bloque pas si échec)
+    try {
+      const resC = await api.get(`${API_QUESTIONS}/categories`);
+      categoriesList.value = resC.data;
+    } catch (errCats) {
+      console.warn("Impossible de charger les catégories dynamiques.");
+    }
   } catch (e) {
     showToast('Erreur de connexion à l\'API.', 'error', 'fa-solid fa-plug-circle-xmark');
   } finally {
@@ -370,17 +451,30 @@ const removeResponse = (i) => {
 const addCategory = () => {
   const name = newCatName.value.trim();
   if (name && !categoriesList.value.includes(name)) {
-    categoriesList.value.push(name);
+    categoriesList.value.push(name); // Ajout local temporaire pour le formulaire
     newCatName.value = '';
   }
 };
+
 const removeCategory = (cat) => {
-  categoriesList.value = categoriesList.value.filter(c => c !== cat);
+  confirmDialog.title   = `Retirer la catégorie "${cat}" ?`;
+  confirmDialog.message = `Cela n'effacera pas les questions, mais le tag "${cat}" sera retiré de tous vos actifs techniques.`;
+  confirmDialog.icon    = 'fa-solid fa-folder-minus';
+  confirmDialog.show    = true;
+  confirmDialog._resolve = async () => {
+    try {
+      await api.delete(`${API_QUESTIONS}/categories/${cat}`);
+      showToast('Catégorie mise à jour.', 'success', 'fa-solid fa-check');
+      await fetchData();
+    } catch {
+      showToast('Erreur lors de la mise à jour.', 'error', 'fa-solid fa-triangle-exclamation');
+    }
+  };
 };
 
 /* ─── MODAL / CRUD ────────────────────────────────────────────── */
 const openModal = (q = null) => {
-  validationErrors.texte    = '';
+  validationErrors.enonce   = '';
   validationErrors.reponses = '';
   isEdit.value = !!q;
 
@@ -407,10 +501,14 @@ const openModal = (q = null) => {
 
 const validate = () => {
   let ok = true;
-  validationErrors.texte    = '';
+  validationErrors.enonce   = '';
   validationErrors.reponses = '';
 
-  if (!form.enonce.trim()) {
+  if (!form.theme) {
+    showToast('Le thème est obligatoire.', 'error', 'fa-solid fa-triangle-exclamation');
+    ok = false;
+  }
+  if (!form.enonce || !form.enonce.trim()) {
     validationErrors.enonce = 'L\'énoncé est obligatoire.';
     ok = false;
   }
@@ -477,6 +575,46 @@ const runConfirm = async () => {
     await confirmDialog._resolve();
     confirmDialog._resolve = null;
   }
+};
+
+/* ─── AI GENERATOR (MOCK) ──────────────────────────────────────── */
+const generateQuestionAi = () => {
+  if (!aiPrompt.value.trim()) return;
+  isAiGenerating.value = true;
+  
+  // Fake API delay to simulate Gemini analysis
+  setTimeout(() => {
+    isAiGenerating.value = false;
+    showAiModal.value = false;
+    
+    // Determine points and tags based on selected difficulty
+    let genPoints = 3;
+    if (aiDifficulty.value === 'JUNIOR') genPoints = 2;
+    if (aiDifficulty.value === 'SENIOR') genPoints = 5;
+
+    // Open the creation modal pre-filled with the AI generated content
+    openModal({
+      id: '00000000-0000-0000-0000-000000000000',
+      enonce: `[Généré par IA] - Expliquez le concept de "${aiPrompt.value.trim()}" et identifiez la bonne affirmation parmi les suivantes :`,
+      type: Number(aiType.value),
+      points: genPoints,
+      theme: categoriesList.value.length > 0 ? categoriesList.value[0] : 'Sujet IA',
+      sousTheme: aiPrompt.value.trim().substring(0, 15),
+      bonneReponse: '',
+      reponses: [
+        { texte: `"${aiPrompt.value}" est une fonctionnalité obsolète.`, estCorrecte: false },
+        { texte: `Il s'agit d'une optimisation de performance côté serveur.`, estCorrecte: false },
+        { texte: `C'est le mécanisme principal qui permet d'atteindre cet objectif spécifique.`, estCorrecte: true },
+        { texte: `Aucune des réponses ci-dessus.`, estCorrecte: false }
+      ]
+    });
+    
+    showToast('Question IA générée avec succès.', 'success', 'fa-solid fa-wand-magic-sparkles');
+    
+    // Reset AI form
+    aiPrompt.value = '';
+    aiDifficulty.value = 'INTERMEDIAIRE';
+  }, 2500);
 };
 
 /* ─── COMPUTED ────────────────────────────────────────────────── */
@@ -561,7 +699,9 @@ onMounted(fetchData);
 /* ASSET CARDS */
 .asset-card-cyber { background: rgba(255,255,255,0.9); border: 1px solid white; border-radius: 30px; padding: 28px; height: 100%; transition: 0.4s; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.02); }
 .asset-card-cyber:hover { transform: translateY(-8px); border-color: #eab308; box-shadow: 0 20px 40px rgba(234,179,8,0.1); }
-.badge-cat { font-size: 9px; font-weight: 900; background: #fffbeb; color: #eab308; padding: 6px 14px; border-radius: 12px; text-transform: uppercase; }
+.badge-group { display: flex; align-items: center; gap: 5px; }
+.badge-cat { font-size: 9px; font-weight: 900; background: #fffbeb; color: #eab308; padding: 6px 14px; border-radius: 12px; text-transform: uppercase; border: 1px solid rgba(234,179,8,0.2); }
+.badge-sub { font-size: 9px; font-weight: 800; background: #f1f5f9; color: #64748b; padding: 5px 12px; border-radius: 10px; text-transform: capitalize; }
 .btn-card-action { width: 34px; height: 34px; background: white; border: 1px solid #f1f5f9; border-radius: 10px; font-size: 12px; transition: 0.3s; color: #94a3b8; cursor: pointer; }
 .btn-card-action:hover { border-color: #eab308; color: #eab308; }
 .card-main { flex-grow: 1; }

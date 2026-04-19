@@ -73,22 +73,31 @@ namespace NeoEvaluation.API.Controllers
                         });
                     }
 
-                    // 3. Générer le Token d'activation (pour le test)
-                    var token = new TokensActivation {
-                        Id = Guid.NewGuid(), 
-                        Token = Guid.NewGuid(), 
-                        UtilisateurId = candidat.Id,
-                        Email = email, 
-                        DateCreation = DateTime.UtcNow,
-                        DateExpiration = DateTime.UtcNow.AddDays(7), 
-                        Utilise = false
-                    };
-                    _context.TokensActivation.Add(token);
+                    string activationLink;
 
-                    await _context.SaveChangesAsync();
+                    if (candidat.EstActif)
+                    {
+                        // Le candidat est déjà enregistré et actif. Pas besoin de recréer de mot de passe.
+                        activationLink = "http://localhost:5173/login";
+                    }
+                    else
+                    {
+                        // 3. Générer le Token d'activation (pour le test)
+                        var token = new TokensActivation {
+                            Id = Guid.NewGuid(), 
+                            Token = Guid.NewGuid(), 
+                            UtilisateurId = candidat.Id,
+                            Email = email, 
+                            DateCreation = DateTime.UtcNow,
+                            DateExpiration = DateTime.UtcNow.AddDays(7), 
+                            Utilise = false
+                        };
+                        _context.TokensActivation.Add(token);
+                        await _context.SaveChangesAsync();
 
-                    // 4. Préparation du lien et de l'email
-                    string activationLink = $"http://localhost:5173/activate-role?token={token.Token}";
+                        // 4. Préparation du lien
+                        activationLink = $"http://localhost:5173/activate-role?token={token.Token}";
+                    }
                     
                     // ✅ DEBUG TERMINAL (Pour toi en VS Code)
                     Console.WriteLine("\n--------------------------------------------------");

@@ -99,6 +99,27 @@ namespace NeoEvaluation.API.Controllers
             }
         }
 
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutQuestion(Guid id, [FromBody] NeoEvaluation.API.DTOs.QuestionCreateDto dto)
+        {
+            var q = await _context.Questions.FindAsync(id);
+            if (q == null) return NotFound();
+
+            q.Enonce = dto.Enonce;
+            q.Type = dto.Type;
+            q.Niveau = dto.Niveau;
+            q.Points = dto.Points;
+            q.DureeSecondes = dto.DureeSecondes;
+            q.Theme = dto.Theme;
+            q.SousTheme = dto.SousTheme;
+            q.Choix = dto.Choix ?? new List<string>();
+            q.BonneReponse = dto.BonneReponse ?? string.Empty;
+            q.Prerequis = dto.Prerequis ?? new List<string>();
+
+            await _context.SaveChangesAsync();
+            return Ok(q);
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteQuestion(Guid id)
         {
@@ -107,6 +128,52 @@ namespace NeoEvaluation.API.Controllers
             _context.Questions.Remove(q);
             await _context.SaveChangesAsync();
             return NoContent();
+        }
+
+        // --- GESTION DES CATÉGORIES ---
+
+        [HttpGet("categories")]
+        public async Task<IActionResult> GetCategories()
+        {
+            var themes = await _context.Questions
+                .Where(q => q.Theme != null && q.Theme != "")
+                .Select(q => q.Theme)
+                .Distinct()
+                .ToListAsync();
+                
+            return Ok(themes);
+        }
+
+        [HttpPost("categories/rename")]
+        public async Task<IActionResult> RenameCategory([FromBody] NeoEvaluation.API.DTOs.CategoryRenameDto dto)
+        {
+            var questions = await _context.Questions
+                .Where(q => q.Theme == dto.OldName)
+                .ToListAsync();
+
+            foreach (var q in questions)
+            {
+                q.Theme = dto.NewName;
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { Message = $"Renommage effectué sur {questions.Count} questions.", NewName = dto.NewName });
+        }
+
+        [HttpDelete("categories/{name}")]
+        public async Task<IActionResult> DeleteCategory(string name)
+        {
+            var questions = await _context.Questions
+                .Where(q => q.Theme == name)
+                .ToListAsync();
+
+            foreach (var q in questions)
+            {
+                q.Theme = null;
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { Message = $"Catégorie retirée de {questions.Count} questions." });
         }
     }
 }

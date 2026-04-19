@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace NeoEvaluation.API.Models
 {
-    public class Utilisateur
+    public class Utilisateur : IMultiTenant
     {
         [Key]
         public Guid Id { get; set; } = Guid.NewGuid();
