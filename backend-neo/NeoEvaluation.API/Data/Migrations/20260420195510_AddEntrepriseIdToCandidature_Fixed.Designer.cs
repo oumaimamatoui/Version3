@@ -2,18 +2,21 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NeoEvaluation.API.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace NeoEvaluation.API.Migrations
+namespace NeoEvaluation.API.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260420195510_AddEntrepriseIdToCandidature_Fixed")]
+    partial class AddEntrepriseIdToCandidature_Fixed
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -96,6 +99,9 @@ namespace NeoEvaluation.API.Migrations
                     b.Property<Guid>("CandidatId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("EntrepriseId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime>("PostuleLe")
                         .HasColumnType("timestamp with time zone");
 
@@ -107,6 +113,8 @@ namespace NeoEvaluation.API.Migrations
                     b.HasIndex("CampagneId");
 
                     b.HasIndex("CandidatId");
+
+                    b.HasIndex("EntrepriseId");
 
                     b.ToTable("Candidatures");
                 });
@@ -698,9 +706,15 @@ namespace NeoEvaluation.API.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("NeoEvaluation.API.Models.Entreprise", "Entreprise")
+                        .WithMany()
+                        .HasForeignKey("EntrepriseId");
+
                     b.Navigation("Campagne");
 
                     b.Navigation("Candidat");
+
+                    b.Navigation("Entreprise");
                 });
 
             modelBuilder.Entity("NeoEvaluation.API.Models.DocumentCandidat", b =>

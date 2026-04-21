@@ -46,6 +46,7 @@ import SuperAdminView from '../views/SuperAdminView.vue'
 import GestionAbonnementsView from '../views/GestionAbonnementsView.vue'
 import PlatformUsersView from '../views/PlatformUsersView.vue'
 import AnalyticsView from '../views/AnalyticsView.vue'
+import GoogleCallbackView from '../views/GoogleCallbackView.vue'
 
 const routes = [
   /**
@@ -109,6 +110,7 @@ const routes = [
   { path: '/gestion-abonnements', name: 'gestion-abonnements', component: GestionAbonnementsView, meta: { requiresAuth: true, role: 'SuperAdmin' } },
   { path: '/platform-users', name: 'platform-users', component: PlatformUsersView, meta: { requiresAuth: true, role: 'SuperAdmin' } },
   { path: '/platform-analytics', name: 'platform-analytics', component: AnalyticsView, meta: { requiresAuth: true, role: 'SuperAdmin' } },
+  { path: '/google-callback', name: 'google-callback', component: GoogleCallbackView, meta: { requiresAuth: true } },
 
   /**
    * ERREUR 404 (Toujours en dernier)

@@ -59,12 +59,12 @@
               </div>
               
               <div class="chart-container-pro d-flex align-items-end gap-3 px-3">
-                <div v-for="(h, i) in [30, 50, 45, 80, 75, 95]" :key="i" class="chart-column-pro flex-grow-1">
-                  <div class="bar-value tiny fw-bold text-muted">{{ Math.floor(h * 1.2) }}</div>
-                  <div class="bar-fill-pro" :style="{ height: h + '%' }">
+                <div v-for="(item, i) in growthData" :key="i" class="chart-column-pro flex-grow-1">
+                  <div class="bar-value tiny fw-bold text-muted">{{ item.count }}</div>
+                  <div class="bar-fill-pro" :style="{ height: (item.count > 0 ? (item.count * 10 + 20) : 5) + '%' }">
                     <div class="bar-glow"></div>
                   </div>
-                  <span class="bar-label-pro tiny fw-bold text-muted mt-3">M0{{ i + 1 }}</span>
+                  <span class="bar-label-pro tiny fw-bold text-muted mt-3">{{ item.mois }}</span>
                 </div>
               </div>
             </div>
@@ -115,21 +115,56 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue';
+import api from '@/services/api';
 import AppSidebar from '../components/AppSidebar.vue';
 import AppNavbar from '../components/AppNavbar.vue';
 
-const masterKpis = [
-  { label: 'Total Orgs', val: '124', icon: 'fa-solid fa-building', bg: '#eff6ff', color: '#3b82f6' },
-  { label: 'Utilisateurs', val: '8.2k', icon: 'fa-solid fa-users', bg: '#f5f3ff', color: '#8b5cf6' },
-  { label: 'Tests IA', val: '45.2k', icon: 'fa-solid fa-brain', bg: '#fffbeb', color: '#f59e0b' },
-  { label: 'Uptime', val: '99.9%', icon: 'fa-solid fa-gauge-high', bg: '#ecfdf5', color: '#10b981' },
-];
+const loading = ref(true);
+const stats = ref(null);
 
-const resources = [
-  { name: 'Charge API IA', usage: 82, limit: '1.2M Tokens', icon: 'fa-solid fa-microchip', class: 'bg-warning' },
-  { name: 'Stockage Cloud', usage: 45, limit: '2.4 To / 5.0 To', icon: 'fa-solid fa-database', class: 'bg-primary' },
-  { name: 'CPU Cluster', usage: 28, limit: 'Node-East-01', icon: 'fa-solid fa-bolt', class: 'bg-success' }
-];
+const masterKpis = ref([
+  { label: 'Total Orgs', val: '...', icon: 'fa-solid fa-building', bg: '#eff6ff', color: '#3b82f6' },
+  { label: 'Utilisateurs', val: '...', icon: 'fa-solid fa-users', bg: '#f5f3ff', color: '#8b5cf6' },
+  { label: 'Tests IA', val: '...', icon: 'fa-solid fa-brain', bg: '#fffbeb', color: '#f59e0b' },
+  { label: 'Uptime', val: '99.9%', icon: 'fa-solid fa-gauge-high', bg: '#ecfdf5', color: '#10b981' },
+]);
+
+const growthData = ref([]);
+
+const resources = ref([
+  { name: 'Charge API IA', usage: 0, limit: '0 Tokens', icon: 'fa-solid fa-microchip', class: 'bg-warning' },
+  { name: 'Stockage Cloud', usage: 0, limit: '0 To / 0 To', icon: 'fa-solid fa-database', class: 'bg-primary' },
+  { name: 'CPU Cluster', usage: 0, limit: 'Offline', icon: 'fa-solid fa-bolt', class: 'bg-success' }
+]);
+
+const formatNumber = (num) => {
+  if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
+  return num.toString();
+};
+
+const fetchStats = async () => {
+  loading.value = true;
+  try {
+    const res = await api.get('/SuperAdmin/stats');
+    const data = res.data;
+    stats.value = data;
+
+    // Mise à jour des KPIs cardinaux
+    masterKpis.value[0].val = formatNumber(data.totalEntreprises);
+    masterKpis.value[1].val = formatNumber(data.totalUtilisateurs);
+    masterKpis.value[2].val = formatNumber(data.totalTests);
+    
+    // Données de croissance
+    growthData.value = data.croissanceStats || [];
+  } catch (err) {
+    console.error("Erreur lors de la récupération des stats:", err);
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(fetchStats);
 </script>
 
 <style scoped>
