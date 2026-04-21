@@ -40,7 +40,8 @@ namespace NeoEvaluation.API.Controllers
                 Email = user.Email,
                 PhotoUrl = user.PhotoUrl,
                 Bio = user.Bio,
-                JoinDate = user.CreeLe.ToString("MMMM yyyy")
+                JoinDate = user.CreeLe.ToString("MMMM yyyy"),
+                ThemePreference = user.ThemePreference
             });
         }
 
@@ -58,6 +59,18 @@ namespace NeoEvaluation.API.Controllers
 
             await _context.SaveChangesAsync();
             return Ok(new { message = "Profil mis à jour" });
+        }
+
+        [HttpPost("theme")]
+        public async Task<IActionResult> UpdateTheme([FromBody] string theme)
+        {
+            var userId = GetCurrentUserId();
+            var user = await _context.Utilisateurs.FindAsync(userId);
+            if (user == null) return NotFound();
+
+            user.ThemePreference = theme == "dark" ? "dark" : "light";
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Thème mis à jour" });
         }
 
         [HttpPost("change-password")]

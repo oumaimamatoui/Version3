@@ -45,14 +45,15 @@ namespace NeoEvaluation.API.Controllers
             Console.WriteLine($"[AUTH DEBUG] Tentative de connexion pour l'email: '{email}'");
             Console.WriteLine($"[AUTH DEBUG] Longueur du mot de passe saisi : {password?.Length ?? 0}");
 
-            var allUsers = await _context.Utilisateurs.Where(u => u.Email.ToLower() == email).ToListAsync();
+            var allUsers = await _context.Utilisateurs
+                .IgnoreQueryFilters()
+                .Where(u => u.Email.ToLower() == email).ToListAsync();
             Console.WriteLine($"[AUTH DEBUG] Tentative pour '{email}' - {allUsers.Count} comptes trouvés.");
 
             Utilisateur? user = null;
             foreach (var u in allUsers)
             {
-                Console.WriteLine($"[AUTH DEBUG] Test du mot de passe sur le compte ID: {u.Id} (Type: {u.GetType().Name})...");
-                
+                    Console.WriteLine($"[AUTH DEBUG] Test du mot de passe sur le compte ID: {u.Id}...");
                 if (string.IsNullOrEmpty(u.MotDePasseHash)) continue;
 
                 try {
@@ -97,7 +98,9 @@ namespace NeoEvaluation.API.Controllers
                 var payload = await GoogleJsonWebSignature.ValidateAsync(googleDto.IdToken, settings);
                 
                 // Recherche de l'utilisateur par l'email renvoyé par Google
-                var user = await _context.Utilisateurs.FirstOrDefaultAsync(u => u.Email == payload.Email.ToLower());
+                var user = await _context.Utilisateurs
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(u => u.Email == payload.Email.ToLower());
 
                 if (user == null) 
                     return BadRequest(new { message = "Compte introuvable. Veuillez d'abord vous inscrire via le formulaire." });
@@ -138,6 +141,11 @@ namespace NeoEvaluation.API.Controllers
                 new Claim("nom", user.NomComplet ?? "")
             };
 
+            if (user.EntrepriseId.HasValue)
+            {
+                claims.Add(new Claim("entrepriseId", user.EntrepriseId.Value.ToString()));
+            }
+
             // AJOUT DES PRIVILÈGES (Utilise votre nouvelle List<string> Privileges)
             if (user.Privileges != null && user.Privileges.Any())
             {
@@ -161,7 +169,9 @@ namespace NeoEvaluation.API.Controllers
                 Nom = user.NomComplet, 
                 Role = userRole,
                 Email = user.Email,
-                Photo = user.PhotoUrl
+                Photo = user.PhotoUrl,
+                EntrepriseId = user.EntrepriseId,
+                ThemePreference = user.ThemePreference
             };
         }
 
@@ -171,7 +181,9 @@ namespace NeoEvaluation.API.Controllers
         {
             Console.WriteLine($"\n[DEBUG] Requête ForgotPassword reçue pour : {dto.Email}");
 
-            var user = await _context.Utilisateurs.FirstOrDefaultAsync(u => u.Email.ToLower() == dto.Email.ToLower());
+            var user = await _context.Utilisateurs
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == dto.Email.ToLower());
             if (user == null)
             {
                 Console.WriteLine($"[DEBUG] Utilisateur non trouvé pour l'email : {dto.Email}");
@@ -234,24 +246,24 @@ namespace NeoEvaluation.API.Controllers
             if (!Guid.TryParse(dto.Token, out Guid tokenGuid))
                 return BadRequest(new { message = "Token invalide." });
 
+            if (string.IsNullOrEmpty(dto.NewPassword))
+                return BadRequest(new { message = "Nouveau mot de passe requis." });
+
             var resetToken = await _context.TokensActivation.FirstOrDefaultAsync(t => t.Token == tokenGuid && !t.Utilise && t.DateExpiration > DateTime.UtcNow);
 
             if (resetToken == null)
                 return BadRequest(new { message = "Le lien est invalide ou a expiré." });
 
-            var user = await _context.Utilisateurs.FindAsync(resetToken.UtilisateurId);
+            var user = await _context.Utilisateurs.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.Id == resetToken.UtilisateurId);
             if (user == null)
                 return BadRequest(new { message = "Utilisateur introuvable." });
-
-            Console.WriteLine($"[RESET DEBUG] Réinitialisation pour : {user.Email}");
-            Console.WriteLine($"[RESET DEBUG] Longueur du nouveau mot de passe reçu : {dto.NewPassword.Length}");
 
             // Mise à jour du mot de passe
             user.MotDePasseHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
             resetToken.Utilise = true;
 
             await _context.SaveChangesAsync();
-            Console.WriteLine($"[RESET DEBUG] SUCCÈS : Mot de passe mis à jour en base pour {user.Email}");
 
             return Ok(new { message = "Votre mot de passe a été réinitialisé avec succès." });
         }

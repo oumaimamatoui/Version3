@@ -45,7 +45,7 @@
                     <i class="fa-solid fa-folder-tree icon-overlay"></i>
                     <select v-model="selectedCampagneId" class="modern-select ps-5">
                       <option value="">— Sélectionner une campagne active —</option>
-                      <option v-for="c in campagnes" :key="c.id" :value="c.id">{{ c.Titre || c.titre }}</option>
+                      <option v-for="c in campagnes" :key="c.id" :value="c.id">{{ c.nom || c.nom }}</option>
                     </select>
                   </div>
                   <button class="btn-outline-gold" @click="router.push('/campaigns')">
@@ -143,13 +143,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import axios from 'axios';
+import api from '@/services/api';
 import { useRouter } from 'vue-router';
 import AppSidebar from '@/components/AppSidebar.vue';
 import AppNavbar from '@/components/AppNavbar.vue';
 
 const router = useRouter();
-const API_URL = 'http://localhost:5172/api/Invitations';
+const API_URL = '/Invitations';
 
 const activeTab = ref('unique');
 const campagnes = ref([]);
@@ -164,7 +164,7 @@ const fileInput = ref(null);
 
 onMounted(async () => {
   try {
-    const res = await axios.get(`${API_URL}/campagnes`);
+    const res = await api.get(`${API_URL}/campagnes`);
     campagnes.value = res.data;
   } catch (e) { console.error(e); }
 });
@@ -220,7 +220,7 @@ const showStatus = (msg, type) => {
 const deployInvitations = async () => {
   isLoading.value = true;
   try {
-    await axios.post(`${API_URL}/invite-candidates`, {
+    await api.post(`${API_URL}/invite-candidates`, {
       campagneId: selectedCampagneId.value,
       emails: emailList.value
     });

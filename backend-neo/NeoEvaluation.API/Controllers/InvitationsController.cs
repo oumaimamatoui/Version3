@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using NeoEvaluation.API.Data;
 using NeoEvaluation.API.Models;
@@ -9,15 +10,18 @@ namespace NeoEvaluation.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class InvitationsController : ControllerBase
     {
         private readonly AppDbContext _context;
         private readonly IEmailService _emailService; // Injection du service
+        private readonly ITenantService _tenantService;
 
-        public InvitationsController(AppDbContext context, IEmailService emailService)
+        public InvitationsController(AppDbContext context, IEmailService emailService, ITenantService tenantService)
         {
             _context = context;
             _emailService = emailService;
+            _tenantService = tenantService;
         }
 
         [HttpPost("invite-candidates")]
@@ -37,20 +41,28 @@ namespace NeoEvaluation.API.Controllers
                 try 
                 {
                     // 1. Gérer l'utilisateur (Candidat)
-                    var candidat = await _context.Candidats.FirstOrDefaultAsync(u => u.Email == email);
+                    var currentEntId = _tenantService.GetTenantId();
+                    var candidat = await _context.Utilisateurs.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Email == email);
+                    
                     if (candidat == null)
                     {
-                        candidat = new Candidat { 
+                        candidat = new Utilisateur { 
                             Id = Guid.NewGuid(), 
                             Email = email, 
                             RoleNom = "Candidat", 
-                            EstActif = false 
+                            EstActif = false,
+                            EntrepriseId = currentEntId
                         };
-                        _context.Candidats.Add(candidat);
+                        _context.Utilisateurs.Add(candidat);
+                    }
+                    else if (candidat.EntrepriseId == null)
+                    {
+                        candidat.EntrepriseId = currentEntId;
                     }
 
                     // 2. Créer la candidature si elle n'existe pas
-                    var exists = await _context.Candidatures.AnyAsync(c => c.CandidatId == candidat.Id && c.CampagneId == request.CampagneId);
+                    var exists = await _context.Candidatures.IgnoreQueryFilters()
+                        .AnyAsync(c => c.CandidatId == candidat.Id && c.CampagneId == request.CampagneId);
                     if (!exists)
                     {
                         _context.Candidatures.Add(new Candidature { 
@@ -61,35 +73,57 @@ namespace NeoEvaluation.API.Controllers
                         });
                     }
 
-                    // 3. Générer le Token d'activation
-                    var token = new TokensActivation {
-                        Id = Guid.NewGuid(), 
-                        Token = Guid.NewGuid(), 
-                        UtilisateurId = candidat.Id,
-                        Email = email, 
-                        DateCreation = DateTime.UtcNow,
-                        DateExpiration = DateTime.UtcNow.AddDays(7), 
-                        Utilise = false
-                    };
-                    _context.TokensActivation.Add(token);
+                    string activationLink;
 
-                    // Sauvegarde en base avant l'envoi de l'email
-                    await _context.SaveChangesAsync();
+                    if (candidat.EstActif)
+                    {
+                        // Le candidat est déjà enregistré et actif. Pas besoin de recréer de mot de passe.
+                        activationLink = "http://localhost:5173/login";
+                    }
+                    else
+                    {
+                        // 3. Générer le Token d'activation (pour le test)
+                        var token = new TokensActivation {
+                            Id = Guid.NewGuid(), 
+                            Token = Guid.NewGuid(), 
+                            UtilisateurId = candidat.Id,
+                            Email = email, 
+                            DateCreation = DateTime.UtcNow,
+                            DateExpiration = DateTime.UtcNow.AddDays(7), 
+                            Utilise = false
+                        };
+                        _context.TokensActivation.Add(token);
+                        await _context.SaveChangesAsync();
 
-                    // 4. Préparation et envoi de l'email via le service
-                    string activationLink = $"http://localhost:5173/activer?token={token.Token}";
+                        // 4. Préparation du lien
+                        activationLink = $"http://localhost:5173/activate-role?token={token.Token}";
+                    }
                     
-                    string subject = $"Invitation : {campagne.Nom}";
+                    // ✅ DEBUG TERMINAL (Pour toi en VS Code)
+                    Console.WriteLine("\n--------------------------------------------------");
+                    Console.WriteLine($"[DEBUG] CANDIDATE TEST LINK: {email}");
+                    Console.WriteLine($"CAMPAGNE: {campagne.Nom}");
+                    Console.WriteLine($"LINK: {activationLink}");
+                    Console.WriteLine("--------------------------------------------------\n");
+
+                    // ✅ PROFESSIONAL HTML TEMPLATE
+                    string subject = $"Invitation : Evaluation {campagne.Nom}";
                     string htmlBody = $@"
-                        <div style='font-family: Arial, sans-serif; border: 1px solid #eee; padding: 20px;'>
-                            <h2 style='color: #f59e0b;'>Invitation EvaluaTech</h2>
-                            <p>Bonjour,</p>
-                            <p>Vous avez été invité à passer une évaluation pour la campagne : <strong>{campagne.Nom}</strong>.</p>
-                            <p>Pour commencer, veuillez activer votre compte et définir votre mot de passe en cliquant sur le bouton ci-dessous :</p>
-                            <div style='text-align: center; margin: 30px 0;'>
-                                <a href='{activationLink}' style='background-color: #f59e0b; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;'>Activer mon compte</a>
+                        <div style='font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 12px;'>
+                            <div style='text-align: center; margin-bottom: 25px;'>
+                                <h2 style='color: #f59e0b; margin: 0;'>EvaluaTech</h2>
+                                <p style='font-size: 10px; font-weight: bold; color: #94a3b8; letter-spacing: 2px;'>SMART EVALUATION SYSTEM</p>
                             </div>
-                            <p style='color: #888; font-size: 12px;'>Ce lien est valable pendant 7 jours.</p>
+                            <h3 style='color: #0f172a;'>Invitation à une évaluation</h3>
+                            <p>Bonjour,</p>
+                            <p>Vous avez été invité à passer une évaluation en ligne pour la campagne : <strong>{campagne.Nom}</strong>.</p>
+                            <p>Cliquez sur le bouton ci-dessous pour accéder à votre espace de test et commencer l'examen :</p>
+                            <div style='text-align: center; margin: 40px 0;'>
+                                <a href='{activationLink}' style='background-color: #0f172a; color: #f59e0b; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 800; display: inline-block; border: 2px solid #f59e0b;'>COMMENCER L'ÉVALUATION</a>
+                            </div>
+                            <p style='color: #64748b; font-size: 13px;'>Note : Assurez-vous d'être dans un endroit calme avec une connexion stable.</p>
+                            <hr style='border: 0; border-top: 1px solid #eee; margin: 30px 0;'>
+                            <p style='font-size: 11px; color: #94a3b8; text-align: center;'>© 2025 EvaluaTech Platform. Tous droits réservés.</p>
                         </div>";
 
                     await _emailService.SendEmailAsync(email, subject, htmlBody);
@@ -97,21 +131,130 @@ namespace NeoEvaluation.API.Controllers
                 }
                 catch (Exception ex)
                 {
-                    // On log l'erreur mais on continue la boucle pour les autres candidats
-                    Console.WriteLine($"Erreur lors de l'envoi à {email}: {ex.Message}");
+                    Console.WriteLine($"[ERROR] Envoi échoué à {email}: {ex.Message}");
                     errorCount++;
                 }
             }
 
             return Ok(new { 
-                message = $"{sentCount} invitations envoyées avec succès.",
-                errors = errorCount > 0 ? $"{errorCount} échecs d'envoi." : null
+                message = $"{sentCount} invitations envoyées.",
+                errors = errorCount
             });
+        }
+
+        [HttpPost("invite-staff")]
+        public async Task<IActionResult> InviteStaff([FromBody] StaffInvitationDto request)
+        {
+            if (string.IsNullOrEmpty(request.Email))
+                return BadRequest("L'adresse e-mail est obligatoire.");
+
+            try 
+            {
+                // 1. Vérifier si l'utilisateur existe déjà
+                var existingUser = await _context.Utilisateurs.FirstOrDefaultAsync(u => u.Email.ToLower() == request.Email.ToLower());
+                if (existingUser != null)
+                {
+                    return BadRequest("Un utilisateur avec cet email existe déjà.");
+                }
+
+                // 2. Auto-résolution de l'EntrepriseId via le Token (TenantService)
+                var currentEntrepriseId = request.EntrepriseId;
+                if (!currentEntrepriseId.HasValue || currentEntrepriseId == Guid.Empty)
+                {
+                    currentEntrepriseId = _tenantService.GetTenantId();
+                }
+
+                // 2.5 Récupérer le rôle réel depuis la DB pour avoir son ID (ou le créer)
+                var dbRole = await _context.Roles.IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(r => r.Nom == request.Role && (r.EntrepriseId == currentEntrepriseId || r.EntrepriseId == null));
+
+                if (dbRole == null)
+                {
+                    dbRole = new Role { Id = Guid.NewGuid(), Nom = request.Role, EntrepriseId = currentEntrepriseId };
+                    _context.Roles.Add(dbRole);
+                }
+
+                // 3. Créer le membre du personnel
+                var personnel = new Utilisateur 
+                { 
+                    Id = Guid.NewGuid(), 
+                    Email = request.Email.ToLower(),
+                    Prenom = request.Prenom,
+                    Nom = request.NomFamille,
+                    RoleNom = request.Role, 
+                    RoleId = dbRole.Id,
+                    EntrepriseId = currentEntrepriseId,
+                    EstActif = false,
+                    MotDePasseHash = "INVITED_" + Guid.NewGuid().ToString("N")
+                };
+                
+                _context.Utilisateurs.Add(personnel);
+
+                // 4. Générer le Token d'activation
+                Console.WriteLine("[DEBUG] Étape 1 : Préparation Token...");
+                var token = new TokensActivation {
+                    Id = Guid.NewGuid(), 
+                    Token = Guid.NewGuid(), 
+                    UtilisateurId = personnel.Id,
+                    Email = request.Email.ToLower(), 
+                    DateCreation = DateTime.UtcNow,
+                    DateExpiration = DateTime.UtcNow.AddDays(7), 
+                    Utilise = false,
+                    IdInscription = Guid.Empty // Satisfait la contrainte NOT NULL de la DB
+                };
+                _context.TokensActivation.Add(token);
+
+                Console.WriteLine("[DEBUG] Étape 2 : Sauvegarde DB...");
+                await _context.SaveChangesAsync();
+
+                // 5. Préparation du lien et de l'email
+                string activationLink = $"http://localhost:5173/activate-role?token={token.Token}";
+                
+                Console.WriteLine("\n--------------------------------------------------");
+                Console.WriteLine($"[DEBUG] STAFF INVITATION LINK: {request.Email}");
+                Console.WriteLine($"ROLE: {request.Role}");
+                Console.WriteLine($"LINK: {activationLink}");
+                Console.WriteLine("--------------------------------------------------\n");
+
+                string subject = $"Invitation : Rejoindre l'équipe EvaluaTech";
+                string htmlBody = $@"
+                    <div style='font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 12px;'>
+                        <div style='text-align: center; margin-bottom: 25px;'>
+                            <h2 style='color: #f59e0b; margin: 0;'>EvaluaTech</h2>
+                            <p style='font-size: 10px; font-weight: bold; color: #94a3b8; letter-spacing: 2px;'>SMART EVALUATION SYSTEM</p>
+                        </div>
+                        <h3 style='color: #0f172a;'>Bienvenue dans l'équipe !</h3>
+                        <p>Bonjour {request.Prenom},</p>
+                        <p>Vous avez été invité à rejoindre la plateforme EvaluaTech en tant que <strong>{request.Role}</strong>.</p>
+                        <p>Cliquez sur le bouton ci-dessous pour activer votre compte et configurer votre mot de passe :</p>
+                        <div style='text-align: center; margin: 40px 0;'>
+                            <a href='{activationLink}' style='background-color: #0f172a; color: #f59e0b; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 800; display: inline-block; border: 2px solid #f59e0b;'>ACTIVER MON COMPTE</a>
+                        </div>
+                        <p style='color: #64748b; font-size: 13px;'>Ce lien est valable pendant 7 jours.</p>
+                        <hr style='border: 0; border-top: 1px solid #eee; margin: 30px 0;'>
+                        <p style='font-size: 11px; color: #94a3b8; text-align: center;'>© 2025 EvaluaTech Platform. Tous droits réservés.</p>
+                    </div>";
+
+                await _emailService.SendEmailAsync(request.Email, subject, htmlBody);
+
+                return Ok(new { message = "Invitation envoyée avec succès au membre du personnel." });
+            }
+            catch (Exception ex)
+            {
+                var fullMessage = ex.InnerException != null 
+                    ? $"{ex.Message} --> {ex.InnerException.Message}" 
+                    : ex.Message;
+                return BadRequest(new { message = "Erreur lors de l'invitation : " + fullMessage });
+            }
         }
 
         [HttpGet("campagnes")]
         public async Task<IActionResult> GetCampagnes() {
-            return Ok(await _context.Campagnes.Select(c => new { c.Id, Titre = c.Nom }).ToListAsync());
+            // Fix: On renvoie "Nom" et "Id" clairement pour le select
+            return Ok(await _context.Campagnes
+                .OrderByDescending(c => c.CreeLe)
+                .Select(c => new { c.Id, Nom = c.Nom })
+                .ToListAsync());
         }
     }
 }

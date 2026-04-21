@@ -61,8 +61,8 @@
           <i class="fa-solid fa-chevron-right arrow-indicator"></i>
         </router-link>
 
-        <!-- SECTION ADMIN ENTREPRISE -->
-        <div v-if="userRole === 'AdminEntreprise'" class="nav-group">
+        <!-- SECTION ADMIN ENTREPRISE / RECRUTEUR -->
+        <div v-if="userRole === 'AdminEntreprise' || userRole === 'Recruteur'" class="nav-group">
           <label class="group-label">Gestion Système</label>
           <router-link to="/dashboard" class="nav-link-tech">
             <div class="icon-shell"><i class="fa-solid fa-gauge-high"></i></div>
@@ -87,7 +87,7 @@
           <router-link to="/campaigns" class="nav-link-tech">
             <div class="icon-shell"><i class="fa-solid fa-rectangle-list"></i></div>
             <span>Campagnes</span>
-            <span class="nav-badge-count">12</span>
+            <span class="nav-badge-count">{{ campaignCount }}</span>
           </router-link>
 
           <label class="group-label">Intelligence Artificielle</label>
@@ -104,10 +104,6 @@
           <router-link to="/staff-members" class="nav-link-tech">
             <div class="icon-shell"><i class="fa-solid fa-user-gear"></i></div>
             <span>Membres du personnel</span>
-          </router-link>
-          <router-link to="/roles" class="nav-link-tech">
-            <div class="icon-shell"><i class="fa-solid fa-shield-halved"></i></div>
-            <span>Rôles & Permissions</span>
           </router-link>
           <router-link to="/settings" class="nav-link-tech">
             <div class="icon-shell"><i class="fa-solid fa-sliders"></i></div>
@@ -188,6 +184,7 @@
             <select @change="changeRole($event)">
               <option value="Candidat" :selected="userRole === 'Candidat'">Candidat</option>
               <option value="Evaluateur" :selected="userRole === 'Evaluateur'">Évaluateur</option>
+              <option value="Recruteur" :selected="userRole === 'Recruteur'">Recruteur</option>
               <option value="AdminEntreprise" :selected="userRole === 'AdminEntreprise'">Admin Entreprise</option>
             </select>
             <i class="fa-solid fa-chevron-up"></i>
@@ -213,13 +210,23 @@ const router = useRouter();
 const authStore = useAuthStore();
 const userRole = computed(() => authStore.role);
 const isSidebarActive = ref(false);
+const campaignCount = ref(0);
 
 const branding = ref({ companyName: 'EvaluaTech', color: '#f59e0b' });
 
 const roleLabel = computed(() => {
-  const roles = { 'SuperAdmin': 'SuperAdmin', 'AdminEntreprise': 'Administrateur', 'Evaluateur': 'Évaluateur', 'Candidat': 'Candidat' };
+  const roles = { 'SuperAdmin': 'SuperAdmin', 'AdminEntreprise': 'Administrateur', 'Recruteur': 'RH / Recruteur', 'Evaluateur': 'Évaluateur', 'Candidat': 'Candidat' };
   return roles[userRole.value] || 'Utilisateur';
 });
+
+const fetchCounts = async () => {
+  try {
+    const res = await api.get('/Campagnes');
+    campaignCount.value = res.data.length;
+  } catch (err) {
+    console.error("Erreur sidebar counts:", err);
+  }
+};
 
 const toggleSidebar = () => { isSidebarActive.value = !isSidebarActive.value; };
 const changeRole = (e) => { 
@@ -227,6 +234,10 @@ const changeRole = (e) => {
   router.push('/dashboard').then(() => window.location.reload()); 
 };
 const logout = () => { authStore.logout(); router.push('/login'); };
+
+onMounted(() => {
+  fetchCounts();
+});
 </script>
 
 <style scoped>
@@ -235,13 +246,18 @@ const logout = () => { authStore.logout(); router.push('/login'); };
 /* --- STRUCTURE PRINCIPALE --- */
 .sidebar-tech {
   min-width: 290px; width: 290px;
-  background: #ffffff; height: 100vh;
+  background: var(--bg-sidebar, #ffffff); height: 100vh;
   position: sticky; top: 0;
-  border-right: 1px solid #f1f5f9;
+  border-right: 1px solid var(--border-sidebar, #f1f5f9);
   display: flex; flex-direction: column;
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   font-family: 'Plus Jakarta Sans', sans-serif;
   z-index: 1000;
+}
+
+[data-theme="dark"] .sidebar-tech {
+  --bg-sidebar: #0f172a;
+  --border-sidebar: rgba(255, 255, 255, 0.05);
 }
 
 /* --- HEADER & LOGO --- */
@@ -254,9 +270,11 @@ const logout = () => { authStore.logout(); router.push('/login'); };
 }
 .brand-svg { width: 100%; height: 100%; filter: drop-shadow(0 4px 6px rgba(245, 158, 11, 0.2)); }
 
-.brand-text { font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; line-height: 1; }
+.brand-text { font-size: 22px; font-weight: 800; color: var(--navy-text, #0f172a); letter-spacing: -0.5px; line-height: 1; }
 .brand-text span { color: #f59e0b; }
 .brand-subtitle { font-size: 10px; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-top: 4px; letter-spacing: 1px; }
+
+[data-theme="dark"] .brand-text { --navy-text: #ffffff; }
 
 .role-badge-premium { 
   background: #f8fafc; color: #64748b; font-size: 10px; font-weight: 700; 
@@ -284,17 +302,22 @@ const logout = () => { authStore.logout(); router.push('/login'); };
 
 /* --- NAVIGATION --- */
 .group-label {
-  font-size: 11px; font-weight: 800; color: #cbd5e1;
+  font-size: 11px; font-weight: 800; color: #1e293b;
   text-transform: uppercase; letter-spacing: 1.2px;
   padding: 24px 12px 10px; display: block;
 }
 .nav-link-tech {
   display: flex; align-items: center; padding: 11px 16px;
-  border-radius: 12px; color: #475569; font-weight: 600; font-size: 14px;
+  border-radius: 12px; color: var(--nav-text, #475569); font-weight: 600; font-size: 14px;
   text-decoration: none; transition: all 0.25s ease; margin-bottom: 4px;
 }
-.nav-link-tech:hover { background: #f8fafc; color: #0f172a; transform: translateX(5px); }
+.nav-link-tech:hover { background: var(--nav-hover-bg, #f8fafc); color: var(--nav-hover-text, #0f172a); transform: translateX(5px); }
 .nav-link-tech.router-link-active { background: #fffbeb; color: #b45309; font-weight: 700; box-shadow: 0 4px 12px -4px rgba(245,158,11,0.15); }
+
+[data-theme="dark"] .nav-link-tech { --nav-text: #94a3b8; }
+[data-theme="dark"] .nav-link-tech:hover { --nav-hover-bg: rgba(255, 255, 255, 0.05); --nav-hover-text: #ffffff; }
+[data-theme="dark"] .nav-link-tech.router-link-active { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+[data-theme="dark"] .group-label { color: #94a3b8; }
 
 .icon-shell { width: 30px; font-size: 17px; display: flex; align-items: center; color: inherit; }
 
@@ -306,8 +329,9 @@ const logout = () => { authStore.logout(); router.push('/login'); };
 .nav-badge-count { margin-left: auto; background: #fbbf24; color: #92400e; font-size: 10px; font-weight: 800; padding: 1px 7px; border-radius: 20px; }
 
 /* --- FOOTER --- */
-.sidebar-footer { padding: 20px 20px 24px; border-top: 1px solid #f1f5f9; margin-top: auto; }
-.simulator-card { background: #f8fafc; padding: 12px; border-radius: 14px; border: 1px solid #edf2f7; }
+.sidebar-footer { padding: 20px 20px 24px; border-top: 1px solid var(--border-sidebar, #f1f5f9); margin-top: auto; }
+.simulator-card { background: var(--footer-card, #f8fafc); padding: 12px; border-radius: 14px; border: 1px solid var(--border-sidebar, #edf2f7); }
+[data-theme="dark"] .simulator-card { --footer-card: rgba(255,255,255,0.03); }
 .simulator-card label { font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; display: block; margin-bottom: 6px; }
 
 .select-ui-wrapper { position: relative; display: flex; align-items: center; }

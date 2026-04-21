@@ -34,9 +34,9 @@
                 <i class="fa-solid fa-rotate" :class="{ 'fa-spin': loading }"></i>
               </button>
               <div class="view-toggle-cluster">
-                <button :class="['btn-view-toggle', { active: viewMode === 'grid' }]"      @click="viewMode = 'grid'"      title="Vue grille"><i class="fa-solid fa-grid-2"></i></button>
+                <button :class="['btn-view-toggle', { active: viewMode === 'grid' }]"      @click="viewMode = 'grid'"      title="Vue grille"><i class="fa-solid fa-table-cells-large"></i></button>
                 <button :class="['btn-view-toggle', { active: viewMode === 'list' }]"      @click="viewMode = 'list'"      title="Vue liste"><i class="fa-solid fa-list-ul"></i></button>
-                <button :class="['btn-view-toggle', { active: viewMode === 'analytics' }]" @click="viewMode = 'analytics'" title="Analytique"><i class="fa-solid fa-chart-mixed"></i></button>
+                <button :class="['btn-view-toggle', { active: viewMode === 'analytics' }]" @click="viewMode = 'analytics'" title="Analytique"><i class="fa-solid fa-chart-simple"></i></button>
               </div>
               <button class="btn-enigma-primary shadow-premium" @click="enterStudioMode()">
                 <div class="btn-content"><i class="fa-solid fa-plus me-2"></i> CRÉER UNE ARCHITECTURE</div>
@@ -471,6 +471,7 @@
                             <h6 class="asset-title-v8 text-truncate">{{ element.texte }}</h6>
                             <div class="d-flex gap-2 mt-1">
                               <span class="t-pill weight">{{ element.poids }} PTS</span>
+                              <span v-if="element.duree" class="t-pill time"><i class="fa-solid fa-clock me-1"></i> {{ element.duree }}s</span>
                               <span v-if="element.difficulty" class="t-pill" :class="'diff-' + element.difficulty?.toLowerCase()">{{ element.difficulty }}</span>
                             </div>
                           </div>
@@ -517,9 +518,9 @@
                   <div class="enigma-card p-5">
                     <h5 class="fw-900 mb-5"><i class="fa-solid fa-calendar-check text-amber me-3"></i>Matrix Planning</h5>
                     <div class="row g-5">
-                      <div class="col-md-6"><div class="enigma-input-wrap"><label>OUVERTURE TERMINAL</label><input type="datetime-local" v-model="studio.campagne.dateDebut" class="enigma-field"></div></div>
-                      <div class="col-md-6"><div class="enigma-input-wrap"><label>FERMETURE ACCÈS</label><input type="datetime-local" v-model="studio.campagne.dateFin" class="enigma-field"></div></div>
-                      <div class="col-md-6"><div class="enigma-input-wrap"><label>MAX CANDIDATS</label><input type="number" v-model.number="studio.campagne.maxCandidats" class="enigma-field" min="1"></div></div>
+                      <div class="col-md-4"><div class="enigma-input-wrap"><label>OUVERTURE TERMINAL</label><input type="datetime-local" v-model="studio.campagne.dateDebut" class="enigma-field"></div></div>
+                      <div class="col-md-4"><div class="enigma-input-wrap"><label>FERMETURE ACCÈS</label><input type="datetime-local" v-model="studio.campagne.dateFin" class="enigma-field"></div></div>
+                      <div class="col-md-4"><div class="enigma-input-wrap"><label>MAX CANDIDATS</label><input type="number" v-model.number="studio.campagne.maxCandidats" class="enigma-field" min="1"></div></div>
                       <div class="col-md-6">
                         <div class="enigma-input-wrap">
                           <label>FUSEAU HORAIRE</label>
@@ -707,6 +708,11 @@
               </div>
             </div>
             <div class="col-md-6">
+              <div class="enigma-input-wrap"><label>DURÉE (SECONDRES)</label>
+                <input type="number" v-model.number="newQuestion.duree" class="enigma-field" placeholder="Ex: 60">
+              </div>
+            </div>
+            <div class="col-md-6">
               <div class="enigma-input-wrap"><label>DIFFICULTÉ</label>
                 <select v-model="newQuestion.difficulty" class="enigma-field">
                   <option value="EASY">Facile</option>
@@ -780,10 +786,10 @@
 </template>
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
-import axios from 'axios';
+import api from '@/services/api';
 import draggable from 'vuedraggable';
 
-const API_ENDPOINT = 'http://localhost:5172/api';
+const API_ENDPOINT = '';
 
 /* ─── ÉTAT GLOBAL ─────────────────────────────────────────────── */
 const isStudioMode   = ref(false);
@@ -834,15 +840,15 @@ const modals   = reactive({ bank: false, quickAdd: false, shortcuts: false });
 const globalToast = reactive({ active: false, message: '', type: '', icon: '' });
 const confirmDialog = reactive({ show: false, title: '', message: '', icon: '', _cb: null });
 
-const categories = ['Backend Specialist', 'Frontend Architect', 'Cybersecurity', 'DevOps', 'AI Logic'];
+const categories = ref([]);
 
 const studio = reactive({
-  questionnaire: { id: null, titre: '', categorie: categories[1], duree: 45, scoreReussite: 70, description: '', tags: [] },
+  questionnaire: { id: null, titre: '', categorie: '', duree: 45, scoreReussite: 70, description: '', tags: [] },
   campagne:      { id: null, nom: '', dateDebut: '', dateFin: '', maxCandidats: 100, anticheat: true, timerPerQuestion: false, sendNotifications: false, timezone: 'Europe/Paris' },
   questions:     [],
 });
 
-const newQuestion = reactive({ texte: '', poids: 10, difficulty: 'MEDIUM', explication: '' });
+const newQuestion = reactive({ texte: '', poids: 10, difficulty: 'MEDIUM', explication: '', duree: 0 });
 
 const steps = [
   { id: 1, label: 'Structure' },
@@ -865,15 +871,17 @@ const autoSaveTimer = ref(null);
 const fetchInitialData = async () => {
   loading.value = true;
   try {
-    const [resCamp, resQuest, resCand, resBank] = await Promise.all([
-      axios.get(`${API_ENDPOINT}/Campagnes`),
-      axios.get(`${API_ENDPOINT}/Questionnaires`),
-      axios.get(`${API_ENDPOINT}/Candidates`),
-      axios.get(`${API_ENDPOINT}/Questions`),
+    const [resCamp, resQuest, resCand, resBank, resCats] = await Promise.all([
+      api.get(`/Campagnes`),
+      api.get(`/Questionnaires`),
+      api.get(`/Candidates`),
+      api.get(`/Questions`),
+      api.get(`/Questions/categories`),
     ]);
     campaigns.value           = resCamp.data;
     questionnairesList.value  = resQuest.data;
     candidateMasterPool.value = resCand.data;
+    categories.value          = resCats.data;
     bankGlobalReference.value = resBank.data.map(q => ({ 
       ...q, 
       difficulty: q.difficulty || 'EXPERT', 
@@ -940,7 +948,7 @@ const enterStudioMode = (campaign = null) => {
     Object.assign(studio.campagne, campaign);
     studio.questionnaire.id    = campaign.questionnaireId;
     studio.questionnaire.titre = getQuestionnaireName(campaign.questionnaireId);
-    axios.get(`${API_ENDPOINT}/Questions/ByQuestionnaire/${campaign.questionnaireId}`)
+    api.get(`/Questions/ByQuestionnaire/${campaign.questionnaireId}`)
       .then(res => { studio.questions = res.data; })
       .catch(() => { studio.questions = []; });
   } else {
@@ -984,6 +992,26 @@ watch(
       } catch (e) {}
       isSaving.value = false;
     }, 1200);
+  }
+);
+
+// Calcul automatique de la date de fin en fonction de la durée
+watch(
+  [() => studio.campagne.dateDebut, () => studio.questionnaire.duree],
+  ([newDate, newDuree]) => {
+    if (newDate && newDuree) {
+      const date = new Date(newDate);
+      date.setMinutes(date.getMinutes() + parseInt(newDuree));
+      
+      // Formater en YYYY-MM-DDTHH:mm pour l'input datetime-local
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      const h = String(date.getHours()).padStart(2, '0');
+      const min = String(date.getMinutes()).padStart(2, '0');
+      
+      studio.campagne.dateFin = `${y}-${m}-${d}T${h}:${min}`;
+    }
   }
 );
 
@@ -1077,32 +1105,51 @@ const publishToProduction = async () => {
   if (!isReadyToPublish.value) return;
   isPublishing.value = true;
   try {
-    // 1. Création du Questionnaire
-    const qResp = await axios.post(`${API_ENDPOINT}/Questionnaires`, {
+    // 1. Identification des questions (nouvelles vs existantes)
+    const existingQuestionIds = [];
+    const newQuestionsPayloads = [];
+
+    studio.questions.forEach(q => {
+      // Si l'id ressemble à un Guid généré par l'API (pas "custom-xxx")
+      if (typeof q.id === 'string' && q.id.includes('-') && !q.id.startsWith('custom')) {
+        existingQuestionIds.push(q.id);
+      } else {
+        newQuestionsPayloads.push(q);
+      }
+    });
+
+    // 2. Création du Questionnaire avec les métadonnées et la liaison des questions existantes
+    const qResp = await api.post(`/Questionnaires`, {
       Titre: studio.questionnaire.titre,
       Description: studio.questionnaire.description || "",
-      Categorie: studio.questionnaire.categorie,
-      Duree: studio.questionnaire.duree,
-      ScoreReussite: studio.questionnaire.scoreReussite
+      DureeMinutes: studio.questionnaire.duree || 60,
+      ScoreReussite: studio.questionnaire.scoreReussite || 70,
+      Categorie: studio.questionnaire.categorie || "TECHNIQUE",
+      QuestionIds: existingQuestionIds
     });
     const qId = qResp.data.id;
 
-    // 2. Création des Questions (On retire les IDs temporaires pour laisser le Guid se générer)
-    await Promise.all(
-      studio.questions.map(q => {
-        const payload = {
-          Texte: q.texte,
-          Poids: Number(q.poids),
-          Type: 0, 
-          BonneReponse: q.explication || "",
-          QuestionnaireId: qId
-        };
-        return axios.post(`${API_ENDPOINT}/Questions`, payload);
-      })
-    );
+    // 3. Création des NOUVELLES questions dans la base et liaison au questionnaire
+    if (newQuestionsPayloads.length > 0) {
+      await Promise.all(
+        newQuestionsPayloads.map(q => {
+          return api.post(`/Questions`, {
+            Enonce: q.texte || "Question sans titre",
+            Points: Number(q.poids) || 1,
+            DureeSecondes: q.duree > 0 ? q.duree : null,
+            Type: 0, 
+            Niveau: 1, 
+            BonneReponse: q.explication || "",
+            QuestionnaireId: qId,
+            Choix: [],
+            Prerequis: []
+          });
+        })
+      );
+    }
 
-    // 3. Création de la Campagne
-    await axios.post(`${API_ENDPOINT}/Campagnes`, {
+    // 4. Création de la Campagne
+    await api.post(`/Campagnes`, {
       Nom: studio.campagne.nom || `ARCHITECTE : ${studio.questionnaire.titre}`,
       Description: studio.questionnaire.description || "",
       QuestionnaireId: qId,
@@ -1134,7 +1181,7 @@ const handleDelete = (id) => {
     'fa-solid fa-trash-can',
     async () => {
       try {
-        await axios.delete(`${API_ENDPOINT}/Campagnes/${id}`);
+        await api.delete(`/Campagnes/${id}`);
         showPulseToast('Session supprimée.', 'warn', 'fa-solid fa-trash-can');
         fetchInitialData();
       } catch {
@@ -1179,7 +1226,13 @@ const previewTimeline = computed(() => [
 const editQuestion = (q, idx) => {
   editingQuestion.value = q;
   editingIndex.value    = idx;
-  Object.assign(newQuestion, { texte: q.texte, poids: q.poids, difficulty: q.difficulty || 'MEDIUM', explication: q.explication || '' });
+  Object.assign(newQuestion, { 
+    texte: q.texte, 
+    poids: q.poids, 
+    difficulty: q.difficulty || 'MEDIUM', 
+    explication: q.explication || '',
+    duree: q.duree || 0
+  });
   modals.quickAdd = true;
 };
 
@@ -1196,7 +1249,7 @@ const saveQuestion = () => {
 
 const closeQuickAdd = () => {
   modals.quickAdd = false; editingQuestion.value = null;
-  Object.assign(newQuestion, { texte: '', poids: 10, difficulty: 'MEDIUM', explication: '' });
+  Object.assign(newQuestion, { texte: '', poids: 10, difficulty: 'MEDIUM', explication: '', duree: 0 });
 };
 
 const toggleSelectQuestion  = (id) => {
@@ -1380,6 +1433,64 @@ onUnmounted(() => {
 .brand-subtitle-v2 { font-size: 0.6rem; font-weight: 800; color: #94a3b8; letter-spacing: 1px; margin: 0; }
 .btn-back-to-dash { width: 44px; height: 44px; border-radius: 14px; border: 1.5px solid #e2e8f0; background: white; cursor: pointer; color: #64748b; transition: 0.2s; }
 .btn-back-to-dash:hover { background: #0f172a; color: white; border-color: #0f172a; }
+
+/* HEADER ACTIONS PRO */
+.btn-refresh-pro {
+  width: 44px;
+  height: 44px;
+  background: white;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  color: #64748b;
+  cursor: pointer;
+  transition: 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+}
+.btn-refresh-pro:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #f59e0b;
+  color: #f59e0b;
+  transform: rotate(180deg) scale(1.1);
+  box-shadow: 0 8px 15px rgba(245, 158, 11, 0.1);
+}
+
+.view-toggle-cluster {
+  display: flex;
+  background: white;
+  padding: 4px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  gap: 4px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+}
+
+.btn-view-toggle {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-view-toggle:hover {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.btn-view-toggle.active {
+  background: #0f172a;
+  color: #f59e0b;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+}
 .ai-robot-terminal { width: 50px; height: 50px; background: #0f172a; border-radius: 15px; display: flex; align-items: center; justify-content: center; }
 
 /* AUTOSAVE */

@@ -27,13 +27,41 @@ namespace NeoEvaluation.API.Controllers
         public async Task<ActionResult<SuperAdminStatsDto>> GetStats()
         {
             try {
+                // Initialisation des stats de base
                 var stats = new SuperAdminStatsDto
                 {
-                    TotalEntreprises = await _context.Entreprises.CountAsync(e => e.EstActif),
+                    TotalEntreprises = await _context.Entreprises.CountAsync(),
                     TotalUtilisateurs = await _context.Utilisateurs.CountAsync(),
                     DemandesEnAttente = await _context.InscriptionsEntreprises.CountAsync(i => i.Statut == 0),
-                    SessionsIARecentes = await _context.Evaluations.CountAsync(e => e.Statut == EvaluationStatus.EN_COURS)
+                    TotalTests = await _context.Evaluations.CountAsync()
                 };
+
+                // Calcul de la croissance des entreprises sur les 6 derniers mois
+                var sixMonthsAgo = DateTime.UtcNow.AddMonths(-5);
+                var startDate = new DateTime(sixMonthsAgo.Year, sixMonthsAgo.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+                
+                var monthlyData = await _context.Entreprises
+                    .Where(e => e.CreeLe >= startDate)
+                    .GroupBy(e => new { e.CreeLe.Year, e.CreeLe.Month })
+                    .Select(g => new { 
+                        Year = g.Key.Year, 
+                        Month = g.Key.Month, 
+                        Count = g.Count() 
+                    })
+                    .OrderBy(g => g.Year).ThenBy(g => g.Month)
+                    .ToListAsync();
+
+                for (int i = 0; i < 6; i++)
+                {
+                    var date = sixMonthsAgo.AddMonths(i);
+                    var match = monthlyData.FirstOrDefault(d => d.Year == date.Year && d.Month == date.Month);
+                    
+                    stats.CroissanceStats.Add(new MonthlyGrowthDto {
+                        Mois = date.ToString("MMM", System.Globalization.CultureInfo.InvariantCulture).ToUpper(),
+                        Count = match?.Count ?? 0
+                    });
+                }
+
                 return Ok(stats);
             } catch (Exception ex) {
                 Console.WriteLine($"[STATS ERROR] {ex.Message}");
@@ -128,14 +156,31 @@ namespace NeoEvaluation.API.Controllers
 
             var link = $"http://localhost:5173/definir-mot-de-passe?token={token.Token}";
             
-            //  DEBUG TERMINAL (comme demandé)
+            //  PROFESSIONAL HTML TEMPLATE Email Button
+            var htmlBody = $@"
+                <div style='font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;'>
+                    <div style='text-align: center; margin-bottom: 20px;'>
+                        <h2 style='color: #f59e0b;'>NeoEvaluation</h2>
+                    </div>
+                    <p>Bonjour <strong>{dto.Name}</strong>,</p>
+                    <p>Vous avez été invité à administrer la plateforme <strong>NeoEvaluation</strong>. Pour activer votre accès, veuillez cliquer sur le bouton ci-dessous :</p>
+                    <div style='text-align: center; margin: 30px 0;'>
+                        <a href='{link}' style='background-color: #f59e0b; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;'>ACTIVER MON COMPTE</a>
+                    </div>
+                    <p style='color: #666; font-size: 12px;'>Si le bouton ne fonctionne pas, copiez ce lien : <br> {link}</p>
+                    <hr style='border: 0; border-top: 1px solid #eee; margin: 20px 0;'>
+                    <p style='font-size: 11px; color: #999; text-align: center;'>&copy; 2025 NeoEvaluation - Smart Evaluation System</p>
+                </div>";
+
+            //  DEBUG TERMINAL (Fallback)
             Console.WriteLine("\n--------------------------------------------------");
             Console.WriteLine($"[DEBUG] ADMIN INVITATION: {dto.Email}");
             Console.WriteLine($"LINK: {link}");
             Console.WriteLine("--------------------------------------------------\n");
 
             try {
-                await _emailService.SendEmailAsync(dto.Email, "Invitation SuperAdmin - NeoEvaluation", $"Bonjour {dto.Name}, vous avez été invité à administrer la plateforme NeoEvaluation. Activez votre compte ici : {link}");
+                await _emailService.SendEmailAsync(dto.Email, "Invitation SuperAdmin - NeoEvaluation", htmlBody);
+                return Ok(new { message = "Invitation envoyée", token = token.Token });
             } catch (Exception ex) {
                 return BadRequest(new { message = "Erreur d'envoi d'email : " + ex.Message });
             }
@@ -192,16 +237,33 @@ namespace NeoEvaluation.API.Controllers
             try {
                 var link = $"http://localhost:5173/definir-mot-de-passe?token={token.Token}";
                 
-                // ✅ LOG CONSOLE POUR DÉVELOPPEMENT (si l'email tarde)
+                // ✅ PROFESSIONAL HTML TEMPLATE
+                var htmlBody = $@"
+                    <div style='font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;'>
+                        <div style='text-align: center; margin-bottom: 20px;'>
+                            <h2 style='color: #f59e0b;'>NeoEvaluation</h2>
+                        </div>
+                        <h3 style='color: #0f172a;'>Félicitations !</h3>
+                        <p>Votre compte <strong>NeoEvaluation</strong> a été approuvé avec succès.</p>
+                        <p>Cliquez sur le bouton ci-dessous pour définir votre mot de passe et accéder à votre tableau de bord :</p>
+                        <div style='text-align: center; margin: 30px 0;'>
+                            <a href='{link}' style='background-color: #f59e0b; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;'>DÉFINIR MON MOT DE PASSE</a>
+                        </div>
+                        <p style='color: #666; font-size: 12px;'>Ce lien expirera dans 48 heures.</p>
+                        <hr style='border: 0; border-top: 1px solid #eee; margin: 20px 0;'>
+                        <p style='font-size: 11px; color: #999; text-align: center;'>&copy; 2025 NeoEvaluation - Smart Evaluation System</p>
+                    </div>";
+
+                // ✅ DEBUG TERMINAL (Fallback)
                 Console.WriteLine("\n--------------------------------------------------");
                 Console.WriteLine($"[DEBUG] ACTIVATION LINK FOR: {reg.EmailResponsable}");
                 Console.WriteLine($"LINK: {link}");
                 Console.WriteLine("--------------------------------------------------\n");
 
-                await _emailService.SendEmailAsync(reg.EmailResponsable, "Compte Approuvé", 
-                    $"Félicitations ! Votre compte NeoEvaluation a été approuvé. Cliquez ici pour définir votre mot de passe : {link}");
+                await _emailService.SendEmailAsync(reg.EmailResponsable, "Compte Approuvé - NeoEvaluation", htmlBody);
+                
+                return Ok(new { message = "Entreprise approuvée et email envoyé." });
             } catch (Exception ex) {
-                return BadRequest(new { message = "Erreur d'envoi d'email d'approbation : " + ex.Message });
             }
 
             return Ok(new { message = "Entreprise approuvée avec succès" });
@@ -237,24 +299,6 @@ namespace NeoEvaluation.API.Controllers
                 CreeLe = DateTime.UtcNow
             };
 
-            // 2. Création des métadonnées détaillées (Table Propre)
-            var details = new EntrepriseParSA {
-                Id = Guid.NewGuid(),
-                Domaine = dto.Domaine,
-                Industrie = dto.Industrie,
-                SiteWeb = dto.SiteWeb,
-                Adresse = dto.Adresse,
-                Ville = dto.Ville,
-                Pays = dto.Pays,
-                CodePostal = dto.CodePostal,
-                Description = dto.Description,
-                NomResponsable = dto.AdminLastName,
-                PrenomResponsable = dto.AdminFirstName,
-                EmailResponsable = dto.AdminEmail,
-                TelephoneResponsable = dto.AdminPhone,
-                CreeLe = DateTime.UtcNow
-            };
-
             var token = new TokensActivation {
                 IdInscription = reg.Id,
                 Token = Guid.NewGuid(),
@@ -263,7 +307,6 @@ namespace NeoEvaluation.API.Controllers
             };
 
             _context.InscriptionsEntreprises.Add(reg);
-            _context.EntrepriseParSA.Add(details);
             _context.TokensActivation.Add(token);
             await _context.SaveChangesAsync();
 
@@ -272,18 +315,33 @@ namespace NeoEvaluation.API.Controllers
             try {
                 var link = $"http://localhost:5173/definir-mot-de-passe?token={token.Token}";
 
-                // ✅ LOG CONSOLE POUR DÉVELOPPEMENT
+                // ✅ PROFESSIONAL HTML TEMPLATE
+                var htmlBody = $@"
+                    <div style='font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;'>
+                        <div style='text-align: center; margin-bottom: 20px;'>
+                            <h2 style='color: #f59e0b;'>NeoEvaluation</h2>
+                        </div>
+                        <h3 style='color: #0f172a;'>Bienvenue parmi nous !</h3>
+                        <p>Une organisation a été créée pour vous sur la plateforme <strong>NeoEvaluation</strong>.</p>
+                        <p>Veuillez cliquer sur le bouton ci-dessous pour finaliser la création de votre accès :</p>
+                        <div style='text-align: center; margin: 30px 0;'>
+                            <a href='{link}' style='background-color: #f59e0b; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;'>ACCÉDER À MON COMPTE</a>
+                        </div>
+                        <hr style='border: 0; border-top: 1px solid #eee; margin: 20px 0;'>
+                        <p style='font-size: 11px; color: #999; text-align: center;'>&copy; 2025 NeoEvaluation - Smart Evaluation System</p>
+                    </div>";
+
+                // ✅ DEBUG TERMINAL (Fallback)
                 Console.WriteLine("\n--------------------------------------------------");
                 Console.WriteLine($"[DEBUG] MANUAL CREATION LINK FOR: {dto.AdminEmail}");
                 Console.WriteLine($"LINK: {link}");
                 Console.WriteLine("--------------------------------------------------\n");
 
-                await _emailService.SendEmailAsync(dto.AdminEmail, "Accès Admin NeoEvaluation", $"Votre organisation a été créée. Définissez votre accès ici : {link}");
+                await _emailService.SendEmailAsync(dto.AdminEmail, "Accès Admin NeoEvaluation", htmlBody);
+                return Ok(new { message = "Organisation créée avec succès" });
             } catch (Exception ex) {
                 return BadRequest(new { message = "Erreur d'envoi d'email de création : " + ex.Message });
             }
-
-            return Ok(new { message = "Organisation créée avec succès", profileId = details.Id });
         }
     }
 }

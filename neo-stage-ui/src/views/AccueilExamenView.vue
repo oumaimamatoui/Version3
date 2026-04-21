@@ -30,7 +30,7 @@
             
             <div v-else class="centering-layout">
                  <div class="surface-card-q">
-                    <h2 class="fw-800">{{ questions[currentIndex]?.texte }}</h2>
+                    <h2 class="fw-800">{{ questions[currentIndex]?.enonce }}</h2>
                     <!-- ... Votre logique de Quiz ... -->
                     <button @click="router.push('/dashboard')" class="btn-img btn-gray mt-5">QUITTER</button>
                  </div>

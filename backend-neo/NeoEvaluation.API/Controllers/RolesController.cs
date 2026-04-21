@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using NeoEvaluation.API.Data;
 using NeoEvaluation.API.Models;
@@ -8,17 +9,20 @@ namespace NeoEvaluation.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class RolesController : ControllerBase
     {
         private readonly AppDbContext _context;
         private readonly IEmailService _emailService;
         private readonly IConfiguration _config;
+        private readonly ITenantService _tenantService;
 
-        public RolesController(AppDbContext context, IEmailService emailService, IConfiguration config)
+        public RolesController(AppDbContext context, IEmailService emailService, IConfiguration config, ITenantService tenantService)
         {
             _context = context;
             _emailService = emailService;
             _config = config;
+            _tenantService = tenantService;
         }
 
         // 1. RÉCUPÉRER TOUS LES RÔLES
@@ -44,13 +48,15 @@ namespace NeoEvaluation.API.Controllers
             {
                 // A. Sauvegarde du Rôle
                 role.Id ??= Guid.NewGuid();
+                role.EntrepriseId = _tenantService.GetTenantId();
                 role.CreeLe = DateTime.UtcNow;
                 _context.Roles.Add(role);
 
                 // B. Création de l'utilisateur (Classe concrète Personnel héritant de Utilisateur)
-                var newUser = new Personnel 
+                var newUser = new Utilisateur 
                 {
                     Id = Guid.NewGuid(),
+                    EntrepriseId = role.EntrepriseId,
                     Email = role.Email ?? "",
                     Nom = role.NomFamille ?? "",
                     Prenom = role.Prenom ?? "",

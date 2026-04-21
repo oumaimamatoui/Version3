@@ -8,6 +8,8 @@ namespace NeoEvaluation.API.Controllers
     public class CompleteActivationDto {
         public Guid Token { get; set; }
         public string Password { get; set; } = string.Empty;
+        public string? Prenom { get; set; }
+        public string? Nom { get; set; }
     }
 
     [Route("api/[controller]")]
@@ -20,7 +22,8 @@ namespace NeoEvaluation.API.Controllers
         [HttpGet("check/{token}")]
         public async Task<IActionResult> CheckToken(Guid token)
         {
-            var t = await _context.TokensActivation.FirstOrDefaultAsync(x => x.Token == token && !x.Utilise && x.DateExpiration > DateTime.UtcNow);
+            var t = await _context.TokensActivation.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(x => x.Token == token && !x.Utilise && x.DateExpiration > DateTime.UtcNow);
             return Ok(new { valide = (t != null) });
         }
 
@@ -28,7 +31,8 @@ namespace NeoEvaluation.API.Controllers
         public async Task<IActionResult> Complete([FromBody] CompleteActivationDto dto)
         {
             Console.WriteLine($"[ACTIVATION DEBUG] Tentative de finalisation pour le token: {dto.Token}");
-            var token = await _context.TokensActivation.FirstOrDefaultAsync(t => t.Token == dto.Token && !t.Utilise);
+            var token = await _context.TokensActivation.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(t => t.Token == dto.Token && !t.Utilise);
             
             if (token == null) {
                 Console.WriteLine("[ACTIVATION DEBUG] Token introuvable ou déjà utilisé.");
@@ -40,24 +44,30 @@ namespace NeoEvaluation.API.Controllers
                 return BadRequest(new { message = "Lien expiré." });
             }
 
-            // CAS CANDIDAT
+            // CAS CANDIDAT / STAFF
             if (token.UtilisateurId != null && token.UtilisateurId != Guid.Empty)
             {
-                Console.WriteLine($"[ACTIVATION DEBUG] Mode: CANDIDAT (User: {token.UtilisateurId})");
-                var user = await _context.Utilisateurs.FindAsync(token.UtilisateurId);
+                Console.WriteLine($"[ACTIVATION DEBUG] Mode: CANDIDAT / STAFF (User: {token.UtilisateurId})");
+                var user = await _context.Utilisateurs.IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(u => u.Id == token.UtilisateurId);
                 if (user == null) return NotFound(new { message = "Utilisateur non trouvé." });
+
+                // Mise à jour du nom/prénom s'ils sont fournis (évite les profils vides)
+                if (!string.IsNullOrWhiteSpace(dto.Prenom)) user.Prenom = dto.Prenom;
+                if (!string.IsNullOrWhiteSpace(dto.Nom)) user.Nom = dto.Nom;
 
                 user.MotDePasseHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
                 user.EstActif = true;
                 token.Utilise = true;
                 await _context.SaveChangesAsync();
-                Console.WriteLine("[ACTIVATION DEBUG] Candidat activé avec succès.");
-                return Ok(new { message = "Candidat activé." });
+                Console.WriteLine("[ACTIVATION DEBUG] Utilisateur activé avec succès.");
+                return Ok(new { message = "Utilisateur activé." });
             }
 
             Console.WriteLine($"[ACTIVATION DEBUG] Mode: ENTREPRISE (Inscription: {token.IdInscription})");
             // CAS ENTREPRISE / SUPERADMIN
-            var reg = await _context.InscriptionsEntreprises.FindAsync(token.IdInscription);
+            var reg = await _context.InscriptionsEntreprises.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(i => i.Id == token.IdInscription);
             if (reg == null) {
                 Console.WriteLine("[ACTIVATION DEBUG] Inscription introuvable dans la DB.");
                 return BadRequest(new { message = "Inscription introuvable." });
@@ -68,7 +78,7 @@ namespace NeoEvaluation.API.Controllers
             {
                 Console.WriteLine("[ACTIVATION DEBUG] Détection d'un SUPER ADMIN.");
                 
-                var superUser = new SuperAdmin {
+                var superUser = new Utilisateur {
                     Id = Guid.NewGuid(),
                     Nom = reg.NomResponsable,
                     Prenom = reg.PrenomResponsable ?? "Master",
@@ -96,19 +106,11 @@ namespace NeoEvaluation.API.Controllers
                 Id = Guid.NewGuid(),
                 Nom = reg.NomEntreprise,
                 MatriculeFiscale = reg.MatriculeFiscale,
-                EstActif = true,
+                AbonnementFin = DateTime.UtcNow.AddYears(1), // 1 an d'essai gratuit
                 Plan = "Gratuit"
             };
             _context.Entreprises.Add(entreprise);
 
-            // 2. Liaison avec EntrepriseParSA (Métadonnées du SuperAdmin)
-            var detailsSA = await _context.EntrepriseParSA
-                .FirstOrDefaultAsync(d => d.EmailResponsable == reg.EmailResponsable && d.EntrepriseId == null);
-            
-            if (detailsSA != null)
-            {
-                detailsSA.EntrepriseId = entreprise.Id;
-            }
 
             // 3. Préparation de l'Admin (Personnel)
             var targetNom = reg.NomResponsable;
@@ -121,8 +123,8 @@ namespace NeoEvaluation.API.Controllers
                 targetPrenom = parts[0];
             }
 
-            // 2. Création de l'Administrateur (Personnel)
-            var adminUser = new Personnel {
+            // 2. Création de l'Administrateur
+            var adminUser = new Utilisateur {
                 Id = Guid.NewGuid(),
                 Nom = targetNom,
                 Prenom = targetPrenom,
@@ -131,7 +133,6 @@ namespace NeoEvaluation.API.Controllers
                 EntrepriseId = entreprise.Id,
                 RoleNom = "AdminEntreprise",
                 EstActif = true,
-                IdEmploye = "ADMIN-01",
                 Privileges = new List<string> { "ALL" }
             };
 
@@ -144,7 +145,7 @@ namespace NeoEvaluation.API.Controllers
                 adminUser.RoleId = roleAdmin.Id;
             }
 
-            _context.Personnels.Add(adminUser);
+            _context.Utilisateurs.Add(adminUser);
 
             token.Utilise = true;
             reg.Statut = 3; // "Activé / Terminé"

@@ -66,18 +66,24 @@
 
         <!-- 3. KPI BENTO GRID -->
         <div class="row g-4 mb-5">
-          <div class="col-md-6 col-xl-3" v-for="stat in dynamicStats" :key="stat.label">
-            <div class="kpi-cyber-card">
-              <div class="d-flex justify-content-between align-items-start">
-                <div class="kpi-icon-box" :style="{ color: stat.color, backgroundColor: stat.bg }">
+          <div class="col-xl-3 col-md-6" v-for="stat in dynamicStats" :key="stat.label">
+            <router-link :to="getStatLink(stat.label)" class="stat-card-premium animate__animated animate__fadeInUp d-block text-decoration-none">
+              <div class="d-flex justify-content-between">
+                <div class="stat-icon-box" :style="{ background: stat.bg, color: stat.color }">
                   <i :class="stat.icon"></i>
                 </div>
+                <div class="stat-trend" :class="{ up: stat.trendUp }">
+                  {{ stat.trend }} <i class="fa-solid" :class="stat.trendUp ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down'"></i>
+                </div>
               </div>
-              <div class="mt-4">
-                <h2 class="kpi-value">{{ stat.value }}</h2>
-                <span class="kpi-label">{{ stat.label }}</span>
+              <div class="stat-content mt-4">
+                <h3 class="m-0 fw-800 text-slate-900">{{ stat.value }}</h3>
+                <p class="m-0 tiny fw-800 text-slate-400 uppercase ls-1">{{ stat.label }}</p>
               </div>
-            </div>
+              <div class="stat-progress mt-3">
+                <div class="progress-bar-pro" :style="{ width: '70%', background: stat.color }"></div>
+              </div>
+            </router-link>
           </div>
         </div>
 
@@ -132,10 +138,32 @@
 
         <!-- 5. ANALYTICS (Pour Admins) -->
         <div v-if="userRole !== 'Candidat'" class="row g-4 pb-5">
-            <div class="col-lg-12">
+            <div class="col-lg-8">
                 <div class="glass-panel">
-                    <h5 class="panel-title mb-4">COURBE DE PERFORMANCE GLOBAL</h5>
-                    <div class="chart-height"><canvas id="mainActivityChart"></canvas></div>
+                    <h5 class="panel-title mb-5">COURBE DE PERFORMANCE GLOBAL</h5>
+                    <div class="chart-container-pro d-flex align-items-end gap-3" style="height: 250px;">
+                        <div v-for="(item, idx) in dashboardChart" :key="idx" class="chart-column-wrapper flex-grow-1 d-flex flex-column align-items-center justify-content-end h-100">
+                            <div class="chart-value tiny fw-bold text-primary mb-2">{{ Math.round(item.score) }}%</div>
+                            <div class="chart-bar-pro w-100" :style="{ height: (item.score > 0 ? (item.score * 0.8 + 10) : 5) + '%', background: 'linear-gradient(to top, #3b82f6, #60a5fa)', borderRadius: '8px 8px 0 0' }"></div>
+                            <span class="tiny fw-bold text-muted mt-3 text-center" style="max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ item.name }}</span>
+                        </div>
+                        <div v-if="!dashboardChart.length" class="text-center w-100 py-5 text-muted tiny fw-bold">AUCUNE DONNÉE DISPONIBLE</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="glass-panel h-100">
+                    <h5 class="panel-title mb-4">LEADERBOARD</h5>
+                    <div v-for="(leader, idx) in dashboardLeaders" :key="idx" class="leader-row d-flex align-items-center gap-3 mb-3 p-2 bg-light rounded-3">
+                        <div class="rank-badge tiny fw-900 text-white bg-dark rounded-circle d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">{{ idx + 1 }}</div>
+                        <div class="avatar-mini bg-primary text-white tiny fw-bold rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">{{ leader.name.charAt(0) }}</div>
+                        <div class="leader-info flex-grow-1">
+                            <div class="tiny fw-800 text-navy">{{ leader.name }}</div>
+                            <div class="text-muted" style="font-size: 9px;">{{ leader.test }}</div>
+                        </div>
+                        <div class="score-badge tiny fw-900 text-success">{{ leader.score }}%</div>
+                    </div>
+                    <div v-if="!dashboardLeaders.length" class="text-center py-5 text-muted tiny fw-bold">VIDE</div>
                 </div>
             </div>
         </div>
@@ -149,7 +177,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
-import axios from 'axios';
+import api from '@/services/api';
 import AppSidebar from '../components/AppSidebar.vue';
 import AppNavbar from '../components/AppNavbar.vue';
 
@@ -164,8 +192,23 @@ const API_ENDPOINT = 'http://localhost:5172/api';
 const fetchCampaigns = async () => {
   loading.value = true;
   try {
-    const res = await axios.get(`${API_ENDPOINT}/Campagnes`);
-    campaigns.value = res.data;
+    if (userRole.value === 'Candidat') {
+      const res = await api.get('/Candidatures/mes-tests');
+      // Map to the format the UI expects for c.id, c.nom, c.statut, etc.
+      // Notice: c.id is set to candidatureId so router.push gets the correct ID
+      campaigns.value = res.data.map(t => ({
+        id: t.candidatureId, 
+        nom: t.campagneNom,
+        statut: (t.statut === 'NON_COMMENCE' || t.statut === 'POSTULE' || t.statut === 'EN_COURS') ? 1 : 0, // 1 = actif
+        categorie: 'TECHNIQUE',
+        dureeMinutes: 60,
+        scorePassage: 10,
+        dateFin: null
+      }));
+    } else {
+      const res = await api.get('/Campagnes');
+      campaigns.value = res.data;
+    }
   } catch (err) { console.error(err); } 
   finally { loading.value = false; }
 };
@@ -178,35 +221,83 @@ const startExam = (id) => { router.push(`/exam-lobby/${id}`); };
 const formatDate = (d) => d ? new Date(d).toLocaleDateString() : 'Non définie';
 
 const roleLabel = computed(() => {
-  const map = { 'SuperAdmin': 'ADMINISTRATEUR MAÎTRE', 'AdminEntreprise': 'ESPACE CORPORATE', 'Evaluateur': 'ESPACE ÉVALUATEUR', 'Candidat': 'PORTAIL CANDIDAT' };
+  const map = { 
+    'SuperAdmin': 'ADMINISTRATEUR MAÎTRE', 
+    'AdminEntreprise': 'ESPACE CORPORATE', 
+    'Recruteur': 'GESTION TALENTS (RH)',
+    'Evaluateur': 'ESPACE ÉVALUATEUR', 
+    'Candidat': 'PORTAIL CANDIDAT' 
+  };
   return map[userRole.value] || 'TABLEAU DE BORD';
 });
 
 const roleContext = computed(() => {
   if (userRole.value === 'SuperAdmin') return 'CORE SYSTEM INFRA';
-  if (userRole.value === 'AdminEntreprise') return 'CORP METRICS';
+  if (userRole.value === 'AdminEntreprise' || userRole.value === 'Recruteur') return 'CORP METRICS';
   if (userRole.value === 'Evaluateur') return 'EVAL_METRICS';
   return 'EVAL_PROCESS';
 });
 
+const getStatLink = (label) => {
+  const l = label.toLowerCase();
+  if (l.includes('candidat') || l.includes('talent')) return '/candidates-list';
+  if (l.includes('invitation')) return '/invite';
+  if (l.includes('entretien')) return '/dashboard';
+  if (l.includes('évaluation') || l.includes('campagne')) return '/campaigns';
+  if (l.includes('session')) return '/campaigns';
+  if (l.includes('question')) return '/questions';
+  return '/dashboard';
+};
+
 const aiInsight = computed(() => {
   if (userRole.value === 'Candidat') return "VOTRE PROFIL EST OPTIMISÉ À 94% POUR L'EXAMEN ACTUEL.";
+  if (userRole.value === 'Recruteur') return "OPTIMISATION HR : 3 NOUVEAUX PROFILS MATCHENT VOS CRITÈRES.";
   return "ANALYSE COMPLÉTÉE : 12 NOUVELLES INSCRIPTIONS DÉTECTÉES CE MATIN.";
 });
+
+const kpis = ref({
+    talents: '...',
+    evaluations: '...',
+    success: '...',
+    ia: '0'
+});
+
+const dashboardChart = ref([]);
+const dashboardLeaders = ref([]);
+
+const fetchDashboardStats = async () => {
+    try {
+        const res = await api.get('/Dashboard/global-stats');
+        kpis.value = {
+            talents: res.data.kpis.totalTalents.toString(),
+            evaluations: res.data.kpis.totalCampagnes.toString(),
+            success: res.data.kpis.moyenne + '%',
+            ia: '00'
+        };
+        dashboardChart.value = res.data.chart || [];
+        dashboardLeaders.value = res.data.leaders || [];
+    } catch (err) { console.error(err); }
+};
 
 const dynamicStats = computed(() => {
   const stats = {
     AdminEntreprise: [
-      { label: 'TALENTS', value: '12', icon: 'fa-solid fa-users-viewfinder', bg: '#eff6ff', color: '#3b82f6', trend: '+4', trendUp: true },
-      { label: 'ÉVALUATIONS', value: '284', icon: 'fa-solid fa-file-signature', bg: '#fffbeb', color: '#f59e0b', trend: '+15%', trendUp: true },
-      { label: 'TAUX SUCCÈS', value: '78%', icon: 'fa-solid fa-chart-pie', bg: '#f5f3ff', color: '#8b5cf6', trend: '+2%', trendUp: true },
-      { label: 'ALERTES IA', value: '02', icon: 'fa-solid fa-bolt-lightning', bg: '#fef2f2', color: '#ef4444', trend: 'BAS', trendUp: false }
+      { label: 'TALENTS', value: kpis.value.talents, icon: 'fa-solid fa-users-viewfinder', bg: '#eff6ff', color: '#3b82f6', trend: '+4', trendUp: true },
+      { label: 'ÉVALUATIONS', value: kpis.value.evaluations, icon: 'fa-solid fa-file-signature', bg: '#fffbeb', color: '#f59e0b', trend: '+15%', trendUp: true },
+      { label: 'TAUX SUCCÈS', value: kpis.value.success, icon: 'fa-solid fa-chart-pie', bg: '#f5f3ff', color: '#8b5cf6', trend: '+2%', trendUp: true },
+      { label: 'ALERTES IA', value: kpis.value.ia, icon: 'fa-solid fa-bolt-lightning', bg: '#fef2f2', color: '#ef4444', trend: 'BAS', trendUp: false }
+    ],
+    Recruteur: [
+      { label: 'CANDIDATS', value: kpis.value.talents, icon: 'fa-solid fa-users', bg: '#eff6ff', color: '#3b82f6', trend: '+4', trendUp: true },
+      { label: 'INVITATIONS', value: '45', icon: 'fa-solid fa-paper-plane', bg: '#fffbeb', color: '#f59e0b', trend: 'Actif', trendUp: true },
+      { label: 'ENTRETIENS', value: '08', icon: 'fa-solid fa-calendar-alt', bg: '#f5f3ff', color: '#8b5cf6', trend: 'Semaine', trendUp: true },
+      { label: 'SOURCING IA', value: '92%', icon: 'fa-solid fa-brain', bg: '#ecfdf5', color: '#10b981', trend: '+5%', trendUp: true }
     ],
     Evaluateur: [
-      { label: 'SESSIONS', value: '05', icon: 'fa-solid fa-calendar-check', bg: '#fffbeb', color: '#f59e0b', trend: '+1', trendUp: true },
+      { label: 'SESSIONS', value: kpis.value.evaluations, icon: 'fa-solid fa-calendar-check', bg: '#fffbeb', color: '#f59e0b', trend: '+1', trendUp: true },
       { label: 'QUESTIONS', value: '248', icon: 'fa-solid fa-database', bg: '#eff6ff', color: '#3b82f6', trend: '+12', trendUp: true },
       { label: 'À CORRIGER', value: '03', icon: 'fa-solid fa-pen-nib', bg: '#fef2f2', color: '#ef4444', trend: 'Urgent', trendUp: false },
-      { label: 'SCORE MOY.', value: '14.5', icon: 'fa-solid fa-star', bg: '#f5f3ff', color: '#8b5cf6', trend: '+0.5', trendUp: true }
+      { label: 'SCORE MOY.', value: kpis.value.success, icon: 'fa-solid fa-star', bg: '#f5f3ff', color: '#8b5cf6', trend: '+0.5', trendUp: true }
     ],
     Candidat: [
         { label: 'À PASSER', value: '01', icon: 'fa-solid fa-hourglass-half', bg: '#fffbeb', color: '#f59e0b', trend: 'Urg.', trendUp: false },
@@ -218,7 +309,10 @@ const dynamicStats = computed(() => {
   return stats[userRole.value] || stats.AdminEntreprise;
 });
 
-onMounted(fetchCampaigns);
+onMounted(() => {
+    fetchCampaigns();
+    fetchDashboardStats();
+});
 </script>
 
 <style scoped>
@@ -232,7 +326,7 @@ onMounted(fetchCampaigns);
 }
 
 /* DECO ELEMENTS */
-.background-overlay { position: absolute; inset: 0; background: radial-gradient(circle at 30% 30%, #ffffff 0%, #f1f5f9 100%); z-index: 0; }
+.background-overlay { position: absolute; inset: 0; background: radial-gradient(circle at 30% 30%, #d2dae6 0%, #f1f5f9 100%); z-index: 0; }
 .tech-grid-subtle { position: absolute; inset: 0; background-image: radial-gradient(#e2e8f0 1.5px, transparent 1.5px); background-size: 40px 40px; opacity: 0.4; }
 .glow-orb { position: absolute; border-radius: 50%; filter: blur(130px); opacity: 0.15; }
 .orb-amber { width: 600px; height: 600px; background: #fbbf24; top: -100px; right: -100px; }

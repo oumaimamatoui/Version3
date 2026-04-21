@@ -83,6 +83,14 @@ const goToLogin = () => {
 
 const handleRegister = async () => {
   errorMessage.value = "";
+  
+  // Custom Email Validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(form.emailResponsable)) {
+    errorMessage.value = "Veuillez entrer une adresse e-mail valide (ex: moi@entreprise.com).";
+    return;
+  }
+
   isLoading.value = true;
   try {
     const response = await axios.post('http://localhost:5172/api/Registration', {

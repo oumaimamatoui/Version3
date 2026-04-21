@@ -26,3 +26,9 @@ dist/
 # Logs
 *.log
 audit_logs.json
+
+# Configuration
+appsettings.json
+appsettings.Development.json
+# Ignore user uploads
+backend-neo/NeoEvaluation.API/wwwroot/uploads/**/*

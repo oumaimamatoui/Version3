@@ -38,7 +38,7 @@
                   <i class="fa-solid fa- rocket icon-left-gold"></i>
                   <select v-model="form.campagneId" class="cyber-select ps-5">
                     <option value="">— Sélectionner une campagne d'excellence —</option>
-                    <option v-for="c in campagnes" :key="c.id" :value="c.id">{{ c.nom || c.titre }}</option>
+                    <option v-for="c in campagnes" :key="c.id" :value="c.id">{{ c.nom }}</option>
                   </select>
                 </div>
               </div>
@@ -145,11 +145,11 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
-import axios from 'axios';
+import api from '@/services/api';
 import AppSidebar from '@/components/AppSidebar.vue';
 import AppNavbar from '@/components/AppNavbar.vue';
 
-const API_URL = 'http://localhost:5172/api/Invitations';
+const API_URL = '/Invitations';
 
 const campagnes = ref([]);
 const currentEmail = ref('');
@@ -162,7 +162,7 @@ const form = reactive({ campagneId: '' });
 
 onMounted(async () => {
   try {
-    const res = await axios.get(`${API_URL}/campagnes`);
+    const res = await api.get(`${API_URL}/campagnes`);
     campagnes.value = res.data;
   } catch (e) {
     console.error("Erreur API", e);
@@ -178,7 +178,7 @@ const sendSingleInvitation = async () => {
 
   isLoading.value = true;
   try {
-    await axios.post(`${API_URL}/invite-candidates`, {
+    await api.post(`${API_URL}/invite-candidates`, {
       campagneId: form.campagneId,
       emails: [currentEmail.value]
     });

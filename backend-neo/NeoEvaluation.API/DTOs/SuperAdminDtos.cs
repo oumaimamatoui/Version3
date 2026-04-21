@@ -13,8 +13,20 @@ namespace NeoEvaluation.API.DTOs
         [JsonPropertyName("demandesEnAttente")]
         public int DemandesEnAttente { get; set; }
 
-        [JsonPropertyName("sessionsIARecentes")]
-        public int SessionsIARecentes { get; set; }
+        [JsonPropertyName("totalTests")]
+        public int TotalTests { get; set; }
+
+        [JsonPropertyName("croissanceStats")]
+        public List<MonthlyGrowthDto> CroissanceStats { get; set; } = new();
+    }
+
+    public class MonthlyGrowthDto
+    {
+        [JsonPropertyName("mois")]
+        public string Mois { get; set; } = string.Empty;
+        
+        [JsonPropertyName("count")]
+        public int Count { get; set; }
     }
 
     public class InviteAdminDto

@@ -28,8 +28,8 @@ namespace NeoEvaluation.API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Categorie")
-                        .HasColumnType("text");
+                    b.Property<DateTime>("CreeLe")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("DateDebut")
                         .HasColumnType("timestamp with time zone");
@@ -46,27 +46,16 @@ namespace NeoEvaluation.API.Migrations
                     b.Property<Guid>("EntrepriseId")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("MaxCandidats")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("NbTentativesMax")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("NiveauDifficulte")
+                    b.Property<string>("ModeNotation")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Nom")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("PersonnelId")
+                    b.Property<Guid?>("PlanificateurId")
                         .HasColumnType("uuid");
-
-                    b.Property<Guid?>("QuestionnaireId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("ScorePassage")
-                        .HasColumnType("integer");
 
                     b.Property<int>("Statut")
                         .HasColumnType("integer");
@@ -75,11 +64,24 @@ namespace NeoEvaluation.API.Migrations
 
                     b.HasIndex("EntrepriseId");
 
-                    b.HasIndex("PersonnelId");
+                    b.HasIndex("PlanificateurId");
+
+                    b.ToTable("Campagnes");
+                });
+
+            modelBuilder.Entity("NeoEvaluation.API.Models.CampagneQuestionnaire", b =>
+                {
+                    b.Property<Guid>("CampagneId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("QuestionnaireId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("CampagneId", "QuestionnaireId");
 
                     b.HasIndex("QuestionnaireId");
 
-                    b.ToTable("Campagnes");
+                    b.ToTable("CampagneQuestionnaires");
                 });
 
             modelBuilder.Entity("NeoEvaluation.API.Models.Candidature", b =>
@@ -145,6 +147,9 @@ namespace NeoEvaluation.API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime?>("AbonnementFin")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("CouleurSignature")
                         .IsRequired()
                         .HasColumnType("text");
@@ -152,8 +157,24 @@ namespace NeoEvaluation.API.Migrations
                     b.Property<DateTime>("CreeLe")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<bool>("EstActif")
-                        .HasColumnType("boolean");
+                    b.Property<string>("GmailAccessToken")
+                        .HasColumnType("text");
+
+                    b.Property<string>("GmailEmail")
+                        .HasColumnType("text");
+
+                    b.Property<string>("GmailRefreshToken")
+                        .HasColumnType("text");
+
+                    b.Property<string>("GmailScope")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("GmailTokenExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Langue")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("LogoUrl")
                         .HasColumnType("text");
@@ -169,65 +190,12 @@ namespace NeoEvaluation.API.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Secteur")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.ToTable("Entreprises");
-                });
-
-            modelBuilder.Entity("NeoEvaluation.API.Models.EntrepriseParSA", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Adresse")
-                        .HasColumnType("text");
-
-                    b.Property<string>("CodePostal")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreeLe")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Domaine")
-                        .HasColumnType("text");
-
-                    b.Property<string>("EmailResponsable")
-                        .HasColumnType("text");
-
-                    b.Property<Guid?>("EntrepriseId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Industrie")
-                        .HasColumnType("text");
-
-                    b.Property<string>("NomResponsable")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Pays")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PrenomResponsable")
-                        .HasColumnType("text");
-
-                    b.Property<string>("SiteWeb")
-                        .HasColumnType("text");
-
-                    b.Property<string>("TelephoneResponsable")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Ville")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EntrepriseId")
-                        .IsUnique();
-
-                    b.ToTable("EntrepriseParSA");
                 });
 
             modelBuilder.Entity("NeoEvaluation.API.Models.Evaluation", b =>
@@ -236,19 +204,37 @@ namespace NeoEvaluation.API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("CandidatId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("CandidatureId")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("LimiteTemps")
+                    b.Property<DateTime?>("DateDebut")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateFin")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("NbReprises")
                         .HasColumnType("integer");
 
-                    b.Property<double>("Score")
-                        .HasColumnType("double precision");
+                    b.Property<float>("ScorePourcentage")
+                        .HasColumnType("real");
+
+                    b.Property<float>("ScoreTotal")
+                        .HasColumnType("real");
+
+                    b.Property<string>("ScoresParTheme")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<int>("Statut")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CandidatId");
 
                     b.HasIndex("CandidatureId")
                         .IsUnique();
@@ -295,32 +281,6 @@ namespace NeoEvaluation.API.Migrations
                     b.ToTable("InscriptionsEntreprises");
                 });
 
-            modelBuilder.Entity("NeoEvaluation.API.Models.Planning", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CampagneId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("DateOuverture")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("DureeMinutes")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("ModeNotation")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CampagneId");
-
-                    b.ToTable("Plannings");
-                });
-
             modelBuilder.Entity("NeoEvaluation.API.Models.Question", b =>
                 {
                     b.Property<Guid>("Id")
@@ -331,22 +291,49 @@ namespace NeoEvaluation.API.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<double>("Poids")
-                        .HasColumnType("double precision");
-
-                    b.Property<Guid?>("QuestionnaireId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Texte")
+                    b.Property<string>("Choix")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<Guid?>("CreateurId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreeLe")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("DureeSecondes")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Enonce")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("EntrepriseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Niveau")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Prerequis")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SousTheme")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Theme")
+                        .HasColumnType("text")
+                        .HasColumnName("Categorie");
 
                     b.Property<int>("Type")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("QuestionnaireId");
+                    b.HasIndex("CreateurId");
 
                     b.ToTable("Questions");
                 });
@@ -357,12 +344,42 @@ namespace NeoEvaluation.API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("AntitricheActif")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid?>("CreateurId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime>("CreeLe")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DebutDispo")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("DureeMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("EntrepriseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("EstPublie")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("FinDispo")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("MaxReprises")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("RandomiserQuestions")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ReprisesAutorisees")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Titre")
                         .IsRequired()
@@ -370,7 +387,76 @@ namespace NeoEvaluation.API.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CreateurId");
+
                     b.ToTable("Questionnaires");
+                });
+
+            modelBuilder.Entity("NeoEvaluation.API.Models.QuestionnaireQuestion", b =>
+                {
+                    b.Property<Guid>("QuestionnaireId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("QuestionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("EstObligatoire")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Ordre")
+                        .HasColumnType("integer");
+
+                    b.Property<float>("Ponderation")
+                        .HasColumnType("real");
+
+                    b.HasKey("QuestionnaireId", "QuestionId");
+
+                    b.HasIndex("QuestionId");
+
+                    b.ToTable("QuestionnaireQuestions");
+                });
+
+            modelBuilder.Entity("NeoEvaluation.API.Models.Rapport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CheminPDF")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("EstEnvoye")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("EvaluationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("GenereLe")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RecommandationsIA")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ScoresParNiveau")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ScoresParTheme")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<float>("TauxReussite")
+                        .HasColumnType("real");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EvaluationId")
+                        .IsUnique();
+
+                    b.ToTable("Rapports");
                 });
 
             modelBuilder.Entity("NeoEvaluation.API.Models.Reponse", b =>
@@ -379,17 +465,23 @@ namespace NeoEvaluation.API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("EstCorrecte")
+                        .HasColumnType("boolean");
+
                     b.Property<Guid>("EvaluationId")
                         .HasColumnType("uuid");
+
+                    b.Property<int>("PointsObtenus")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("QuestionId")
                         .HasColumnType("uuid");
 
-                    b.Property<double>("ScoreIA")
-                        .HasColumnType("double precision");
-
-                    b.Property<DateTime>("SoumiseLe")
+                    b.Property<DateTime>("SoumisLe")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("TempsSecondes")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Valeur")
                         .IsRequired()
@@ -419,6 +511,9 @@ namespace NeoEvaluation.API.Migrations
 
                     b.Property<string>("Email")
                         .HasColumnType("text");
+
+                    b.Property<Guid?>("EntrepriseId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Nom")
                         .IsRequired()
@@ -477,10 +572,19 @@ namespace NeoEvaluation.API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Adresse")
+                        .HasColumnType("text");
+
                     b.Property<string>("Bio")
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreeLe")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Departement")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DerniereConnexion")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Email")
@@ -492,6 +596,9 @@ namespace NeoEvaluation.API.Migrations
 
                     b.Property<bool>("EstActif")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("IdEmploye")
+                        .HasColumnType("text");
 
                     b.Property<string>("MotDePasseHash")
                         .IsRequired()
@@ -512,6 +619,9 @@ namespace NeoEvaluation.API.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool?>("ProfilComplet")
+                        .HasColumnType("boolean");
+
                     b.Property<Guid?>("RoleId")
                         .HasColumnType("uuid");
 
@@ -519,83 +629,57 @@ namespace NeoEvaluation.API.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("UserType")
+                    b.Property<string>("Telephone")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ThemePreference")
                         .IsRequired()
-                        .HasMaxLength(13)
-                        .HasColumnType("character varying(13)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("EntrepriseId");
 
                     b.HasIndex("RoleId");
 
                     b.ToTable("Utilisateurs");
-
-                    b.HasDiscriminator<string>("UserType").HasValue("Utilisateur");
-
-                    b.UseTphMappingStrategy();
-                });
-
-            modelBuilder.Entity("NeoEvaluation.API.Models.Candidat", b =>
-                {
-                    b.HasBaseType("NeoEvaluation.API.Models.Utilisateur");
-
-                    b.Property<string>("Adresse")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("ProfilComplet")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Telephone")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasIndex("EntrepriseId");
-
-                    b.HasDiscriminator().HasValue("Candidat");
-                });
-
-            modelBuilder.Entity("NeoEvaluation.API.Models.Personnel", b =>
-                {
-                    b.HasBaseType("NeoEvaluation.API.Models.Utilisateur");
-
-                    b.Property<string>("Departement")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("IdEmploye")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasIndex("EntrepriseId");
-
-                    b.HasDiscriminator().HasValue("Personnel");
-                });
-
-            modelBuilder.Entity("NeoEvaluation.API.Models.SuperAdmin", b =>
-                {
-                    b.HasBaseType("NeoEvaluation.API.Models.Utilisateur");
-
-                    b.HasIndex("EntrepriseId");
-
-                    b.HasDiscriminator().HasValue("SuperAdmin");
                 });
 
             modelBuilder.Entity("NeoEvaluation.API.Models.Campagne", b =>
                 {
-                    b.HasOne("NeoEvaluation.API.Models.Entreprise", null)
+                    b.HasOne("NeoEvaluation.API.Models.Entreprise", "Entreprise")
                         .WithMany("Campagnes")
                         .HasForeignKey("EntrepriseId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("NeoEvaluation.API.Models.Personnel", null)
+                    b.HasOne("NeoEvaluation.API.Models.Utilisateur", "Planificateur")
                         .WithMany("CampagnesGerees")
-                        .HasForeignKey("PersonnelId");
+                        .HasForeignKey("PlanificateurId");
+
+                    b.Navigation("Entreprise");
+
+                    b.Navigation("Planificateur");
+                });
+
+            modelBuilder.Entity("NeoEvaluation.API.Models.CampagneQuestionnaire", b =>
+                {
+                    b.HasOne("NeoEvaluation.API.Models.Campagne", "Campagne")
+                        .WithMany("CampagneQuestionnaires")
+                        .HasForeignKey("CampagneId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("NeoEvaluation.API.Models.Questionnaire", "Questionnaire")
-                        .WithMany()
-                        .HasForeignKey("QuestionnaireId");
+                        .WithMany("CampagneQuestionnaires")
+                        .HasForeignKey("QuestionnaireId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Campagne");
 
                     b.Navigation("Questionnaire");
                 });
@@ -608,7 +692,7 @@ namespace NeoEvaluation.API.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("NeoEvaluation.API.Models.Candidat", "Candidat")
+                    b.HasOne("NeoEvaluation.API.Models.Utilisateur", "Candidat")
                         .WithMany("Candidatures")
                         .HasForeignKey("CandidatId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -621,7 +705,7 @@ namespace NeoEvaluation.API.Migrations
 
             modelBuilder.Entity("NeoEvaluation.API.Models.DocumentCandidat", b =>
                 {
-                    b.HasOne("NeoEvaluation.API.Models.Candidat", "Candidat")
+                    b.HasOne("NeoEvaluation.API.Models.Utilisateur", "Candidat")
                         .WithMany("Documents")
                         .HasForeignKey("CandidatId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -630,44 +714,69 @@ namespace NeoEvaluation.API.Migrations
                     b.Navigation("Candidat");
                 });
 
-            modelBuilder.Entity("NeoEvaluation.API.Models.EntrepriseParSA", b =>
-                {
-                    b.HasOne("NeoEvaluation.API.Models.Entreprise", "Entreprise")
-                        .WithOne("DetailsSA")
-                        .HasForeignKey("NeoEvaluation.API.Models.EntrepriseParSA", "EntrepriseId");
-
-                    b.Navigation("Entreprise");
-                });
-
             modelBuilder.Entity("NeoEvaluation.API.Models.Evaluation", b =>
                 {
+                    b.HasOne("NeoEvaluation.API.Models.Utilisateur", "Candidat")
+                        .WithMany()
+                        .HasForeignKey("CandidatId");
+
                     b.HasOne("NeoEvaluation.API.Models.Candidature", "Candidature")
                         .WithOne("Evaluation")
                         .HasForeignKey("NeoEvaluation.API.Models.Evaluation", "CandidatureId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("Candidat");
+
                     b.Navigation("Candidature");
-                });
-
-            modelBuilder.Entity("NeoEvaluation.API.Models.Planning", b =>
-                {
-                    b.HasOne("NeoEvaluation.API.Models.Campagne", "Campagne")
-                        .WithMany()
-                        .HasForeignKey("CampagneId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Campagne");
                 });
 
             modelBuilder.Entity("NeoEvaluation.API.Models.Question", b =>
                 {
+                    b.HasOne("NeoEvaluation.API.Models.Utilisateur", "Createur")
+                        .WithMany()
+                        .HasForeignKey("CreateurId");
+
+                    b.Navigation("Createur");
+                });
+
+            modelBuilder.Entity("NeoEvaluation.API.Models.Questionnaire", b =>
+                {
+                    b.HasOne("NeoEvaluation.API.Models.Utilisateur", "Createur")
+                        .WithMany()
+                        .HasForeignKey("CreateurId");
+
+                    b.Navigation("Createur");
+                });
+
+            modelBuilder.Entity("NeoEvaluation.API.Models.QuestionnaireQuestion", b =>
+                {
+                    b.HasOne("NeoEvaluation.API.Models.Question", "Question")
+                        .WithMany("QuestionnaireQuestions")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("NeoEvaluation.API.Models.Questionnaire", "Questionnaire")
-                        .WithMany("Questions")
-                        .HasForeignKey("QuestionnaireId");
+                        .WithMany("QuestionnaireQuestions")
+                        .HasForeignKey("QuestionnaireId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Question");
 
                     b.Navigation("Questionnaire");
+                });
+
+            modelBuilder.Entity("NeoEvaluation.API.Models.Rapport", b =>
+                {
+                    b.HasOne("NeoEvaluation.API.Models.Evaluation", "Evaluation")
+                        .WithOne("Rapport")
+                        .HasForeignKey("NeoEvaluation.API.Models.Rapport", "EvaluationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Evaluation");
                 });
 
             modelBuilder.Entity("NeoEvaluation.API.Models.Reponse", b =>
@@ -691,42 +800,23 @@ namespace NeoEvaluation.API.Migrations
 
             modelBuilder.Entity("NeoEvaluation.API.Models.Utilisateur", b =>
                 {
-                    b.HasOne("NeoEvaluation.API.Models.Role", "Role")
-                        .WithMany()
-                        .HasForeignKey("RoleId");
-
-                    b.Navigation("Role");
-                });
-
-            modelBuilder.Entity("NeoEvaluation.API.Models.Candidat", b =>
-                {
-                    b.HasOne("NeoEvaluation.API.Models.Entreprise", "Entreprise")
-                        .WithMany()
-                        .HasForeignKey("EntrepriseId");
-
-                    b.Navigation("Entreprise");
-                });
-
-            modelBuilder.Entity("NeoEvaluation.API.Models.Personnel", b =>
-                {
                     b.HasOne("NeoEvaluation.API.Models.Entreprise", "Entreprise")
                         .WithMany("Staff")
                         .HasForeignKey("EntrepriseId");
 
-                    b.Navigation("Entreprise");
-                });
-
-            modelBuilder.Entity("NeoEvaluation.API.Models.SuperAdmin", b =>
-                {
-                    b.HasOne("NeoEvaluation.API.Models.Entreprise", "Entreprise")
+                    b.HasOne("NeoEvaluation.API.Models.Role", "Role")
                         .WithMany()
-                        .HasForeignKey("EntrepriseId");
+                        .HasForeignKey("RoleId");
 
                     b.Navigation("Entreprise");
+
+                    b.Navigation("Role");
                 });
 
             modelBuilder.Entity("NeoEvaluation.API.Models.Campagne", b =>
                 {
+                    b.Navigation("CampagneQuestionnaires");
+
                     b.Navigation("Candidatures");
                 });
 
@@ -739,31 +829,35 @@ namespace NeoEvaluation.API.Migrations
                 {
                     b.Navigation("Campagnes");
 
-                    b.Navigation("DetailsSA");
-
                     b.Navigation("Staff");
                 });
 
             modelBuilder.Entity("NeoEvaluation.API.Models.Evaluation", b =>
                 {
+                    b.Navigation("Rapport");
+
                     b.Navigation("Reponses");
+                });
+
+            modelBuilder.Entity("NeoEvaluation.API.Models.Question", b =>
+                {
+                    b.Navigation("QuestionnaireQuestions");
                 });
 
             modelBuilder.Entity("NeoEvaluation.API.Models.Questionnaire", b =>
                 {
-                    b.Navigation("Questions");
+                    b.Navigation("CampagneQuestionnaires");
+
+                    b.Navigation("QuestionnaireQuestions");
                 });
 
-            modelBuilder.Entity("NeoEvaluation.API.Models.Candidat", b =>
+            modelBuilder.Entity("NeoEvaluation.API.Models.Utilisateur", b =>
                 {
+                    b.Navigation("CampagnesGerees");
+
                     b.Navigation("Candidatures");
 
                     b.Navigation("Documents");
-                });
-
-            modelBuilder.Entity("NeoEvaluation.API.Models.Personnel", b =>
-                {
-                    b.Navigation("CampagnesGerees");
                 });
 #pragma warning restore 612, 618
         }
