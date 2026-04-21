@@ -29,8 +29,8 @@ builder.Services.AddSendGrid(options => {
     options.ApiKey = builder.Configuration["SendGridSettings:ApiKey"];
 });
 
-//  MODIFICATION : Utilisation de SendGridEmailService
-builder.Services.AddScoped<IEmailService, SendGridEmailService>();
+//  MODIFICATION : Utilisation de GmailApiService (Senior Architecture)
+builder.Services.AddScoped<IEmailService, GmailApiService>();
 
 builder.Services.AddSingleton<IAuditLogService, AuditLogService>();
 builder.Services.AddHttpContextAccessor();

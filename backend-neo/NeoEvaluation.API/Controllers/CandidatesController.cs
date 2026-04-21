@@ -38,25 +38,23 @@ namespace NeoEvaluation.API.Controllers
         [HttpGet]
         public async Task<ActionResult> GetCandidates()
         {
-            var list = await _context.Utilisateurs
-                .Where(u => u.RoleNom == "Candidat")
-                .OrderByDescending(u => u.CreeLe)
-                .Select(u => new {
-                    id = u.Id,
-                    name = (u.Prenom + " " + u.Nom).Trim(),
-                    email = u.Email,
-                    group = _context.Candidatures
-                        .Where(cad => cad.CandidatId == u.Id)
-                        .OrderByDescending(cad => cad.PostuleLe)
-                        .Select(cad => cad.Campagne.Nom)
-                        .FirstOrDefault() ?? "N/A",
+            var tenantId = _tenantService.GetTenantId();
+
+            // On récupère les candidats qui ont une candidature dans l'entreprise actuelle
+            var list = await _context.Candidatures
+                .Include(c => c.Candidat)
+                .Include(c => c.Campagne)
+                .Where(c => c.Campagne.EntrepriseId == tenantId)
+                .OrderByDescending(c => c.PostuleLe)
+                .Select(c => new {
+                    id = c.CandidatId,
+                    name = (c.Candidat.Prenom + " " + c.Candidat.Nom).Trim() == "" ? "Candidat" : (c.Candidat.Prenom + " " + c.Candidat.Nom).Trim(),
+                    email = c.Candidat.Email,
+                    group = c.Campagne.Nom,
                     score = 0,
-                    status = _context.Candidatures
-                        .Where(cad => cad.CandidatId == u.Id)
-                        .OrderByDescending(cad => cad.PostuleLe)
-                        .Select(cad => cad.Statut.ToString())
-                        .FirstOrDefault() ?? "INACTIF"
+                    status = c.Statut.ToString()
                 }).ToListAsync();
+
             return Ok(list);
         }
 

@@ -116,6 +116,25 @@
                   </div>
                 </div>
 
+                <!-- SECTION : INTÉGRATIONS -->
+                <div v-if="activeTab === 'integrations'" class="settings-section">
+                  <h5 class="label-heading mb-4 text-dark">Connexions Externes</h5>
+                  <div class="glass-surface p-4 border rounded-4 bg-light d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-3">
+                      <div class="icon-shell bg-white shadow-sm">
+                        <i class="fa-brands fa-google text-danger" style="font-size: 20px;"></i>
+                      </div>
+                      <div>
+                        <h6 class="fw-800 m-0">Google Gmail API</h6>
+                        <p class="text-muted small m-0">Envoyez vos emails via votre propre compte professionnel.</p>
+                      </div>
+                    </div>
+                    <button @click="connectGmail" class="btn-primary-gradient px-4 py-2">
+                        <i class="fa-solid fa-link me-2"></i> CONNECTER
+                    </button>
+                  </div>
+                </div>
+
                 <!-- FOOTER ACTIONS -->
                 <div class="mt-5 pt-4 border-top-light d-flex justify-content-between align-items-center">
                   <button class="btn-link-tech" @click="resetForm">ANNULER LES MODIFICATIONS</button>
@@ -172,9 +191,10 @@ const profileDisplayUrl = computed(() => {
 
 // Navigation
 const allTabs = [
-  { id: 'profile', label: 'Profil', icon: 'fa-solid fa-user-gear', roles: ['SuperAdmin', 'AdminEntreprise', 'Evaluateur', 'Candidat'] },
-  { id: 'security', label: 'Sécurité', icon: 'fa-solid fa-shield-halved', roles: ['SuperAdmin', 'AdminEntreprise', 'Evaluateur', 'Candidat'] },
+  { id: 'profile', label: 'Profil', icon: 'fa-solid fa-user-gear', roles: ['SuperAdmin', 'AdminEntreprise', 'Recruteur', 'Evaluateur', 'Candidat'] },
+  { id: 'security', label: 'Sécurité', icon: 'fa-solid fa-shield-halved', roles: ['SuperAdmin', 'AdminEntreprise', 'Recruteur', 'Evaluateur', 'Candidat'] },
   { id: 'branding', label: 'Branding', icon: 'fa-solid fa-palette', roles: ['AdminEntreprise'] },
+  { id: 'integrations', label: 'Intégrations', icon: 'fa-solid fa-plug', roles: ['AdminEntreprise', 'SuperAdmin'] },
 ];
 
 const filteredTabs = computed(() => allTabs.filter(tab => tab.roles.includes(role.value)));
@@ -277,6 +297,17 @@ const handlePhotoChange = async (e) => {
   } finally {
     saving.value = false;
   }
+};
+
+const connectGmail = async () => {
+    try {
+        const res = await api.get('/GoogleAuth/auth-url');
+        // Redirection vers Google
+        window.location.href = res.data.url;
+    } catch (err) {
+        console.error("Erreur Auth URL:", err);
+        alert("Impossible de joindre le service d'authentification Google.");
+    }
 };
 
 onMounted(fetchInitialData);

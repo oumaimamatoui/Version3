@@ -191,6 +191,7 @@ namespace NeoEvaluation.API.Controllers
                 _context.Utilisateurs.Add(personnel);
 
                 // 4. Générer le Token d'activation
+                Console.WriteLine("[DEBUG] Étape 1 : Préparation Token...");
                 var token = new TokensActivation {
                     Id = Guid.NewGuid(), 
                     Token = Guid.NewGuid(), 
@@ -199,10 +200,11 @@ namespace NeoEvaluation.API.Controllers
                     DateCreation = DateTime.UtcNow,
                     DateExpiration = DateTime.UtcNow.AddDays(7), 
                     Utilise = false,
-                    IdInscription = Guid.Empty // 🔥 CRITIQUE : Satisfait la contrainte NOT NULL de la DB
+                    IdInscription = Guid.Empty // Satisfait la contrainte NOT NULL de la DB
                 };
                 _context.TokensActivation.Add(token);
 
+                Console.WriteLine("[DEBUG] Étape 2 : Sauvegarde DB...");
                 await _context.SaveChangesAsync();
 
                 // 5. Préparation du lien et de l'email

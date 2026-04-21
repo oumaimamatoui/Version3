@@ -94,10 +94,11 @@ const roleDisplay = computed(() => {
   const map = { 
     'SuperAdmin': 'SuperAdmin', 
     'AdminEntreprise': 'Administrateur Organisation', 
+    'Recruteur': 'RH / Recruteur',
     'Evaluateur': 'Évaluateur Expert', 
     'Candidat': 'Candidat' 
   };
-  return map[authStore.role] || 'Chargement...';
+  return map[authStore.role] || 'Utilisateur';
 });
 
 const fetchProfile = async () => {

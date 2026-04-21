@@ -27,13 +27,41 @@ namespace NeoEvaluation.API.Controllers
         public async Task<ActionResult<SuperAdminStatsDto>> GetStats()
         {
             try {
+                // Initialisation des stats de base
                 var stats = new SuperAdminStatsDto
                 {
-                    TotalEntreprises = await _context.Entreprises.CountAsync(e => e.AbonnementFin == null || e.AbonnementFin > DateTime.UtcNow),
+                    TotalEntreprises = await _context.Entreprises.CountAsync(),
                     TotalUtilisateurs = await _context.Utilisateurs.CountAsync(),
                     DemandesEnAttente = await _context.InscriptionsEntreprises.CountAsync(i => i.Statut == 0),
-                    SessionsIARecentes = await _context.Evaluations.CountAsync(e => e.Statut == StatutPassage.EN_COURS)
+                    TotalTests = await _context.Evaluations.CountAsync()
                 };
+
+                // Calcul de la croissance des entreprises sur les 6 derniers mois
+                var sixMonthsAgo = DateTime.UtcNow.AddMonths(-5);
+                var startDate = new DateTime(sixMonthsAgo.Year, sixMonthsAgo.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+                
+                var monthlyData = await _context.Entreprises
+                    .Where(e => e.CreeLe >= startDate)
+                    .GroupBy(e => new { e.CreeLe.Year, e.CreeLe.Month })
+                    .Select(g => new { 
+                        Year = g.Key.Year, 
+                        Month = g.Key.Month, 
+                        Count = g.Count() 
+                    })
+                    .OrderBy(g => g.Year).ThenBy(g => g.Month)
+                    .ToListAsync();
+
+                for (int i = 0; i < 6; i++)
+                {
+                    var date = sixMonthsAgo.AddMonths(i);
+                    var match = monthlyData.FirstOrDefault(d => d.Year == date.Year && d.Month == date.Month);
+                    
+                    stats.CroissanceStats.Add(new MonthlyGrowthDto {
+                        Mois = date.ToString("MMM", System.Globalization.CultureInfo.InvariantCulture).ToUpper(),
+                        Count = match?.Count ?? 0
+                    });
+                }
+
                 return Ok(stats);
             } catch (Exception ex) {
                 Console.WriteLine($"[STATS ERROR] {ex.Message}");

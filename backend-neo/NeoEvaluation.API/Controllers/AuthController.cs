@@ -53,8 +53,7 @@ namespace NeoEvaluation.API.Controllers
             Utilisateur? user = null;
             foreach (var u in allUsers)
             {
-                Console.WriteLine($"[AUTH DEBUG] Test du mot de passe sur le compte ID: {u.Id} (Type: {u.GetType().Name})...");
-                
+                    Console.WriteLine($"[AUTH DEBUG] Test du mot de passe sur le compte ID: {u.Id}...");
                 if (string.IsNullOrEmpty(u.MotDePasseHash)) continue;
 
                 try {

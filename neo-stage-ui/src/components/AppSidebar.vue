@@ -302,7 +302,7 @@ onMounted(() => {
 
 /* --- NAVIGATION --- */
 .group-label {
-  font-size: 11px; font-weight: 800; color: #cbd5e1;
+  font-size: 11px; font-weight: 800; color: #1e293b;
   text-transform: uppercase; letter-spacing: 1.2px;
   padding: 24px 12px 10px; display: block;
 }
@@ -317,6 +317,7 @@ onMounted(() => {
 [data-theme="dark"] .nav-link-tech { --nav-text: #94a3b8; }
 [data-theme="dark"] .nav-link-tech:hover { --nav-hover-bg: rgba(255, 255, 255, 0.05); --nav-hover-text: #ffffff; }
 [data-theme="dark"] .nav-link-tech.router-link-active { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+[data-theme="dark"] .group-label { color: #94a3b8; }
 
 .icon-shell { width: 30px; font-size: 17px; display: flex; align-items: center; color: inherit; }
 

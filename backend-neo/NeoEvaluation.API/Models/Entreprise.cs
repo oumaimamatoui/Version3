@@ -23,6 +23,13 @@ namespace NeoEvaluation.API.Models
         public string? MatriculeFiscale { get; set; }
         public string CouleurSignature { get; set; } = "#6366f1";
         public string? LogoUrl { get; set; }
+ 
+        // --- CONFIGURATION GMAIL OAUTH (Optionnelle par entreprise) ---
+        public string? GmailEmail { get; set; }
+        public string? GmailRefreshToken { get; set; }
+        public string? GmailAccessToken { get; set; }
+        public DateTime? GmailTokenExpiresAt { get; set; }
+        public string? GmailScope { get; set; }
 
         // Méthode du diagramme: estActif() basé sur la date d'abonnement
         [NotMapped]
