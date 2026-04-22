@@ -99,14 +99,14 @@ namespace NeoEvaluation.API.Controllers
                         activationLink = $"http://localhost:5173/activate-role?token={token.Token}";
                     }
                     
-                    // ✅ DEBUG TERMINAL (Pour toi en VS Code)
+                    //  DEBUG TERMINAL (Pour toi en VS Code)
                     Console.WriteLine("\n--------------------------------------------------");
                     Console.WriteLine($"[DEBUG] CANDIDATE TEST LINK: {email}");
                     Console.WriteLine($"CAMPAGNE: {campagne.Nom}");
                     Console.WriteLine($"LINK: {activationLink}");
                     Console.WriteLine("--------------------------------------------------\n");
 
-                    // ✅ PROFESSIONAL HTML TEMPLATE
+                    //  PROFESSIONAL HTML TEMPLATE
                     string subject = $"Invitation : Evaluation {campagne.Nom}";
                     string htmlBody = $@"
                         <div style='font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 12px;'>
