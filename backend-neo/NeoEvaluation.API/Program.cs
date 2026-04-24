@@ -73,6 +73,14 @@ if (app.Environment.IsDevelopment()) {
 }
 
 app.UseCors("VueCorsPolicy");
+
+// Fix for Google Auth COOP warnings
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Add("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+    await next();
+});
+
 app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();

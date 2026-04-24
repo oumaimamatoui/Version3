@@ -41,7 +41,7 @@ namespace NeoEvaluation.API.Controllers
             var tenantId = _tenantService.GetTenantId();
 
             // On récupère les candidats qui ont une candidature dans l'entreprise actuelle
-            var list = await _context.Candidatures
+            var query = await _context.Candidatures
                 .Include(c => c.Candidat)
                 .Include(c => c.Campagne)
                 .Where(c => c.Campagne.EntrepriseId == tenantId)
@@ -55,7 +55,12 @@ namespace NeoEvaluation.API.Controllers
                     status = c.Statut.ToString()
                 }).ToListAsync();
 
-            return Ok(list);
+            // Éviter les doublons basés sur l'email
+            var distinctList = query.GroupBy(x => x.email)
+                                    .Select(g => g.First())
+                                    .ToList();
+
+            return Ok(distinctList);
         }
 
         // URL: POST http://localhost:5172/api/Candidates/bulk-invite

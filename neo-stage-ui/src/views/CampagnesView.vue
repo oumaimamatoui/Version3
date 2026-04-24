@@ -602,9 +602,8 @@
                   <div class="enigma-card p-5">
                     <h5 class="fw-900 mb-5"><i class="fa-solid fa-calendar-check text-amber me-3"></i>Matrix Planning</h5>
                     <div class="row g-5">
-                      <div class="col-md-4"><div class="enigma-input-wrap"><label>OUVERTURE TERMINAL</label><input type="datetime-local" v-model="studio.campagne.dateDebut" class="enigma-field"></div></div>
-                      <div class="col-md-4"><div class="enigma-input-wrap"><label>DURÉE (MIN)</label><input type="number" v-model.number="studio.questionnaire.duree" class="enigma-field" min="1"></div></div>
-                      <div class="col-md-4"><div class="enigma-input-wrap"><label>FERMETURE ACCÈS</label><input type="datetime-local" v-model="studio.campagne.dateFin" class="enigma-field"></div></div>
+                      <div class="col-md-6"><div class="enigma-input-wrap"><label>OUVERTURE TERMINAL</label><input type="datetime-local" v-model="studio.campagne.dateDebut" class="enigma-field"></div></div>
+                      <div class="col-md-6"><div class="enigma-input-wrap"><label>FERMETURE ACCÈS</label><input type="datetime-local" v-model="studio.campagne.dateFin" class="enigma-field"></div></div>
                       <div class="col-md-6"><div class="enigma-input-wrap"><label>MAX CANDIDATS</label><input type="number" v-model.number="studio.campagne.maxCandidats" class="enigma-field" min="1"></div></div>
                       <div class="col-md-6">
                         <div class="enigma-input-wrap">
@@ -1368,11 +1367,23 @@ const filteredBankReference = computed(() => {
   return list;
 });
 
-const filteredCandidatePool = computed(() =>
-  candidateMasterPool.value.filter(c =>
-    c.name?.toLowerCase().includes(searchCandQuery.value.toLowerCase())
-  )
-);
+const filteredCandidatePool = computed(() => {
+  const pool = candidateMasterPool.value.filter(c =>
+    c.name?.toLowerCase().includes(searchCandQuery.value.toLowerCase()) ||
+    c.email?.toLowerCase().includes(searchCandQuery.value.toLowerCase())
+  );
+  
+  // Supprimer les doublons par Email pour le ciblage (Step 3)
+  const uniquePool = [];
+  const map = new Map();
+  for (const item of pool) {
+    if (!map.has(item.email)) {
+      map.set(item.email, true);
+      uniquePool.push(item);
+    }
+  }
+  return uniquePool;
+});
 
 /* ─── BANQUE : Actions ────────────────────────────────────────── */
 const openDeepBankModal = () => {
@@ -1479,7 +1490,8 @@ const publishToProduction = async () => {
       ScorePassage:          studio.questionnaire.scoreReussite,
       DureeMinutes:          studio.questionnaire.duree,
       Statut:                1,
-      SelectedCandidatesIds: selectedCandidatesIds.value
+      SelectedCandidatesIds: selectedCandidatesIds.value,
+      SendNotifications:     studio.campagne.sendNotifications
     });
 
     showPulseToast('DÉPLOIEMENT RÉUSSI', 'success', 'fa-solid fa-server');

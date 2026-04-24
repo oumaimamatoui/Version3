@@ -9,7 +9,7 @@ namespace NeoEvaluation.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(Roles = "SuperAdmin,AdminEntreprise")]
     public class RolesController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -29,13 +29,25 @@ namespace NeoEvaluation.API.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Role>>> GetRoles()
         {
-            var roles = await _context.Roles.ToListAsync();
-            foreach (var r in roles)
+            try 
             {
-                // Calcul du nombre de membres (Utilisateurs liés à ce RoleId)
-                r.NombreMembres = await _context.Utilisateurs.CountAsync(u => u.RoleId == r.Id);
+                // On utilise IgnoreQueryFilters pour être sûr de voir les rôles système si besoin
+                var roles = await _context.Roles.ToListAsync();
+                
+                foreach (var r in roles)
+                {
+                    r.NombreMembres = await _context.Utilisateurs
+                        .IgnoreQueryFilters()
+                        .CountAsync(u => u.RoleId == r.Id);
+                }
+                
+                return Ok(roles.OrderByDescending(r => r.CreeLe));
             }
-            return Ok(roles.OrderByDescending(r => r.CreeLe));
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ROLES ERROR] {ex.Message}");
+                return StatusCode(500, ex.Message);
+            }
         }
 
         // 2. CRÉATION D'UN RÔLE + INVITATION D'UN PERSONNEL

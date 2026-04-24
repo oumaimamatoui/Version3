@@ -14,11 +14,13 @@ namespace NeoEvaluation.API.Controllers
     {
         private readonly AppDbContext _context;
         private readonly ITenantService _tenantService;
+        private readonly IEmailService _emailService;
 
-        public CampagnesController(AppDbContext context, ITenantService tenantService) 
+        public CampagnesController(AppDbContext context, ITenantService tenantService, IEmailService emailService) 
         { 
             _context = context; 
             _tenantService = tenantService;
+            _emailService = emailService;
         }
 
         [HttpGet]
@@ -26,11 +28,70 @@ namespace NeoEvaluation.API.Controllers
         {
             try
             {
-                var list = await _context.Campagnes
+                var userRole = _tenantService.GetUserRole();
+                var userId = _tenantService.GetUserId();
+
+                IQueryable<Campagne> query = _context.Campagnes
                     .Include(c => c.CampagneQuestionnaires)
-                        .ThenInclude(cq => cq.Questionnaire)
+                        .ThenInclude(cq => cq.Questionnaire);
+
+                // Si c'est un candidat, on cherche par son EMAIL (en minuscules)
+                if (userRole == "Candidat" && userId.HasValue)
+                {
+                    var currentUser = await _context.Utilisateurs.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId.Value);
+                    if (currentUser == null) return Unauthorized();
+
+                    var email = currentUser.Email.ToLower();
+
+                    // 1. Récupérer tous les IDs de campagnes où cet email est inscrit
+                    var campaignIds = await _context.Candidatures
+                        .IgnoreQueryFilters()
+                        .Include(c => c.Candidat)
+                        .Where(c => c.Candidat != null && c.Candidat.Email.ToLower() == email)
+                        .Select(c => c.CampagneId)
+                        .ToListAsync();
+
+                    // 2. Récupérer les détails de ces campagnes
+                    var campaignsForUser = await _context.Campagnes
+                        .IgnoreQueryFilters()
+                        .Include(c => c.CampagneQuestionnaires)
+                            .ThenInclude(cq => cq.Questionnaire)
+                        .Where(c => campaignIds.Contains(c.Id))
+                        .ToListAsync();
+
+                    var result = campaignsForUser.Select(c => new {
+                        c.Id,
+                        CandidatureId = _context.Candidatures
+                            .IgnoreQueryFilters()
+                            .Where(cand => cand.CampagneId == c.Id && cand.Candidat != null && cand.Candidat.Email.ToLower() == email)
+                            .Select(cand => cand.Id)
+                            .FirstOrDefault(),
+                        c.Nom,
+                        c.Description,
+                        c.Statut,
+                        c.DateDebut,
+                        c.DateFin,
+                        c.CreeLe,
+                        c.DureeMinutes,
+                        c.ModeNotation,
+                        Questionnaires = c.CampagneQuestionnaires.Select(cq => new {
+                            Id = cq.Questionnaire?.Id ?? Guid.Empty,
+                            Titre = cq.Questionnaire?.Titre ?? "Sans Titre",
+                            DureeMinutes = cq.Questionnaire?.DureeMinutes ?? 60
+                        })
+                    }).OrderByDescending(c => c.DateDebut).ToList();
+
+                    return Ok(result);
+                }
+
+                var list = await query
                     .Select(c => new {
                         c.Id,
+                        // On cherche le CandidatureId pour ce candidat précis
+                        CandidatureId = userRole == "Candidat" ? _context.Candidatures
+                            .Where(cand => cand.CampagneId == c.Id && cand.CandidatId == userId.Value)
+                            .Select(cand => cand.Id)
+                            .FirstOrDefault() : Guid.Empty,
                         c.Nom,
                         c.Description,
                         c.Statut,
@@ -134,6 +195,35 @@ namespace NeoEvaluation.API.Controllers
             } catch (Exception ex) {
                 return BadRequest(ex.Message);
             }
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteCampagne(Guid id)
+        {
+            var c = await _context.Campagnes
+                .Include(x => x.CampagneQuestionnaires)
+                .Include(x => x.Candidatures)
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            if (c == null) return NotFound();
+
+            // 1. Supprimer les liaisons questionnaires
+            if (c.CampagneQuestionnaires.Any())
+            {
+                _context.CampagneQuestionnaires.RemoveRange(c.CampagneQuestionnaires);
+            }
+
+            // 2. Supprimer les candidatures liées
+            if (c.Candidatures.Any())
+            {
+                _context.Candidatures.RemoveRange(c.Candidatures);
+            }
+
+            // 3. Supprimer la campagne
+            _context.Campagnes.Remove(c);
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Campagne supprimée avec succès." });
         }
     }
 }

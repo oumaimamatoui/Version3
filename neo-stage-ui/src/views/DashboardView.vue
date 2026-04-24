@@ -142,8 +142,18 @@
                     </div>
                   </div>
 
-                  <button @click="startExam(c.id)" class="btn-primary-cyber">
-                    Démarrer la session <i class="fa-solid fa-arrow-right ms-2"></i>
+                  <button 
+                    @click="startExam(c)" 
+                    class="btn-primary-cyber" 
+                    :disabled="new Date(c.dateDebut) > new Date()"
+                    :title="new Date(c.dateDebut) > new Date() ? 'Ce test n\'est pas encore ouvert' : ''"
+                  >
+                    <span v-if="new Date(c.dateDebut) > new Date()">
+                      Ouvre le {{ formatDate(c.dateDebut) }}
+                    </span>
+                    <span v-else>
+                      Démarrer la session <i class="fa-solid fa-arrow-right ms-2"></i>
+                    </span>
                   </button>
                 </div>
               </div>
@@ -196,10 +206,13 @@ const fetchCampaigns = async () => {
 };
 
 const filteredCampaigns = computed(() => {
-  return userRole.value === 'Candidat' ? campaigns.value.filter(c => c.statut === 1) : campaigns.value;
+  return campaigns.value; // On laisse le bouton "Démarrer" se gérer avec la date
 });
 
-const startExam = (id) => { router.push(`/exam-lobby/${id}`); };
+const startExam = (campaign) => { 
+  const targetId = campaign.candidatureId || campaign.id;
+  router.push(`/exam-lobby/${targetId}`); 
+};
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }) : 'N/A';
 
 const roleLabel = computed(() => {

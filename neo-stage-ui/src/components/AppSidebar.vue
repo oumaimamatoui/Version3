@@ -157,7 +157,7 @@
         <!-- Candidat -->
         <div v-if="userRole === 'Candidat'" class="nav-group">
           <span class="group-label">Mon parcours</span>
-          <router-link to="/exam-lobby" class="nav-item nav-success">
+          <router-link to="/my-tests" class="nav-item nav-success">
             <div class="nav-icon"><i class="fa-solid fa-play"></i></div>
             <span>Passer un test</span>
           </router-link>
