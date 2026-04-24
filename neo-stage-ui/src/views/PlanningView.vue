@@ -116,16 +116,13 @@ onMounted(() => {
 
 const chargerDonnees = async () => {
   try {
-    // Les campagnes contiennent déjà le planning maintenant !
+    // 1. Recupération des campagnes déjà créées dans le Builder
     const resCamp = await axios.get(`${API_BASE}/Campagnes`);
     listCampagnes.value = resCamp.data;
-    
-    // Pour le calendrier, on transforme les campagnes directement
-    eventsOnCalendar.value = resCamp.data.map(c => ({
-       id: c.id,
-       titre: c.nom,
-       debut: c.dateDebut
-    }));
+
+    // 2. Recupération du planning pour le calendrier
+    const resPlan = await axios.get(`${API_BASE}/Plannings/calendrier`);
+    eventsOnCalendar.value = resPlan.data; // Formats attendus: [{id, titre, debut}]
   } catch (err) {
     console.error("Problème API :", err);
   }
@@ -140,15 +137,16 @@ const validerPlanning = async () => {
   loading.value = true;
   try {
     const payload = {
+      campagneId: form.value.campagneId,
       dureeMinutes: form.value.duree,
       dateOuverture: form.value.dateOuverture,
       modeNotation: form.value.modeNotation
     };
 
-    // On utilise la nouvelle route PUT sur la campagne spécifiée
-    await axios.put(`${API_BASE}/Campagnes/${form.value.campagneId}/planning`, payload);
+    await axios.post(`${API_BASE}/Plannings`, payload);
     alert("La planification a été enregistrée avec succès.");
     
+    // Refresh
     form.value.campagneId = '';
     chargerDonnees();
   } catch (err) {

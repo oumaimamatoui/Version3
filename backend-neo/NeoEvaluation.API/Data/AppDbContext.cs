@@ -38,10 +38,14 @@ namespace NeoEvaluation.API.Data
         public DbSet<Question> Questions { get; set; } = null!;
         public DbSet<Reponse> Reponses { get; set; } = null!;
         public DbSet<Role> Roles { get; set; } = null!;
+
         // Nouvelles tables
         public DbSet<Rapport> Rapports { get; set; } = null!;
         public DbSet<QuestionnaireQuestion> QuestionnaireQuestions { get; set; } = null!;
         public DbSet<CampagneQuestionnaire> CampagneQuestionnaires { get; set; } = null!;
+
+        public DbSet<Categorie> Categories { get; set; } = null!;
+        public DbSet<SousCategorie> SousCategories { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

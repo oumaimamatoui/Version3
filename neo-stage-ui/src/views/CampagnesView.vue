@@ -75,7 +75,6 @@
                     </div>
                   </div>
                   <div class="bar-chart-v2">
-                    <!-- FIX #1: activityData is a ref (generated once), not a computed with Math.random() -->
                     <div v-for="(bar, i) in activityData" :key="i" class="bar-col">
                       <div class="bar-wrap">
                         <div class="bar-fill bar-amber" :style="{ height: bar.deploy + '%' }"></div>
@@ -174,19 +173,29 @@
                 </div>
                 <div v-if="pinnedCampaigns.includes(c.id)" class="pin-badge"><i class="fa-solid fa-thumbtack"></i> Épinglé</div>
                 <h5 class="campaign-title-modern fw-800">{{ c.nom }}</h5>
+
+                <!-- ✅ FIX : STRUCTURE LIÉE — affiche le vrai nom ou le nom de la campagne en fallback -->
                 <div class="test-attachment-box mt-3 mb-3 p-3 bg-light rounded-4 d-flex align-items-center gap-3">
                   <div class="icon-file text-amber"><i class="fa-solid fa-file-code fa-lg"></i></div>
                   <div class="flex-grow-1 overflow-hidden">
                     <span class="text-overline d-block" style="font-size:0.6rem;font-weight:900;opacity:0.5;">STRUCTURE LIÉE</span>
-                    <p class="m-0 text-truncate fw-bold small">{{ getQuestionnaireName(c.questionnaireId) }}</p>
+                    <p class="m-0 text-truncate fw-bold small">
+                      {{ getQuestionnaireName(c.questionnaireId) }}
+                    </p>
                   </div>
                 </div>
+
                 <div class="progress-slim mb-3">
                   <div class="progress-fill" :style="{ width: getCampaignProgress(c) + '%', background: getProgressColor(getCampaignProgress(c)) }"></div>
                 </div>
+
+                <!-- ✅ FIX : slots — affiche la valeur réelle ou '—' si absent -->
                 <div class="card-footer-modern d-flex justify-content-between pt-3 border-top border-light">
                   <div class="meta-item small text-muted"><i class="fa-regular fa-calendar me-2"></i>{{ formatDate(c.dateDebut) }}</div>
-                  <div class="meta-item small text-muted"><i class="fa-solid fa-user-group me-2"></i>{{ c.maxCandidats }} slots</div>
+                  <div class="meta-item small text-muted">
+                    <i class="fa-solid fa-user-group me-2"></i>
+                    {{ c.maxCandidats != null && c.maxCandidats !== '' ? c.maxCandidats : '—' }} slots
+                  </div>
                 </div>
               </div>
             </div>
@@ -209,10 +218,13 @@
               </div>
               <div class="flex-grow-1">
                 <div class="fw-800 small">{{ c.nom }}</div>
+                <!-- ✅ FIX list view -->
                 <div class="text-muted" style="font-size:0.7rem">{{ getQuestionnaireName(c.questionnaireId) }}</div>
               </div>
               <div style="width:120px" class="small text-muted">{{ formatDate(c.dateDebut) }}</div>
-              <div style="width:100px" class="text-center"><span class="slot-badge">{{ c.maxCandidats }}</span></div>
+              <div style="width:100px" class="text-center">
+                <span class="slot-badge">{{ c.maxCandidats != null && c.maxCandidats !== '' ? c.maxCandidats : '—' }}</span>
+              </div>
               <div style="width:80px" class="d-flex gap-2 justify-content-center">
                 <button class="btn-icon-sm" @click="enterStudioMode(c)" title="Editer"><i class="fa-solid fa-pen-to-square"></i></button>
                 <button class="btn-icon-sm danger" @click="handleDelete(c.id)" title="Supprimer"><i class="fa-solid fa-trash-can"></i></button>
@@ -255,13 +267,14 @@
                     </div>
                   </div>
                   <div class="col-md-6">
+                    <!-- ✅ FIX preview -->
                     <div class="preview-field-box"><span class="preview-field-label">STRUCTURE LIÉE</span><span class="fw-800">{{ getQuestionnaireName(previewData.questionnaireId) }}</span></div>
                   </div>
                   <div class="col-md-6">
                     <div class="preview-field-box"><span class="preview-field-label">DATE D'OUVERTURE</span><span class="fw-800">{{ formatDate(previewData.dateDebut) }}</span></div>
                   </div>
                   <div class="col-md-6">
-                    <div class="preview-field-box"><span class="preview-field-label">MAX CANDIDATS</span><span class="fw-800">{{ previewData.maxCandidats }}</span></div>
+                    <div class="preview-field-box"><span class="preview-field-label">MAX CANDIDATS</span><span class="fw-800">{{ previewData.maxCandidats != null && previewData.maxCandidats !== '' ? previewData.maxCandidats : '—' }}</span></div>
                   </div>
                 </div>
               </div>
@@ -325,7 +338,6 @@
                   </div>
                 </div>
                 <div class="global-actions-cluster d-flex gap-3 align-items-center flex-wrap">
-                  <!-- FIX #2: autoSaveTimer is a ref, not window._autoSaveTimer -->
                   <div class="autosave-indicator" :class="{ 'saving': isSaving, 'saved': lastSaved }">
                     <i :class="isSaving ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-cloud-arrow-up'"></i>
                     <span>{{ isSaving ? 'Sauvegarde...' : lastSaved ? 'Sauvegardé ' + lastSavedTime : 'Non sauvegardé' }}</span>
@@ -374,7 +386,9 @@
             <div class="row g-5">
               <div class="col-xl-8">
 
-                <!-- ÉTAPE 1 -->
+                <!-- ═══════════════════════════════════
+                     ÉTAPE 1 — ARCHITECTURE NOYAU
+                ═══════════════════════════════════ -->
                 <section v-if="currentStep === 1" class="engine-pane animate__animated animate__fadeIn">
                   <div class="enigma-card p-5">
                     <div class="pane-header-v2 mb-5">
@@ -389,17 +403,54 @@
                           <span v-if="showValidation && !studio.questionnaire.titre" class="field-error-msg">Ce champ est requis</span>
                         </div>
                       </div>
+
+                      <!-- ─── THÈME (CATÉGORIE PRINCIPALE) ─── -->
                       <div class="col-md-6">
                         <div class="enigma-input-wrap">
-                          <label>EXPERTISE</label>
-                          <select v-model="studio.questionnaire.categorie" class="enigma-field">
-                            <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-                          </select>
+                          <label>THÈME / DOMAINE</label>
+                          <div class="theme-select-wrapper">
+                            <i class="fa-solid fa-tag theme-select-icon"></i>
+                            <select v-model="studio.questionnaire.theme" class="enigma-field theme-select" @change="studio.questionnaire.sousTheme = ''">
+                              <option value="">— Choisir —</option>
+                              <option v-for="cat in categoriesList" :key="cat.id" :value="cat.nom">
+                                {{ cat.nom }}
+                              </option>
+                            </select>
+                          </div>
                         </div>
                       </div>
+
+                      <!-- ─── SOUS-THÈME (FILTRÉ DYNAMIQUEMENT) ─── -->
                       <div class="col-md-6">
                         <div class="enigma-input-wrap">
-                          <label>DURÉE (MIN)</label>
+                          <label>SOUS-THÈME / SPÉCIALITÉ</label>
+                          <div class="theme-select-wrapper" :class="{ 'disabled-wrapper': !studio.questionnaire.theme }">
+                            <i class="fa-solid fa-sitemap theme-select-icon"></i>
+                            <select v-model="studio.questionnaire.sousTheme" class="enigma-field theme-select" :disabled="!studio.questionnaire.theme">
+                              <option value="">— Sélectionner —</option>
+                              <option v-for="sub in dynamicSubCategories" :key="sub.id" :value="sub.nom">
+                                {{ sub.nom }}
+                              </option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Breadcrumb thème sélectionné -->
+                      <div class="col-12" v-if="studio.questionnaire.theme">
+                        <div class="theme-breadcrumb-display">
+                          <i class="fa-solid fa-folder-open text-amber me-2"></i>
+                          <span class="theme-bc-item">{{ studio.questionnaire.theme }}</span>
+                          <template v-if="studio.questionnaire.sousTheme">
+                            <i class="fa-solid fa-chevron-right mx-2 opacity-40"></i>
+                            <span class="theme-bc-item active">{{ studio.questionnaire.sousTheme }}</span>
+                          </template>
+                        </div>
+                      </div>
+
+                      <div class="col-md-6">
+                        <div class="enigma-input-wrap">
+                          <label>DURÉE GLOBALE (MIN)</label>
                           <input type="number" v-model.number="studio.questionnaire.duree" class="enigma-field" min="5" max="360">
                         </div>
                       </div>
@@ -438,12 +489,13 @@
                   </div>
                 </section>
 
-                <!-- ÉTAPE 2 -->
+                <!-- ═══════════════════════════════════
+                     ÉTAPE 2 — INGÉNIERIE / QUESTIONS
+                ═══════════════════════════════════ -->
                 <section v-if="currentStep === 2" class="engine-pane animate__animated animate__fadeIn">
                   <div class="orchestrator-head-v2 mb-4 d-flex justify-content-between align-items-end">
                     <h5 class="fw-900 m-0">Composition ({{ studio.questions.length }})</h5>
                     <div class="d-flex gap-2">
-    
                       <button @click="openDeepBankModal" class="btn-bank-action-v2"><i class="fa-solid fa-vault me-2"></i> BANQUE</button>
                     </div>
                   </div>
@@ -468,12 +520,44 @@
                           <div class="drag-node-handle"><i class="fa-solid fa-grip-vertical"></i></div>
                           <div class="asset-index-v8">{{ String(index + 1).padStart(2, '0') }}</div>
                           <div class="asset-core-v8 flex-grow-1">
-                            <h6 class="asset-title-v8 text-truncate">{{ element.texte }}</h6>
-                            <div class="d-flex gap-2 mt-1">
-                              <span class="t-pill weight">{{ element.poids }} PTS</span>
-                              <span v-if="element.duree" class="t-pill time"><i class="fa-solid fa-clock me-1"></i> {{ element.duree }}s</span>
+                            <h6 class="asset-title-v8 text-truncate">{{ element.texte || element.enonce }}</h6>
+                            <div class="d-flex gap-2 mt-1 flex-wrap">
+                              <span class="t-pill weight">{{ element.poids || element.points }} PTS</span>
+                              <span v-if="element.duree && element.duree > 0" class="t-pill time">
+                                <i class="fa-solid fa-stopwatch me-1"></i>{{ element.duree }}s
+                              </span>
                               <span v-if="element.difficulty" class="t-pill" :class="'diff-' + element.difficulty?.toLowerCase()">{{ element.difficulty }}</span>
+                              <span v-if="element.type !== undefined" class="t-pill type-pill">
+                                <i :class="getTypeInfo(element.type).icon + ' me-1'"></i>{{ getTypeInfo(element.type).label }}
+                              </span>
+                              <span v-if="element.theme" class="t-pill cat-pill">{{ element.theme }}</span>
                             </div>
+                          </div>
+                          <!-- Timer individuel inline -->
+                          <div class="question-timer-inline" @click.stop>
+                            <button
+                              class="timer-toggle-btn"
+                              :class="{ 'timer-active': element.duree > 0 }"
+                              @click="toggleQuestionTimer(element)"
+                              :title="element.duree > 0 ? 'Minuteur activé — cliquer pour désactiver' : 'Activer un minuteur pour cette question'"
+                            >
+                              <i class="fa-solid fa-stopwatch"></i>
+                            </button>
+                            <transition name="timer-expand">
+                              <div v-if="element.duree > 0 || element._showTimer" class="timer-input-group">
+                                <input
+                                  type="number"
+                                  v-model.number="element.duree"
+                                  min="5"
+                                  max="3600"
+                                  class="timer-input-field"
+                                  placeholder="60"
+                                  @focus="element._showTimer = true"
+                                  @blur="handleTimerBlur(element)"
+                                >
+                                <span class="timer-unit">s</span>
+                              </div>
+                            </transition>
                           </div>
                           <button @click="editQuestion(element, index)" class="btn-icon-sm me-1"><i class="fa-solid fa-pen"></i></button>
                           <button @click="studio.questions.splice(index, 1)" class="btn-remove-v8"><i class="fa-solid fa-xmark"></i></button>
@@ -519,8 +603,9 @@
                     <h5 class="fw-900 mb-5"><i class="fa-solid fa-calendar-check text-amber me-3"></i>Matrix Planning</h5>
                     <div class="row g-5">
                       <div class="col-md-4"><div class="enigma-input-wrap"><label>OUVERTURE TERMINAL</label><input type="datetime-local" v-model="studio.campagne.dateDebut" class="enigma-field"></div></div>
+                      <div class="col-md-4"><div class="enigma-input-wrap"><label>DURÉE (MIN)</label><input type="number" v-model.number="studio.questionnaire.duree" class="enigma-field" min="1"></div></div>
                       <div class="col-md-4"><div class="enigma-input-wrap"><label>FERMETURE ACCÈS</label><input type="datetime-local" v-model="studio.campagne.dateFin" class="enigma-field"></div></div>
-                      <div class="col-md-4"><div class="enigma-input-wrap"><label>MAX CANDIDATS</label><input type="number" v-model.number="studio.campagne.maxCandidats" class="enigma-field" min="1"></div></div>
+                      <div class="col-md-6"><div class="enigma-input-wrap"><label>MAX CANDIDATS</label><input type="number" v-model.number="studio.campagne.maxCandidats" class="enigma-field" min="1"></div></div>
                       <div class="col-md-6">
                         <div class="enigma-input-wrap">
                           <label>FUSEAU HORAIRE</label>
@@ -539,9 +624,17 @@
                           <div class="form-check form-switch enigma-switch"><input class="form-check-input" type="checkbox" v-model="studio.campagne.anticheat"></div>
                         </div>
                         <div class="protocol-row border-top pt-4 mt-4">
-                          <div class="p-icon text-indigo"><i class="fa-solid fa-timer"></i></div>
-                          <div class="p-data"><h6>Minuteur par Question</h6><p>Limite de temps individuelle par actif.</p></div>
-                          <div class="form-check form-switch enigma-switch"><input class="form-check-input" type="checkbox" v-model="studio.campagne.timerPerQuestion"></div>
+                          <div class="p-icon p-icon-blue">
+                            <i class="fa-solid fa-stopwatch"></i>
+                          </div>
+                          <div class="p-data">
+                            <h6>Minuteur par Question</h6>
+                            <p>Activez un chronomètre individuel sur chaque actif depuis l'étape 2.</p>
+                          </div>
+                          <div class="timer-per-q-summary">
+                            <span class="tpq-count">{{ questionsWithTimer }}</span>
+                            <span class="tpq-label">question(s)<br>minutées</span>
+                          </div>
                         </div>
                         <div class="protocol-row border-top pt-4 mt-4">
                           <div class="p-icon text-success"><i class="fa-solid fa-paper-plane"></i></div>
@@ -615,70 +708,187 @@
           <header class="qv-header">
             <div class="qv-title">
               <h2 class="m-0 fw-900">Bibliothèque d'Actifs Certifiés</h2>
-              <p class="m-0 text-muted small">Panier temporaire : {{ selectedItemsInBank.length }} actifs.</p>
+              <p class="m-0 text-muted small">Panier temporaire : {{ selectedItemsInBank.length }} actifs sélectionnés</p>
             </div>
             <div class="qv-actions d-flex gap-3">
               <button @click="modals.bank = false" class="btn-qv-cancel">ANNULER</button>
-              <button @click="confirmStudioSync" :disabled="selectedItemsInBank.length === 0" class="btn-qv-confirm">IMPORTER ({{ selectedItemsInBank.length }})</button>
+              <button @click="confirmStudioSync" :disabled="selectedItemsInBank.length === 0" class="btn-qv-confirm">
+                <i class="fa-solid fa-bolt me-2"></i>IMPORTER ({{ selectedItemsInBank.length }})
+              </button>
             </div>
           </header>
-          <div class="qv-filter-tabs px-4 py-3 border-bottom d-flex gap-2 align-items-center flex-wrap">
-            <button v-for="diff in ['Tous', 'EXPERT', 'MEDIUM', 'EASY']" :key="diff"
-              :class="['qv-filter-btn', { active: bankDiffFilter === diff }]"
-              @click="bankDiffFilter = diff">{{ diff }}</button>
-            <div class="ms-auto small text-muted">{{ filteredBankReference.length }} actifs trouvés</div>
+
+          <div class="qv-filter-tabs px-4 py-3 border-bottom">
+            <div class="d-flex align-items-center flex-wrap gap-2 mb-2">
+              <span class="qv-filter-section-label">DIFFICULTÉ :</span>
+              <button v-for="diff in ['Tous', 'EXPERT', 'MEDIUM', 'EASY']" :key="diff"
+                :class="['qv-filter-btn', { active: bankDiffFilter === diff }]"
+                @click="bankDiffFilter = diff">{{ diff }}</button>
+              <div class="vr mx-2 opacity-25" style="height:20px"></div>
+              <span class="ms-auto small text-muted fw-800">{{ filteredBankReference.length }} actifs trouvés</span>
+            </div>
+            <div class="d-flex align-items-center flex-wrap gap-2">
+              <span class="qv-filter-section-label">TYPE :</span>
+              <button :class="['qv-filter-btn', { active: bankTypeFilter === -1 }]"
+                @click="bankTypeFilter = -1">Tous types</button>
+              <button v-for="t in typeDefinitions" :key="t.val"
+                :class="['qv-filter-btn', 'qv-filter-btn-type', { active: bankTypeFilter === t.val }]"
+                @click="bankTypeFilter = t.val">
+                <i :class="t.icon + ' me-1'"></i>{{ t.label }}
+              </button>
+            </div>
           </div>
+
           <div class="qv-layout">
             <aside class="qv-sidebar">
               <div class="qv-search-area mb-4">
                 <label class="small fw-800 text-muted d-block mb-2">RECHERCHE</label>
-                <input type="text" v-model="searchBankQuery" class="enigma-field" placeholder="SQL, Kafka...">
+                <input type="text" v-model="searchBankQuery" class="enigma-field" placeholder="SQL, Kafka, Vue...">
               </div>
+
               <div class="mb-4">
-                <label class="small fw-800 text-muted d-block mb-2">CATÉGORIE</label>
+                <label class="small fw-800 text-muted d-block mb-2">THÈME</label>
                 <div class="d-flex flex-column gap-1">
-                  <button v-for="cat in ['Toutes', ...categories]" :key="cat"
-                    :class="['qv-cat-btn', { active: bankCatFilter === cat }]"
-                    @click="bankCatFilter = cat">{{ cat }}</button>
+                  <button :class="['qv-cat-btn', { active: bankCatFilter === 'Toutes' }]"
+                    @click="bankCatFilter = 'Toutes'">
+                    <i class="fa-solid fa-layer-group me-2 text-muted" style="font-size:0.65rem"></i>Tous
+                  </button>
+                  <template v-if="categoriesList.length === 0">
+                    <div v-for="th in themesData" :key="th.nom">
+                      <button :class="['qv-cat-btn', { active: bankCatFilter === th.nom }]"
+                        @click="bankCatFilter = th.nom">
+                        <i class="fa-solid fa-tag me-2 text-amber" style="font-size:0.65rem"></i>{{ th.nom }}
+                      </button>
+                      <div v-if="th.sousTh && th.sousTh.length > 0" class="ms-3">
+                        <button v-for="sub in th.sousTh" :key="sub"
+                          :class="['qv-cat-btn qv-cat-sub-btn', { active: bankCatFilter === sub }]"
+                          @click="bankCatFilter = sub">
+                          <i class="fa-solid fa-caret-right me-2 text-muted" style="font-size:0.6rem"></i>{{ sub }}
+                        </button>
+                      </div>
+                    </div>
+                  </template>
+                  <template v-else>
+                    <div v-for="cat in categoriesList" :key="cat.id">
+                      <button :class="['qv-cat-btn', { active: bankCatFilter === cat.nom }]"
+                        @click="bankCatFilter = cat.nom">
+                        <i class="fa-solid fa-tag me-2 text-amber" style="font-size:0.65rem"></i>{{ cat.nom }}
+                      </button>
+                      <div v-if="cat.sousCategories && cat.sousCategories.length > 0" class="ms-3">
+                        <button v-for="sub in cat.sousCategories" :key="sub.id"
+                          :class="['qv-cat-btn qv-cat-sub-btn', { active: bankCatFilter === sub.nom }]"
+                          @click="bankCatFilter = sub.nom">
+                          <i class="fa-solid fa-caret-right me-2 text-muted" style="font-size:0.6rem"></i>{{ sub.nom }}
+                        </button>
+                      </div>
+                    </div>
+                  </template>
                 </div>
               </div>
+
               <div class="qv-bank-stats mt-auto p-4 bg-light rounded-4">
-                <span>Total Assets: </span><strong>{{ bankGlobalReference.length }}</strong>
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="small text-muted fw-700">Total actifs</span>
+                  <strong>{{ bankGlobalReference.length }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="small text-muted fw-700">Expert</span>
+                  <strong class="text-danger">{{ bankGlobalReference.filter(q => q.difficulty === 'EXPERT').length }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="small text-muted fw-700">Medium</span>
+                  <strong class="text-amber">{{ bankGlobalReference.filter(q => q.difficulty === 'MEDIUM').length }}</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                  <span class="small text-muted fw-700">Easy</span>
+                  <strong class="text-success">{{ bankGlobalReference.filter(q => q.difficulty === 'EASY').length }}</strong>
+                </div>
               </div>
             </aside>
+
             <section class="qv-list custom-scrollbar">
+              <div v-if="filteredBankReference.length === 0" class="text-center py-5 text-muted">
+                <i class="fa-solid fa-box-open fa-2x mb-3"></i>
+                <p class="small fw-700">Aucun actif trouvé pour cette sélection.</p>
+              </div>
               <div v-for="qRef in filteredBankReference" :key="qRef.id"
                 @click="currentInspectedBankItem = qRef"
                 :class="['qv-item-card', { 'active': currentInspectedBankItem?.id === qRef.id, 'checked': isCocheeInBank(qRef.id) }]">
                 <div class="qv-item-top">
-                  <span class="qv-badge" :class="qRef.difficulty?.toLowerCase()">{{ qRef.difficulty }}</span>
+                  <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="qv-badge" :class="(qRef.difficulty || 'EXPERT').toLowerCase()">{{ qRef.difficulty || 'EXPERT' }}</span>
+                    <span class="qv-type-badge"><i :class="getTypeInfo(qRef.type).icon"></i></span>
+                  </div>
                   <div class="qv-checkbox" @click.stop="toggleInBankPool(qRef)">
                     <i :class="isCocheeInBank(qRef.id) ? 'fa-solid fa-check-circle' : 'fa-regular fa-circle'"></i>
                   </div>
                 </div>
-                <h6 class="qv-item-text mt-3">{{ qRef.texte }}</h6>
-                <div class="qv-item-footer mt-4"><span><strong>{{ qRef.poids }}</strong> PTS</span></div>
+                <h6 class="qv-item-text mt-2">{{ qRef.texte || qRef.enonce }}</h6>
+                <div v-if="qRef.theme || qRef.categorie" class="qv-item-cat mt-1">
+                  <i class="fa-solid fa-tag me-1"></i>
+                  {{ qRef.theme || qRef.categorie }}
+                  <span v-if="qRef.sousTheme"> › {{ qRef.sousTheme }}</span>
+                </div>
+                <div class="qv-item-footer mt-3 d-flex justify-content-between align-items-center">
+                  <span><strong>{{ qRef.poids || qRef.points }}</strong> PTS</span>
+                  <span class="small text-muted">{{ getTypeInfo(qRef.type).label }}</span>
+                </div>
               </div>
             </section>
+
             <section class="qv-inspector">
-              <div v-if="currentInspectedBankItem" class="p-5 animate__animated animate__fadeIn">
+              <div v-if="currentInspectedBankItem" class="p-4 animate__animated animate__fadeIn h-100 d-flex flex-column">
                 <h5 class="fw-900 mb-4">Aperçu Technique</h5>
-                <div class="device-mockup-v8 p-4">
-                  <p class="fw-bold">{{ currentInspectedBankItem.texte }}</p>
-                  <hr>
-                  <p class="small text-muted">{{ currentInspectedBankItem.explication }}</p>
+                <div class="d-flex gap-2 flex-wrap mb-4">
+                  <span class="qv-badge" :class="(currentInspectedBankItem.difficulty || 'EXPERT').toLowerCase()">
+                    {{ currentInspectedBankItem.difficulty || 'EXPERT' }}
+                  </span>
+                  <span class="inspector-type-badge">
+                    <i :class="getTypeInfo(currentInspectedBankItem.type).icon + ' me-1'"></i>
+                    {{ getTypeInfo(currentInspectedBankItem.type).label }}
+                  </span>
+                  <span v-if="currentInspectedBankItem.theme || currentInspectedBankItem.categorie" class="inspector-cat-badge">
+                    <i class="fa-solid fa-tag me-1"></i>
+                    {{ currentInspectedBankItem.theme || currentInspectedBankItem.categorie }}
+                  </span>
                 </div>
-                <button @click="toggleInBankPool(currentInspectedBankItem)" class="btn-enigma-primary mt-4 w-100">
+                <div class="device-mockup-v8 p-4 mb-4 flex-grow-1">
+                  <p class="fw-bold mb-3">{{ currentInspectedBankItem.texte || currentInspectedBankItem.enonce }}</p>
+                  <hr>
+                  <div v-if="currentInspectedBankItem.reponses && currentInspectedBankItem.reponses.length > 0" class="mb-3">
+                    <p class="small fw-800 text-muted mb-2">OPTIONS :</p>
+                    <div v-for="(rep, i) in currentInspectedBankItem.reponses" :key="i"
+                      class="d-flex align-items-center gap-2 mb-1 small">
+                      <i :class="rep.estCorrecte ? 'fa-solid fa-check-circle text-success' : 'fa-regular fa-circle text-muted'"></i>
+                      <span>{{ rep.texte }}</span>
+                    </div>
+                  </div>
+                  <p v-if="currentInspectedBankItem.explication || currentInspectedBankItem.bonneReponse" class="small text-muted mb-0">
+                    <strong>Explication :</strong> {{ currentInspectedBankItem.explication || currentInspectedBankItem.bonneReponse }}
+                  </p>
+                </div>
+                <div class="inspector-stats-row mb-4">
+                  <div class="inspector-stat-box">
+                    <span class="v">{{ currentInspectedBankItem.poids || currentInspectedBankItem.points }}</span>
+                    <span class="l">PTS</span>
+                  </div>
+                  <div v-if="currentInspectedBankItem.duree" class="inspector-stat-box">
+                    <span class="v">{{ currentInspectedBankItem.duree }}s</span>
+                    <span class="l">DURÉE</span>
+                  </div>
+                </div>
+                <button @click="toggleInBankPool(currentInspectedBankItem)" class="btn-enigma-primary w-100">
                   <div class="btn-content">
                     <i :class="isCocheeInBank(currentInspectedBankItem.id) ? 'fa-solid fa-check me-2' : 'fa-solid fa-plus me-2'"></i>
-                    {{ isCocheeInBank(currentInspectedBankItem.id) ? 'Retiré du panier' : 'Ajouter au panier' }}
+                    {{ isCocheeInBank(currentInspectedBankItem.id) ? 'Retirer du panier' : 'Ajouter au panier' }}
                   </div>
                   <div class="btn-glow"></div>
                 </button>
               </div>
               <div v-else class="p-5 text-center text-muted d-flex flex-column align-items-center justify-content-center h-100">
-                <i class="fa-solid fa-hand-pointer fa-2x mb-3"></i>
-                <p class="small">Cliquez sur un actif pour l'inspecter</p>
+                <i class="fa-solid fa-hand-pointer fa-2x mb-3 text-muted"></i>
+                <p class="small fw-700">Cliquez sur un actif pour l'inspecter</p>
+                <p class="small opacity-50">Vous pouvez aussi cocher directement depuis la liste.</p>
               </div>
             </section>
           </div>
@@ -686,9 +896,7 @@
       </div>
     </transition>
 
-    <!-- ═══════════════════════════════════════════════════════
-         MODALE : QUICK ADD QUESTION
-    ═══════════════════════════════════════════════════════ -->
+    <!-- MODALE : QUICK ADD QUESTION -->
     <transition name="modal-quantum">
       <div v-if="modals.quickAdd" class="quantum-vault-overlay" @click.self="closeQuickAdd">
         <div class="quick-add-modal animate__animated animate__zoomIn animate__faster">
@@ -708,8 +916,14 @@
               </div>
             </div>
             <div class="col-md-6">
-              <div class="enigma-input-wrap"><label>DURÉE (SECONDRES)</label>
-                <input type="number" v-model.number="newQuestion.duree" class="enigma-field" placeholder="Ex: 60">
+              <div class="enigma-input-wrap">
+                <label><i class="fa-solid fa-stopwatch me-1 text-amber"></i> MINUTEUR (SECONDES)</label>
+                <div class="timer-modal-row">
+                  <input type="number" v-model.number="newQuestion.duree" class="enigma-field" placeholder="Ex: 60 (0 = pas de minuteur)" min="0">
+                  <span v-if="newQuestion.duree > 0" class="timer-modal-preview">
+                    <i class="fa-solid fa-stopwatch text-amber me-1"></i>{{ Math.floor(newQuestion.duree/60) }}m{{ newQuestion.duree % 60 }}s
+                  </span>
+                </div>
               </div>
             </div>
             <div class="col-md-6">
@@ -718,6 +932,13 @@
                   <option value="EASY">Facile</option>
                   <option value="MEDIUM">Moyen</option>
                   <option value="EXPERT">Expert</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="enigma-input-wrap"><label>TYPE</label>
+                <select v-model="newQuestion.type" class="enigma-field">
+                  <option v-for="t in typeDefinitions" :key="t.val" :value="t.val">{{ t.label }}</option>
                 </select>
               </div>
             </div>
@@ -735,9 +956,7 @@
       </div>
     </transition>
 
-    <!-- ═══════════════════════════════════════════════════════
-         MODALE : RACCOURCIS CLAVIER
-    ═══════════════════════════════════════════════════════ -->
+    <!-- MODALE : RACCOURCIS -->
     <transition name="modal-quantum">
       <div v-if="modals.shortcuts" class="quantum-vault-overlay" @click.self="modals.shortcuts = false">
         <div class="shortcuts-modal animate__animated animate__zoomIn animate__faster">
@@ -757,9 +976,7 @@
       </div>
     </transition>
 
-    <!-- ═══════════════════════════════════════════════════════
-         CONFIRM DIALOG
-    ═══════════════════════════════════════════════════════ -->
+    <!-- CONFIRM DIALOG -->
     <transition name="modal-quantum">
       <div v-if="confirmDialog.show" class="quantum-vault-overlay" style="z-index:9999" @click.self="confirmDialog.show = false">
         <div class="confirm-modal animate__animated animate__zoomIn animate__faster">
@@ -768,7 +985,6 @@
           <p class="text-muted small mb-4">{{ confirmDialog.message }}</p>
           <div class="d-flex gap-3 justify-content-center">
             <button @click="confirmDialog.show = false" class="btn-qv-cancel">ANNULER</button>
-            <!-- FIX #5: Close dialog BEFORE running the confirm callback to avoid visual flash -->
             <button @click="runConfirmDialog" class="btn-confirm-danger">CONFIRMER</button>
           </div>
         </div>
@@ -784,48 +1000,72 @@
     </transition>
   </div>
 </template>
+
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
 import api from '@/services/api';
 import draggable from 'vuedraggable';
 
-const API_ENDPOINT = '';
+/* ─── TYPES ─────────────────────────────────────────────────────── */
+const typeDefinitions = [
+  { val: 0, label: 'Choix Unique',     icon: 'fa-solid fa-circle-dot' },
+  { val: 1, label: 'Choix Multiple',   icon: 'fa-solid fa-square-check' },
+  { val: 2, label: 'Vrai / Faux',      icon: 'fa-solid fa-toggle-on' },
+  { val: 4, label: 'Audit Texte',      icon: 'fa-solid fa-robot' },
+  { val: 5, label: 'Code Source',      icon: 'fa-solid fa-code' },
+  { val: 6, label: 'Fichier / Projet', icon: 'fa-solid fa-folder-open' },
+];
+
+/* ─── THÈMES STATIQUES (fallback si API Categories vide) ─────────── */
+const themesData = [
+  { nom: 'Backend Specialist', sousTh: ['Node.js', 'Java Spring', 'Python / Django', 'API REST', 'Microservices', 'GraphQL'] },
+  { nom: 'Frontend Architect',  sousTh: ['Vue.js', 'React', 'Angular', 'CSS Avancé', 'Performance Web', 'Accessibilité'] },
+  { nom: 'Cybersecurity',       sousTh: ['Pentest', 'OWASP Top 10', 'Cryptographie', 'DevSecOps', 'Forensic'] },
+  { nom: 'DevOps',              sousTh: ['CI/CD', 'Docker / Kubernetes', 'Terraform', 'Monitoring', 'GitOps'] },
+  { nom: 'AI Logic',            sousTh: ['Machine Learning', 'NLP', 'Computer Vision', 'MLOps', 'LLM Engineering'] },
+  { nom: 'Data Engineering',    sousTh: ['SQL Avancé', 'Kafka', 'Spark', 'Data Warehouse', 'ETL Pipeline'] },
+];
 
 /* ─── ÉTAT GLOBAL ─────────────────────────────────────────────── */
-const isStudioMode   = ref(false);
-const loading        = ref(true);
-const currentStep    = ref(1);
-const isPublishing   = ref(false);
-const isScrolled     = ref(false);
-const isSaving       = ref(false);
-const lastSaved      = ref(false);
-const lastSavedTime  = ref('');
-const showValidation = ref(false);
-const activeView     = ref('dashboard');
-const viewMode       = ref('grid');
+const isStudioMode    = ref(false);
+const loading         = ref(true);
+const currentStep     = ref(1);
+const isPublishing    = ref(false);
+const isScrolled      = ref(false);
+const isSaving        = ref(false);
+const lastSaved       = ref(false);
+const lastSavedTime   = ref('');
+const showValidation  = ref(false);
+const activeView      = ref('dashboard');
+const viewMode        = ref('grid');
 const dashboardSearch = ref('');
-const sortBy         = ref('date');
-const activeTab      = ref('all');
-const tagInput       = ref('');
+const sortBy          = ref('date');
+const activeTab       = ref('all');
+const tagInput        = ref('');
 const candidateFilter = ref('');
-const bankDiffFilter = ref('Tous');
-const bankCatFilter  = ref('Toutes');
+
+/* ─── FILTRES BANQUE ──────────────────────────────────────────── */
+const bankDiffFilter  = ref('Tous');
+const bankCatFilter   = ref('Toutes');
+const bankTypeFilter  = ref(-1);
 const searchBankQuery = ref('');
 const searchCandQuery = ref('');
 
-const campaigns           = ref([]);
-const questionnairesList  = ref([]);
-const candidateMasterPool = ref([]);
-const bankGlobalReference = ref([]);
-const selectedItemsInBank = ref([]);
+/* ─── DONNÉES ─────────────────────────────────────────────────── */
+const campaigns             = ref([]);
+const questionnairesList    = ref([]);
+const candidateMasterPool   = ref([]);
+const bankGlobalReference   = ref([]);
+const categoriesList        = ref([]);
+const selectedItemsInBank   = ref([]);
 const selectedCandidatesIds = ref([]);
-const pinnedCampaigns     = ref([]);
-const selectedQuestions   = ref([]);
-const previewData         = ref(null);
+const pinnedCampaigns       = ref([]);
+const selectedQuestions     = ref([]);
+const previewData           = ref(null);
 const currentInspectedBankItem = ref(null);
-const editingQuestion     = ref(null);
-const editingIndex        = ref(-1);
-const studioActivityFeed  = ref([{ id: 1, text: 'Studio initialisé', color: '#10b981', time: 'À l\'instant' }]);
+const editingQuestion       = ref(null);
+const editingIndex          = ref(-1);
+const studioActivityFeed    = ref([{ id: 1, text: 'Studio initialisé', color: '#10b981', time: 'À l\'instant' }]);
 
 const activityData = ref(
   ['L', 'M', 'M', 'J', 'V', 'S', 'D'].map(d => ({
@@ -835,20 +1075,37 @@ const activityData = ref(
   }))
 );
 
-const mousePos = reactive({ x: 0, y: 0 });
-const modals   = reactive({ bank: false, quickAdd: false, shortcuts: false });
-const globalToast = reactive({ active: false, message: '', type: '', icon: '' });
+const mousePos     = reactive({ x: 0, y: 0 });
+const modals       = reactive({ bank: false, quickAdd: false, shortcuts: false });
+const globalToast  = reactive({ active: false, message: '', type: '', icon: '' });
 const confirmDialog = reactive({ show: false, title: '', message: '', icon: '', _cb: null });
 
-const categories = ref([]);
-
 const studio = reactive({
-  questionnaire: { id: null, titre: '', categorie: '', duree: 45, scoreReussite: 70, description: '', tags: [] },
-  campagne:      { id: null, nom: '', dateDebut: '', dateFin: '', maxCandidats: 100, anticheat: true, timerPerQuestion: false, sendNotifications: false, timezone: 'Europe/Paris' },
-  questions:     [],
+  questionnaire: {
+    id: null,
+    titre: '',
+    theme: '',
+    sousTheme: '',
+    duree: 45,
+    scoreReussite: 70,
+    description: '',
+    tags: []
+  },
+  campagne: {
+    id: null,
+    nom: '',
+    dateDebut: '',
+    dateFin: '',
+    maxCandidats: 100,
+    anticheat: true,
+    timerPerQuestion: false,
+    sendNotifications: false,
+    timezone: 'Europe/Paris'
+  },
+  questions: [],
 });
 
-const newQuestion = reactive({ texte: '', poids: 10, difficulty: 'MEDIUM', explication: '', duree: 0 });
+const newQuestion = reactive({ texte: '', poids: 10, difficulty: 'MEDIUM', explication: '', duree: 0, type: 0 });
 
 const steps = [
   { id: 1, label: 'Structure' },
@@ -867,26 +1124,53 @@ const keyboardShortcuts = [
 
 const autoSaveTimer = ref(null);
 
+/* ─── COMPUTED : sous-catégories dynamiques selon thème choisi ── */
+const dynamicSubCategories = computed(() => {
+  if (!studio.questionnaire.theme) return [];
+  if (categoriesList.value.length > 0) {
+    const found = categoriesList.value.find(c => c.nom === studio.questionnaire.theme);
+    return found ? (found.sousCategories || []) : [];
+  }
+  const found = themesData.find(t => t.nom === studio.questionnaire.theme);
+  return found ? found.sousTh.map((s, i) => ({ id: i, nom: s })) : [];
+});
+
+/* ─── COMPUTED : questions avec minuteur ─────────────────────── */
+const questionsWithTimer = computed(() =>
+  studio.questions.filter(q => q.duree && q.duree > 0).length
+);
+
+/* ─── TIMER BLUR HANDLER ─────────────────────────────────────── */
+const handleTimerBlur = (element) => {
+  if (!element.duree || element.duree <= 0) {
+    element._showTimer = false;
+  }
+};
+
 /* ─── DATA FETCHING ───────────────────────────────────────────── */
 const fetchInitialData = async () => {
   loading.value = true;
   try {
-    const [resCamp, resQuest, resCand, resBank, resCats] = await Promise.all([
+    const [resCamp, resQuest, resCand, resBank] = await Promise.all([
       api.get(`/Campagnes`),
       api.get(`/Questionnaires`),
       api.get(`/Candidates`),
       api.get(`/Questions`),
-      api.get(`/Questions/categories`),
     ]);
     campaigns.value           = resCamp.data;
     questionnairesList.value  = resQuest.data;
     candidateMasterPool.value = resCand.data;
-    categories.value          = resCats.data;
-    bankGlobalReference.value = resBank.data.map(q => ({ 
-      ...q, 
-      difficulty: q.difficulty || 'EXPERT', 
-      explication: q.bonneReponse || 'Justification UML standard.' 
+    bankGlobalReference.value = resBank.data.map(q => ({
+      ...q,
+      difficulty:  q.difficulty  || getDifficultyFromPoints(q.points),
+      explication: q.explication || q.bonneReponse || 'Justification UML standard.',
+      texte:       q.texte       || q.enonce || '',
+      poids:       q.poids       || q.points || 10,
     }));
+    try {
+      const resCat = await api.get(`/Categories`);
+      categoriesList.value = resCat.data;
+    } catch { /* silencieux */ }
   } catch (err) {
     console.warn("API Offline, utilisation des mocks");
     showPulseToast('Mode local activé (API Offline).', 'warn', 'fa-solid fa-plug-circle-xmark');
@@ -896,11 +1180,20 @@ const fetchInitialData = async () => {
   }
 };
 
+const getDifficultyFromPoints = (pts) => {
+  if (!pts) return 'EXPERT';
+  if (pts >= 4) return 'EXPERT';
+  if (pts >= 2.5) return 'MEDIUM';
+  return 'EASY';
+};
+
+const getTypeInfo = (val) => typeDefinitions.find(t => t.val === val) || typeDefinitions[0];
+
 /* ─── DASHBOARD LOGIC ─────────────────────────────────────────── */
 const filterTabs = computed(() => [
-  { label: 'Tout',     value: 'all', count: campaigns.value.length },
-  { label: 'Actives',  value: 1,     count: campaigns.value.filter(c => c.statut === 1).length },
-  { label: 'Terminées',value: 2,     count: campaigns.value.filter(c => c.statut === 2).length },
+  { label: 'Tout',      value: 'all', count: campaigns.value.length },
+  { label: 'Actives',   value: 1,     count: campaigns.value.filter(c => c.statut === 1).length },
+  { label: 'Terminées', value: 2,     count: campaigns.value.filter(c => c.statut === 2).length },
 ]);
 
 const filteredCampaigns = computed(() => {
@@ -928,16 +1221,15 @@ const donutSegments = computed(() => {
   const colors  = ['#f59e0b', '#6366f1', '#10b981', '#f43f5e', '#06b6d4'];
   const labels  = ['Planifié', 'Active', 'Terminée'];
   const total   = campaigns.value.length || 1;
-  const circ    = 283; 
-  const startOffset = circ / 4; 
+  const circ    = 283;
+  const startOffset = circ / 4;
   const grouped = { 0:0, 1:0, 2:0 };
   campaigns.value.forEach(c => { grouped[c.statut] = (grouped[c.statut] || 0) + 1; });
-
   let cumulative = 0;
   return Object.entries(grouped).map(([s, count], i) => {
-    const dash = (count / total) * circ;
+    const dash   = (count / total) * circ;
     const offset = startOffset - cumulative;
-    cumulative += dash;
+    cumulative  += dash;
     return { label: labels[s] || 'Autre', count, color: colors[i % colors.length], dash, offset };
   });
 });
@@ -946,22 +1238,30 @@ const donutSegments = computed(() => {
 const enterStudioMode = (campaign = null) => {
   if (campaign) {
     Object.assign(studio.campagne, campaign);
-    studio.questionnaire.id    = campaign.questionnaireId;
-    studio.questionnaire.titre = getQuestionnaireName(campaign.questionnaireId);
+    studio.questionnaire.id        = campaign.questionnaireId;
+    studio.questionnaire.titre     = getQuestionnaireName(campaign.questionnaireId);
+    studio.questionnaire.theme     = campaign.theme     || '';
+    studio.questionnaire.sousTheme = campaign.sousTheme || '';
     api.get(`/Questions/ByQuestionnaire/${campaign.questionnaireId}`)
       .then(res => { studio.questions = res.data; })
       .catch(() => { studio.questions = []; });
   } else {
-    Object.assign(studio.questionnaire, { id: null, titre: '', categorie: categories[1], duree: 45, scoreReussite: 70, description: '', tags: [] });
-    Object.assign(studio.campagne,      { id: null, nom: '', dateDebut: '', dateFin: '', maxCandidats: 100, anticheat: true, timerPerQuestion: false, sendNotifications: false, timezone: 'Europe/Paris' });
+    Object.assign(studio.questionnaire, {
+      id: null, titre: '', theme: '', sousTheme: '',
+      duree: 45, scoreReussite: 70, description: '', tags: []
+    });
+    Object.assign(studio.campagne, {
+      id: null, nom: '', dateDebut: '', dateFin: '', maxCandidats: 100,
+      anticheat: true, timerPerQuestion: false, sendNotifications: false, timezone: 'Europe/Paris'
+    });
     studio.questions = [];
     selectedCandidatesIds.value = [];
     selectedQuestions.value = [];
   }
-  currentStep.value  = 1;
-  isStudioMode.value = true;
+  currentStep.value    = 1;
+  isStudioMode.value   = true;
   showValidation.value = false;
-  lastSaved.value    = false;
+  lastSaved.value      = false;
   studioActivityFeed.value = [{ id: Date.now(), text: 'Studio initialisé', color: '#10b981', time: 'À l\'instant' }];
 };
 
@@ -987,7 +1287,7 @@ watch(
     autoSaveTimer.value = setTimeout(() => {
       try {
         localStorage.setItem('studio_draft', JSON.stringify({ questionnaire: studio.questionnaire, questions: studio.questions }));
-        lastSaved.value    = true;
+        lastSaved.value     = true;
         lastSavedTime.value = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
       } catch (e) {}
       isSaving.value = false;
@@ -995,21 +1295,17 @@ watch(
   }
 );
 
-// Calcul automatique de la date de fin en fonction de la durée
 watch(
   [() => studio.campagne.dateDebut, () => studio.questionnaire.duree],
   ([newDate, newDuree]) => {
     if (newDate && newDuree) {
       const date = new Date(newDate);
       date.setMinutes(date.getMinutes() + parseInt(newDuree));
-      
-      // Formater en YYYY-MM-DDTHH:mm pour l'input datetime-local
-      const y = date.getFullYear();
-      const m = String(date.getMonth() + 1).padStart(2, '0');
-      const d = String(date.getDate()).padStart(2, '0');
-      const h = String(date.getHours()).padStart(2, '0');
+      const y   = date.getFullYear();
+      const m   = String(date.getMonth() + 1).padStart(2, '0');
+      const d   = String(date.getDate()).padStart(2, '0');
+      const h   = String(date.getHours()).padStart(2, '0');
       const min = String(date.getMinutes()).padStart(2, '0');
-      
       studio.campagne.dateFin = `${y}-${m}-${d}T${h}:${min}`;
     }
   }
@@ -1018,10 +1314,10 @@ watch(
 /* ─── STUDIO COMPUTED ─────────────────────────────────────────── */
 const architectureHealth = computed(() => {
   let score = 0;
-  if (studio.questionnaire.titre.length > 5)   score += 25;
-  if (studio.questions.length >= 3)             score += 35;
-  if (selectedCandidatesIds.value.length > 0)   score += 25;
-  if (studio.campagne.dateDebut)                score += 15;
+  if (studio.questionnaire.titre.length > 5) score += 25;
+  if (studio.questions.length >= 3)           score += 35;
+  if (selectedCandidatesIds.value.length > 0) score += 25;
+  if (studio.campagne.dateDebut)              score += 15;
   return score;
 });
 const healthStatusText = computed(() => architectureHealth.value > 80 ? 'STABLE' : architectureHealth.value > 50 ? 'EN COURS' : 'CRITIQUE');
@@ -1030,14 +1326,14 @@ const healthRingStyle  = computed(() => {
   const circ = 2 * Math.PI * 19;
   return { strokeDasharray: `${circ} ${circ}`, strokeDashoffset: circ - (architectureHealth.value / 100) * circ, stroke: healthColor.value };
 });
-const stepperProgress    = computed(() => ((currentStep.value - 1) / (steps.length - 1)) * 100);
-const totalLogicPoints   = computed(() => studio.questions.reduce((a, b) => a + (Number(b.poids) || 0), 0));
-const isReadyToPublish   = computed(() => architectureHealth.value >= 70);
-const coachAIAdvice      = computed(() => {
-  if (!studio.questionnaire.titre)             return 'Commencez par nommer votre instance UML.';
-  if (studio.questions.length < 3)             return 'Ajoutez au moins 3 actifs pour stabiliser la structure.';
+const stepperProgress  = computed(() => ((currentStep.value - 1) / (steps.length - 1)) * 100);
+const totalLogicPoints = computed(() => studio.questions.reduce((a, b) => a + (Number(b.poids || b.points) || 0), 0));
+const isReadyToPublish = computed(() => architectureHealth.value >= 70);
+const coachAIAdvice    = computed(() => {
+  if (!studio.questionnaire.titre)              return 'Commencez par nommer votre instance UML.';
+  if (studio.questions.length < 3)              return 'Ajoutez au moins 3 actifs pour stabiliser la structure.';
   if (selectedCandidatesIds.value.length === 0) return 'Ciblez des profils pour permettre le déploiement.';
-  if (!studio.campagne.dateDebut)              return 'Définissez les dates d\'ouverture du terminal.';
+  if (!studio.campagne.dateDebut)               return 'Définissez les dates d\'ouverture du terminal.';
   return 'Architecture certifiée prête pour le déploiement SQL.';
 });
 const validationState = computed(() => {
@@ -1052,31 +1348,63 @@ const deployChecklist = computed(() => [
   { label: 'Date d\'ouverture',   passed: !!studio.campagne.dateDebut },
 ]);
 
-/* ─── BANK & CANDIDATES ───────────────────────────────────────── */
+/* ─── BANK LOGIC ──────────────────────────────────────────────── */
 const filteredBankReference = computed(() => {
   let list = bankGlobalReference.value;
-  if (searchBankQuery.value) list = list.filter(q => q.texte?.toLowerCase().includes(searchBankQuery.value.toLowerCase()));
-  if (bankDiffFilter.value !== 'Tous') list = list.filter(q => q.difficulty === bankDiffFilter.value);
-  if (bankCatFilter.value !== 'Toutes') list = list.filter(q => q.categorie === bankCatFilter.value);
+  if (searchBankQuery.value)
+    list = list.filter(q =>
+      (q.texte || q.enonce || '').toLowerCase().includes(searchBankQuery.value.toLowerCase())
+    );
+  if (bankDiffFilter.value !== 'Tous')
+    list = list.filter(q => q.difficulty === bankDiffFilter.value);
+  if (bankTypeFilter.value !== -1)
+    list = list.filter(q => q.type === bankTypeFilter.value);
+  if (bankCatFilter.value !== 'Toutes')
+    list = list.filter(q =>
+      q.categorie === bankCatFilter.value ||
+      q.theme     === bankCatFilter.value ||
+      q.sousTheme === bankCatFilter.value
+    );
   return list;
 });
+
 const filteredCandidatePool = computed(() =>
-  candidateMasterPool.value.filter(c => c.name?.toLowerCase().includes(searchCandQuery.value.toLowerCase()))
+  candidateMasterPool.value.filter(c =>
+    c.name?.toLowerCase().includes(searchCandQuery.value.toLowerCase())
+  )
 );
 
-const openDeepBankModal  = () => { modals.bank = true; selectedItemsInBank.value = []; };
-const isCocheeInBank     = (id) => selectedItemsInBank.value.some(q => q.id === id);
-const toggleInBankPool   = (q) => {
-  const idx = selectedItemsInBank.value.findIndex(item => item.id === q.id);
-  idx > -1 ? selectedItemsInBank.value.splice(idx, 1) : selectedItemsInBank.value.push(JSON.parse(JSON.stringify(q)));
+/* ─── BANQUE : Actions ────────────────────────────────────────── */
+const openDeepBankModal = () => {
+  modals.bank = true;
+  selectedItemsInBank.value      = [];
+  bankTypeFilter.value           = -1;
+  bankDiffFilter.value           = 'Tous';
+  bankCatFilter.value            = 'Toutes';
+  searchBankQuery.value          = '';
+  currentInspectedBankItem.value = null;
 };
-const confirmStudioSync  = () => {
-  const added = selectedItemsInBank.value.map(q => ({ 
-    texte: q.texte, 
-    poids: q.poids, 
-    difficulty: q.difficulty, 
-    explication: q.explication,
-    id: `temp-${Math.random()}` 
+
+const isCocheeInBank   = (id) => selectedItemsInBank.value.some(q => q.id === id);
+const toggleInBankPool = (q)  => {
+  const idx = selectedItemsInBank.value.findIndex(item => item.id === q.id);
+  idx > -1
+    ? selectedItemsInBank.value.splice(idx, 1)
+    : selectedItemsInBank.value.push(JSON.parse(JSON.stringify(q)));
+};
+
+const confirmStudioSync = () => {
+  const added = selectedItemsInBank.value.map(q => ({
+    texte:       q.texte || q.enonce,
+    poids:       q.poids || q.points || 10,
+    difficulty:  q.difficulty || 'EXPERT',
+    explication: q.explication || q.bonneReponse || '',
+    type:        q.type ?? 0,
+    theme:       q.theme || q.categorie || '',
+    sousTheme:   q.sousTheme || '',
+    duree:       q.duree || 0,
+    id:          `temp-${Math.random()}`,
+    _showTimer:  false,
   }));
   studio.questions.push(...added);
   modals.bank = false;
@@ -1084,12 +1412,24 @@ const confirmStudioSync  = () => {
   showPulseToast('Actifs synchronisés', 'success', 'fa-solid fa-bolt');
 };
 
+/* ─── TIMER INDIVIDUEL PAR QUESTION ──────────────────────────── */
+const toggleQuestionTimer = (element) => {
+  if (element.duree > 0) {
+    element.duree      = 0;
+    element._showTimer = false;
+  } else {
+    element.duree      = 60;
+    element._showTimer = true;
+  }
+};
+
+/* ─── CANDIDATES ──────────────────────────────────────────────── */
 const toggleCandidateTarget = (c) => {
   const idx = selectedCandidatesIds.value.indexOf(c.id);
   idx > -1 ? selectedCandidatesIds.value.splice(idx, 1) : selectedCandidatesIds.value.push(c.id);
 };
 const isSelectedCandidate = (id) => selectedCandidatesIds.value.includes(id);
-const selectAllCandidates = () => { selectedCandidatesIds.value = filteredCandidatePool.value.map(c => c.id); };
+const selectAllCandidates = ()   => { selectedCandidatesIds.value = filteredCandidatePool.value.map(c => c.id); };
 
 /* ─── STEPPER NAV ─────────────────────────────────────────────── */
 const jumpToStep = (id) => { if (id <= currentStep.value + 1) currentStep.value = id; };
@@ -1100,66 +1440,46 @@ const nextStep   = () => {
 };
 const prevStep = () => { currentStep.value--; window.scrollTo(0, 0); };
 
-/* ─── PUBLISH TRANSACTION (CORRECTED) ─────────────────────────── */
+/* ─── PUBLISH ─────────────────────────────────────────────────── */
 const publishToProduction = async () => {
   if (!isReadyToPublish.value) return;
   isPublishing.value = true;
   try {
-    // 1. Identification des questions (nouvelles vs existantes)
-    const existingQuestionIds = [];
-    const newQuestionsPayloads = [];
-
-    studio.questions.forEach(q => {
-      // Si l'id ressemble à un Guid généré par l'API (pas "custom-xxx")
-      if (typeof q.id === 'string' && q.id.includes('-') && !q.id.startsWith('custom')) {
-        existingQuestionIds.push(q.id);
-      } else {
-        newQuestionsPayloads.push(q);
-      }
-    });
-
-    // 2. Création du Questionnaire avec les métadonnées et la liaison des questions existantes
     const qResp = await api.post(`/Questionnaires`, {
-      Titre: studio.questionnaire.titre,
-      Description: studio.questionnaire.description || "",
-      DureeMinutes: studio.questionnaire.duree || 60,
+      Titre:         studio.questionnaire.titre,
+      Description:   studio.questionnaire.description || "",
+      DureeMinutes:  studio.questionnaire.duree || 60,
       ScoreReussite: studio.questionnaire.scoreReussite || 70,
-      Categorie: studio.questionnaire.categorie || "TECHNIQUE",
-      QuestionIds: existingQuestionIds
+      Theme:         studio.questionnaire.theme || "",
+      SousTheme:     studio.questionnaire.sousTheme || "",
     });
     const qId = qResp.data.id;
 
-    // 3. Création des NOUVELLES questions dans la base et liaison au questionnaire
-    if (newQuestionsPayloads.length > 0) {
-      await Promise.all(
-        newQuestionsPayloads.map(q => {
-          return api.post(`/Questions`, {
-            Enonce: q.texte || "Question sans titre",
-            Points: Number(q.poids) || 1,
-            DureeSecondes: q.duree > 0 ? q.duree : null,
-            Type: 0, 
-            Niveau: 1, 
-            BonneReponse: q.explication || "",
-            QuestionnaireId: qId,
-            Choix: [],
-            Prerequis: []
-          });
-        })
-      );
-    }
+    await Promise.all(
+      studio.questions.map(q => api.post(`/Questions`, {
+        Enonce:          q.texte || q.enonce || "Question sans titre",
+        Points:          Number(q.poids || q.points) || 1,
+        DureeSecondes:   q.duree > 0 ? q.duree : null,
+        Type:            q.type ?? 0,
+        Niveau:          1,
+        BonneReponse:    q.explication || "",
+        QuestionnaireId: qId,
+        Choix:           [],
+        Prerequis:       []
+      }))
+    );
 
-    // 4. Création de la Campagne
     await api.post(`/Campagnes`, {
-      Nom: studio.campagne.nom || `ARCHITECTE : ${studio.questionnaire.titre}`,
-      Description: studio.questionnaire.description || "",
-      QuestionnaireId: qId,
-      DateDebut: new Date(studio.campagne.dateDebut).toISOString(),
-      DateFin: new Date(studio.campagne.dateFin).toISOString(),
-      MaxCandidats: studio.campagne.maxCandidats,
-      ScorePassage: studio.questionnaire.scoreReussite,
-      DureeMinutes: studio.questionnaire.duree,
-      Statut: 1,
-      SelectedCandidatesIds: selectedCandidatesIds.value 
+      Nom:                   studio.campagne.nom || `ARCHITECTE : ${studio.questionnaire.titre}`,
+      Description:           studio.questionnaire.description || "",
+      QuestionnaireId:       qId,
+      DateDebut:             new Date(studio.campagne.dateDebut).toISOString(),
+      DateFin:               new Date(studio.campagne.dateFin).toISOString(),
+      MaxCandidats:          studio.campagne.maxCandidats,
+      ScorePassage:          studio.questionnaire.scoreReussite,
+      DureeMinutes:          studio.questionnaire.duree,
+      Statut:                1,
+      SelectedCandidatesIds: selectedCandidatesIds.value
     });
 
     showPulseToast('DÉPLOIEMENT RÉUSSI', 'success', 'fa-solid fa-server');
@@ -1211,27 +1531,28 @@ const togglePinCampaign = (id) => {
   idx > -1 ? pinnedCampaigns.value.splice(idx, 1) : pinnedCampaigns.value.push(id);
 };
 
-const previewCampaign = (c) => { previewData.value = c; activeView.value = 'preview'; };
-const changeStatus    = (c, s) => { c.statut = s; showPulseToast('Statut mis à jour.', 'success', 'fa-solid fa-check'); };
-const getCampaignProgress = (c) => ({ 0: 10, 1: 60, 2: 100 }[c.statut] ?? 0);
-const getProgressColor    = (p) => p >= 100 ? '#10b981' : p >= 50 ? '#f59e0b' : '#6366f1';
+const previewCampaign     = (c) => { previewData.value = c; activeView.value = 'preview'; };
+const changeStatus        = (c, s) => { c.statut = s; showPulseToast('Statut mis à jour.', 'success', 'fa-solid fa-check'); };
+const getCampaignProgress = (c)    => ({ 0: 10, 1: 60, 2: 100 }[c.statut] ?? 0);
+const getProgressColor    = (p)    => p >= 100 ? '#10b981' : p >= 50 ? '#f59e0b' : '#6366f1';
 
 const previewTimeline = computed(() => [
-  { id: 1, title: 'Campagne créée', desc: 'Architecte initialisé.', color: '#6366f1', time: formatDate(previewData.value?.dateDebut) },
-  { id: 2, title: 'Candidats notifiés', desc: 'Invitations envoyées.', color: '#f59e0b', time: 'J+1' },
-  { id: 3, title: 'Session ouverte', desc: 'Accès activé.', color: '#10b981', time: formatDate(previewData.value?.dateDebut) },
+  { id: 1, title: 'Campagne créée',     desc: 'Architecte initialisé.',  color: '#6366f1', time: formatDate(previewData.value?.dateDebut) },
+  { id: 2, title: 'Candidats notifiés', desc: 'Invitations envoyées.',   color: '#f59e0b', time: 'J+1' },
+  { id: 3, title: 'Session ouverte',    desc: 'Accès activé.',           color: '#10b981', time: formatDate(previewData.value?.dateDebut) },
 ]);
 
-/* ─── MODAL ACTIONS ───────────────────────────────────────────── */
+/* ─── MODAL QUESTIONS ─────────────────────────────────────────── */
 const editQuestion = (q, idx) => {
   editingQuestion.value = q;
   editingIndex.value    = idx;
-  Object.assign(newQuestion, { 
-    texte: q.texte, 
-    poids: q.poids, 
-    difficulty: q.difficulty || 'MEDIUM', 
+  Object.assign(newQuestion, {
+    texte:       q.texte || q.enonce,
+    poids:       q.poids || q.points || 10,
+    difficulty:  q.difficulty || 'MEDIUM',
     explication: q.explication || '',
-    duree: q.duree || 0
+    duree:       q.duree || 0,
+    type:        q.type ?? 0,
   });
   modals.quickAdd = true;
 };
@@ -1241,15 +1562,16 @@ const saveQuestion = () => {
   if (editingQuestion.value !== null) {
     Object.assign(studio.questions[editingIndex.value], { ...newQuestion });
   } else {
-    studio.questions.push({ ...newQuestion, id: `custom-${Date.now()}` });
+    studio.questions.push({ ...newQuestion, id: `custom-${Date.now()}`, _showTimer: false });
   }
   showPulseToast('Question enregistrée.', 'success', 'fa-solid fa-check');
   closeQuickAdd();
 };
 
 const closeQuickAdd = () => {
-  modals.quickAdd = false; editingQuestion.value = null;
-  Object.assign(newQuestion, { texte: '', poids: 10, difficulty: 'MEDIUM', explication: '', duree: 0 });
+  modals.quickAdd = false;
+  editingQuestion.value = null;
+  Object.assign(newQuestion, { texte: '', poids: 10, difficulty: 'MEDIUM', explication: '', duree: 0, type: 0 });
 };
 
 const toggleSelectQuestion  = (id) => {
@@ -1264,7 +1586,7 @@ const removeSelectedQuestions = () => {
   selectedQuestions.value = [];
 };
 
-const addTag = () => {
+const addTag    = () => {
   const t = tagInput.value.trim().replace(',', '');
   if (t && !studio.questionnaire.tags.includes(t)) studio.questionnaire.tags.push(t);
   tagInput.value = '';
@@ -1285,9 +1607,21 @@ const runConfirmDialog = () => {
 };
 
 /* ─── HELPERS ─────────────────────────────────────────────────── */
-const getQuestionnaireName = (id)  => questionnairesList.value.find(q => q.id === id)?.titre || 'UML Inconnu';
-const getStatusLabel       = (s)   => (['Planifié', 'Active', 'Terminée'][s] ?? 'Brouillon');
-const formatDate           = (d)   => d ? new Date(d).toLocaleDateString('fr-FR') : '∞';
+
+/**
+ * ✅ FIX PRINCIPAL : Recherche par id en comparaison stricte ET souple (string vs number)
+ * Fallback sur le nom de la campagne si aucun questionnaire trouvé, puis 'Non défini'
+ */
+const getQuestionnaireName = (id) => {
+  if (id === null || id === undefined || id === '') return 'Non défini';
+  const found =
+    questionnairesList.value.find(q => q.id === id) ||
+    questionnairesList.value.find(q => String(q.id) === String(id));
+  return found?.titre || 'Non défini';
+};
+
+const getStatusLabel = (s)  => (['Planifié', 'Active', 'Terminée'][s] ?? 'Brouillon');
+const formatDate     = (d)  => d ? new Date(d).toLocaleDateString('fr-FR') : '∞';
 
 let _toastTimer = null;
 const showPulseToast = (msg, type = 'success', icon = 'fa-solid fa-check') => {
@@ -1296,7 +1630,7 @@ const showPulseToast = (msg, type = 'success', icon = 'fa-solid fa-check') => {
   _toastTimer = setTimeout(() => { globalToast.active = false; }, 4000);
 };
 
-const orbStyle      = (f)  => ({ transform: `translate(${mousePos.x * f * 10}px, ${mousePos.y * f * 10}px)` });
+const orbStyle       = (f) => ({ transform: `translate(${mousePos.x * f * 10}px, ${mousePos.y * f * 10}px)` });
 const handleParallax = (e) => { mousePos.x = (e.clientX - window.innerWidth / 2) / 20; mousePos.y = (e.clientY - window.innerHeight / 2) / 20; };
 const handleScroll   = (e) => { isScrolled.value = e.target.scrollTop > 50; };
 
@@ -1307,16 +1641,23 @@ const handleKeyboard = (e) => {
 };
 
 const generateMocks = () => {
-  campaigns.value = [{ id: '1', nom: 'Frontend Senior Audit', questionnaireId: '10', statut: 1, maxCandidats: 25, dateDebut: new Date().toISOString() }];
-  questionnairesList.value = [{ id: '10', titre: 'Vue.js Architecture Test' }];
+  campaigns.value           = [{ id: '1', nom: 'Frontend Senior Audit', questionnaireId: '10', statut: 1, maxCandidats: 25, dateDebut: new Date().toISOString() }];
+  questionnairesList.value  = [{ id: '10', titre: 'Vue.js Architecture Test' }];
   candidateMasterPool.value = [{ id: '1', name: 'Alice Durand', email: 'alice@tech.io' }];
-  bankGlobalReference.value = [{ id: '101', texte: "Expliquez l'Event Loop Node.js", poids: 15, difficulty: 'EXPERT' }];
+  bankGlobalReference.value = [
+    { id: '101', texte: "Expliquez l'Event Loop Node.js",   poids: 15, points: 4, difficulty: 'EXPERT', type: 4, theme: 'Backend Specialist', sousTheme: 'Node.js' },
+    { id: '102', texte: "Différence entre var, let, const", poids: 10, points: 2, difficulty: 'MEDIUM', type: 0, theme: 'Frontend Architect',  sousTheme: 'Vue.js'  },
+    { id: '103', texte: "Qu'est-ce que le SOLID ?",          poids: 12, points: 3, difficulty: 'MEDIUM', type: 1, theme: 'Backend Specialist', sousTheme: 'API REST' },
+  ];
+  categoriesList.value = [];
 };
 
+/* ─── LIFECYCLE ───────────────────────────────────────────────── */
 onMounted(() => {
   fetchInitialData();
   document.addEventListener('keydown', handleKeyboard);
 });
+
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeyboard);
 });
@@ -1353,14 +1694,14 @@ onUnmounted(() => {
 .stat-trend { display: flex; flex-direction: column; align-items: center; font-size: 0.65rem; font-weight: 800; gap: 2px; }
 .trend-up { color: #10b981; } .trend-down { color: #f43f5e; }
 
-/* VIEW TOGGLE */
-.view-toggle-cluster { display: flex; background: white; border: 1px solid #eef2f6; border-radius: 14px; padding: 4px; gap: 2px; }
-.btn-view-toggle { width: 36px; height: 36px; border-radius: 10px; border: none; background: transparent; color: #94a3b8; transition: 0.2s; font-size: 0.85rem; cursor: pointer; }
-.btn-view-toggle.active { background: #0f172a; color: white; }
-.btn-refresh-pro { width: 44px; height: 44px; border-radius: 14px; border: 1.5px solid #eef2f6; background: white; cursor: pointer; color: #64748b; transition: 0.2s; }
-.btn-refresh-pro:hover { background: #f8fafc; }
+.view-toggle-cluster { display: flex; background: white; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 4px; gap: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+.btn-view-toggle { width: 38px; height: 38px; border-radius: 12px; border: none; background: transparent; color: #94a3b8; transition: 0.3s; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.btn-view-toggle:hover { background: #f8fafc; color: #0f172a; }
+.btn-view-toggle.active { background: #0f172a; color: #f59e0b; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2); }
+.btn-refresh-pro { width: 44px; height: 44px; background: white; border: 1.5px solid #e2e8f0; border-radius: 14px; color: #64748b; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; }
+.btn-refresh-pro:hover:not(:disabled) { background: #f8fafc; border-color: #f59e0b; color: #f59e0b; transform: rotate(180deg) scale(1.1); }
+.shadow-premium { box-shadow: 0 20px 60px rgba(0,0,0,0.12) !important; }
 
-/* CAMPAIGN CARDS */
 .campaign-card-modern { background: white; border-radius: 30px; padding: 28px; border: 1px solid #eef2f6; transition: 0.3s cubic-bezier(0.4,0,0.2,1); cursor: pointer; height: 100%; }
 .campaign-card-modern:hover { transform: translateY(-10px); border-color: #f59e0b; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.08); }
 .campaign-title-modern { font-size: 1rem; color: #0f172a; margin-bottom: 0; }
@@ -1371,7 +1712,6 @@ onUnmounted(() => {
 .progress-slim { height: 4px; background: #f1f5f9; border-radius: 10px; overflow: hidden; }
 .progress-fill { height: 100%; border-radius: 10px; transition: width 0.6s ease; }
 .btn-options-round { width: 32px; height: 32px; border-radius: 10px; border: 1.5px solid #eef2f6; background: white; cursor: pointer; font-size: 0.8rem; color: #94a3b8; }
-.shadow-premium { box-shadow: 0 20px 60px rgba(0,0,0,0.12) !important; }
 
 /* ANALYTICS */
 .analytics-card-pro { background: white; border-radius: 24px; border: 1px solid #eef2f6; }
@@ -1390,26 +1730,21 @@ onUnmounted(() => {
 .donut-center-text { font-size: 22px; font-weight: 900; fill: #0f172a; }
 .donut-sub-text { font-size: 8px; fill: #94a3b8; font-weight: 700; }
 
-/* TABS */
 .nav-tab-btn-modern { padding: 8px 18px; border-radius: 12px; border: none; background: transparent; font-weight: 800; font-size: 0.8rem; color: #94a3b8; cursor: pointer; transition: 0.2s; }
 .nav-tab-btn-modern.active { background: #0f172a; color: white; }
 .tab-count { background: rgba(255,255,255,0.2); padding: 2px 7px; border-radius: 8px; font-size: 0.65rem; margin-left: 6px; }
 .nav-tab-btn-modern:not(.active) .tab-count { background: #f1f5f9; color: #64748b; }
 
-/* SEARCH + SORT */
 .search-inline-box { display: flex; align-items: center; background: white; border: 1.5px solid #eef2f6; border-radius: 14px; padding: 0 14px; gap: 10px; color: #94a3b8; }
 .search-inline-input { border: none; outline: none; background: transparent; padding: 10px 0; font-weight: 700; font-size: 0.85rem; width: 180px; font-family: inherit; }
 .btn-clear-search { border: none; background: transparent; color: #94a3b8; padding: 0; cursor: pointer; }
 .sort-select-pro { border: 1.5px solid #eef2f6; border-radius: 14px; padding: 10px 14px; font-weight: 700; font-size: 0.8rem; background: white; outline: none; cursor: pointer; font-family: inherit; }
 
-/* LIST VIEW */
 .list-header-row { background: #f8fafc; border-radius: 14px; }
 .list-col-label { font-size: 0.6rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
 .list-row-item { background: white; border-radius: 16px; border: 1px solid #eef2f6; transition: 0.2s; }
 .list-row-item:hover { border-color: #f59e0b; }
 .slot-badge { background: #fffbeb; color: #f59e0b; font-weight: 800; font-size: 0.75rem; padding: 3px 10px; border-radius: 8px; }
-
-/* EMPTY STATE */
 .empty-state-pro { background: white; border-radius: 30px; padding: 40px; border: 1px dashed #e2e8f0; }
 
 /* PREVIEW */
@@ -1433,71 +1768,11 @@ onUnmounted(() => {
 .brand-subtitle-v2 { font-size: 0.6rem; font-weight: 800; color: #94a3b8; letter-spacing: 1px; margin: 0; }
 .btn-back-to-dash { width: 44px; height: 44px; border-radius: 14px; border: 1.5px solid #e2e8f0; background: white; cursor: pointer; color: #64748b; transition: 0.2s; }
 .btn-back-to-dash:hover { background: #0f172a; color: white; border-color: #0f172a; }
-
-/* HEADER ACTIONS PRO */
-.btn-refresh-pro {
-  width: 44px;
-  height: 44px;
-  background: white;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 14px;
-  color: #64748b;
-  cursor: pointer;
-  transition: 0.3s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-}
-.btn-refresh-pro:hover:not(:disabled) {
-  background: #f8fafc;
-  border-color: #f59e0b;
-  color: #f59e0b;
-  transform: rotate(180deg) scale(1.1);
-  box-shadow: 0 8px 15px rgba(245, 158, 11, 0.1);
-}
-
-.view-toggle-cluster {
-  display: flex;
-  background: white;
-  padding: 4px;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 16px;
-  gap: 4px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-}
-
-.btn-view-toggle {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  border: none;
-  background: transparent;
-  color: #94a3b8;
-  cursor: pointer;
-  transition: 0.3s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-view-toggle:hover {
-  background: #f8fafc;
-  color: #0f172a;
-}
-
-.btn-view-toggle.active {
-  background: #0f172a;
-  color: #f59e0b;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
-}
 .ai-robot-terminal { width: 50px; height: 50px; background: #0f172a; border-radius: 15px; display: flex; align-items: center; justify-content: center; }
 
-/* AUTOSAVE */
 .autosave-indicator { display: flex; align-items: center; gap: 8px; font-size: 0.7rem; font-weight: 700; color: #94a3b8; background: #f8fafc; padding: 8px 14px; border-radius: 12px; border: 1px solid #eef2f6; }
 .autosave-indicator.saved { color: #10b981; } .autosave-indicator.saving { color: #f59e0b; }
 
-/* HEALTH WIDGET */
 .health-core-widget { display: flex; align-items: center; gap: 12px; background: #f8fafc; padding: 10px 16px; border-radius: 16px; border: 1px solid #eef2f6; }
 .health-ring-box { position: relative; display: flex; align-items: center; justify-content: center; }
 .health-ring-box svg { overflow: visible; }
@@ -1525,6 +1800,7 @@ onUnmounted(() => {
 .enigma-card { background: white; border-radius: 32px; border: 1px solid #eef2f6; }
 .enigma-field { width: 100%; padding: 15px 20px; background: #f8fafc; border: 2px solid #f59e0b; border-radius: 16px; font-weight: 700; outline: none; font-family: inherit; transition: border-color 0.2s; font-size: 0.9rem; color: #0f172a; }
 .enigma-field:focus { border-color: #f59e0b; background: white; }
+.enigma-field:disabled { opacity: 0.4; cursor: not-allowed; border-color: #e2e8f0; }
 .enigma-field.field-error { border-color: #f43f5e !important; }
 .field-error-msg { font-size: 0.7rem; color: #f43f5e; font-weight: 700; margin-top: 4px; display: block; }
 .enigma-input-wrap label { font-size: 0.6rem; font-weight: 900; color: #94a3b8; letter-spacing: 1px; margin-bottom: 8px; display: block; }
@@ -1536,6 +1812,16 @@ onUnmounted(() => {
 .icon-box-v2 { width: 52px; height: 52px; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
 .icon-box-v2.amber { background: #fffbeb; color: #f59e0b; }
 
+/* THÈME + SOUS-THÈME */
+.theme-select-wrapper { position: relative; }
+.theme-select-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #f59e0b; font-size: 0.75rem; z-index: 2; pointer-events: none; }
+.theme-select { padding-left: 40px !important; appearance: none; -webkit-appearance: none; cursor: pointer; }
+.disabled-wrapper .theme-select-icon { color: #cbd5e1; }
+.theme-breadcrumb-display { display: inline-flex; align-items: center; background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 12px; padding: 8px 16px; font-size: 0.75rem; font-weight: 700; }
+.theme-bc-item { color: #92400e; }
+.theme-bc-item.active { color: #f59e0b; font-weight: 900; }
+.opacity-40 { opacity: 0.4; }
+
 /* TAGS */
 .tags-input-container { cursor: text; }
 .tag-chip { background: #fffbeb; color: #f59e0b; font-size: 0.7rem; font-weight: 800; padding: 4px 10px; border-radius: 8px; display: flex; align-items: center; gap: 6px; }
@@ -1545,13 +1831,19 @@ onUnmounted(() => {
 /* PROTOCOL ROWS */
 .protocol-row { display: flex; align-items: center; gap: 20px; }
 .p-icon { width: 44px; height: 44px; background: #f8fafc; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #f59e0b; flex-shrink: 0; }
+.p-icon-blue { background: #eff6ff; color: #3b82f6; }
 .p-data { flex: 1; } .p-data h6 { font-weight: 800; margin: 0; font-size: 0.9rem; } .p-data p { font-size: 0.75rem; color: #94a3b8; margin: 0; }
 .enigma-switch .form-check-input { width: 44px; height: 24px; cursor: pointer; }
 .enigma-switch .form-check-input:checked { background-color: #f59e0b; border-color: #f59e0b; }
 
-/* ASSET CARDS (Step 2) */
+/* Timer per question summary */
+.timer-per-q-summary { display: flex; flex-direction: column; align-items: center; background: #eff6ff; border-radius: 14px; padding: 10px 18px; min-width: 70px; }
+.tpq-count { font-size: 1.4rem; font-weight: 900; color: #3b82f6; line-height: 1; }
+.tpq-label { font-size: 0.55rem; font-weight: 800; color: #93c5fd; text-align: center; letter-spacing: 0.5px; margin-top: 3px; }
+
+/* ASSET CARDS + TIMER INDIVIDUEL */
 .assets-scroll-v8 { max-height: 500px; overflow-y: auto; padding-right: 4px; }
-.asset-card-v8 { background: white; border: 1.5px solid #eef2f6; border-radius: 20px; padding: 15px 20px; display: flex; align-items: center; gap: 15px; margin-bottom: 12px; transition: 0.2s; }
+.asset-card-v8 { background: white; border: 1.5px solid #eef2f6; border-radius: 20px; padding: 15px 20px; display: flex; align-items: center; gap: 12px; margin-bottom: 12px; transition: 0.2s; }
 .asset-card-v8:hover { border-color: #f59e0b; transform: translateX(4px); }
 .asset-card-v8.selected { border-color: #6366f1; background: #f5f3ff; }
 .asset-checkbox { width: 16px; height: 16px; accent-color: #6366f1; flex-shrink: 0; cursor: pointer; }
@@ -1560,14 +1852,34 @@ onUnmounted(() => {
 .asset-index-v8 { font-size: 0.6rem; font-weight: 900; background: #fffbeb; color: #f59e0b; padding: 4px 8px; border-radius: 8px; flex-shrink: 0; }
 .asset-title-v8 { font-size: 0.88rem; font-weight: 700; margin: 0; }
 .asset-ghost-v8 { opacity: 0.4; background: #fffbeb; }
-.btn-remove-v8 { width: 28px; height: 28px; border-radius: 8px; border: none; background: #f1f5f9; color: #94a3b8; cursor: pointer; flex-shrink: 0; font-size: 0.75rem; transition: 0.2s; }
+.asset-core-v8 { min-width: 0; }
+.btn-remove-v8 { width: 28px; height: 28px; border-radius: 8px; border: none; background: #f1f5f9; color: #94a3b8; cursor: pointer; flex-shrink: 0; font-size: 0.75rem; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
 .btn-remove-v8:hover { background: #fee2e2; color: #f43f5e; }
 .t-pill { font-size: 0.6rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; }
-.t-pill.weight { background: #fffbeb; color: #f59e0b; }
+.t-pill.weight  { background: #fffbeb; color: #f59e0b; }
+.t-pill.time    { background: #eff6ff; color: #3b82f6; }
+.t-pill.type-pill { background: #f0f9ff; color: #0284c7; }
+.t-pill.cat-pill  { background: #f0fdf4; color: #16a34a; }
 .diff-expert { background: #fff1f2; color: #f43f5e; } .diff-medium { background: #fffbeb; color: #f59e0b; } .diff-easy { background: #ecfdf5; color: #10b981; }
 .bulk-actions-bar { background: #f8fafc; border-radius: 14px; padding: 10px 16px; display: flex; align-items: center; gap: 10px; }
 .btn-bank-action-v2 { background: #0f172a; color: white; border: none; padding: 10px 20px; border-radius: 14px; font-weight: 800; font-size: 0.78rem; cursor: pointer; }
 .empty-questions-hint { background: #f8fafc; border-radius: 16px; }
+
+/* Timer individuel inline */
+.question-timer-inline { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.timer-toggle-btn { width: 32px; height: 32px; border-radius: 10px; border: 1.5px solid #e2e8f0; background: white; color: #cbd5e1; cursor: pointer; font-size: 0.8rem; transition: 0.2s; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.timer-toggle-btn:hover { border-color: #3b82f6; color: #3b82f6; background: #eff6ff; }
+.timer-toggle-btn.timer-active { background: #eff6ff; border-color: #3b82f6; color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+.timer-input-group { display: flex; align-items: center; background: #eff6ff; border: 1.5px solid #3b82f6; border-radius: 10px; padding: 0 8px; gap: 4px; overflow: hidden; }
+.timer-input-field { border: none; outline: none; background: transparent; font-weight: 800; font-size: 0.8rem; color: #1d4ed8; font-family: inherit; width: 48px; padding: 6px 0; text-align: center; }
+.timer-unit { font-size: 0.65rem; font-weight: 900; color: #93c5fd; }
+.timer-expand-enter-active { animation: timerIn 0.2s ease-out; }
+.timer-expand-leave-active  { animation: timerIn 0.15s ease-in reverse; }
+@keyframes timerIn { from { opacity: 0; transform: scaleX(0.6); } to { opacity: 1; transform: scaleX(1); } }
+
+/* Timer dans modal quick-add */
+.timer-modal-row { position: relative; }
+.timer-modal-preview { display: block; margin-top: 6px; font-size: 0.7rem; font-weight: 800; color: #3b82f6; background: #eff6ff; padding: 4px 10px; border-radius: 8px; width: fit-content; }
 
 /* CANDIDATES */
 .talent-hub-search-v2 { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
@@ -1587,7 +1899,7 @@ onUnmounted(() => {
 .avatar-v8 { width: 44px; height: 44px; border-radius: 14px; background: linear-gradient(135deg, #f59e0b, #fbbf24); color: #0f172a; font-weight: 900; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .data-v8 b { font-size: 0.9rem; } .data-v8 p { font-size: 0.72rem; }
 
-/* ANALYTICS HUD */
+/* HUD SIDEBAR */
 .analytics-hub-glass { background: #0f172a; color: white; border-radius: 40px; padding: 40px; }
 .hub-label { font-size: 0.55rem; font-weight: 900; opacity: 0.4; letter-spacing: 2px; text-transform: uppercase; }
 .hub-title-v2 { font-size: 1.1rem; font-weight: 900; margin-top: 8px; margin-bottom: 4px; word-break: break-word; }
@@ -1637,32 +1949,50 @@ onUnmounted(() => {
 
 /* VAULT MODAL */
 .quantum-vault-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(10px); z-index: 2000; display: flex; align-items: center; justify-content: center; }
-.quantum-vault-window { width: 90vw; height: 85vh; background: white; border-radius: 40px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,0.2); }
-.qv-header { padding: 28px 40px; border-bottom: 1px solid #eef2f6; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+.quantum-vault-window { width: 92vw; height: 88vh; background: white; border-radius: 40px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,0.2); }
+.qv-header { padding: 24px 36px; border-bottom: 1px solid #eef2f6; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
 .qv-filter-tabs { background: #f8fafc; flex-shrink: 0; }
-.qv-filter-btn { padding: 6px 14px; border-radius: 10px; border: 1.5px solid transparent; background: transparent; font-size: 0.7rem; font-weight: 800; cursor: pointer; font-family: inherit; }
-.qv-filter-btn.active { background: #0f172a; color: white; }
+.qv-filter-section-label { font-size: 0.55rem; font-weight: 900; color: #94a3b8; letter-spacing: 1.5px; text-transform: uppercase; white-space: nowrap; }
+.qv-filter-btn { padding: 5px 12px; border-radius: 10px; border: 1.5px solid transparent; background: white; font-size: 0.68rem; font-weight: 800; cursor: pointer; font-family: inherit; transition: 0.2s; color: #64748b; border-color: #eef2f6; }
+.qv-filter-btn:hover { border-color: #f59e0b; color: #f59e0b; }
+.qv-filter-btn.active { background: #0f172a; color: white; border-color: #0f172a; }
+.qv-filter-btn-type.active { background: #fffbeb; color: #f59e0b; border-color: #f59e0b; }
 .qv-layout { display: flex; flex-grow: 1; overflow: hidden; }
-.qv-sidebar { width: 240px; padding: 24px; border-right: 1px solid #eef2f6; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
-.qv-cat-btn { padding: 6px 12px; border-radius: 10px; border: none; background: transparent; font-size: 0.75rem; font-weight: 700; cursor: pointer; text-align: left; color: #64748b; font-family: inherit; transition: 0.2s; }
+.qv-sidebar { width: 220px; padding: 20px 16px; border-right: 1px solid #eef2f6; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; background: #fafbfc; }
+.qv-cat-btn { padding: 7px 12px; border-radius: 10px; border: none; background: transparent; font-size: 0.72rem; font-weight: 700; cursor: pointer; text-align: left; color: #64748b; font-family: inherit; transition: 0.2s; width: 100%; }
+.qv-cat-btn:hover { background: #f1f5f9; color: #0f172a; }
 .qv-cat-btn.active { background: #fffbeb; color: #f59e0b; font-weight: 800; }
+.qv-cat-sub-btn { font-size: 0.68rem; padding: 5px 10px; opacity: 0.85; }
+.qv-cat-sub-btn.active { background: #fffbeb; color: #f59e0b; font-weight: 800; opacity: 1; }
 .qv-bank-stats { margin-top: auto; }
-.qv-list { flex-grow: 1; padding: 24px; background: #f8fafc; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; align-content: start; }
-.qv-item-card { background: white; padding: 18px; border-radius: 18px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
-.qv-item-card:hover { border-color: #e2e8f0; }
+.qv-list { flex-grow: 1; padding: 20px; background: #f8fafc; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; align-content: start; }
+.qv-item-card { background: white; padding: 16px; border-radius: 18px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
+.qv-item-card:hover { border-color: #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
 .qv-item-card.active { border-color: #f59e0b; }
 .qv-item-card.checked { background: #f0fdf4; border-color: #10b981; }
-.qv-item-top { display: flex; justify-content: space-between; align-items: center; }
+.qv-item-top { display: flex; justify-content: space-between; align-items: flex-start; }
 .qv-badge { font-size: 0.6rem; font-weight: 900; padding: 3px 10px; border-radius: 8px; text-transform: uppercase; }
-.qv-badge.expert { background: #fff1f2; color: #f43f5e; } .qv-badge.medium { background: #fffbeb; color: #f59e0b; } .qv-badge.easy { background: #ecfdf5; color: #10b981; }
+.qv-badge.expert { background: #fff1f2; color: #f43f5e; }
+.qv-badge.medium { background: #fffbeb; color: #f59e0b; }
+.qv-badge.easy   { background: #ecfdf5; color: #10b981; }
+.qv-type-badge { font-size: 0.7rem; color: #94a3b8; background: #f8fafc; width: 24px; height: 24px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
 .qv-checkbox { color: #94a3b8; cursor: pointer; transition: color 0.2s; font-size: 1.1rem; }
 .qv-item-card.checked .qv-checkbox { color: #10b981; }
 .qv-item-text { font-size: 0.82rem; font-weight: 700; color: #0f172a; line-height: 1.4; }
+.qv-item-cat { font-size: 0.62rem; color: #94a3b8; font-weight: 700; }
 .qv-item-footer { font-size: 0.75rem; color: #94a3b8; }
-.qv-inspector { width: 280px; border-left: 1px solid #eef2f6; overflow-y: auto; display: flex; flex-direction: column; flex-shrink: 0; }
-.device-mockup-v8 { background: #f8fafc; border-radius: 20px; }
+.qv-inspector { width: 290px; border-left: 1px solid #eef2f6; overflow-y: auto; display: flex; flex-direction: column; flex-shrink: 0; background: white; }
+.device-mockup-v8 { background: #f8fafc; border-radius: 20px; flex-grow: 1; }
+.inspector-type-badge { font-size: 0.68rem; font-weight: 800; background: #eff6ff; color: #3b82f6; padding: 3px 10px; border-radius: 8px; }
+.inspector-cat-badge { font-size: 0.68rem; font-weight: 800; background: #f0fdf4; color: #16a34a; padding: 3px 10px; border-radius: 8px; }
+.inspector-stats-row { display: flex; gap: 12px; }
+.inspector-stat-box { flex: 1; background: #f8fafc; border-radius: 14px; padding: 14px; text-align: center; }
+.inspector-stat-box .v { font-size: 1.4rem; font-weight: 900; display: block; color: #0f172a; line-height: 1; }
+.inspector-stat-box .l { font-size: 0.55rem; font-weight: 900; color: #94a3b8; letter-spacing: 1px; margin-top: 4px; display: block; }
+
+/* MODALES */
 .btn-qv-cancel  { background: #f1f5f9; color: #64748b; border: none; padding: 12px 24px; border-radius: 14px; font-weight: 800; cursor: pointer; font-family: inherit; }
-.btn-qv-confirm { background: #0f172a; color: white; border: none; padding: 12px 24px; border-radius: 14px; font-weight: 800; cursor: pointer; font-family: inherit; }
+.btn-qv-confirm { background: #0f172a; color: white; border: none; padding: 12px 24px; border-radius: 14px; font-weight: 800; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 6px; }
 .btn-qv-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
 .quick-add-modal { background: white; border-radius: 32px; padding: 40px; width: 550px; max-width: 95vw; box-shadow: 0 40px 80px rgba(0,0,0,0.15); }
 .shortcuts-modal { background: white; border-radius: 32px; padding: 40px; width: 480px; max-width: 95vw; box-shadow: 0 40px 80px rgba(0,0,0,0.15); }
@@ -1687,9 +2017,6 @@ kbd { background: #0f172a; color: white; padding: 4px 10px; border-radius: 8px; 
 /* SPINNER */
 .spinner-pro-premium { width: 50px; height: 50px; border: 4px solid #f1f5f9; border-top: 4px solid #f59e0b; border-radius: 50%; animation: spin 1s linear infinite; margin: 40px auto; }
 @keyframes spin { to { transform: rotate(360deg); } }
-
-/* SCROLLBAR */
-
 
 /* MISC */
 .text-amber   { color: #f59e0b !important; }

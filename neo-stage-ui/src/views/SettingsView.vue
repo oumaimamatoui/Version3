@@ -101,7 +101,7 @@
                 </div>
 
                 <!-- SECTION : BRANDING (ADMIN) -->
-                <div v-if="activeTab === 'branding' && role === 'AdminEntreprise'" class="settings-section">
+                <div v-if="activeTab === 'branding' && role.toLowerCase() === 'adminentreprise'" class="settings-section">
                   <h5 class="label-heading mb-4 text-dark">Identité Visuelle Entreprise</h5>
                   <div class="mb-4">
                     <label class="cyber-label">Raison sociale (Entreprise)</label>
@@ -171,7 +171,7 @@ const authStore = useAuthStore();
 // États
 const loading = ref(true);
 const saving = ref(false);
-const role = ref(localStorage.getItem('role') || 'AdminEntreprise');
+const role = ref('');
 const activeTab = ref('profile');
 
 // État du sélecteur de fichier
@@ -197,10 +197,21 @@ const allTabs = [
   { id: 'integrations', label: 'Intégrations', icon: 'fa-solid fa-plug', roles: ['AdminEntreprise', 'SuperAdmin'] },
 ];
 
-const filteredTabs = computed(() => allTabs.filter(tab => tab.roles.includes(role.value)));
+const filteredTabs = computed(() => {
+  const currentRole = (role.value || '').toLowerCase();
+  return allTabs.filter(tab => 
+    tab.roles.some(r => r.toLowerCase() === currentRole)
+  );
+});
+
 const roleDisplay = computed(() => {
-  const map = { 'SuperAdmin': 'Master', 'AdminEntreprise': 'Organisation', 'Evaluateur': 'Évaluateur', 'Candidat': 'Candidat' };
-  return map[role.value] || 'User';
+  const map = { 
+    'superadmin': 'Master', 
+    'adminentreprise': 'Organisation', 
+    'evaluateur': 'Évaluateur', 
+    'candidat': 'Candidat' 
+  };
+  return map[(role.value || '').toLowerCase()] || 'User';
 });
 
 // --- ACTIONS BACKEND ---
@@ -208,12 +219,10 @@ const roleDisplay = computed(() => {
 const fetchInitialData = async () => {
   loading.value = true;
   try {
-    // 1. Charger le profil
     const resUser = await api.get('/Settings/me');
     userForm.value = resUser.data;
 
-    // 2. Charger le branding si Admin
-    if (role.value === 'AdminEntreprise') {
+    if (role.value.toLowerCase() === 'adminentreprise') {
       const resBrand = await api.get('/Settings/branding');
       brandForm.value = resBrand.data;
     }
@@ -233,8 +242,7 @@ const saveChanges = async () => {
     if (activeTab.value === 'profile') {
       endpoint = `/Settings/update-profile`;
       payload = userForm.value;
-    } 
-    else if (activeTab.value === 'security') {
+    } else if (activeTab.value === 'security') {
       if (securityForm.value.newPassword !== securityForm.value.confirmPassword) {
         alert("Les mots de passe ne correspondent pas.");
         saving.value = false;
@@ -242,8 +250,7 @@ const saveChanges = async () => {
       }
       endpoint = `/Settings/change-password`;
       payload = securityForm.value;
-    } 
-    else if (activeTab.value === 'branding') {
+    } else if (activeTab.value === 'branding') {
       endpoint = `/Settings/update-branding`;
       payload = brandForm.value;
     }
@@ -285,8 +292,6 @@ const handlePhotoChange = async (e) => {
     });
     
     userForm.value.photoUrl = res.data.photoUrl;
-    
-    // Synchro avec authStore (si on stocke la photo là aussi)
     authStore.user.photoUrl = res.data.photoUrl;
     localStorage.setItem('user', JSON.stringify(authStore.user));
     
@@ -300,17 +305,21 @@ const handlePhotoChange = async (e) => {
 };
 
 const connectGmail = async () => {
-    try {
-        const res = await api.get('/GoogleAuth/auth-url');
-        // Redirection vers Google
-        window.location.href = res.data.url;
-    } catch (err) {
-        console.error("Erreur Auth URL:", err);
-        alert("Impossible de joindre le service d'authentification Google.");
-    }
+  try {
+    const res = await api.get('/GoogleAuth/auth-url');
+    window.location.href = res.data.url;
+  } catch (err) {
+    console.error("Erreur Auth URL:", err);
+    alert("Impossible de joindre le service d'authentification Google.");
+  }
 };
 
-onMounted(fetchInitialData);
+onMounted(() => {
+  // S'assurer que le rôle est bien chargé depuis le store ou localStorage
+  role.value = authStore.role || localStorage.getItem('role') || 'Candidat';
+  console.log("DEBUG - Current Role:", role.value);
+  fetchInitialData();
+});
 </script>
 
 <style scoped>
@@ -369,7 +378,8 @@ onMounted(fetchInitialData);
 .cyber-input:focus { border-color: #eab308; background: white; }
 
 /* --- AVATAR --- */
-.avatar-vessel { position: relative; width: 90px; height: 90px; }
+.profile-neural-upload { display: flex; align-items: center; }
+.avatar-vessel { position: relative; width: 90px; height: 90px; cursor: pointer; }
 .avatar-vessel img { width: 100%; height: 100%; border-radius: 22px; object-fit: cover; }
 .btn-edit-neural {
   position: absolute; bottom: -5px; right: -5px; width: 30px; height: 30px;
@@ -391,4 +401,5 @@ onMounted(fetchInitialData);
 .pulse-dot { width: 6px; height: 6px; background: #eab308; border-radius: 50%; animation: blink 1s infinite; }
 @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 .btn-link-tech { background: none; border: none; color: #94a3b8; font-weight: 700; font-size: 11px; cursor: pointer; }
+.label-heading { font-weight: 800; font-size: 16px; letter-spacing: -0.5px; }
 </style>

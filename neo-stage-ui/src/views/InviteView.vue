@@ -1,13 +1,9 @@
 <template>
   <div class="d-flex admin-layout">
     <AppSidebar />
-    
     <div class="main-content flex-grow-1">
       <AppNavbar />
-
       <main class="p-4 p-lg-5 animate-in">
-        
-        <!-- HEADER SECTION -->
         <header class="d-flex justify-content-between align-items-center mb-5">
           <div>
             <h2 class="brand-title">Hub d'<span>Invitations</span></h2>
@@ -19,11 +15,9 @@
         </header>
 
         <div class="row g-4">
-          <!-- LEFT COLUMN: FORM -->
           <div class="col-lg-8">
             <div class="cyber-glass-card p-4 p-lg-5 shadow-lg">
-              
-              <!-- STEP 1 -->
+              <!-- ETAPE 1 -->
               <div class="step-header mb-4">
                 <span class="step-num">01</span>
                 <div>
@@ -35,15 +29,16 @@
               <div class="group-select-wrapper mb-5">
                 <label class="input-label">Campagne Cible</label>
                 <div class="position-relative">
-                  <i class="fa-solid fa- rocket icon-left-gold"></i>
-                  <select v-model="form.campagneId" class="cyber-select ps-5">
-                    <option value="">— Sélectionner une campagne d'excellence —</option>
+                  <!-- Correction icône : fa-rocket -->
+                  <i class="fa-solid fa-rocket icon-left-gold"></i>
+                  <select v-model="form.campagneId" class="cyber-select ps-5" :disabled="loadingCampagnes">
+                    <option value="">{{ loadingCampagnes ? 'Chargement...' : '— Sélectionner une campagne —' }}</option>
                     <option v-for="c in campagnes" :key="c.id" :value="c.id">{{ c.nom }}</option>
                   </select>
                 </div>
               </div>
 
-              <!-- STEP 2 -->
+              <!-- ETAPE 2 -->
               <div class="step-header mb-4">
                 <span class="step-num">02</span>
                 <div>
@@ -66,7 +61,6 @@
                 </div>
               </div>
 
-              <!-- ACTION BUTTON -->
               <div class="action-footer text-end pt-4 border-top">
                 <button 
                   @click="sendSingleInvitation" 
@@ -77,10 +71,9 @@
                   <span v-else><i class="fa-solid fa-paper-plane me-2"></i> DÉPLOYER L'INVITATION</span>
                 </button>
               </div>
-
             </div>
 
-            <!-- RECENT ACTIVITY TABLE -->
+            <!-- ACTIVITÉ RÉCENTE -->
             <div class="mt-5 animate-up">
               <h6 class="fw-800 mb-3 text-slate-500"><i class="fa-solid fa-history me-2"></i>INVITATIONS RÉCENTES</h6>
               <div class="activity-card p-0 overflow-hidden shadow-sm">
@@ -107,25 +100,23 @@
             </div>
           </div>
 
-          <!-- RIGHT COLUMN: GUIDELINES & PREVIEW -->
+          <!-- SIDEBAR -->
           <div class="col-lg-4">
             <div class="info-card mb-4">
               <div class="info-icon"><i class="fa-solid fa-lightbulb"></i></div>
               <h6 class="fw-800">Comment ça marche ?</h6>
               <ul class="info-list">
-                <li>Le candidat reçoit un e-mail personnalisé.</li>
-                <li>Un lien sécurisé unique est généré.</li>
-                <li>La progression est suivie en temps réel.</li>
+                <li>Le candidat reçoit un e-mail avec un lien d'activation.</li>
+                <li>L'accès à l'évaluation est instantané après activation.</li>
+                <li>Le suivi se fait via votre dashboard de recrutement.</li>
               </ul>
             </div>
-
             <div class="preview-card-mockup">
-              <div class="mockup-header">Aperçu du mail</div>
+              <div class="mockup-header">Aperçu de l'email</div>
               <div class="mockup-body">
                 <div class="skeleton-line sm"></div>
                 <div class="skeleton-line lg"></div>
-                <div class="skeleton-line md"></div>
-                <div class="mockup-btn">Accéder au test</div>
+                <div class="mockup-btn" style="background:#0f172a; color:#f59e0b; border:1px solid #f59e0b">Démarrer le test</div>
               </div>
             </div>
           </div>
@@ -133,7 +124,7 @@
       </main>
     </div>
 
-    <!-- NOTIFICATION POPUP -->
+    <!-- TOAST -->
     <transition name="slide-fade">
       <div v-if="statusMsg" :class="['toast-notification', statusType]">
         <i class="fa-solid" :class="statusType === 'success' ? 'fa-check-circle' : 'fa-circle-xmark'"></i>
@@ -149,25 +140,30 @@ import api from '@/services/api';
 import AppSidebar from '@/components/AppSidebar.vue';
 import AppNavbar from '@/components/AppNavbar.vue';
 
-const API_URL = '/Invitations';
-
+const BASE_URL = '/Invitations';
 const campagnes = ref([]);
 const currentEmail = ref('');
 const isLoading = ref(false);
+const loadingCampagnes = ref(false);
 const statusMsg = ref('');
 const statusType = ref('success');
-const recentInvites = ref([]); // للتخزين المحلي المؤقت لآخر الدعوات
+const recentInvites = ref([]);
 
 const form = reactive({ campagneId: '' });
 
-onMounted(async () => {
+const fetchCampagnes = async () => {
+  loadingCampagnes.value = true;
   try {
-    const res = await api.get(`${API_URL}/campagnes`);
+    const res = await api.get(`${BASE_URL}/campagnes`);
     campagnes.value = res.data;
   } catch (e) {
-    console.error("Erreur API", e);
+    showToast("Impossible de charger les campagnes.", "error");
+  } finally {
+    loadingCampagnes.value = false;
   }
-});
+};
+
+onMounted(fetchCampagnes);
 
 const sendSingleInvitation = async () => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -178,22 +174,22 @@ const sendSingleInvitation = async () => {
 
   isLoading.value = true;
   try {
-    await api.post(`${API_URL}/invite-candidates`, {
+    await api.post(`${BASE_URL}/invite-candidates`, {
       campagneId: form.campagneId,
-      emails: [currentEmail.value]
+      emails: [currentEmail.value.toLowerCase()]
     });
     
     showToast("Le candidat a été invité avec succès.", "success");
     
-    // إضافة للنشاط الأخير
     recentInvites.value.unshift({
       email: currentEmail.value,
-      date: new Date().toLocaleTimeString()
+      date: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
     });
 
     currentEmail.value = '';
   } catch (error) {
-    showToast("Échec de l'envoi de l'invitation.", "error");
+    const errorMsg = error.response?.data || "Échec de l'envoi de l'invitation.";
+    showToast(errorMsg, "error");
   } finally {
     isLoading.value = false;
   }
