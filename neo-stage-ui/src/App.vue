@@ -220,25 +220,10 @@ watch(
   color: var(--bg-light) !important;
 }
 
-[data-theme="dark"] .modern-select, 
-[data-theme="dark"] .modern-input, 
-[data-theme="dark"] .form-select-premium, 
-[data-theme="dark"] .input-pro-search, 
-[data-theme="dark"] .form-control-pro, 
-[data-theme="dark"] .cyber-select, 
-[data-theme="dark"] .cyber-input,
-[data-theme="dark"] textarea.cyber-input {
+[data-theme="dark"] .modern-select, [data-theme="dark"] .modern-input, [data-theme="dark"] .form-select-premium, [data-theme="dark"] .input-pro-search, [data-theme="dark"] .form-control-pro, [data-theme="dark"] .cyber-select, [data-theme="dark"] .cyber-input {
   background: var(--input-bg) !important;
   color: white !important;
   border-color: var(--border-color) !important;
-}
-
-[data-theme="dark"] .cyber-label {
-  color: #94a3b8 !important; /* Muted but visible */
-}
-
-[data-theme="dark"] .cyber-input::placeholder {
-  color: rgba(255, 255, 255, 0.3) !important;
 }
 
 [data-theme="dark"] .csv-dropzone, [data-theme="dark"] .upload-zone-premium {
@@ -273,27 +258,6 @@ watch(
 }
 
 [data-theme="dark"] .main-cloud, [data-theme="dark"] .q-actions-mini button, [data-theme="dark"] .btn-remove-sm {
-  color: #94a3b8 !important;
-}
-
-/* ProfilView & Settings Overrides */
-[data-theme="dark"] .text-black, 
-[data-theme="dark"] .text-slate-800,
-[data-theme="dark"] .text-slate-700,
-[data-theme="dark"] .text-dark,
-[data-theme="dark"] .label-heading,
-[data-theme="dark"] .admin-body h4,
-[data-theme="dark"] .admin-viewport h1 {
-  color: #ffffff !important;
-}
-
-[data-theme="dark"] .admin-body .glass-card, 
-[data-theme="dark"] .admin-body .glass-surface {
-  background: var(--card-bg) !important;
-  border-color: var(--border-color) !important;
-}
-
-[data-theme="dark"] .text-muted, [data-theme="dark"] .tiny.text-muted {
   color: #94a3b8 !important;
 }
 

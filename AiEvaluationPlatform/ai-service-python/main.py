@@ -1,137 +1,266 @@
-from fastapi import FastAPI, Form, File, UploadFile, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-import google.generativeai as genai
-import json
-import re
-import logging
+import os
 import io
-import PyPDF2
+import re
+import json
+import random
+import joblib
+import numpy as np
+import polars as pl
+import spacy
+from typing import List, Dict, Optional
+from contextlib import asynccontextmanager
+
+# FastAPI & Pydantic
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from pypdf import PdfReader
 from docx import Document
 
-# --- CONFIGURATION DES LOGS ---
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# IA Google Gemini
+from google import genai
+from dotenv import load_dotenv
 
-app = FastAPI(title="Evaluatech Unified AI Engine v2.0")
+# Charger les variables d'environnement (Clé API)
+load_dotenv()
+GOOGLE_API_KEY = os.getenv("GEMINI_API_KEY", "VOTRE_CLE_PAR_DEFAUT_SI_NON_ENV")
+client_gemini = genai.Client(api_key=GOOGLE_API_KEY)
 
-# --- CONFIGURATION CORS ---
+# --- CHARGEMENT DU MODÈLE NLP LOCAL ---
+try:
+    # Utilisation du modèle léger pour les performances
+    nlp = spacy.load("fr_core_news_sm")
+except:
+    nlp = None
+
+# --- COFFRE-FORT DE MÉMOIRE IA (Optimisation Haute Performance) ---
+AI_HUB = {}
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """ 
+    Initialisation du Hub IA : Chargement des modèles et calcul des 
+    benchmarks mondiaux au démarrage pour éviter les latences.
+    """
+    print("🚀 [DÉMARRAGE] Initialisation du moteur IA...")
+    try:
+        # 1. Chargement des modèles prédictifs (XGBoost / Scikit-Learn)
+        # Assurez-vous que ces fichiers existent dans votre dossier
+        AI_HUB['hiring_model'] = joblib.load('hiring_brain.pkl')
+        AI_HUB['salary_model'] = joblib.load('salary_brain.pkl')
+        
+        # 2. Chargement de la banque de questions (+30 000 questions)
+        AI_HUB['questions_db'] = pl.read_csv("questions_big_data_BILINGUAL.csv")
+
+        # 3. Analyse comportementale Big Data (Scan sans charger tout en RAM)
+        q_behavior = pl.scan_csv("data-final.csv", separator="\t", ignore_errors=True, null_values=["NULL", "nan"])
+        stats = q_behavior.select([
+            pl.col("testelapse").mean().alias("moy"),
+            pl.col("testelapse").std().alias("std"),
+            pl.len().alias("count")
+        ]).collect()
+        
+        AI_HUB['global_avg_time'] = stats["moy"][0]
+        AI_HUB['global_std_time'] = stats["std"][0]
+        AI_HUB['total_profiles'] = stats["count"][0]
+        
+        print(f"✅ IA opérationnelle : {AI_HUB['total_profiles']} profils et {AI_HUB['questions_db'].height} questions chargés.")
+    except Exception as e:
+        print(f"⚠️ Alerte : Certains fichiers de données sont manquants. Mode dégradé activé. Erreur: {e}")
+        # Initialisation minimale pour éviter le crash
+        AI_HUB['questions_db'] = pl.DataFrame()
+        AI_HUB['total_profiles'] = 0
+
+    yield
+    print("🔌 Fermeture du moteur IA.")
+
+app = FastAPI(title="Evaluatech Assistant IA Ultime", lifespan=lifespan)
+
+# --- CONFIGURATION CORS (Pour permettre au Frontend d'appeler l'IA) ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# --- CONFIGURATION GEMINI ---
-API_KEY = "AIzaSyDRatPj0MltmjRjfKBTtPAH32XjcJpfWvo"
-genai.configure(api_key=API_KEY)
+# --- MODÈLES DE DONNÉES ---
 
-# --- FONCTIONS UTILITAIRES ---
+class RequeteGeneration(BaseModel):
+    theme: str 
+    sous_theme: Optional[str] = None 
+    langue: str = "fr" 
+    nombre_questions: int
 
-def extract_text_from_file(file: UploadFile):
-    content = ""
+class RequeteRapport(BaseModel):
+    nom: str
+    scores_tech: List[float] 
+    experience: int 
+    scores_ocean: Dict[str, float]
+    temps_chrono: float
+    langue: str = "fr"
+
+class CandidatClassement(BaseModel):
+    id: str
+    score: float
+
+class RequeteClassement(BaseModel):
+    candidats: List[CandidatClassement]
+
+# --- UTILITAIRES ---
+
+def lire_contenu_fichier(file: UploadFile):
+    """ Extrait le texte d'un PDF ou DOCX """
+    extension = file.filename.split('.')[-1].lower()
+    content = file.file.read()
+    text = ""
     try:
-        ext = file.filename.split('.')[-1].lower()
-        fb = file.file.read()
-        if ext == "pdf":
-            reader = PyPDF2.PdfReader(io.BytesIO(fb))
-            for p in reader.pages: content += p.extract_text() or ""
-        elif ext == "docx":
-            doc = Document(io.BytesIO(fb))
-            content = "\n".join([p.text for p in doc.paragraphs])
-        return content[:4000]
+        if extension == "pdf":
+            reader = PdfReader(io.BytesIO(content))
+            text = "".join([p.extract_text() for p in reader.pages[:10]]) # Limite 10 pages
+        elif extension in ["docx", "doc"]:
+            doc = Document(io.BytesIO(content))
+            text = "\n".join([p.text for p in doc.paragraphs])
     except Exception as e:
-        logger.error(f"Extraction error: {e}")
-        return ""
+        print(f"Erreur lecture fichier: {e}")
+    return text
 
-def get_working_model():
-    try:
-        available = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        for t in ['models/gemini-1.5-flash', 'models/gemini-pro']:
-            if t in available: return t
-        return available[0]
-    except:
-        return 'gemini-1.5-flash'
+def extraire_concepts_nlp(texte: str):
+    """ Analyse le texte pour extraire les mots-clés techniques """
+    if not nlp or not texte: return []
+    doc = nlp(texte.lower())
+    concepts = [t.text for t in doc if t.pos_ in ["NOUN", "PROPN"] and len(t.text) > 3]
+    return list(set(concepts))[:12]
 
-def clean_and_parse_json(raw_text):
-    try:
-        json_match = re.search(r'\{.*\}', raw_text, re.DOTALL)
-        if json_match:
-            return json.loads(json_match.group())
-        return json.loads(raw_text)
-    except Exception as e:
-        logger.error(f"JSON Parsing failed: {e}")
-        raise Exception("L'IA n'a pas renvoyé un format JSON valide.")
-
-def handle_error(e):
-    error_str = str(e)
-    if "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
-        logger.error("🛑 QUOTA IA ÉPUISÉ")
-        raise HTTPException(status_code=429, detail="Quota Gemini épuisé. Attendez 60s.")
-    logger.error(f"🔥 ERREUR SERVEUR : {error_str}")
-    raise HTTPException(status_code=500, detail=error_str)
-
-# --- ROUTES API ---
+# --- ENDPOINTS ---
 
 @app.get("/")
-async def health_check():
-    return {"status": "AI Server is running"}
+def home():
+    return {"status": "Online", "service": "AI-Evaluation-Service", "version": "2.0.0"}
 
-# 1. Génération Vault (Actifs)
-@app.post("/ia/generate-ultra")
-async def generate_ultra(theme: str = Form(...), sousTheme: str = Form(...), n: int = Form(5)):
-    try:
-        model = genai.GenerativeModel(get_working_model())
-        prompt = f"Génère {n} questions QCM techniques sur {theme}/{sousTheme}. Retourne JSON pur: {{'questions': [{{'question':'','options':[],'answer':0}}]}}"
-        response = model.generate_content(prompt)
-        return clean_and_parse_json(response.text)
-    except Exception as e: handle_error(e)
+@app.get("/ia/list-all-categories")
+def lister_categories(langue: str = "fr"):
+    col_t = "theme_fr" if langue == "fr" else "theme_en"
+    col_st = "sub_theme_fr" if langue == "fr" else "sub_theme_en"
+    df = AI_HUB['questions_db']
+    if df.is_empty(): return {"categories": []}
+    structure = df.group_by(col_t).agg(pl.col(col_st).unique().sort()).to_dicts()
+    return {"langue": langue, "categories": structure}
 
-# 2. Génération Recrutement (Pro / CV)
+@app.post("/ia/generate-questions-smart")
+async def generer_questions(req: RequeteGeneration):
+    c_t = "theme_fr" if req.langue == "fr" else "theme_en"
+    c_st = "sub_theme_fr" if req.langue == "fr" else "sub_theme_en"
+    c_q = "question_fr" if req.langue == "fr" else "question_en"
+    c_o = "options_fr" if req.langue == "fr" else "options_en"
+    
+    pool = AI_HUB['questions_db'].filter(pl.col(c_t).str.to_lowercase() == req.theme.lower().strip())
+    if req.sous_theme:
+        pool = pool.filter(pl.col(c_st).str.to_lowercase() == req.sous_theme.lower().strip())
+    
+    if pool.height == 0:
+        raise HTTPException(status_code=404, detail="Aucune question trouvée dans la base locale.")
+    
+    selection = pool.sample(min(req.nombre_questions, pool.height))
+    return {"theme": req.theme, "questions": selection.select([c_q, c_o]).to_dicts()}
+
 @app.post("/ia/generate-pro")
-async def generate_pro(nombre: int = Form(...), themetique: str = Form(...), difficulte: str = Form(...), file: UploadFile = File(None)):
-    try:
-        context = extract_text_from_file(file) if file else ""
-        model = genai.GenerativeModel(get_working_model())
-        prompt = f"Expert RH. Génère {nombre} questions QCM ({difficulte}) sur {themetique}. Contexte: {context}. Retourne JSON: {{'status': 'IA_SUCCESS', 'questions': []}}"
-        response = model.generate_content(prompt)
-        return clean_and_parse_json(response.text)
-    except Exception as e: handle_error(e)
+async def generer_questions_pro(
+    file: Optional[UploadFile] = File(None),
+    nombre: int = Form(10),
+    themetique: str = Form("Auto-detect from content"),
+    difficulte: str = Form("Medium"), 
+    type_question: str = Form("MULTI_CHOICE"), 
+    langue: str = Form("fr")
+):
+    """ Génération de questions par IA Gemini basée sur un document (CV/Fiche de poste) """
+    texte_contexte = lire_contenu_fichier(file) if file else ""
 
-# 3. Analyse Cognitive / Comportementale (Neural Scan)
-@app.post("/ia/analyze-candidate")
-async def analyze_candidate(nom: str = Form(...), scores_techniques: str = Form(...)):
+    prompt = f"""
+    En tant qu'expert RH et technique, génère {nombre} questions de niveau {difficulte}.
+    Thème : {themetique}. Type : {type_question}. Langue : {langue}.
+    Contexte supplémentaire (Document) : {texte_contexte[:3000]}
+    
+    Format de réponse attendu : JSON STRICT uniquement, sans texte avant ou après.
+    Structure : [{{ "question": "...", "options": ["choix1", "choix2", "choix3", "choix4"], "answer": 0 }}]
+    (L'index 'answer' correspond au bon choix dans la liste 'options').
+    """
+
     try:
-        model = genai.GenerativeModel(get_working_model())
-        prompt = f"Analyse cognitive de {nom} (Scores: {scores_techniques}). Génère JSON: global_score, neural_tier, profile_type, radar_data (Rigueur, Adaptabilité, Communication, Critique, Leadership), traits (name, val, icon, color), terminal_insights (time, type, text)."
-        response = model.generate_content(prompt)
-        return clean_and_parse_json(response.text)
+        response = client_gemini.models.generate_content(model="gemini-2.0-flash", contents=prompt)
+        # Nettoyage et parsing du JSON
+        json_match = re.search(r'\[.*\]', response.text, re.DOTALL)
+        if json_match:
+            questions_ia = json.loads(json_match.group(0))
+            return {"status": "IA_SUCCESS", "questions": questions_ia}
+        else:
+            raise ValueError("Réponse IA non formatée correctement.")
+    
     except Exception as e:
-        return {"id": "SIM-2026", "global_score": 75, "neural_tier": "AVANCÉ", "profile_type": "DÉVELOPPEUR", "radar_data": [{"label":"Rigueur","val":80},{"label":"Adapt.","val":70},{"label":"Comm.","val":60},{"label":"Critique","val":75},{"label":"Lead.","val":50}], "traits": [], "terminal_insights": [{"time":"00:00","type":"amber","text":"MODE DÉMO"}]}
+        print(f"Fallback CSV activé à cause de : {e}")
+        # Retour à la base de données locale Polars en cas d'échec de l'API
+        pool = AI_HUB['questions_db']
+        selection = pool.sample(min(nombre, pool.height))
+        return {"status": "FALLBACK_CSV", "questions": selection.to_dicts()}
 
-# 4. Rapport de Performance (ResultsView)
-@app.post("/ia/performance-report")
-async def generate_performance_report(global_score: int = Form(...), themes_json: str = Form(...)):
+@app.post("/ia/generate-smart-report")
+async def generer_rapport(req: RequeteRapport):
+    # Calcul prédictif simple (Normalisation basique des entrées)
+    inputs = np.array([req.scores_tech + [req.experience]])
+    
     try:
-        model = genai.GenerativeModel(get_working_model())
-        prompt = f"Analyse résultats techniques. Score: {global_score}/100. Thèmes: {themes_json}. Génère JSON: synthese (string), forces (array), faiblesses (array), roadmap ({{'objectif':'','certification':''}})"
-        response = model.generate_content(prompt)
-        return clean_and_parse_json(response.text)
-    except Exception as e:
-        return {"synthese": "Analyse technique standard.", "forces": ["Rigueur"], "faiblesses": ["Optimisation"], "roadmap": {"objectif": "Senior", "certification": "Cloud Architect"}}
+        prob = AI_HUB['hiring_model'].predict_proba(inputs)[0][1]
+        salaire = AI_HUB['salary_model'].predict(inputs)[0]
+    except:
+        prob, salaire = 0.5, 0 # Fallback si modèles non chargés
 
-# 5. Analyse de l'Historique (HistoryView)
-@app.post("/ia/analyze-history")
-async def analyze_history(history_json: str = Form(...)):
+    z_score = (req.temps_chrono - AI_HUB.get('global_avg_time', 0)) / (AI_HUB.get('global_std_time', 1))
+    
+    labels = {
+        "fr": {"fiabilite": "ÉLEVÉE", "verdict": "RECOMMANDÉ", "al": "SUSPECT", "pos": "Top 15% mondial"},
+        "en": {"fiabilite": "HIGH", "verdict": "RECOMMENDED", "al": "SUSPICIOUS", "pos": "Global Top 15%"}
+    }.get(req.langue, "fr")
+
+    fiabilite = labels["fiabilite"] if z_score > -1.5 else labels["al"]
+    
+    return {
+        "candidat": req.nom,
+        "analyse_ia": {
+            "compatibilite": f"{round(prob * 100, 1)}%",
+            "salaire_estime": f"${round(float(salaire), 2)}",
+            "fiabilite_behaviorale": fiabilite,
+            "positionnement": labels["pos"] if z_score < -1 else "Normal"
+        },
+        "verdict_final": labels["verdict"] if (prob > 0.7 and fiabilite == labels["fiabilite"]) else "A VÉRIFIER"
+    }
+
+@app.post("/ia/rank-candidates")
+async def rank_candidates(req: RequeteClassement):
     try:
-        model = genai.GenerativeModel(get_working_model())
-        prompt = f"Analyse progression utilisateur. Historique JSON: {history_json}. Génère JSON: progression_status (CROISSANTE/STABLE/ALERTE), global_summary (string), top_skill (string), advice (string), cyber_log (string)."
-        response = model.generate_content(prompt)
-        return clean_and_parse_json(response.text)
+        df = pl.DataFrame([c.model_dump() for c in req.candidats]).sort("score", descending=True)
+        return {"classement": df.to_dicts(), "meilleur_talent_id": df['id'][0]}
     except Exception as e:
-        return {"progression_status": "STABLE", "global_summary": "Données insuffisantes.", "top_skill": "N/A", "advice": "Continuez vos tests.", "cyber_log": "LOG_IA: Standby."}
+        raise HTTPException(status_code=500, detail=str(e))
 
-# --- LANCEMENT ---
+@app.get("/ia/platform-pulse")
+def platform_status():
+    return {
+        "statut": "Optimal",
+        "profils_mondiaux": AI_HUB.get('total_profiles', 0),
+        "catalogue_questions": AI_HUB['questions_db'].height,
+        "moteurs_actifs": ["Polars", "XGBoost", "Gemini 2.0 Flash"]
+    }
+
+@app.post("/ia/auto-detect-category")
+def detect_category_pro(file: UploadFile = File(...)):
+    texte = lire_contenu_fichier(file)
+    keywords = extraire_concepts_nlp(texte)
+    # Logique simple de détection
+    tech_hits = any(k in ["code", "sql", "dev", "python", "data", "cloud"] for k in keywords)
+    prediction = "Informatique / Tech" if tech_hits else "Management / RH"
+    return {"categorie_detectee": prediction, "mots_cles": keywords[:5]}
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000)

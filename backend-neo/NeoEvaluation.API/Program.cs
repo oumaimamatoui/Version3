@@ -87,29 +87,67 @@ using (var scope = app.Services.CreateScope()) {
 
         // 1. Seed Roles
         var rolesToSeed = new List<Role> {
-            new Role { Nom = "SuperAdmin", Description = "Administrateur Global" },
-            new Role { Nom = "AdminEntreprise", Description = "Administrateur d'organisation" },
-            new Role { Nom = "Evaluateur", Description = "Correcteur technique" },
-            new Role { Nom = "Candidat", Description = "Participant aux tests" }
+            new Role { 
+                Nom = "SuperAdmin", 
+                Description = "Administrateur Global",
+                Permissions = new List<string> { "ALL" }
+            },
+            new Role { 
+                Nom = "AdminEntreprise", 
+                Description = "Administrateur d'organisation",
+                Permissions = new List<string> { "MANAGE_USERS", "MANAGE_CAMPAIGNS", "VIEW_RESULTS", "MANAGE_BRANDING" }
+            },
+            new Role { 
+                Nom = "Evaluateur", 
+                Description = "Correcteur technique",
+                Permissions = new List<string> { "VIEW_TESTS", "GRADE_TESTS" }
+            },
+            new Role { 
+                Nom = "Candidat", 
+                Description = "Participant aux tests",
+                Permissions = new List<string> { "TAKE_TEST" }
+            }
         };
 
         foreach (var r in rolesToSeed) {
-            if (!context.Roles.Any(x => x.Nom == r.Nom)) {
+            var existingRole = context.Roles.IgnoreQueryFilters().FirstOrDefault(x => x.Nom == r.Nom);
+            if (existingRole == null) {
                 context.Roles.Add(r);
+            } else {
+                existingRole.Permissions = r.Permissions; // Sync permissions
             }
         }
         context.SaveChanges();
 
         // 2. Admin Seed
-        var superAdminRole = context.Roles.FirstOrDefault(r => r.Nom == "SuperAdmin");
-        if (!context.Utilisateurs.Any(u => u.Email == "admin@evaluatech.tn")) {
+        if (!context.Utilisateurs.IgnoreQueryFilters().Any(u => u.Email == "admin@evaluatech.tn")) {
             context.Utilisateurs.Add(new Utilisateur {
                 Id = Guid.NewGuid(),
                 Email = "admin@evaluatech.tn", Prenom = "Admin", Nom = "Evaluatech",
                 RoleNom = "SuperAdmin", 
                 EstActif = true, CreeLe = DateTime.UtcNow,
                 MotDePasseHash = BCrypt.Net.BCrypt.HashPassword("Admin123"),
-                Privileges = new List<string> { "ADMIN_GLOBAL" }
+                Privileges = new List<string> { "ALL" }
+            });
+        }
+
+        // 2b. AdminEntreprise Seed (For Testing)
+        if (!context.Utilisateurs.IgnoreQueryFilters().Any(u => u.Email == "company@test.tn")) {
+            var testOrg = context.Entreprises.IgnoreQueryFilters().FirstOrDefault(e => e.Nom == "Test Organization");
+            if (testOrg == null) {
+                testOrg = new Entreprise { Id = Guid.NewGuid(), Nom = "Test Organization", Plan = "Premium" };
+                context.Entreprises.Add(testOrg);
+                context.SaveChanges();
+            }
+
+            context.Utilisateurs.Add(new Utilisateur {
+                Id = Guid.NewGuid(),
+                Email = "company@test.tn", Prenom = "Ahmed", Nom = "Manager",
+                RoleNom = "AdminEntreprise", 
+                EntrepriseId = testOrg.Id,
+                EstActif = true, CreeLe = DateTime.UtcNow,
+                MotDePasseHash = BCrypt.Net.BCrypt.HashPassword("Company123"),
+                Privileges = new List<string> { "MANAGE_USERS", "MANAGE_CAMPAIGNS", "VIEW_RESULTS" }
             });
         }
 

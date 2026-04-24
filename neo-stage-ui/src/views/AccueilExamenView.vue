@@ -1,38 +1,77 @@
 <template>
   <div class="premium-secure-viewport">
+    <!-- COUCHES DÉCORATIVES -->
     <div class="background-overlay"></div>
     <div class="glow-orb orb-amber"></div>
     <div class="glow-orb orb-blue"></div>
 
-    <div v-if="loading" class="centering-layout">
-        <div class="spinner-pro-premium"></div>
-        <h2 class="ms-3 fw-800">CHARGEMENT DE LA SESSION...</h2>
-    </div>
-
-    <div v-else-if="errorMsg" class="centering-layout">
-        <div class="card-glass-setup text-center">
-            <i class="fa-solid fa-circle-xmark fa-4x text-danger mb-4"></i>
-            <h1 class="title-display">Accès <span>Refusé</span></h1>
-            <p class="text-muted fw-bold">{{ errorMsg }}</p>
-            <button @click="router.push('/dashboard')" class="btn-img btn-dark mt-4 w-100">RETOUR AU TERMINAL</button>
+    <!-- 1. ÉTAT DE CHARGEMENT -->
+    <div v-if="loading" class="centering-lzzayout">
+        <div class="loader-container text-center">
+            <div class="spinner-pro-premium"></div>
+            <h2 class="mt-4 fw-800">CHARGEMENT DE LA SESSION...</h2>
+            <p class="text-muted">Sécurisation de la connexion en cours</p>
         </div>
     </div>
 
+    <!-- 2. ÉTAT D'ERREUR (Accès Refusé / Candidature introuvable) -->
+    <div v-else-if="errorMsg" class="centering-layout">
+        <div class="card-glass-setup text-center animate__animated animate__fadeIn">
+            <div class="icon-error-container mb-4">
+                <i class="fa-solid fa-shield-halved fa-4x text-danger"></i>
+            </div>
+            <h1 class="title-display">Accès <span>Refusé</span></h1>
+            <p class="error-text mt-3">{{ errorMsg }}</p>
+            <div class="divider my-4"></div>
+            <button @click="router.push('/dashboard')" class="btn-img btn-dark w-100">
+                <i class="fa-solid fa-arrow-left me-2"></i> RETOUR AU TERMINAL
+            </button>
+        </div>
+    </div>
+
+    <!-- 3. ÉCRAN D'ACCUEIL DU TEST -->
     <template v-else>
         <main class="main-terminal">
             <div v-if="!examStarted" class="centering-layout">
                 <div class="card-glass-setup animate__animated animate__zoomIn">
+                    <div class="badge-tech mb-3">EXAMEN OFFICIEL</div>
                     <h1 class="title-display">Session <span>{{ campaignName }}</span></h1>
-                    <p class="text-muted mt-3">Prêt à commencer l'évaluation ?</p>
-                    <button @click="initiateSession" class="btn-img btn-amber px-5 mt-5">DÉMARRER LE TEST</button>
+                    <p class="text-muted mt-3">
+                        Cette évaluation est chronométrée. Assurez-vous d'être dans un environnement calme.
+                    </p>
+                    
+                    <div class="info-summary my-4">
+                        <div class="info-pill"><i class="fa-solid fa-list-check me-2"></i> {{ questions.length }} Questions</div>
+                        <div class="info-pill"><i class="fa-solid fa-clock me-2"></i> Temps limité</div>
+                    </div>
+
+                    <button @click="initiateSession" class="btn-img btn-amber px-5 mt-4 w-100">
+                        DÉMARRER LE TEST <i class="fa-solid fa-play ms-2"></i>
+                    </button>
                 </div>
             </div>
             
+            <!-- 4. INTERFACE DU QUIZ (Une fois démarré) -->
             <div v-else class="centering-layout">
-                 <div class="surface-card-q">
-                    <h2 class="fw-800">{{ questions[currentIndex]?.enonce }}</h2>
-                    <!-- ... Votre logique de Quiz ... -->
-                    <button @click="router.push('/dashboard')" class="btn-img btn-gray mt-5">QUITTER</button>
+                 <div class="surface-card-q animate__animated animate__fadeInUp">
+                    <div class="quiz-header d-flex justify-content-between align-items-center mb-5">
+                        <span class="question-count">Question {{ currentIndex + 1 }} sur {{ questions.length }}</span>
+                        <div class="timer-box"><i class="fa-regular fa-clock me-2"></i> --:--</div>
+                    </div>
+
+                    <h2 class="question-title fw-800">{{ questions[currentIndex]?.enonce }}</h2>
+                    
+                    <div class="options-container mt-5">
+                        <!-- Exemple de boucle pour les options si présentes -->
+                        <div v-for="(opt, idx) in questions[currentIndex]?.options" :key="idx" class="option-card">
+                            {{ opt.texte }}
+                        </div>
+                    </div>
+
+                    <div class="quiz-footer mt-5 d-flex justify-content-between">
+                        <button @click="router.push('/dashboard')" class="btn-img btn-gray">QUITTER</button>
+                        <button @click="nextQuestion" class="btn-img btn-dark">SUIVANT <i class="fa-solid fa-chevron-right ms-2"></i></button>
+                    </div>
                  </div>
             </div>
         </main>
@@ -41,24 +80,24 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'; // Ajoutez computed
+import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import axios from 'axios';
+// IMPORTANT : Utilisation de l'instance API configurée avec le Token
+import api from '@/services/api'; 
 
 const route = useRoute();
 const router = useRouter();
 
-// --- ETATS ---
+// --- ÉTATS ---
 const loading = ref(true);
 const errorMsg = ref(null);
 const examStarted = ref(false);
-const quizFinished = ref(false);
 const campaignName = ref("");
 const questions = ref([]);
 const currentIndex = ref(0);
 const evaluationId = ref(null);
 
-// ✅ FIX : Ajoutez ces variables pour stopper l'erreur "Property securityBreach not defined"
+// --- SÉCURITÉ ---
 const isFocused = ref(true);
 const isFullscreen = ref(false);
 const securityBreach = computed(() => !isFocused.value || !isFullscreen.value);
@@ -66,43 +105,117 @@ const securityBreach = computed(() => !isFocused.value || !isFullscreen.value);
 const loadData = async () => {
     const cid = route.params.id; 
 
-    // ✅ FIX : Empêche l'appel si l'ID est "undefined"
+    // Vérification de l'ID dans l'URL
     if (!cid || cid === 'undefined') {
-        errorMsg.value = "Identifiant de session invalide. Veuillez repasser par le Dashboard.";
+        errorMsg.value = "Identifiant de session manquant ou invalide.";
         loading.value = false;
         return;
     }
 
     try {
-        const res = await axios.get(`http://localhost:5172/api/Examen/setup/${cid}`);
+        // APPEL API avec votre service configuré
+        const res = await api.get(`/Examen/setup/${cid}`);
+        
         evaluationId.value = res.data.evaluationId;
-        questions.value = res.data.questions;
-        campaignName.value = res.data.campagneNom;
-        loading.value = false;
+        questions.value = res.data.questions || [];
+        campaignName.value = res.data.campagneNom || "Évaluation";
+        
     } catch (err) {
-        // ✅ FIX : Affiche le message d'erreur du backend
-        errorMsg.value = err.response?.data?.message || "Erreur de connexion au serveur.";
+        console.error("Erreur de chargement:", err);
+        // On récupère le message d'erreur précis du backend (ex: "Candidature introuvable")
+        errorMsg.value = err.response?.data?.message || "Impossible de charger la session. Vérifiez votre connexion.";
+    } finally {
         loading.value = false;
+    }
+};
+
+const initiateSession = () => {
+    examStarted.value = true;
+};
+
+const nextQuestion = () => {
+    if (currentIndex.value < questions.value.length - 1) {
+        currentIndex.value++;
     }
 };
 
 onMounted(loadData);
 </script>
+
 <style scoped>
-/* Mix de vos styles précédents */
-.premium-secure-viewport { height: 100vh; background: #f8fafc; overflow: hidden; position: relative; font-family: 'Plus Jakarta Sans'; }
-.background-overlay { position: absolute; inset: 0; background: radial-gradient(circle at 30% 30%, #fff 0%, #f1f5f9 100%); }
-.glow-orb { position: absolute; border-radius: 50%; filter: blur(130px); opacity: 0.15; }
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+
+.premium-secure-viewport { height: 100vh; background: #f8fafc; overflow: hidden; position: relative; font-family: 'Plus Jakarta Sans', sans-serif; }
+.background-overlay { position: absolute; inset: 0; background: radial-gradient(circle at 30% 30%, #fff 0%, #f1f5f9 100%); z-index: 1; }
+
+.glow-orb { position: absolute; border-radius: 50%; filter: blur(130px); opacity: 0.15; z-index: 2; }
 .orb-amber { width: 600px; height: 600px; background: #fbbf24; top: -100px; right: -100px; }
 .orb-blue { width: 500px; height: 500px; background: #60a5fa; bottom: -100px; left: -100px; }
-.centering-layout { height: 100%; display: flex; align-items: center; justify-content: center; z-index: 10; position: relative; }
-.card-glass-setup, .surface-card-q { background: white; border-radius: 35px; box-shadow: 0 30px 60px rgba(0,0,0,0.05); padding: 50px; }
-.surface-card-q { width: 850px; }
-.option-card { padding: 20px; background: #f8fafc; border: 2px solid #f1f5f9; border-radius: 20px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; font-weight: 700; }
-.option-card.selected { background: #0f172a; color: white; border-color: #0f172a; }
-.btn-img { padding: 15px 30px; border-radius: 15px; border: none; font-weight: 800; cursor: pointer; }
-.btn-amber { background: #eab308; }
-.btn-gray { background: #e2e8f0; }
+
+.centering-layout { height: 100%; display: flex; align-items: center; justify-content: center; z-index: 10; position: relative; padding: 20px; }
+
+.card-glass-setup { 
+    background: rgba(255, 255, 255, 0.9); 
+    backdrop-filter: blur(10px);
+    border-radius: 35px; 
+    box-shadow: 0 30px 60px rgba(0,0,0,0.08); 
+    padding: 50px; 
+    max-width: 550px;
+    width: 100%;
+}
+
+.surface-card-q { 
+    background: white; 
+    border-radius: 35px; 
+    box-shadow: 0 30px 60px rgba(0,0,0,0.05); 
+    padding: 50px; 
+    width: 100%;
+    max-width: 900px;
+}
+
+.title-display { font-weight: 800; font-size: 2.5rem; color: #0f172a; }
+.title-display span { color: #eab308; }
+
+.error-text { font-weight: 600; color: #64748b; font-size: 1.1rem; }
+
+.badge-tech { display: inline-block; padding: 6px 15px; background: #f1f5f9; border-radius: 10px; font-weight: 800; font-size: 11px; color: #475569; letter-spacing: 1px; }
+
+.info-summary { display: flex; gap: 15px; justify-content: center; }
+.info-pill { background: #f8fafc; padding: 10px 20px; border-radius: 15px; font-weight: 700; color: #1e293b; border: 1px solid #e2e8f0; }
+
+/* BOUTONS */
+.btn-img { 
+    padding: 18px 30px; 
+    border-radius: 20px; 
+    border: none; 
+    font-weight: 800; 
+    cursor: pointer; 
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.btn-amber { background: #eab308; color: #0f172a; }
+.btn-amber:hover { background: #ca8a04; transform: translateY(-2px); }
 .btn-dark { background: #0f172a; color: white; }
-.timer-box { background: #0f172a; color: white; padding: 10px 20px; border-radius: 10px; font-weight: 800; }
+.btn-dark:hover { background: #1e293b; transform: translateY(-2px); }
+.btn-gray { background: #f1f5f9; color: #475569; }
+
+/* SPINNER */
+.spinner-pro-premium {
+    width: 60px; height: 60px;
+    border: 5px solid #f1f5f9;
+    border-top: 5px solid #eab308;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+.timer-box { background: #0f172a; color: white; padding: 10px 20px; border-radius: 15px; font-weight: 800; }
+.question-title { color: #0f172a; line-height: 1.4; }
+.option-card { padding: 25px; background: #f8fafc; border: 2px solid #f1f5f9; border-radius: 20px; margin-bottom: 15px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+.option-card:hover { border-color: #eab308; background: #fff; }
+
+.divider { height: 1px; background: #e2e8f0; }
 </style>

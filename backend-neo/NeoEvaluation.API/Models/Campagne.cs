@@ -33,4 +33,4 @@ namespace NeoEvaluation.API.Models
         public Guid? PlanificateurId { get; set; }
         public Utilisateur? Planificateur { get; set; }
     }
-}
+}

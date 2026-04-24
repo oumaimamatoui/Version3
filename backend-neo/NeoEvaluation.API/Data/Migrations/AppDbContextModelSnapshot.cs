@@ -46,9 +46,6 @@ namespace NeoEvaluation.API.Data.Migrations
                     b.Property<Guid>("EntrepriseId")
                         .HasColumnType("uuid");
 
-                    b.Property<int?>("MaxCandidats")
-                        .HasColumnType("integer");
-
                     b.Property<string>("ModeNotation")
                         .IsRequired()
                         .HasColumnType("text");
@@ -231,9 +228,6 @@ namespace NeoEvaluation.API.Data.Migrations
 
                     b.Property<Guid>("CandidatureId")
                         .HasColumnType("uuid");
-
-                    b.Property<int>("CurrentQuestionIndex")
-                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("DateDebut")
                         .HasColumnType("timestamp with time zone");

@@ -34,4 +34,4 @@ namespace NeoEvaluation.API.Models
         public Guid? CreateurId { get; set; }
         public Utilisateur? Createur { get; set; }
     }
-}
+}
