@@ -24,7 +24,11 @@ namespace NeoEvaluation.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetQuestions()
         {
-            return Ok(await _context.Questions.ToListAsync());
+            var questions = await _context.Questions
+                .OrderByDescending(q => q.CreeLe)
+                .ToListAsync();
+                
+            return Ok(questions.GroupBy(q => q.Enonce).Select(g => g.First()).ToList());
         }
 
         [HttpGet("{id}")]
@@ -58,7 +62,7 @@ namespace NeoEvaluation.API.Controllers
                     DureeSecondes = dto.DureeSecondes,
                     Theme = dto.Theme,
                     SousTheme = dto.SousTheme,
-                    Choix = dto.Choix ?? new List<string>(),
+                    Choix = new List<string>(dto.Choix ?? new List<string>()),
                     BonneReponse = dto.BonneReponse ?? string.Empty,
                     Prerequis = dto.Prerequis ?? new List<string>()
                 };
@@ -105,6 +109,11 @@ namespace NeoEvaluation.API.Controllers
             var q = await _context.Questions.FindAsync(id);
             if (q == null) return NotFound();
 
+            Console.WriteLine($"[DEBUG] Updating Question {id}. Options received: {dto.Choix?.Count ?? 0}");
+            if (dto.Choix != null) {
+                foreach(var c in dto.Choix) Console.WriteLine($" - Option: {c}");
+            }
+
             q.Enonce = dto.Enonce;
             q.Type = dto.Type;
             q.Niveau = dto.Niveau;
@@ -112,9 +121,8 @@ namespace NeoEvaluation.API.Controllers
             q.DureeSecondes = dto.DureeSecondes;
             q.Theme = dto.Theme;
             q.SousTheme = dto.SousTheme;
-            q.Choix = dto.Choix ?? new List<string>();
-            q.BonneReponse = dto.BonneReponse ?? string.Empty;
-            q.Prerequis = dto.Prerequis ?? new List<string>();
+            q.Choix = new List<string>(dto.Choix ?? new List<string>());
+            q.BonneReponse = dto.BonneReponse;
 
             await _context.SaveChangesAsync();
             return Ok(q);
@@ -123,11 +131,23 @@ namespace NeoEvaluation.API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteQuestion(Guid id)
         {
-            var q = await _context.Questions.FindAsync(id);
+            var q = await _context.Questions
+                .Include(x => x.QuestionnaireQuestions)
+                .FirstOrDefaultAsync(x => x.Id == id);
+
             if (q == null) return NotFound();
+
+            // 1. Supprimer d'abord les liaisons dans la table de jointure
+            if (q.QuestionnaireQuestions.Any())
+            {
+                _context.QuestionnaireQuestions.RemoveRange(q.QuestionnaireQuestions);
+            }
+
+            // 2. Supprimer la question elle-même
             _context.Questions.Remove(q);
+
             await _context.SaveChangesAsync();
-            return NoContent();
+            return Ok(new { message = "Question et ses liaisons supprimées avec succès." });
         }
 
         // --- GESTION DES CATÉGORIES ---

@@ -56,15 +56,21 @@
                  <div class="surface-card-q animate__animated animate__fadeInUp">
                     <div class="quiz-header d-flex justify-content-between align-items-center mb-5">
                         <span class="question-count">Question {{ currentIndex + 1 }} sur {{ questions.length }}</span>
-                        <div class="timer-box"><i class="fa-regular fa-clock me-2"></i> --:--</div>
+                        <div class="timer-box"><i class="fa-regular fa-clock me-2"></i> {{ formatTime }}</div>
                     </div>
 
                     <h2 class="question-title fw-800">{{ questions[currentIndex]?.enonce }}</h2>
                     
                     <div class="options-container mt-5">
-                        <!-- Exemple de boucle pour les options si présentes -->
-                        <div v-for="(opt, idx) in questions[currentIndex]?.options" :key="idx" class="option-card">
-                            {{ opt.texte }}
+                        <div 
+                            v-for="(opt, idx) in questions[currentIndex]?.options" 
+                            :key="idx" 
+                            class="option-card"
+                            :class="{ 'selected': selectedOption === idx }"
+                            @click="selectOption(idx)"
+                        >
+                            <div class="option-marker">{{ String.fromCharCode(65 + idx) }}</div>
+                            <div class="option-text">{{ opt }}</div>
                         </div>
                     </div>
 
@@ -96,47 +102,103 @@ const campaignName = ref("");
 const questions = ref([]);
 const currentIndex = ref(0);
 const evaluationId = ref(null);
+const duration = ref(20); // Valeur par défaut
+const timeLeft = ref(0);
+const timerInterval = ref(null);
+const selectedOption = ref(null); // Option sélectionnée par le candidat
 
-// --- SÉCURITÉ ---
-const isFocused = ref(true);
-const isFullscreen = ref(false);
-const securityBreach = computed(() => !isFocused.value || !isFullscreen.value);
+const selectOption = (idx) => {
+    selectedOption.value = idx;
+};
+
+// --- TIMER LOGIC ---
+const startTimer = () => {
+    timeLeft.value = duration.value * 60;
+    timerInterval.value = setInterval(() => {
+        if (timeLeft.value > 0) {
+            timeLeft.value--;
+        } else {
+            clearInterval(timerInterval.value);
+            finishExam();
+        }
+    }, 1000);
+};
+
+const formatTime = computed(() => {
+    const mins = Math.floor(timeLeft.value / 60);
+    const secs = timeLeft.value % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+});
 
 const loadData = async () => {
     const cid = route.params.id; 
-
-    // Vérification de l'ID dans l'URL
     if (!cid || cid === 'undefined') {
-        errorMsg.value = "Identifiant de session manquant ou invalide.";
+        errorMsg.value = "Identifiant de session manquant.";
         loading.value = false;
         return;
     }
 
     try {
-        // APPEL API avec votre service configuré
         const res = await api.get(`/Examen/setup/${cid}`);
-        
         evaluationId.value = res.data.evaluationId;
-        questions.value = res.data.questions || [];
+        questions.value = (res.data.questions || []).map(q => ({
+            ...q,
+            options: q.options || q.Options || q.choix || q.Choix || []
+        }));
         campaignName.value = res.data.campagneNom || "Évaluation";
-        
+        duration.value = Math.floor(res.data.tempsLimite / 60) || 20; // Utiliser tempsLimite du DTO
     } catch (err) {
-        console.error("Erreur de chargement:", err);
-        // On récupère le message d'erreur précis du backend (ex: "Candidature introuvable")
-        errorMsg.value = err.response?.data?.message || "Impossible de charger la session. Vérifiez votre connexion.";
+        errorMsg.value = err.response?.data?.message || "Erreur de chargement.";
     } finally {
         loading.value = false;
     }
 };
 
-const initiateSession = () => {
-    examStarted.value = true;
+// --- SÉCURITÉ (ALERTES SUPPRIMÉES) ---
+const warnCount = ref(0);
+
+const handleVisibilityChange = () => {
+    // Logique désactivée à la demande de l'utilisateur
 };
 
-const nextQuestion = () => {
+const enterFullScreen = () => {
+    const el = document.documentElement;
+    if (el.requestFullscreen) el.requestFullscreen();
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+};
+
+const initiateSession = () => {
+    examStarted.value = true;
+    enterFullScreen();
+    startTimer();
+    // Activer la surveillance
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+};
+
+const nextQuestion = async () => {
+    // Sauvegarde auto du progrès
+    try {
+        await api.post('/Examen/sync', { evaluationId: evaluationId.value });
+    } catch (e) { console.error("Sync failed"); }
+
+    selectedOption.value = null;
     if (currentIndex.value < questions.value.length - 1) {
         currentIndex.value++;
+    } else {
+        finishExam();
     }
+};
+
+const finishExam = async () => {
+    clearInterval(timerInterval.value);
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+    if (document.fullscreenElement) document.exitFullscreen();
+    
+    try {
+        await api.post(`/Examen/terminer/${evaluationId.value}`);
+    } catch (e) { console.error("Finish failed"); }
+
+    router.push(`/results/${route.params.id}`);
 };
 
 onMounted(loadData);
@@ -213,9 +275,29 @@ onMounted(loadData);
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
 .timer-box { background: #0f172a; color: white; padding: 10px 20px; border-radius: 15px; font-weight: 800; }
-.question-title { color: #0f172a; line-height: 1.4; }
-.option-card { padding: 25px; background: #f8fafc; border: 2px solid #f1f5f9; border-radius: 20px; margin-bottom: 15px; font-weight: 700; cursor: pointer; transition: 0.2s; }
-.option-card:hover { border-color: #eab308; background: #fff; }
+.question-title { color: #0f172a; line-height: 1.4; font-size: 2rem; }
+.option-card { 
+    padding: 20px 25px; 
+    background: #f8fafc; 
+    border: 2.5px solid #f1f5f9; 
+    border-radius: 20px; 
+    margin-bottom: 15px; 
+    font-weight: 700; 
+    cursor: pointer; 
+    transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.option-card:hover { border-color: #eab308; background: #fff; transform: translateX(10px); }
+.option-card.selected { border-color: #eab308; background: #fffbeb; box-shadow: 0 10px 25px rgba(234, 179, 8, 0.1); }
+
+.option-marker { 
+    width: 35px; height: 35px; background: #0f172a; color: white; 
+    border-radius: 10px; display: flex; align-items: center; justify-content: center; 
+    font-weight: 800; font-size: 14px; 
+}
+.option-card.selected .option-marker { background: #eab308; color: #0f172a; }
 
 .divider { height: 1px; background: #e2e8f0; }
 </style>

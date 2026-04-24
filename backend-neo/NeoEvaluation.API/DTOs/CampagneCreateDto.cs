@@ -10,4 +10,5 @@ public class CampagneCreateDto {
         public int DureeMinutes { get; set; } = 60;
         public string ModeNotation { get; set; } = "STRICT";
         public List<Guid>? SelectedCandidatesIds { get; set; }
+        public bool SendNotifications { get; set; } = true;
     }

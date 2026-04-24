@@ -248,7 +248,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, watch } from 'vue';
 import api from '@/services/api';
 
 /* --- DEFINITIONS --- */
@@ -382,7 +382,27 @@ const removeResponse = (i) => form.reponses.splice(i, 1);
 const openModal = (q = null) => {
   isEdit.value = !!q;
   if (q) {
-    Object.assign(form, JSON.parse(JSON.stringify(q)));
+    // Clone pour éviter de modifier l'original en direct
+    const clone = JSON.parse(JSON.stringify(q));
+    Object.assign(form, clone);
+    
+    // Correction cruciale : On cherche Choix ou choix
+    const rawOptions = q.choix || q.Choix || q.options || [];
+    console.log("[DEBUG] Raw options found:", rawOptions);
+
+    if (Array.isArray(rawOptions) && rawOptions.length > 0) {
+      form.reponses = rawOptions.map(opt => ({
+        texte: opt,
+        estCorrecte: opt === q.bonneReponse || opt === q.BonneReponse
+      }));
+    } else if (q.type === 2) {
+      form.reponses = [
+        { texte: 'Vrai', estCorrecte: (q.bonneReponse || q.BonneReponse) === 'Vrai' },
+        { texte: 'Faux', estCorrecte: (q.bonneReponse || q.BonneReponse) === 'Faux' }
+      ];
+    } else {
+      form.reponses = [{ texte: '', estCorrecte: true }, { texte: '', estCorrecte: false }];
+    }
   } else {
     Object.assign(form, {
       id: '00000000-0000-0000-0000-000000000000',
@@ -397,7 +417,13 @@ const save = async () => {
   if(!form.enonce.trim()) return;
   isSaving.value = true;
   try {
-    const payload = { ...form, Choix: form.reponses.map(r => r.texte), BonneReponse: form.reponses.find(r => r.estCorrecte)?.texte || '' };
+    // On s'assure que Choix contient les textes des réponses
+    const payload = { 
+      ...form, 
+      Choix: form.reponses.map(r => r.texte), 
+      BonneReponse: form.reponses.find(r => r.estCorrecte)?.texte || '' 
+    };
+    
     if (isEdit.value) await api.put(`/Questions/${form.id}`, payload);
     else await api.post('/Questions', payload);
     showModal.value = false;
@@ -427,6 +453,23 @@ const showToast = (message, type = 'success') => {
   toast.active = true;
   setTimeout(() => { toast.active = false; }, 3000);
 };
+
+// Surveiller le changement de type pour adapter les réponses
+watch(() => form.type, (newType) => {
+  if (newType === 2) { // VRAI_FAUX
+    if (form.reponses.length !== 2 || form.reponses[0].texte !== 'Vrai') {
+      form.reponses = [
+        { texte: 'Vrai', estCorrecte: true },
+        { texte: 'Faux', estCorrecte: false }
+      ];
+    }
+  } else if (isEdit.value === false && (newType === 0 || newType === 1)) {
+     // Pour une nouvelle question QCM, on met des champs vides
+     if (form.reponses.length === 2 && form.reponses[0].texte === 'Vrai') {
+        form.reponses = [{ texte: '', estCorrecte: true }, { texte: '', estCorrecte: false }];
+     }
+  }
+});
 
 onMounted(fetchData);
 </script>
