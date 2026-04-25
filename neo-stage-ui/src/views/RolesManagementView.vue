@@ -141,6 +141,7 @@
                     <option value="">Rôle personnalisé</option>
                     <option value="manager">Manager - Accès complet</option>
                     <option value="hr">RH - Recrutement & Staff</option>
+                    <option value="evaluator">Évaluateur (Correcteur technique)</option>
                     <option value="viewer">Lecteur - Lecture seule</option>
                   </select>
                 </div>
@@ -229,14 +230,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed, onUnmounted } from 'vue';
-import axios from 'axios';
-
-// 1. IMPORTATION DES COMPOSANTS (Utilisez @ pour src/)
-import AppSidebar from '@/components/AppSidebar.vue';
-import AppNavbar from '@/components/AppNavbar.vue';
-
-const API_URL = 'http://localhost:5172/api/Roles'; 
-const abortController = new AbortController();
+import api from '@/services/api';
 
 const roles = ref([]);
 const stats = ref([]);
@@ -263,14 +257,13 @@ const fetchData = async () => {
   loading.value = true;
   try {
     const [rolesRes, statsRes] = await Promise.all([
-      axios.get(API_URL, { signal: abortController.signal }),
-      axios.get(`${API_URL}/stats`, { signal: abortController.signal })
+      api.get('/Roles'),
+      api.get('/Roles/stats')
     ]);
     roles.value = rolesRes.data;
     stats.value = statsRes.data;
   } catch (err) {
-    if (axios.isCancel(err)) return;
-    console.error("Erreur API : Vérifiez que le serveur .NET tourne sur le port 5172.");
+    console.error("Erreur API Roles:", err);
     roles.value = [];
   } finally {
     loading.value = false;
@@ -278,7 +271,6 @@ const fetchData = async () => {
 };
 
 onMounted(fetchData);
-onUnmounted(() => abortController.abort());
 
 const filteredRoles = computed(() => {
   return roles.value.filter(r => 
@@ -290,8 +282,9 @@ const filteredRoles = computed(() => {
 const applyTemplate = () => {
   if (!selectedTemplate.value) return;
   const templates = {
-    manager: { nom: 'Manager Général', perms: ['view_can', 'inv_can', 'del_can', 'add_rol', 'view_rol', 'add_staff', 'view_staff'] },
+    manager: { nom: 'Manager Général', perms: ['view_can', 'inv_can', 'del_can', 'add_rol', 'view_rol', 'add_staff', 'view_staff', 'view_tests', 'grade_tests'] },
     hr: { nom: 'Responsable RH', perms: ['view_can', 'inv_can', 'view_staff'] },
+    evaluator: { nom: 'Évaluateur Technique', perms: ['view_can', 'view_tests', 'grade_tests', 'edit_bank'] },
     viewer: { nom: 'Lecteur Système', perms: ['view_can', 'view_staff'] }
   };
   const t = templates[selectedTemplate.value];
@@ -303,12 +296,12 @@ const saveRole = async () => {
   if (!form.nom) return alert("Le nom du rôle est obligatoire.");
   saving.value = true;
   try {
-    if (isEditing.value) await axios.put(`${API_URL}/${form.id}`, form);
-    else await axios.post(API_URL, form);
+    if (isEditing.value) await api.put(`/Roles/${form.id}`, form);
+    else await api.post('/Roles', form);
     await fetchData();
     closeModal();
   } catch (err) {
-    alert("Erreur lors de l'enregistrement.");
+    alert("Erreur lors de l'enregistrement. Vérifiez vos droits.");
   } finally {
     saving.value = false;
   }
@@ -317,7 +310,7 @@ const saveRole = async () => {
 const deleteRole = async (id) => {
   if (confirm("Supprimer ce rôle définitivement ?")) {
     try {
-      await axios.delete(`${API_URL}/${id}`);
+      await api.delete(`/Roles/${id}`);
       await fetchData();
     } catch (err) {
       alert("Action impossible : ce rôle est déjà attribué à des utilisateurs.");
@@ -367,7 +360,8 @@ const clearAll = () => form.permissions = [];
 const permissionGroups = [
   { title: 'Candidats & Recrutement', icon: 'fa-solid fa-user-tie', items: [{ id: 'view_can', label: 'Consultation', desc: 'Accès aux listes' }, { id: 'inv_can', label: 'Invitations', desc: 'Envoyer des tests' }, { id: 'del_can', label: 'Suppression', desc: 'Archiver les dossiers' }] },
   { title: 'Gestion du Système', icon: 'fa-solid fa-shield-halved', items: [{ id: 'add_rol', label: 'Création Rôles', desc: 'Ajouter des profils' }, { id: 'view_rol', label: 'Audit Droits', desc: 'Voir les logs' }] },
-  { title: 'Administration Staff', icon: 'fa-solid fa-users-gear', items: [{ id: 'add_staff', label: 'Nouveau Staff', desc: 'Inscrire un employé' }, { id: 'view_staff', label: 'Voir Staff', desc: 'Accès annuaire' }] }
+  { title: 'Administration Staff', icon: 'fa-solid fa-users-gear', items: [{ id: 'add_staff', label: 'Nouveau Staff', desc: 'Inscrire un employé' }, { id: 'view_staff', label: 'Voir Staff', desc: 'Accès annuaire' }] },
+  { title: 'Évaluation & Correction', icon: 'fa-solid fa-square-check', items: [{ id: 'view_tests', label: 'Voir Réponses', desc: 'Consulter les tests finis' }, { id: 'grade_tests', label: 'Correction', desc: 'Attribuer les notes' }, { id: 'edit_bank', label: 'Banque Questions', desc: 'Modifier les questions' }] }
 ];
 </script>
 

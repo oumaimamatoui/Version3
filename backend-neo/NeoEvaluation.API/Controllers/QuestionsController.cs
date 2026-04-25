@@ -51,6 +51,9 @@ namespace NeoEvaluation.API.Controllers
             try
             {
                 // 1. Création de la Question
+                Console.WriteLine($"[DEBUG CREATE] Enonce: {dto.Enonce}");
+                Console.WriteLine($"[DEBUG CREATE] Options received in DTO: {dto.Choix?.Count ?? 0}");
+
                 var question = new Question
                 {
                     Id = Guid.NewGuid(),
@@ -66,6 +69,8 @@ namespace NeoEvaluation.API.Controllers
                     BonneReponse = dto.BonneReponse ?? string.Empty,
                     Prerequis = dto.Prerequis ?? new List<string>()
                 };
+
+                Console.WriteLine($"[DEBUG CREATE] Question object Choix count: {question.Choix.Count}");
 
                 _context.Questions.Add(question);
 

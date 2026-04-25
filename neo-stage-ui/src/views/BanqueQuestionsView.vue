@@ -210,7 +210,7 @@
                 <div class="col-12 responses-config-panel" v-if="[0, 1, 2].includes(form.type)">
                   <div class="d-flex justify-content-between align-items-center mb-3">
                     <label class="label-cyber m-0">RÉPONSES ET CORRECTION</label>
-                    <button v-if="form.type !== 2" @click="addResponse" class="btn-add-cyber">
+                    <button v-if="form.type === 0 || form.type === 1" @click="addResponse" class="btn-add-cyber" type="button">
                       <i class="fa-solid fa-plus me-1"></i> AJOUTER OPTION
                     </button>
                   </div>
@@ -417,11 +417,19 @@ const save = async () => {
   if(!form.enonce.trim()) return;
   isSaving.value = true;
   try {
-    // On s'assure que Choix contient les textes des réponses
-    const payload = { 
-      ...form, 
-      Choix: form.reponses.map(r => r.texte), 
-      BonneReponse: form.reponses.find(r => r.estCorrecte)?.texte || '' 
+    // 2. Préparation du payload pour le backend
+    // 2. Préparation du payload pour le backend (Noms des champs exactement comme le DTO)
+    const payload = {
+      enonce: form.enonce,
+      type: form.type,
+      points: form.points,
+      theme: form.theme,
+      sousTheme: form.sousTheme,
+      choix: form.reponses.map(r => r.texte).filter(t => t && t.trim() !== ''),
+      bonneReponse: form.reponses
+        .filter(r => r.estCorrecte)
+        .map(r => r.texte)
+        .join('|')
     };
     
     if (isEdit.value) await api.put(`/Questions/${form.id}`, payload);

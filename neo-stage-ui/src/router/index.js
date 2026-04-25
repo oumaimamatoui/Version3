@@ -23,6 +23,7 @@ import AccueilExamenView from '../views/AccueilExamenView.vue'
 import QuizView from '../views/QuizView.vue'
 import ResultsView from '../views/ResultsView.vue'
 import HistoryView from '../views/HistoryView.vue'
+import MyTestsView from '../views/MyTestsView.vue'
 
 import BanqueQuestionsView from '../views/BanqueQuestionsView.vue'
 import CampagnesView from '../views/CampagnesView.vue'
@@ -68,6 +69,7 @@ const routes = [
    * ROUTES COMMUNES (AUTHENTIFIÉES)
    */
   { path: '/dashboard', name: 'dashboard', component: DashboardView, meta: { requiresAuth: true } },
+  { path: '/my-tests', name: 'my-tests', component: MyTestsView, meta: { requiresAuth: true, role: 'Candidat' } },
   { path: '/profile', name: 'profile', component: ProfilView, meta: { requiresAuth: true } },
   { path: '/settings', name: 'settings', component: SettingsView, meta: { requiresAuth: true } },
   { path: '/aide-support', name: 'aide-support', component: AideSupportView, meta: { requiresAuth: true } },
