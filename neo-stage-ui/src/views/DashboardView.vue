@@ -97,68 +97,9 @@
           </div>
         </div>
 
-        <!-- 4. SECTION CANDIDATS : LISTE DES CAMPAGNES -->
-        <div v-if="userRole === 'Candidat'" class="campaign-candidate-section mb-5">
-          <div class="d-flex justify-content-between align-items-end mb-4">
-            <div>
-              <h4 class="section-title-main">Evaluations prioritaires</h4>
-              <p class="text-muted small m-0">Veuillez compléter vos tests avant la date limite.</p>
-            </div>
-            <span class="badge bg-slate-100 text-slate-600 px-3 py-2 rounded-pill fw-bold">{{ filteredCampaigns.length }} Tests</span>
-          </div>
-
-          <div v-if="loading" class="text-center py-5">
-            <div class="loader-ripple"><div></div><div></div></div>
-            <p class="mt-3 text-muted fw-semibold">Chargement de votre environnement...</p>
-          </div>
-
-          <div v-else class="row g-4">
-            <div v-if="filteredCampaigns.length === 0" class="col-12">
-              <div class="empty-state-panel">
-                <i class="fa-solid fa-inbox fa-3x mb-3 text-slate-200"></i>
-                <p class="fw-bold text-slate-500">Aucun test ne requiert votre attention pour le moment.</p>
-              </div>
-            </div>
-
-            <div v-for="c in filteredCampaigns" :key="c.id" class="col-md-6 col-xl-4">
-              <div class="campaign-card-glass">
-                <div class="card-header-tech">
-                  <span class="category-tag">{{ c.categorie || 'TECH' }}</span>
-                  <div class="duration-tag"><i class="fa-regular fa-clock me-1"></i> {{ c.dureeMinutes }}min</div>
-                </div>
-                
-                <div class="p-4 pt-3">
-                  <h5 class="campaign-title">{{ c.nom }}</h5>
-                  <p class="campaign-description">{{ c.description || 'Test de compétences techniques de haut niveau.' }}</p>
-                  
-                  <div class="campaign-info-grid">
-                    <div class="info-item">
-                      <span class="label">Passage</span>
-                      <span class="value text-success">{{ c.scorePassage }}%</span>
-                    </div>
-                    <div class="info-item">
-                      <span class="label">Échéance</span>
-                      <span class="value">{{ formatDate(c.dateFin) }}</span>
-                    </div>
-                  </div>
-
-                  <button 
-                    @click="startExam(c)" 
-                    class="btn-primary-cyber" 
-                    :disabled="new Date(c.dateDebut) > new Date()"
-                    :title="new Date(c.dateDebut) > new Date() ? 'Ce test n\'est pas encore ouvert' : ''"
-                  >
-                    <span v-if="new Date(c.dateDebut) > new Date()">
-                      Ouvre le {{ formatDate(c.dateDebut) }}
-                    </span>
-                    <span v-else>
-                      Démarrer la session <i class="fa-solid fa-arrow-right ms-2"></i>
-                    </span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+        <!-- 4. FOOTER BIENVENUE POUR CANDIDAT -->
+        <div v-if="userRole === 'Candidat'" class="welcome-candidate-footer py-5 text-center">
+            <p class="text-muted italic">"Le succès n'est pas final, l'échec n'est pas fatal : c'est le courage de continuer qui compte."</p>
         </div>
 
         <!-- 5. ANALYTICS (Pour Admins) -->
@@ -200,8 +141,11 @@ const fetchCampaigns = async () => {
   loading.value = true;
   try {
     const res = await api.get('/Campagnes');
+    console.log("[DEBUG DASHBOARD] Campaigns received:", res.data);
     campaigns.value = res.data;
-  } catch (err) { console.error(err); } 
+  } catch (err) { 
+    console.error("[DEBUG DASHBOARD] Error fetching campaigns:", err); 
+  } 
   finally { loading.value = false; }
 };
 

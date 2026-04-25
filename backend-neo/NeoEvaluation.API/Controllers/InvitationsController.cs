@@ -54,7 +54,6 @@ namespace NeoEvaluation.API.Controllers
                             EntrepriseId = currentEntId
                         };
                         _context.Utilisateurs.Add(candidat);
-                        await _context.SaveChangesAsync();
                     }
                     else if (candidat.EntrepriseId == null)
                     {
@@ -78,6 +77,7 @@ namespace NeoEvaluation.API.Controllers
                     await _context.SaveChangesAsync();
 
                     string activationLink;
+
                     if (candidat.EstActif)
                     {
                         // Le candidat est déjà enregistré et actif. Pas besoin de recréer de mot de passe.
@@ -85,7 +85,7 @@ namespace NeoEvaluation.API.Controllers
                     }
                     else
                     {
-                        // 4. Générer le Token d'activation (pour le test)
+                        // 3. Générer le Token d'activation (pour le test)
                         var token = new TokensActivation {
                             Id = Guid.NewGuid(), 
                             Token = Guid.NewGuid(), 
@@ -98,7 +98,7 @@ namespace NeoEvaluation.API.Controllers
                         _context.TokensActivation.Add(token);
                         await _context.SaveChangesAsync();
 
-                        // 5. Préparation du lien
+                        // 4. Préparation du lien
                         activationLink = $"http://localhost:5173/activate-role?token={token.Token}";
                     }
                     
