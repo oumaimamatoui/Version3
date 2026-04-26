@@ -40,7 +40,6 @@ namespace NeoEvaluation.API.Controllers
         {
             var tenantId = _tenantService.GetTenantId();
 
-            // On récupère les candidats qui ont une candidature dans l'entreprise actuelle
             var query = await _context.Candidatures
                 .Include(c => c.Candidat)
                 .Include(c => c.Campagne)
@@ -55,12 +54,45 @@ namespace NeoEvaluation.API.Controllers
                     status = c.Statut.ToString()
                 }).ToListAsync();
 
-            // Éviter les doublons basés sur l'email
             var distinctList = query.GroupBy(x => x.email)
                                     .Select(g => g.First())
                                     .ToList();
 
             return Ok(distinctList);
+        }
+
+        // NOUVEAU - URL: GET http://localhost:5172/api/Candidates/{id}
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetCandidateById(Guid id)
+        {
+            var tenantId = _tenantService.GetTenantId();
+
+            var candidature = await _context.Candidatures
+                .Include(c => c.Candidat)
+                .Include(c => c.Campagne)
+                .Where(c => c.CandidatId == id && c.Campagne.EntrepriseId == tenantId)
+                .FirstOrDefaultAsync();
+
+            if (candidature == null) return NotFound(new { message = "Candidat introuvable" });
+
+            // Projection pour correspondre aux besoins du Frontend
+            var result = new
+            {
+                id = candidature.CandidatId,
+                fullName = (candidature.Candidat.Prenom + " " + candidature.Candidat.Nom).Trim(),
+                email = candidature.Candidat.Email,
+                campaignName = candidature.Campagne.Nom,
+                scoreGlobal = 78, // À lier à votre table de résultats plus tard
+                iaVerdict = "L'analyse montre un profil technique solide avec une bonne capacité d'adaptation aux environnements agiles.",
+                skills = new List<object>
+                {
+                    new { name = "Technique", val = 85 },
+                    new { name = "Soft Skills", val = 70 },
+                    new { name = "Logique", val = 90 }
+                }
+            };
+
+            return Ok(result);
         }
 
         // URL: POST http://localhost:5172/api/Candidates/bulk-invite
@@ -77,7 +109,6 @@ namespace NeoEvaluation.API.Controllers
 
             foreach (var email in dto.Emails)
             {
-                // Vérifier si le candidat existe déjà (on ignore les filtres pour éviter les doublons d'email)
                 var cand = await _context.Utilisateurs.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Email == email);
                 
                 if (cand == null) {
@@ -89,14 +120,13 @@ namespace NeoEvaluation.API.Controllers
                         RoleNom = "Candidat", 
                         EstActif = false, 
                         CreeLe = DateTime.UtcNow,
-                        EntrepriseId = entId, // CRUCIAL : Lier à l'entreprise
+                        EntrepriseId = entId, 
                         Privileges = new List<string> { "AccèsExamen" } 
                     };
                     _context.Utilisateurs.Add(cand);
                 }
                 else if (cand.EntrepriseId == null)
                 {
-                    // Si le candidat existait sans entreprise, on le lie à celle-ci
                     cand.EntrepriseId = entId;
                 }
 
@@ -105,7 +135,7 @@ namespace NeoEvaluation.API.Controllers
                     PostuleLe = DateTime.UtcNow, Statut = ApplicationStatus.POSTULE 
                 });
 
-                string link = "http://localhost:5173/login"; // Par défaut, aller au login
+                string link = "http://localhost:5173/login";
 
                 if (!cand.EstActif)
                 {
@@ -124,7 +154,7 @@ namespace NeoEvaluation.API.Controllers
                 }
 
                 try {
-                    await _emailService.SendEmailAsync(email, $"Invitation : {campagne.Nom}", $"Vous avez été assigné à une nouvelle évaluation. Connectez-vous ou activez votre compte via ce lien : {link}");
+                    await _emailService.SendEmailAsync(email, $"Invitation : {campagne.Nom}", $"Vous avez été assigné à une nouvelle évaluation. Lien : {link}");
                 } catch { }
             }
             return Ok(new { message = "Invitations envoyées avec succès." });

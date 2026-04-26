@@ -53,56 +53,118 @@
       </div>
     </header>
 
-    <!-- 3. HERO SECTION -->
+    <!-- 3. HERO SECTION (AMÉLIORÉE) -->
     <section id="top" class="hero-section">
       <div class="hero-bg-grid"></div>
       <div class="hero-orb hero-orb-1"></div>
       <div class="hero-orb hero-orb-2"></div>
       <div class="container position-relative">
-        <div class="row align-items-center">
+        <div class="row align-items-center g-5">
+
+          <!-- LEFT COLUMN -->
           <div class="col-lg-6 hero-text-wrapper" :class="{ 'hero-visible': heroVisible }">
+
             <div class="hero-badge">
               <span class="badge-dot"></span>
               Plateforme IA · PFE 2026
             </div>
+
+            <p class="hero-eyebrow">Évaluation Technique & Comportementale</p>
+
             <h1 class="hero-title">
               Révolutionnez<br>
-              vos <span class="hero-highlight">évaluations<br>avec l'IA</span>
+              vos <span class="hero-highlight">évaluations</span><br>
+              avec l'IA
             </h1>
+
             <p class="hero-desc">
               EvaluaTech est une plateforme SaaS d'évaluation technique et comportementale.
               Automatisez la création de tests et analysez les compétences en temps réel.
             </p>
-            <div class="hero-btns mt-4 d-flex align-items-center gap-3">
+
+            <!-- Mini stats inline -->
+            <div class="hero-stats-inline">
+              <div class="stat-pill">
+                <span class="stat-pill-val">1.2M+</span>
+                <span class="stat-pill-label">Tests Générés</span>
+              </div>
+              <div class="stat-sep"></div>
+              <div class="stat-pill">
+                <span class="stat-pill-val">98%</span>
+                <span class="stat-pill-label">Précision IA</span>
+              </div>
+              <div class="stat-sep"></div>
+              <div class="stat-pill">
+                <span class="stat-pill-val">500+</span>
+                <span class="stat-pill-label">Entreprises</span>
+              </div>
+            </div>
+
+            <div class="hero-btns d-flex align-items-center gap-3">
               <a href="/login" class="btn-amber-lg shadow-amber">
                 Démarrer maintenant
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>
               </a>
-              <a href="#services" class="btn-outline-custom">
-                Découvrir
-              </a>
+              <a href="#services" class="btn-outline-custom">Découvrir</a>
             </div>
-            <div class="hero-trust mt-5">
+
+            <div class="hero-divider"></div>
+
+            <div class="hero-trust">
               <div class="trust-avatars">
                 <div class="ta" style="background:#6366f1">A</div>
                 <div class="ta" style="background:#8b5cf6">B</div>
                 <div class="ta" style="background:#ec4899">C</div>
                 <div class="ta" style="background:#14b8a6">D</div>
               </div>
-              <span class="trust-text"><strong>500+</strong> entreprises nous font confiance</span>
+              <div class="trust-info">
+                <span class="trust-count">500+ entreprises</span>
+                <span class="trust-sub">nous font confiance</span>
+              </div>
             </div>
           </div>
 
+          <!-- RIGHT COLUMN -->
           <div class="col-lg-6 hero-img-wrapper mt-5 mt-lg-0" :class="{ 'hero-visible': heroVisible }">
             <div class="right-image position-relative">
+
+              <div class="hero-glow-effect"></div>
+
+              <!-- Float badge: Proctoring -->
+              <div class="float-badge fb1 animate-float-slow">
+                <div class="fb-icon fb-icon-amber">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <div class="fb-text">
+                  <span class="fb-val">Proctoring Actif</span>
+                  <span class="fb-sub">Surveillance IA activée</span>
+                </div>
+              </div>
+
+              <!-- Main Mockup -->
               <div class="hero-mockup animate-float">
                 <div class="mock-header">
                   <span class="m-dot red"></span>
                   <span class="m-dot yellow"></span>
                   <span class="m-dot green"></span>
                   <span class="mock-title">Rapport IA – Candidat #042</span>
+                  <span class="mock-live"><span class="live-dot"></span> Live</span>
                 </div>
                 <div class="mock-body">
+                  <!-- Candidate row -->
+                  <div class="mock-candidate">
+                    <div class="candidate-avatar">A</div>
+                    <div class="candidate-info">
+                      <h4>Ahmed Benali</h4>
+                      <p>Développeur Full-Stack · Senior</p>
+                    </div>
+                    <div class="score-badge-inline">
+                      <span class="sbi-val">84.2</span>
+                      <span class="sbi-label">Score IA</span>
+                    </div>
+                  </div>
+
+                  <!-- Score circle + Skills -->
                   <div class="score-row">
                     <div class="score-circle">
                       <svg viewBox="0 0 120 120" class="score-svg">
@@ -111,7 +173,7 @@
                           stroke-dasharray="264" stroke-dashoffset="38" stroke-linecap="round"
                           style="transform:rotate(-90deg);transform-origin:60px 60px"/>
                       </svg>
-                      <div class="score-text">84.2<span>Score IA</span></div>
+                      <div class="score-text">84<span>Score</span></div>
                     </div>
                     <div class="score-details">
                       <div class="skill-bar-item" v-for="(skill, i) in mockSkills" :key="i">
@@ -125,23 +187,41 @@
                       </div>
                     </div>
                   </div>
+
                   <div class="mock-tags mt-3">
                     <span class="mock-tag green">✓ React Expert</span>
                     <span class="mock-tag blue">✓ Node.js</span>
                     <span class="mock-tag amber">⚠ DevOps</span>
                   </div>
                 </div>
+                <div class="mock-footer">
+                  <span class="mf-label">Analyse complétée · il y a 2 min</span>
+                  <span class="mf-action">Voir le rapport →</span>
+                </div>
               </div>
-              <!-- Floating badges -->
-              <div class="float-badge fb1 animate-float-slow">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                <span>Proctoring Actif</span>
-              </div>
+
+              <!-- Float badge: Tests -->
               <div class="float-badge fb2 animate-float-delayed">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                <span>+147 Tests aujourd'hui</span>
+                <div class="fb-icon fb-icon-green">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <div class="fb-text">
+                  <span class="fb-val">+147 Tests</span>
+                  <span class="fb-sub">Complétés aujourd'hui</span>
+                </div>
               </div>
-              <div class="hero-glow-effect"></div>
+
+              <!-- Float badge: Accuracy -->
+              <div class="float-badge fb3 animate-float-slow">
+                <div class="fb-icon fb-icon-blue">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.5"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/></svg>
+                </div>
+                <div class="fb-text">
+                  <span class="fb-val">+23% précision</span>
+                  <span class="fb-sub">Ce mois-ci</span>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
@@ -186,7 +266,7 @@
       </div>
     </section>
 
-    <!-- 6. PROCESS / COMMENCER EST FACILE -->
+    <!-- 6. PROCESS -->
     <section id="process" class="process-section py-5 bg-white">
       <div class="container py-5">
         <div class="section-heading text-center mb-2">
@@ -196,7 +276,6 @@
           <div class="h-line"></div>
         </div>
 
-        <!-- Timeline connector line -->
         <div class="process-connector d-none d-lg-block"></div>
 
         <div class="row g-4 mt-4 justify-content-center">
@@ -216,7 +295,7 @@
       </div>
     </section>
 
-    <!-- 7. ABOUT US -->
+    <!-- 7. ABOUT -->
     <section id="about" class="about-section py-5 bg-light-soft">
       <div class="container">
         <div class="row align-items-center g-5 py-5">
@@ -287,7 +366,7 @@
       </div>
     </section>
 
-    <!-- 9. CTA FINAL BANNER -->
+    <!-- 9. CTA FINAL -->
     <section class="final-cta py-5">
       <div class="container">
         <div class="cta-box text-center position-relative overflow-hidden">
@@ -530,7 +609,6 @@ const testimonials = [
 
 const handleScroll = () => {
   scrolled.value = window.scrollY > 50;
-  // update active section
   const sections = ['top', 'services', 'process', 'about'];
   for (const id of sections.reverse()) {
     const el = document.getElementById(id);
@@ -610,17 +688,14 @@ onUnmounted(() => {
 }
 .header-nav.scrolled { box-shadow: 0 4px 30px rgba(0,0,0,0.06); }
 .main-navigation { height: 80px; display: flex; align-items: center; justify-content: space-between; }
-
 .brand { text-decoration: none; display: flex; align-items: center; gap: 10px; }
 .brand-logo-wrap { flex-shrink: 0; }
 .brand-name { font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
-
 .nav-links { list-style: none; margin: 0; padding: 0; display: flex; gap: 30px; }
 .nav-links a { text-decoration: none; color: #64748b; font-weight: 700; font-size: 15px; transition: 0.2s; position: relative; }
 .nav-links a::after { content: ''; position: absolute; bottom: -4px; left: 0; width: 0; height: 2px; background: #eab308; border-radius: 10px; transition: 0.3s; }
 .nav-links a:hover::after, .nav-links a.active::after { width: 100%; }
 .nav-links a:hover, .nav-links a.active { color: #eab308; }
-
 .btn-text { text-decoration: none; color: #0f172a; font-weight: 700; font-size: 15px; transition: 0.2s; margin-right: 8px; }
 .btn-text:hover { color: #eab308; }
 .btn-amber-pill {
@@ -652,29 +727,55 @@ onUnmounted(() => {
 .hero-orb-2 { width: 300px; height: 300px; background: rgba(234,179,8,0.07); bottom: 0; left: -50px; animation: orb-float 10s ease-in-out infinite reverse; }
 @keyframes orb-float { 0%,100%{transform:translate(0,0)} 50%{transform:translate(30px,-30px)} }
 
-/* Hero text animation */
+/* Hero animations */
 .hero-text-wrapper { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
 .hero-img-wrapper { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease 0.3s, transform 0.8s ease 0.3s; }
 .hero-visible { opacity: 1 !important; transform: none !important; }
 
+/* Hero badge */
 .hero-badge {
   display: inline-flex; align-items: center; gap: 8px;
-  background: #fefce8; color: #a16207;
-  padding: 8px 18px; border-radius: 100px; font-weight: 800; font-size: 13px;
-  margin-bottom: 24px; border: 1px solid #fde68a;
+  background: #fefce8; color: #92400e;
+  padding: 7px 16px; border-radius: 100px; font-weight: 700; font-size: 12px;
+  margin-bottom: 16px; border: 1px solid #fde68a;
+  text-transform: uppercase; letter-spacing: 0.8px;
 }
-.badge-dot { width: 8px; height: 8px; background: #eab308; border-radius: 50%; animation: pulse-dot 2s ease-in-out infinite; }
+.badge-dot { width: 7px; height: 7px; background: #eab308; border-radius: 50%; animation: pulse-dot 2s ease-in-out infinite; }
 @keyframes pulse-dot { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.5);opacity:0.7} }
 
-.hero-title { font-size: 62px; font-weight: 800; letter-spacing: -3px; line-height: 1.05; color: #0f172a; }
+/* Hero eyebrow */
+.hero-eyebrow {
+  font-size: 12px; font-weight: 700; color: #eab308;
+  text-transform: uppercase; letter-spacing: 2px; margin-bottom: 14px;
+}
+
+/* Hero title */
+.hero-title { font-size: 62px; font-weight: 800; letter-spacing: -3px; line-height: 1.05; color: #0f172a; margin-bottom: 22px; }
 .hero-highlight { color: #eab308; font-style: italic; position: relative; }
 .hero-highlight::after {
   content: ''; position: absolute; bottom: -4px; left: 0; right: 0; height: 4px;
   background: linear-gradient(90deg, #eab308, transparent);
   border-radius: 10px;
 }
-.hero-desc { font-size: 18px; color: #475569; margin-top: 24px; line-height: 1.65; max-width: 520px; }
 
+/* Hero desc */
+.hero-desc { font-size: 18px; color: #475569; margin-bottom: 28px; line-height: 1.65; max-width: 520px; }
+
+/* Hero inline stats */
+.hero-stats-inline {
+  display: flex; gap: 28px; align-items: center;
+  margin-bottom: 32px;
+  padding: 20px 0;
+  border-top: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f1f5f9;
+}
+.stat-pill { display: flex; flex-direction: column; gap: 2px; }
+.stat-pill-val { font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
+.stat-pill-label { font-size: 10px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; }
+.stat-sep { width: 1px; height: 36px; background: #e2e8f0; }
+
+/* Hero buttons */
+.hero-btns { margin-bottom: 0; }
 .btn-amber-lg, .btn-amber {
   background: #eab308; color: #fff; padding: 18px 40px; border-radius: 16px;
   text-decoration: none; font-weight: 800; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px;
@@ -686,6 +787,10 @@ onUnmounted(() => {
 }
 .btn-outline-custom:hover { background: #0f172a; color: #fff; border-color: #0f172a; }
 
+/* Hero divider */
+.hero-divider { width: 100%; height: 1px; background: #f1f5f9; margin: 28px 0; }
+
+/* Hero trust */
 .hero-trust { display: flex; align-items: center; gap: 14px; }
 .trust-avatars { display: flex; }
 .ta {
@@ -694,40 +799,61 @@ onUnmounted(() => {
   margin-left: -8px;
 }
 .ta:first-child { margin-left: 0; }
-.trust-text { font-size: 14px; color: #64748b; }
-.trust-text strong { color: #0f172a; }
+.trust-info { display: flex; flex-direction: column; gap: 1px; }
+.trust-count { font-size: 15px; font-weight: 800; color: #0f172a; }
+.trust-sub { font-size: 12px; color: #94a3b8; }
 
 /* Hero mockup */
 .hero-mockup {
   background: white; border-radius: 24px; border: 1px solid #e2e8f0;
-  overflow: hidden; max-width: 480px; margin: 0 auto; position: relative; z-index: 5;
+  overflow: hidden; max-width: 500px; margin: 0 auto; position: relative; z-index: 5;
   box-shadow: 0 40px 80px rgba(0,0,0,0.08);
 }
 .mock-header {
   background: #f8fafc; padding: 14px 20px; border-bottom: 1px solid #f1f5f9;
   display: flex; align-items: center; gap: 6px;
 }
-.mock-title { font-size: 12px; font-weight: 700; color: #94a3b8; margin-left: 10px; }
+.mock-title { font-size: 12px; font-weight: 700; color: #94a3b8; margin-left: 10px; flex: 1; }
+.mock-live { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; color: #22c55e; }
+.live-dot { width: 6px; height: 6px; background: #22c55e; border-radius: 50%; }
 .m-dot { width: 10px; height: 10px; border-radius: 50%; }
 .m-dot.red { background: #ff5f56; } .m-dot.yellow { background: #ffbd2e; } .m-dot.green { background: #27c93f; }
-.mock-body { padding: 30px; }
+.mock-body { padding: 24px; }
+
+/* Candidate row */
+.mock-candidate {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9;
+}
+.candidate-avatar {
+  width: 40px; height: 40px; background: #fefce8; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 16px; color: #eab308; flex-shrink: 0;
+}
+.candidate-info { flex: 1; }
+.candidate-info h4 { font-size: 13px; font-weight: 800; color: #0f172a; margin: 0 0 2px; }
+.candidate-info p { font-size: 11px; color: #94a3b8; margin: 0; }
+.score-badge-inline { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+.sbi-val { font-size: 26px; font-weight: 800; color: #0f172a; line-height: 1; }
+.sbi-label { font-size: 9px; font-weight: 700; color: #eab308; text-transform: uppercase; letter-spacing: 1px; }
+
+/* Score row */
 .score-row { display: flex; gap: 24px; align-items: center; }
-.score-circle { position: relative; width: 120px; height: 120px; flex-shrink: 0; }
-.score-svg { width: 120px; height: 120px; }
+.score-circle { position: relative; width: 110px; height: 110px; flex-shrink: 0; }
+.score-svg { width: 110px; height: 110px; }
 .score-text {
   position: absolute; inset: 0; display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   font-size: 26px; font-weight: 800; color: #0f172a;
 }
-.score-text span { font-size: 11px; color: #eab308; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; }
+.score-text span { font-size: 10px; color: #eab308; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; }
 .score-details { flex: 1; }
 .skill-bar-item { margin-bottom: 12px; }
 .skill-track { height: 6px; background: #f1f5f9; border-radius: 10px; overflow: hidden; }
 .skill-fill {
   height: 100%; background: linear-gradient(90deg, #eab308, #f59e0b);
-  border-radius: 10px; width: 0;
-  animation: fill-bar 1.5s ease forwards;
-  animation-delay: 1.2s;
+  border-radius: 10px; animation: fill-bar 1.5s ease forwards;
+  animation-delay: 1.2s; width: 0;
 }
 @keyframes fill-bar { to { width: var(--w); } }
 .mock-tags { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -736,15 +862,34 @@ onUnmounted(() => {
 .mock-tag.blue { background: #dbeafe; color: #2563eb; }
 .mock-tag.amber { background: #fef9c3; color: #a16207; }
 
-/* Float badges */
+/* Mock footer */
+.mock-footer {
+  padding: 12px 20px; background: #f8fafc; border-top: 1px solid #f1f5f9;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.mf-label { font-size: 11px; color: #94a3b8; font-weight: 600; }
+.mf-action { font-size: 11px; font-weight: 700; color: #eab308; }
+
+/* Float badges (new 3-badge design) */
 .float-badge {
   position: absolute; background: white; border: 1px solid #f1f5f9;
-  border-radius: 50px; padding: 10px 18px; display: flex; align-items: center;
-  gap: 8px; font-size: 13px; font-weight: 700; color: #0f172a;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  border-radius: 14px; padding: 10px 14px; display: flex; align-items: center;
+  gap: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); z-index: 10;
 }
-.fb1 { top: 10%; right: -10%; }
-.fb2 { bottom: 10%; left: -5%; }
+.fb-icon {
+  width: 32px; height: 32px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.fb-icon-amber { background: #fef9c3; }
+.fb-icon-green { background: #dcfce7; }
+.fb-icon-blue  { background: #dbeafe; }
+.fb-text { display: flex; flex-direction: column; gap: 1px; }
+.fb-val { font-size: 13px; font-weight: 800; color: #0f172a; }
+.fb-sub { font-size: 10px; color: #94a3b8; font-weight: 600; }
+.fb1 { top: -20px; right: 20px; }
+.fb2 { bottom: 40px; left: -20px; }
+.fb3 { bottom: -16px; right: 10px; }
+
 .hero-glow-effect {
   position: absolute; top: 40%; left: 50%; transform: translate(-30%, -30%);
   width: 400px; height: 400px; background: rgba(234,179,8,0.15);
@@ -759,13 +904,11 @@ onUnmounted(() => {
   padding: 32px 0;
 }
 .stats-inner {
-  display: grid; grid-template-columns: repeat(6, 1fr);
-  gap: 0;
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 0;
 }
 .stat-item {
   display: flex; align-items: center; gap: 14px;
-  padding: 16px 24px;
-  border-right: 1px solid #f1f5f9;
+  padding: 16px 24px; border-right: 1px solid #f1f5f9;
 }
 .stat-item:last-child { border-right: none; }
 .stat-icon {
@@ -801,7 +944,7 @@ onUnmounted(() => {
 }
 .service-card:hover { transform: translateY(-10px); box-shadow: 0 24px 50px rgba(0,0,0,0.06); border-color: #fde68a; }
 .service-card:hover::before { opacity: 1; }
-.service-card:hover .card-arrow { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.service-card:hover .card-arrow { opacity: 1; }
 .icon-circle {
   width: 64px; height: 64px; background: #fefce8; color: #eab308;
   border-radius: 18px; display: flex; align-items: center; justify-content: center;
@@ -968,20 +1111,25 @@ onUnmounted(() => {
 @media (max-width: 991px) {
   .hero-section { min-height: auto; padding: 100px 0 60px; }
   .hero-title { font-size: 40px; text-align: center; }
+  .hero-eyebrow { text-align: center; }
   .hero-desc { text-align: center; margin: 20px auto; }
   .hero-btns { justify-content: center; flex-direction: column; }
-  .hero-badge { margin: 0 auto 20px; }
+  .hero-badge { margin: 0 auto 16px; }
   .hero-trust { justify-content: center; }
+  .hero-stats-inline { justify-content: center; }
+  .hero-divider { display: none; }
   .section-title { font-size: 34px; }
   .floating-badge, .floating-badge-2 { display: none; }
   .footer-dark { border-radius: 24px 24px 0 0; }
   .stats-inner { grid-template-columns: repeat(2, 1fr); }
   .stat-item { border-right: none; border-bottom: 1px solid #f1f5f9; }
-  .fb1, .fb2 { display: none; }
+  .fb1, .fb2, .fb3 { display: none; }
 }
 @media (max-width: 575px) {
   .hero-title { font-size: 32px; letter-spacing: -1.5px; }
   .stats-inner { grid-template-columns: 1fr 1fr; }
   .cta-box { padding: 50px 24px; }
+  .hero-stats-inline { gap: 16px; }
+  .stat-pill-val { font-size: 18px; }
 }
 </style>
