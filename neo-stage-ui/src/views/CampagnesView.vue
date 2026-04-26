@@ -1416,6 +1416,8 @@ const confirmStudioSync = () => {
     duree:       q.duree || 0,
     id:          `temp-${Math.random()}`,
     _showTimer:  false,
+    // ✅ FIX : Conserver les réponses lors de l'import depuis la banque
+    reponses:    q.reponses ? JSON.parse(JSON.stringify(q.reponses)) : []
   }));
   studio.questions.push(...added);
   modals.bank = false;
@@ -1475,7 +1477,11 @@ const publishToProduction = async () => {
         Niveau:          1,
         BonneReponse:    q.explication || "",
         QuestionnaireId: qId,
-        Choix:           [],
+        // ✅ EL FIX HOUNI: Mapping des réponses (options)
+        Choix: q.reponses ? q.reponses.map(r => ({
+          Texte: r.texte || r.Texte,
+          EstCorrecte: !!(r.estCorrecte || r.EstCorrecte)
+        })) : [],
         Prerequis:       []
       }))
     );
@@ -1493,13 +1499,14 @@ const publishToProduction = async () => {
       SelectedCandidatesIds: selectedCandidatesIds.value,
       SendNotifications:     studio.campagne.sendNotifications
     });
+    
 
     showPulseToast('DÉPLOIEMENT RÉUSSI', 'success', 'fa-solid fa-server');
     isStudioMode.value = false;
     fetchInitialData();
   } catch (err) {
-    console.error("Erreur détaillée:", err.response?.data);
-    showPulseToast('ERREUR DE DÉPLOIEMENT (400)', 'error', 'fa-solid fa-triangle-exclamation');
+    console.error("Erreur détaillée:", err.response?.data || err);
+    showPulseToast('ERREUR DE DÉPLOIEMENT', 'error', 'fa-solid fa-triangle-exclamation');
   } finally {
     isPublishing.value = false;
   }
@@ -1657,12 +1664,13 @@ const generateMocks = () => {
   questionnairesList.value  = [{ id: '10', titre: 'Vue.js Architecture Test' }];
   candidateMasterPool.value = [{ id: '1', name: 'Alice Durand', email: 'alice@tech.io' }];
   bankGlobalReference.value = [
-    { id: '101', texte: "Expliquez l'Event Loop Node.js",   poids: 15, points: 4, difficulty: 'EXPERT', type: 4, theme: 'Backend Specialist', sousTheme: 'Node.js' },
-    { id: '102', texte: "Différence entre var, let, const", poids: 10, points: 2, difficulty: 'MEDIUM', type: 0, theme: 'Frontend Architect',  sousTheme: 'Vue.js'  },
-    { id: '103', texte: "Qu'est-ce que le SOLID ?",          poids: 12, points: 3, difficulty: 'MEDIUM', type: 1, theme: 'Backend Specialist', sousTheme: 'API REST' },
+    { id: '101', texte: "Expliquez l'Event Loop Node.js",   poids: 15, points: 4, difficulty: 'EXPERT', type: 4, theme: 'Backend Specialist', sousTheme: 'Node.js', reponses: [{texte: 'Option A'}, {texte: 'Option B'}] },
+    { id: '102', texte: "Différence entre var, let, const", poids: 10, points: 2, difficulty: 'MEDIUM', type: 0, theme: 'Frontend Architect',  sousTheme: 'Vue.js', reponses: [{texte: 'Vrai'}, {texte: 'Faux'}]  },
+    { id: '103', texte: "Qu'est-ce que le SOLID ?",          poids: 12, points: 3, difficulty: 'MEDIUM', type: 1, theme: 'Backend Specialist', sousTheme: 'API REST', reponses: [] },
   ];
   categoriesList.value = [];
 };
+
 
 /* ─── LIFECYCLE ───────────────────────────────────────────────── */
 onMounted(() => {
@@ -1673,6 +1681,7 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeyboard);
 });
+
 </script>
 
 <style scoped>
@@ -2037,4 +2046,4 @@ kbd { background: #0f172a; color: white; padding: 4px 10px; border-radius: 8px; 
 .text-danger  { color: #f43f5e !important; }
 .fw-800 { font-weight: 800 !important; }
 .fw-900 { font-weight: 900 !important; }
-</style>
+</style> 
