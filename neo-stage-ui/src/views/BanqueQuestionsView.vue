@@ -391,10 +391,10 @@ const openModal = (q = null) => {
     console.log("[DEBUG] Raw options found:", rawOptions);
 
     if (Array.isArray(rawOptions) && rawOptions.length > 0) {
-      form.reponses = rawOptions.map(opt => ({
-        texte: opt,
-        estCorrecte: opt === q.bonneReponse || opt === q.BonneReponse
-      }));
+      form.reponses = rawOptions.map(opt => {
+        const isCorrect = (q.bonneReponse || q.BonneReponse || "").split('|').includes(opt);
+        return { texte: opt, estCorrecte: isCorrect };
+      });
     } else if (q.type === 2) {
       form.reponses = [
         { texte: 'Vrai', estCorrecte: (q.bonneReponse || q.BonneReponse) === 'Vrai' },
@@ -415,22 +415,37 @@ const openModal = (q = null) => {
 
 const save = async () => {
   if(!form.enonce.trim()) return;
+  
+  // Validation: Il faut au moins 2 options pour les types QCM/Vrai-Faux
+  const validChoices = form.reponses.map(r => r.texte).filter(t => t && t.trim() !== '');
+  if ([0, 1, 2].includes(form.type) && validChoices.length < 2) {
+    alert("Veuillez saisir au moins 2 options de réponse.");
+    return;
+  }
+
   isSaving.value = true;
   try {
-    // 2. Préparation du payload pour le backend
-    // 2. Préparation du payload pour le backend (Noms des champs exactement comme le DTO)
-    const payload = {
-      enonce: form.enonce,
-      type: form.type,
-      points: form.points,
-      theme: form.theme,
-      sousTheme: form.sousTheme,
-      choix: form.reponses.map(r => r.texte).filter(t => t && t.trim() !== ''),
-      bonneReponse: form.reponses
-        .filter(r => r.estCorrecte)
-        .map(r => r.texte)
-        .join('|')
-    };
+    // Correction Cruciale: Mise à jour de estCorrecte pour le type Choice Unique (radio)
+    if (form.type === 0 || form.type === 2) {
+      form.reponses.forEach((r, idx) => {
+        r.estCorrecte = (idx === correctRadioIndex.value);
+      });
+    }
+
+      // PREPARATION DU PAYLOAD ULTRA-SYNCHRONISE
+      const payload = {
+        enonce: form.enonce,
+        type: form.type,
+        niveau: form.niveau,
+        points: form.points || 1,
+        dureeSecondes: form.duree || 60,
+        theme: form.theme,
+        sousTheme: form.sousTheme,
+        choix: form.reponses.map(r => r.texte).filter(t => t && t.trim() !== ''),
+        bonneReponse: form.type === 0 || form.type === 2 
+          ? form.reponses.find(r => r.estCorrecte)?.texte || '' 
+          : form.reponses.filter(r => r.estCorrecte).map(r => r.texte).join('|')
+      };
     
     if (isEdit.value) await api.put(`/Questions/${form.id}`, payload);
     else await api.post('/Questions', payload);

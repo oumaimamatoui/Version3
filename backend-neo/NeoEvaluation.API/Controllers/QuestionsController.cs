@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using NeoEvaluation.API.Data;
 using NeoEvaluation.API.Models;
 using NeoEvaluation.API.Services;
+using NeoEvaluation.API.Attributes;
 
 namespace NeoEvaluation.API.Controllers
 {
@@ -28,7 +29,12 @@ namespace NeoEvaluation.API.Controllers
                 .OrderByDescending(q => q.CreeLe)
                 .ToListAsync();
                 
-            return Ok(questions.GroupBy(q => q.Enonce).Select(g => g.First()).ToList());
+            var result = questions
+                .GroupBy(q => q.Enonce)
+                .Select(g => g.OrderByDescending(q => q.Choix?.Count ?? 0).ThenByDescending(q => q.CreeLe).First())
+                .ToList();
+                
+            return Ok(result);
         }
 
         [HttpGet("{id}")]
@@ -38,95 +44,109 @@ namespace NeoEvaluation.API.Controllers
             return q == null ? NotFound() : Ok(q);
         }
 
+        [HttpGet("ByQuestionnaire/{questionnaireId}")]
+        public async Task<IActionResult> GetQuestionsByQuestionnaire(Guid questionnaireId)
+        {
+            var questions = await _context.QuestionnaireQuestions
+                .Where(qq => qq.QuestionnaireId == questionnaireId)
+                .OrderBy(qq => qq.Ordre)
+                .Select(qq => qq.Question)
+                .ToListAsync();
+
+            return Ok(questions);
+        }
+
+        [HttpPost("seed-demo")]
+        public async Task<IActionResult> SeedDemo()
+        {
+            var entId = _tenantService.GetTenantId();
+            if (!entId.HasValue) return Unauthorized();
+
+            var q = new Question {
+                Id = Guid.NewGuid(),
+                Enonce = "Quelle est la capitale de la Tunisie ?",
+                Type = TypeQuestion.QCU,
+                Points = 2,
+                EntrepriseId = entId.Value,
+                Choix = new List<string> { "Tunis", "Sousse", "Sfax", "Bizerte" },
+                BonneReponse = "Tunis",
+                CreeLe = DateTime.UtcNow
+            };
+
+            _context.Questions.Add(q);
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Question démo créée !", questionId = q.Id });
+        }
+
         [HttpPost]
+        [RequirePermission("edit_bank")]
         public async Task<IActionResult> PostQuestion([FromBody] NeoEvaluation.API.DTOs.QuestionCreateDto dto)
         {
-            if (!ModelState.IsValid)
-            {
-                var details = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
-                return BadRequest(new { Message = "Données invalides", Errors = details });
-            }
+            try {
+                var entId = _tenantService.GetTenantId();
+                if (!entId.HasValue) return Unauthorized();
 
-            using var transaction = await _context.Database.BeginTransactionAsync();
-            try
-            {
-                // 1. Création de la Question
-                Console.WriteLine($"[DEBUG CREATE] Enonce: {dto.Enonce}");
-                Console.WriteLine($"[DEBUG CREATE] Options received in DTO: {dto.Choix?.Count ?? 0}");
+                // DEBUG POUR VOIR SI LE FRONTEND ENVOIE BIEN LES CHOIX
+                Console.WriteLine($"[DEBUG POST] Enonce: {dto.Enonce} | Choix Count: {dto.Choix?.Count ?? 0}");
 
-                var question = new Question
-                {
+                var question = new Question {
                     Id = Guid.NewGuid(),
-                    EntrepriseId = _tenantService.GetTenantId(),
                     Enonce = dto.Enonce,
                     Type = dto.Type,
                     Niveau = dto.Niveau,
                     Points = dto.Points,
-                    DureeSecondes = dto.DureeSecondes,
+                    DureeSecondes = dto.DureeSecondes ?? 60,
                     Theme = dto.Theme,
                     SousTheme = dto.SousTheme,
-                    Choix = new List<string>(dto.Choix ?? new List<string>()),
+                    EntrepriseId = entId.Value,
+                    Choix = dto.Choix ?? new List<string>(),
                     BonneReponse = dto.BonneReponse ?? string.Empty,
-                    Prerequis = dto.Prerequis ?? new List<string>()
+                    CreeLe = DateTime.UtcNow
                 };
-
-                Console.WriteLine($"[DEBUG CREATE] Question object Choix count: {question.Choix.Count}");
 
                 _context.Questions.Add(question);
 
-                // 2. Liaison avec le Questionnaire via la table de jointure (si renseigné)
-                if (dto.QuestionnaireId.HasValue && dto.QuestionnaireId.Value != Guid.Empty)
+                // ✅ FIX: Créer la liaison avec le questionnaire si on nous l'envoie !
+                if (dto.QuestionnaireId.HasValue && dto.QuestionnaireId != Guid.Empty)
                 {
-                    // Vérifier si le questionnaire existe
-                    var questionnaireExiste = await _context.Questionnaires.AnyAsync(q => q.Id == dto.QuestionnaireId.Value);
-                    if (!questionnaireExiste)
-                    {
-                        return NotFound(new { message = "Le questionnaire spécifié n'existe pas." });
-                    }
+                    // Calculer le prochain ordre de manière compatible avec EF Core
+                    var maxOrder = await _context.QuestionnaireQuestions
+                        .Where(qq => qq.QuestionnaireId == dto.QuestionnaireId.Value)
+                        .Select(qq => (int?)qq.Ordre)
+                        .MaxAsync();
+                        
+                    var nextOrder = (maxOrder ?? 0) + 1;
 
-                    var liaison = new QuestionnaireQuestion
-                    {
+                    _context.QuestionnaireQuestions.Add(new QuestionnaireQuestion {
                         QuestionnaireId = dto.QuestionnaireId.Value,
                         QuestionId = question.Id,
-                        Ordre = dto.Ordre,
-                        Ponderation = dto.Ponderation,
-                        EstObligatoire = dto.EstObligatoire
-                    };
-                    
-                    _context.QuestionnaireQuestions.Add(liaison);
+                        Ordre = nextOrder,
+                        Ponderation = dto.Points
+                    });
                 }
 
                 await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-
-                return CreatedAtAction(nameof(GetQuestion), new { id = question.Id }, question);
-            }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync();
-                return StatusCode(500, new { message = "Erreur lors de la création de la question", details = ex.Message });
-            }
+                return Ok(question);
+            } catch (Exception ex) { return StatusCode(500, ex.Message); }
         }
 
         [HttpPut("{id}")]
+        [RequirePermission("edit_bank")]
         public async Task<IActionResult> PutQuestion(Guid id, [FromBody] NeoEvaluation.API.DTOs.QuestionCreateDto dto)
         {
             var q = await _context.Questions.FindAsync(id);
             if (q == null) return NotFound();
 
-            Console.WriteLine($"[DEBUG] Updating Question {id}. Options received: {dto.Choix?.Count ?? 0}");
-            if (dto.Choix != null) {
-                foreach(var c in dto.Choix) Console.WriteLine($" - Option: {c}");
-            }
+            Console.WriteLine($"[DEBUG PUT] ID: {id} | Choix Count: {dto.Choix?.Count ?? 0}");
 
             q.Enonce = dto.Enonce;
             q.Type = dto.Type;
             q.Niveau = dto.Niveau;
             q.Points = dto.Points;
-            q.DureeSecondes = dto.DureeSecondes;
+            q.DureeSecondes = dto.DureeSecondes ?? 60;
             q.Theme = dto.Theme;
             q.SousTheme = dto.SousTheme;
-            q.Choix = new List<string>(dto.Choix ?? new List<string>());
+            q.Choix = dto.Choix ?? new List<string>();
             q.BonneReponse = dto.BonneReponse;
 
             await _context.SaveChangesAsync();
@@ -134,25 +154,34 @@ namespace NeoEvaluation.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [RequirePermission("edit_bank")]
         public async Task<IActionResult> DeleteQuestion(Guid id)
         {
             var q = await _context.Questions
+                .IgnoreQueryFilters()
                 .Include(x => x.QuestionnaireQuestions)
                 .FirstOrDefaultAsync(x => x.Id == id);
 
             if (q == null) return NotFound();
 
-            // 1. Supprimer d'abord les liaisons dans la table de jointure
+            // 1. Supprimer les liaisons dans la table de jointure
             if (q.QuestionnaireQuestions.Any())
             {
                 _context.QuestionnaireQuestions.RemoveRange(q.QuestionnaireQuestions);
             }
 
-            // 2. Supprimer la question elle-même
+            // 2. Supprimer les réponses des candidats (très important pour ne pas bloquer)
+            var reponses = await _context.Reponses.IgnoreQueryFilters().Where(r => r.QuestionId == id).ToListAsync();
+            if (reponses.Any())
+            {
+                _context.Reponses.RemoveRange(reponses);
+            }
+
+            // 3. Supprimer la question elle-même
             _context.Questions.Remove(q);
 
             await _context.SaveChangesAsync();
-            return Ok(new { message = "Question et ses liaisons supprimées avec succès." });
+            return Ok(new { message = "Question et ses liaisons/réponses supprimées avec succès." });
         }
 
         // --- GESTION DES CATÉGORIES ---
@@ -170,6 +199,7 @@ namespace NeoEvaluation.API.Controllers
         }
 
         [HttpPost("categories/rename")]
+        [RequirePermission("edit_bank")]
         public async Task<IActionResult> RenameCategory([FromBody] NeoEvaluation.API.DTOs.CategoryRenameDto dto)
         {
             var questions = await _context.Questions
@@ -186,6 +216,7 @@ namespace NeoEvaluation.API.Controllers
         }
 
         [HttpDelete("categories/{name}")]
+        [RequirePermission("edit_bank")]
         public async Task<IActionResult> DeleteCategory(string name)
         {
             var questions = await _context.Questions

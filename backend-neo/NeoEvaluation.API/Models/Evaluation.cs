@@ -15,6 +15,7 @@ namespace NeoEvaluation.API.Models
         public float ScorePourcentage { get; set; }
         public StatutPassage Statut { get; set; } = StatutPassage.NON_COMMENCE;
         public int NbReprises { get; set; } = 0;
+        public int CurrentQuestionIndex { get; set; } = 0;
 
         // Stocké en JSON: {"theme1": 85.5, "theme2": 72.0}
         public Dictionary<string, float> ScoresParTheme { get; set; } = new Dictionary<string, float>();

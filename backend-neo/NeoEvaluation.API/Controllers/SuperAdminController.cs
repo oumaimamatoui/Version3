@@ -184,8 +184,6 @@ namespace NeoEvaluation.API.Controllers
             } catch (Exception ex) {
                 return BadRequest(new { message = "Erreur d'envoi d'email : " + ex.Message });
             }
-
-            return Ok(new { message = "Invitation envoyée", token = token.Token });
         }
 
         // --- AUDIT LOGS ---
@@ -263,7 +261,7 @@ namespace NeoEvaluation.API.Controllers
                 await _emailService.SendEmailAsync(reg.EmailResponsable, "Compte Approuvé - NeoEvaluation", htmlBody);
                 
                 return Ok(new { message = "Entreprise approuvée et email envoyé." });
-            } catch (Exception ex) {
+            } catch (Exception) {
             }
 
             return Ok(new { message = "Entreprise approuvée avec succès" });

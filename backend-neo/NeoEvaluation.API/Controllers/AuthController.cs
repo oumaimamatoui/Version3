@@ -171,7 +171,8 @@ namespace NeoEvaluation.API.Controllers
                 Email = user.Email,
                 Photo = user.PhotoUrl,
                 EntrepriseId = user.EntrepriseId,
-                ThemePreference = user.ThemePreference
+                ThemePreference = user.ThemePreference,
+                Privileges = user.Privileges ?? new List<string>()
             };
         }
 

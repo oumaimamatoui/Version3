@@ -115,19 +115,26 @@
                   <label class="form-label fw-bold small">Description</label>
                   <textarea v-model="newCampagne.description" class="form-control-pro" rows="3" placeholder="Objectifs du test..." required></textarea>
                 </div>
+                <div class="col-12">
+                  <label class="form-label fw-bold small">Questionnaire (Banque de questions)</label>
+                  <select v-model="newCampagne.questionnaireId" class="form-control-pro" required>
+                    <option value="" disabled>-- Sélectionnez un questionnaire --</option>
+                    <option v-for="q in questionnaires" :key="q.id" :value="q.id">{{ q.nom }} ({{ q.questions?.length || 0 }} questions)</option>
+                  </select>
+                </div>
                 <div class="col-md-6">
                   <label class="form-label fw-bold small">Durée (minutes)</label>
                   <input type="number" v-model="newCampagne.dureeMinutes" class="form-control-pro" value="60">
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label fw-bold small">Nombre de questions estimé</label>
-                  <input type="number" class="form-control-pro" value="20" disabled> <!-- À lier au Questionnaire plus tard -->
+                  <label class="form-label fw-bold small">Max Candidats</label>
+                  <input type="number" v-model="newCampagne.maxCandidats" class="form-control-pro" value="100">
                 </div>
               </div>
             </div>
             <div class="modal-footer p-4 border-top">
               <button class="btn btn-light-pro me-2" @click="showCreateModal = false">Annuler</button>
-              <button class="btn btn-primary-pro" @click="createCampagne" :disabled="isSaving">
+              <button class="btn btn-primary-pro" @click="createCampagne" :disabled="isSaving || !newCampagne.questionnaireId">
                 <span v-if="isSaving" class="spinner-border spinner-border-sm me-2"></span>
                 Créer la campagne
               </button>
@@ -156,6 +163,7 @@ const API_BASE = 'http://localhost:5172/api/Campagnes';
 const newCampagne = ref({
   nom: '',
   description: '',
+  questionnaireId: '',
   dureeMinutes: 60,
   maxCandidats: 100,
   statut: 1, // 1 = Active
@@ -171,10 +179,21 @@ const kpis = ref([
 ]);
 
 const assessments = ref([]);
+const questionnaires = ref([]);
 
 // Configuration Axios avec Sécurité (Token JWT)
 const getAuthHeaders = () => {
     return { headers: { Authorization: `Bearer ${authStore.token}` } };
+};
+
+// Récupérer les questionnaires pour le dropdown
+const fetchQuestionnaires = async () => {
+    try {
+        const res = await axios.get('http://localhost:5172/api/Questionnaire', getAuthHeaders());
+        questionnaires.value = res.data;
+    } catch (e) {
+        console.error("Erreur chargement questionnaires:", e);
+    }
 };
 
 // Récupérer les KPIs
@@ -257,6 +276,7 @@ const filteredAssessments = computed(() => {
 onMounted(() => {
     fetchStats();
     fetchAssessments();
+    fetchQuestionnaires();
 });
 </script>
 

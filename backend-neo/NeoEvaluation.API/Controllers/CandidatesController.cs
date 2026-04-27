@@ -5,6 +5,7 @@ using NeoEvaluation.API.Data;
 using NeoEvaluation.API.DTOs;
 using NeoEvaluation.API.Models;
 using NeoEvaluation.API.Services;
+using NeoEvaluation.API.Attributes;
 
 namespace NeoEvaluation.API.Controllers
 {
@@ -26,6 +27,7 @@ namespace NeoEvaluation.API.Controllers
 
         // URL: GET http://localhost:5172/api/Candidates/campagnes
         [HttpGet("campagnes")]
+        [RequirePermission("view_can")]
         public async Task<IActionResult> GetCampagnes()
         {
             var list = await _context.Campagnes
@@ -36,6 +38,7 @@ namespace NeoEvaluation.API.Controllers
 
         // URL: GET http://localhost:5172/api/Candidates
         [HttpGet]
+        [RequirePermission("view_can")]
         public async Task<ActionResult> GetCandidates()
         {
             var tenantId = _tenantService.GetTenantId();
@@ -63,6 +66,7 @@ namespace NeoEvaluation.API.Controllers
 
         // NOUVEAU - URL: GET http://localhost:5172/api/Candidates/{id}
         [HttpGet("{id}")]
+        [RequirePermission("view_can")]
         public async Task<IActionResult> GetCandidateById(Guid id)
         {
             var tenantId = _tenantService.GetTenantId();
@@ -97,6 +101,7 @@ namespace NeoEvaluation.API.Controllers
 
         // URL: POST http://localhost:5172/api/Candidates/bulk-invite
         [HttpPost("bulk-invite")]
+        [RequirePermission("inv_can")]
         public async Task<IActionResult> BulkInvite([FromBody] BulkInviteDto dto)
         {
             if (dto.Emails == null || !dto.Emails.Any()) return BadRequest("Emails manquants.");

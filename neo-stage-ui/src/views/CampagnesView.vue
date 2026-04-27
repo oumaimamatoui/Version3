@@ -1405,20 +1405,33 @@ const toggleInBankPool = (q)  => {
 };
 
 const confirmStudioSync = () => {
-  const added = selectedItemsInBank.value.map(q => ({
-    texte:       q.texte || q.enonce,
-    poids:       q.poids || q.points || 10,
-    difficulty:  q.difficulty || 'EXPERT',
-    explication: q.explication || q.bonneReponse || '',
-    type:        q.type ?? 0,
-    theme:       q.theme || q.categorie || '',
-    sousTheme:   q.sousTheme || '',
-    duree:       q.duree || 0,
-    id:          `temp-${Math.random()}`,
-    _showTimer:  false,
-    // ✅ FIX : Conserver les réponses lors de l'import depuis la banque
-    reponses:    q.reponses ? JSON.parse(JSON.stringify(q.reponses)) : []
-  }));
+  const added = selectedItemsInBank.value.map(q => {
+    // ✅ FIX CRITIQUE: Les questions de la banque ont q.choix (string[]) mais pas q.reponses
+    // On doit convertir q.choix → reponses pour que publishToProduction puisse les utiliser
+    const correctOpts = (q.bonneReponse || '').split('|').map(s => s.trim()).filter(Boolean);
+    const reponses = q.reponses && q.reponses.length > 0
+      ? JSON.parse(JSON.stringify(q.reponses))
+      : (q.choix || []).map(opt => ({
+          texte: opt,
+          estCorrecte: correctOpts.includes(opt.trim())
+        }));
+
+    return {
+      texte:       q.texte || q.enonce,
+      poids:       q.poids || q.points || 10,
+      difficulty:  q.difficulty || 'EXPERT',
+      explication: q.explication || q.bonneReponse || '',
+      bonneReponse: q.bonneReponse || '',
+      choix:       q.choix || [],
+      type:        q.type ?? 0,
+      theme:       q.theme || q.categorie || '',
+      sousTheme:   q.sousTheme || '',
+      duree:       q.duree || 0,
+      id:          `temp-${Math.random()}`,
+      _showTimer:  false,
+      reponses,
+    };
+  });
   studio.questions.push(...added);
   modals.bank = false;
   addFeedItem(`${added.length} actif(s) importé(s)`, '#f59e0b');
@@ -1469,21 +1482,28 @@ const publishToProduction = async () => {
     const qId = qResp.data.id;
 
     await Promise.all(
-      studio.questions.map(q => api.post(`/Questions`, {
-        Enonce:          q.texte || q.enonce || "Question sans titre",
-        Points:          Number(q.poids || q.points) || 1,
-        DureeSecondes:   q.duree > 0 ? q.duree : null,
-        Type:            q.type ?? 0,
-        Niveau:          1,
-        BonneReponse:    q.explication || "",
-        QuestionnaireId: qId,
-        // ✅ EL FIX HOUNI: Mapping des réponses (options)
-        Choix: q.reponses ? q.reponses.map(r => ({
-          Texte: r.texte || r.Texte,
-          EstCorrecte: !!(r.estCorrecte || r.EstCorrecte)
-        })) : [],
-        Prerequis:       []
-      }))
+      studio.questions.map(q => {
+        // ✅ FIX CRITIQUE: q.reponses peut être [] (tableau vide = truthy!) → vérifier la longueur
+        const hasReponses = q.reponses && q.reponses.length > 0;
+        const choixFinal = hasReponses
+          ? q.reponses.map(r => r.texte || r.Texte).filter(Boolean)
+          : (q.choix || q.Options || []);
+
+        const bonneReponseFinal = hasReponses
+          ? q.reponses.filter(r => r.estCorrecte).map(r => r.texte || r.Texte).filter(Boolean).join('|')
+          : (q.bonneReponse || q.explication || '');
+
+        return api.post(`/Questions`, {
+          enonce:          q.texte || q.enonce || 'Question sans titre',
+          points:          Number(q.poids || q.points) || 1,
+          dureeSecondes:   q.duree > 0 ? q.duree : null,
+          type:            q.type ?? 0,
+          niveau:          1,
+          bonneReponse:    bonneReponseFinal,
+          questionnaireId: qId,
+          choix:           choixFinal,
+        });
+      })
     );
 
     await api.post(`/Campagnes`, {

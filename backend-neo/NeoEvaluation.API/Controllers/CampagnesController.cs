@@ -69,7 +69,12 @@ namespace NeoEvaluation.API.Controllers
                                             .Select(cq => cq.QuestionnaireId)
                                             .FirstOrDefault(),
                         // On renvoie aussi le nombre actuel de candidats inscrits
-                        NbCandidats = c.Candidatures.Count
+                        NbCandidats = c.Candidatures.Count,
+                        // ✅ NOUVEAU : ID de candidature pour le lobby (très important)
+                        CandidatureId = c.Candidatures
+                                         .Where(cand => cand.CandidatId == userId)
+                                         .Select(cand => cand.Id)
+                                         .FirstOrDefault()
                     })
                     .OrderByDescending(c => c.DateDebut)
                     .ToListAsync();
@@ -92,6 +97,18 @@ namespace NeoEvaluation.API.Controllers
 
             using var trans = await _context.Database.BeginTransactionAsync();
             try {
+                // VALIDATION : Le questionnaire doit avoir au moins 3 questions
+                if (!dto.QuestionnaireId.HasValue || dto.QuestionnaireId == Guid.Empty)
+                {
+                    return BadRequest(new { message = "Vous devez lier un questionnaire (banque de questions) à cette évaluation." });
+                }
+
+                var questionCount = await _context.QuestionnaireQuestions.CountAsync(q => q.QuestionnaireId == dto.QuestionnaireId.Value);
+                if (questionCount < 3)
+                {
+                    return BadRequest(new { message = $"Opération impossible. Ce questionnaire ne contient que {questionCount} question(s). Il en faut au moins 3 pour lancer une évaluation." });
+                }
+
                 var nouvelle = new Campagne {
                     Id = Guid.NewGuid(),
                     Nom = dto.Nom, 

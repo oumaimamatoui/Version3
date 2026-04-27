@@ -25,9 +25,6 @@
           </div>
           <div class="d-flex gap-3">
             <button @click="fetchData" class="btn-outline-tech-sm"><i class="fa-solid fa-rotate me-2"></i>Actualiser</button>
-            <button @click="showInviteModal = true" class="btn-primary-premium">
-              <i class="fa-solid fa-plus-circle me-2"></i> Ajouter un Utilisateur
-            </button>
           </div>
         </div>
 
@@ -128,23 +125,6 @@
         </div>
 
         <!-- MODAL INVITATION ADMIN -->
-        <div v-if="showInviteModal" class="custom-modal-overlay">
-          <div class="glass-card p-4 modal-box shadow-lg animate-fade-in">
-            <h4 class="fw-800 text-navy mb-4">Inviter un <span>Administrateur</span></h4>
-            <div class="mb-3">
-              <label class="tiny-label uppercase mb-2">Nom Complet</label>
-              <input v-model="inviteData.name" type="text" class="form-control-pro" placeholder="Ex: Jean Dupont">
-            </div>
-            <div class="mb-4">
-              <label class="tiny-label uppercase mb-2">Email Professionnel</label>
-              <input v-model="inviteData.email" type="email" class="form-control-pro" placeholder="admin@entreprise.com">
-            </div>
-            <div class="d-flex gap-2 justify-content-end">
-              <button @click="showInviteModal = false" class="btn btn-outline-secondary btn-pro">Annuler</button>
-              <button @click="handleInvite" class="btn-primary-premium py-2 px-4">Envoyer l'invitation</button>
-            </div>
-          </div>
-        </div>
       </main>
     </div>
   </div>
@@ -161,9 +141,6 @@ const toast = useToast();
 const loading = ref(false);
 const searchQuery = ref('');
 const selectedRole = ref('Tous les rôles');
-const showInviteModal = ref(false);
-
-const inviteData = reactive({ name: '', email: '' });
 
 const platformStats = ref([
   { label: 'Utilisateurs Totaux', val: '0', icon: 'fa-solid fa-users', bg: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', trend: 'Live', key: 'totalUtilisateurs' },
@@ -229,15 +206,6 @@ const handleToggleStatus = async (user) => {
     }
 };
 
-const handleInvite = async () => {
-    if(!inviteData.email || !inviteData.name) return toast.warning("Champs requis.");
-    try {
-        await superAdminApi.inviteAdmin(inviteData);
-        toast.success(`Invitation envoyée à ${inviteData.email}`);
-        showInviteModal.value = false;
-        inviteData.name = ''; inviteData.email = '';
-    } catch (e) { toast.error("Erreur d'invitation."); }
-};
 
 const getRoleClass = (role) => {
   const map = {

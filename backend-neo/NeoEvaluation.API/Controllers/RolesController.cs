@@ -4,12 +4,13 @@ using Microsoft.EntityFrameworkCore;
 using NeoEvaluation.API.Data;
 using NeoEvaluation.API.Models;
 using NeoEvaluation.API.Services;
+using NeoEvaluation.API.Attributes;
 
 namespace NeoEvaluation.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "SuperAdmin,AdminEntreprise")]
+    [Authorize]
     public class RolesController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -27,6 +28,7 @@ namespace NeoEvaluation.API.Controllers
 
         // 1. RÉCUPÉRER TOUS LES RÔLES
         [HttpGet]
+        [RequirePermission("view_rol")]
         public async Task<ActionResult<IEnumerable<Role>>> GetRoles()
         {
             try 
@@ -52,6 +54,7 @@ namespace NeoEvaluation.API.Controllers
 
         // 2. CRÉATION D'UN RÔLE + INVITATION D'UN PERSONNEL
         [HttpPost]
+        [RequirePermission("add_rol")]
         public async Task<ActionResult<Role>> CreateRole(Role role)
         {
             // Utilisation d'une transaction pour garantir l'intégrité (Role + Utilisateur + Token)
@@ -103,6 +106,13 @@ namespace NeoEvaluation.API.Controllers
                     string frontendUrl = _config["AppSettings:FrontendUrl"] ?? "http://localhost:5173";
                     string activationLink = $"{frontendUrl}/activate-role?token={activationToken.Token}";
 
+                    // DEBUG TERMINAL (Affichage du token/lien de rôle dans la console)
+                    Console.WriteLine("\n--------------------------------------------------");
+                    Console.WriteLine($"[DEBUG] ROLE ACTIVATION LINK FOR: {role.Email}");
+                    Console.WriteLine($"ROLE: {role.Nom}");
+                    Console.WriteLine($"LINK: {activationLink}");
+                    Console.WriteLine("--------------------------------------------------\n");
+
                     string subject = $"[NeoEvaluation] Activation de votre accès : {role.Nom}";
                     string body = $@"
                         <div style='font-family: sans-serif; padding: 25px; border: 1px solid #e2e8f0; border-radius: 12px;'>
@@ -132,6 +142,7 @@ namespace NeoEvaluation.API.Controllers
 
         // 3. STATISTIQUES
         [HttpGet("stats")]
+        [RequirePermission("view_rol")]
         public async Task<ActionResult> GetStats()
         {
             var totalRoles = await _context.Roles.CountAsync();
@@ -146,6 +157,7 @@ namespace NeoEvaluation.API.Controllers
 
         // 4. SUPPRESSION
         [HttpDelete("{id}")]
+        [RequirePermission("add_rol")]
         public async Task<IActionResult> DeleteRole(Guid id)
         {
             var role = await _context.Roles.FindAsync(id);
@@ -162,6 +174,7 @@ namespace NeoEvaluation.API.Controllers
 
         // 5. MISE À JOUR
         [HttpPut("{id}")]
+        [RequirePermission("add_rol")]
         public async Task<IActionResult> UpdateRole(Guid id, Role role)
         {
             var existing = await _context.Roles.FindAsync(id);
