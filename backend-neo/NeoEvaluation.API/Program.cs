@@ -38,6 +38,11 @@ builder.Services.AddScoped<ITenantService, TenantService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// OPTIMISATION : Compression des réponses pour réduire la taille des transferts
+builder.Services.AddResponseCompression(options => {
+    options.EnableForHttps = true;
+});
+
 builder.Services.AddCors(options => {
     options.AddPolicy("VueCorsPolicy", policy => {
         policy.WithOrigins("http://localhost:5173", "http://127.0.0.1:5173") 
@@ -73,11 +78,12 @@ if (app.Environment.IsDevelopment()) {
 }
 
 app.UseCors("VueCorsPolicy");
+app.UseResponseCompression();
 
 // Fix for Google Auth COOP warnings
 app.Use(async (context, next) =>
 {
-    context.Response.Headers.Add("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+    context.Response.Headers.Append("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
     await next();
 });
 
@@ -104,27 +110,25 @@ using (var scope = app.Services.CreateScope()) {
                 Nom = "AdminEntreprise", 
                 Description = "Administrateur d'organisation",
                 Permissions = new List<string> { "MANAGE_USERS", "MANAGE_CAMPAIGNS", "VIEW_RESULTS", "MANAGE_BRANDING" }
-            },
-            new Role { 
-                Nom = "Evaluateur", 
-                Description = "Correcteur technique",
-                Permissions = new List<string> { "VIEW_TESTS", "GRADE_TESTS" }
-            },
-            new Role { 
-                Nom = "Candidat", 
-                Description = "Participant aux tests",
-                Permissions = new List<string> { "TAKE_TEST" }
             }
         };
 
         foreach (var r in rolesToSeed) {
-            var existingRole = context.Roles.IgnoreQueryFilters().FirstOrDefault(x => x.Nom == r.Nom);
+            var existingRole = context.Roles.IgnoreQueryFilters().FirstOrDefault(x => x.Nom == r.Nom && x.EntrepriseId == null);
             if (existingRole == null) {
                 context.Roles.Add(r);
             } else {
                 existingRole.Permissions = r.Permissions; // Sync permissions
             }
         }
+        
+        // Remove old static roles Evaluateur and Candidat if they exist
+        var oldEvaluateur = context.Roles.IgnoreQueryFilters().FirstOrDefault(x => x.Nom == "Evaluateur" && x.EntrepriseId == null);
+        if (oldEvaluateur != null) context.Roles.Remove(oldEvaluateur);
+        
+        var oldCandidat = context.Roles.IgnoreQueryFilters().FirstOrDefault(x => x.Nom == "Candidat" && x.EntrepriseId == null);
+        if (oldCandidat != null) context.Roles.Remove(oldCandidat);
+
         context.SaveChanges();
 
         // 2. Admin Seed
@@ -139,25 +143,6 @@ using (var scope = app.Services.CreateScope()) {
             });
         }
 
-        // 2b. AdminEntreprise Seed (For Testing)
-        if (!context.Utilisateurs.IgnoreQueryFilters().Any(u => u.Email == "company@test.tn")) {
-            var testOrg = context.Entreprises.IgnoreQueryFilters().FirstOrDefault(e => e.Nom == "Test Organization");
-            if (testOrg == null) {
-                testOrg = new Entreprise { Id = Guid.NewGuid(), Nom = "Test Organization", Plan = "Premium" };
-                context.Entreprises.Add(testOrg);
-                context.SaveChanges();
-            }
-
-            context.Utilisateurs.Add(new Utilisateur {
-                Id = Guid.NewGuid(),
-                Email = "company@test.tn", Prenom = "Ahmed", Nom = "Manager",
-                RoleNom = "AdminEntreprise", 
-                EntrepriseId = testOrg.Id,
-                EstActif = true, CreeLe = DateTime.UtcNow,
-                MotDePasseHash = BCrypt.Net.BCrypt.HashPassword("Company123"),
-                Privileges = new List<string> { "MANAGE_USERS", "MANAGE_CAMPAIGNS", "VIEW_RESULTS" }
-            });
-        }
 
         // 3. Questionnaire Seed
         if (!context.Questionnaires.Any()) {

@@ -96,10 +96,13 @@ namespace NeoEvaluation.API.Data
                 .WithMany(q => q.CampagneQuestionnaires)
                 .HasForeignKey(cq => cq.QuestionnaireId);
 
-            // 6. CONFIGURATION DES LISTES (List<string> vers JSON)
+            // 6. CONFIGURATION DES LISTES (List<string> vers JSON - Version Ultra-Robuste)
             var listConverter = new ValueConverter<List<string>, string>(
-                v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null) ?? "[]",
-                v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new List<string>()
+                v => v == null ? "[]" : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null) ?? "[]",
+                v => string.IsNullOrEmpty(v) ? new List<string>() : 
+                     (v.Trim().StartsWith("[") 
+                        ? (JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new List<string>()) 
+                        : v.Split(new[] { '|', ';', ',' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList())
             );
 
             var listComparer = new ValueComparer<List<string>>(
@@ -120,7 +123,21 @@ namespace NeoEvaluation.API.Data
                 c => new Dictionary<string, float>(c)
             );
 
+            // (Utilise les convertisseurs définis ci-dessus)
+
             // Application aux champs List<string>
+            modelBuilder.Entity<Question>()
+                .Property(e => e.Choix)
+                .HasConversion(listConverter)
+                .HasColumnType("text") // Force text for Npgsql to avoid array conflicts
+                .Metadata.SetValueComparer(listComparer);
+
+            modelBuilder.Entity<Question>()
+                .Property(e => e.Prerequis)
+                .HasConversion(listConverter)
+                .HasColumnType("text")
+                .Metadata.SetValueComparer(listComparer);
+
             modelBuilder.Entity<Role>()
                 .Property(e => e.Permissions)
                 .HasConversion(listConverter)
@@ -128,16 +145,6 @@ namespace NeoEvaluation.API.Data
 
             modelBuilder.Entity<Utilisateur>()
                 .Property(e => e.Privileges)
-                .HasConversion(listConverter)
-                .Metadata.SetValueComparer(listComparer);
-
-            modelBuilder.Entity<Question>()
-                .Property(e => e.Choix)
-                .HasConversion(listConverter)
-                .Metadata.SetValueComparer(listComparer);
-
-            modelBuilder.Entity<Question>()
-                .Property(e => e.Prerequis)
                 .HasConversion(listConverter)
                 .Metadata.SetValueComparer(listComparer);
 

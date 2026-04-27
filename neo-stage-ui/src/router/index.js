@@ -105,28 +105,28 @@ const routes = [
   /**
    * ESPACE ÉVALUATEUR / RH / RECRUTEUR
    */
-  { path: '/questions', name: 'questions', component: BanqueQuestionsView, meta: { requiresAuth: true, role: ['Evaluateur', 'AdminEntreprise', 'Recruteur'] } },
-  { path: '/campaigns', name: 'campaigns', component: CampagnesView, meta: { requiresAuth: true, role: ['Evaluateur', 'AdminEntreprise', 'Recruteur'] } },
-  { path: '/ai-generator', name: 'ai-generator', component: AIGeneratorView, meta: { requiresAuth: true, role: ['Evaluateur', 'AdminEntreprise', 'Recruteur'] } },
-  { path: '/analyse-comportementale', name: 'analyse-comportementale', component: AnalyseComportementaleView, meta: { requiresAuth: true, role: ['Evaluateur', 'AdminEntreprise', 'Recruteur'] } },
-  { path: '/stats', name: 'stats', component: StatsView, meta: { requiresAuth: true, role: ['Evaluateur', 'AdminEntreprise', 'Recruteur'] } },
-  { path: '/comparaison', name: 'comparaison', component: ComparaisonView, meta: { requiresAuth: true, role: ['Evaluateur', 'AdminEntreprise', 'Recruteur'] } },
-  { path: '/suivi-performance', name: 'suivi-performance', component: SuiviPerformanceView, meta: { requiresAuth: true, role: ['Evaluateur', 'AdminEntreprise', 'Recruteur'] } },
-  { path: '/sessions', name: 'sessions', component: PlanningView, meta: { requiresAuth: true, role: 'Evaluateur' } },
-  { path: '/test-builder', name: 'test-builder', component: EvaluateurAssessments, meta: { requiresAuth: true, role: 'Evaluateur' } },
+  { path: '/questions', name: 'questions', component: BanqueQuestionsView, meta: { requiresAuth: true, permission: 'edit_bank' } },
+  { path: '/campaigns', name: 'campaigns', component: CampagnesView, meta: { requiresAuth: true, permission: ['view_tests', 'inv_can'] } },
+  { path: '/ai-generator', name: 'ai-generator', component: AIGeneratorView, meta: { requiresAuth: true, permission: 'edit_bank' } },
+  { path: '/analyse-comportementale', name: 'analyse-comportementale', component: AnalyseComportementaleView, meta: { requiresAuth: true, permission: 'view_tests' } },
+  { path: '/stats', name: 'stats', component: StatsView, meta: { requiresAuth: true, permission: 'view_tests' } },
+  { path: '/comparaison', name: 'comparaison', component: ComparaisonView, meta: { requiresAuth: true, permission: 'view_tests' } },
+  { path: '/suivi-performance', name: 'suivi-performance', component: SuiviPerformanceView, meta: { requiresAuth: true, permission: 'view_tests' } },
+  { path: '/sessions', name: 'sessions', component: PlanningView, meta: { requiresAuth: true, permission: 'view_tests' } },
+  { path: '/test-builder', name: 'test-builder', component: EvaluateurAssessments, meta: { requiresAuth: true, permission: 'edit_bank' } },
 
   /**
    * ESPACE ADMINISTRATION ENTREPRISE
    */
-  { path: '/roles', name: 'roles', component: RolesManagementView, meta: { requiresAuth: true, role: 'AdminEntreprise' } },
-  { path: '/groups', name: 'groups', component: GroupsView, meta: { requiresAuth: true, role: ['AdminEntreprise', 'Recruteur'] } },
-  { path: '/gestion-groupes', name: 'gestion-groupes', component: GestionGroupesView, meta: { requiresAuth: true, role: ['AdminEntreprise', 'Recruteur'] } },
-  { path: '/candidates-list', name: 'candidates-list', component: ListeCandidatsView, meta: { requiresAuth: true, role: ['AdminEntreprise', 'Recruteur'] } },
-  { path: '/details-candidat/:id', name: 'details-candidat', component: DetailsCandidatView, meta: { requiresAuth: true, role: ['AdminEntreprise', 'Recruteur'] } },
-  { path: '/invite', name: 'invite', component: InviteView, meta: { requiresAuth: true, role: ['AdminEntreprise', 'Recruteur'] } },
-  { path: '/reporting', name: 'reporting', component: RapportsView, meta: { requiresAuth: true, role: ['AdminEntreprise', 'Recruteur'] } },
-  { path: '/staff-members', name: 'staff-members', component: StaffMembersView, meta: { requiresAuth: true, role: ['AdminEntreprise', 'Recruteur'] } },
-  { path: '/gestion-staff', name: 'gestion-staff', component: GestionStaffView, meta: { requiresAuth: true, role: ['AdminEntreprise', 'Recruteur'] } },
+  { path: '/roles', name: 'roles', component: RolesManagementView, meta: { requiresAuth: true, permission: 'view_rol' } },
+  { path: '/groups', name: 'groups', component: GroupsView, meta: { requiresAuth: true, permission: 'view_can' } },
+  { path: '/gestion-groupes', name: 'gestion-groupes', component: GestionGroupesView, meta: { requiresAuth: true, permission: 'view_can' } },
+  { path: '/candidates-list', name: 'candidates-list', component: ListeCandidatsView, meta: { requiresAuth: true, permission: 'view_can' } },
+  { path: '/details-candidat/:id', name: 'details-candidat', component: DetailsCandidatView, meta: { requiresAuth: true, permission: 'view_can' } },
+  { path: '/invite', name: 'invite', component: InviteView, meta: { requiresAuth: true, permission: 'inv_can' } },
+  { path: '/reporting', name: 'reporting', component: RapportsView, meta: { requiresAuth: true, permission: 'view_tests' } },
+  { path: '/staff-members', name: 'staff-members', component: StaffMembersView, meta: { requiresAuth: true, permission: 'view_staff' } },
+  { path: '/gestion-staff', name: 'gestion-staff', component: GestionStaffView, meta: { requiresAuth: true, permission: 'view_staff' } },
 
   /**
    * ESPACE SUPER ADMIN
@@ -163,11 +163,20 @@ router.beforeEach((to, from, next) => {
     return next({ name: 'login' })
   }
 
-  // 2. Vérification des droits d'accès par rôle
+  // 2. Vérification des droits d'accès par rôle strict (SuperAdmin, Candidat)
   if (to.meta.role) {
     const rolesAutorises = Array.isArray(to.meta.role) ? to.meta.role : [to.meta.role]
     if (!rolesAutorises.includes(userRole)) {
       return next({ name: 'dashboard' }) 
+    }
+  }
+
+  // 3. Vérification des permissions granulaires
+  if (to.meta.permission) {
+    const requiredPerms = Array.isArray(to.meta.permission) ? to.meta.permission : [to.meta.permission];
+    const hasAccess = requiredPerms.some(p => authStore.hasPermission(p));
+    if (!hasAccess) {
+      return next({ name: 'dashboard' });
     }
   }
 

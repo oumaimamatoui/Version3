@@ -5,6 +5,7 @@ using NeoEvaluation.API.Data;
 using NeoEvaluation.API.Models;
 using NeoEvaluation.API.Services;
 using NeoEvaluation.API.Dtos;
+using NeoEvaluation.API.Attributes;
 
 namespace NeoEvaluation.API.Controllers
 {
@@ -25,6 +26,7 @@ namespace NeoEvaluation.API.Controllers
         }
 
         [HttpPost("invite-candidates")]
+        [RequirePermission("inv_can")]
         public async Task<IActionResult> InviteCandidates([FromBody] InvitationRequestDto request)
         {
             if (request.Emails == null || !request.Emails.Any())
@@ -146,6 +148,7 @@ namespace NeoEvaluation.API.Controllers
         }
 
         [HttpPost("invite-staff")]
+        [RequirePermission("add_staff")]
         public async Task<IActionResult> InviteStaff([FromBody] StaffInvitationDto request)
         {
             if (string.IsNullOrEmpty(request.Email))

@@ -16,8 +16,11 @@ namespace NeoEvaluation.API.DTOs
         public string? Theme { get; set; }
         public string? SousTheme { get; set; }
         
+        [System.Text.Json.Serialization.JsonPropertyName("choix")]
         public List<string> Choix { get; set; } = new List<string>();
+        [System.Text.Json.Serialization.JsonPropertyName("bonneReponse")]
         public string BonneReponse { get; set; } = string.Empty;
+        [System.Text.Json.Serialization.JsonPropertyName("prerequis")]
         public List<string> Prerequis { get; set; } = new List<string>();
 
         // Liaison (Many-to-Many)

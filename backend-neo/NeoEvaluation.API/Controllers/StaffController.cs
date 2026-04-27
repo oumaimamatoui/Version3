@@ -4,6 +4,7 @@ using NeoEvaluation.API.Data;
 using NeoEvaluation.API.Models;
 using Microsoft.AspNetCore.Authorization;
 using NeoEvaluation.API.Services;
+using NeoEvaluation.API.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,6 +28,7 @@ namespace NeoEvaluation.API.Controllers
 
         // 1. OBTENIR TOUT LE PERSONNEL
         [HttpGet]
+        [RequirePermission("view_staff")]
         public async Task<ActionResult> GetStaff()
         {
             try
@@ -78,6 +80,7 @@ namespace NeoEvaluation.API.Controllers
 
         // 2. STATISTIQUES
         [HttpGet("stats")]
+        [RequirePermission("view_staff")]
         public async Task<ActionResult> GetStaffStats()
         {
             try
@@ -91,6 +94,7 @@ namespace NeoEvaluation.API.Controllers
 
         // 3. TOGGLE STATUS
         [HttpPatch("{id}/toggle-status")]
+        [RequirePermission("add_staff")]
         public async Task<IActionResult> ToggleStatus(Guid id)
         {
             var user = await _context.Utilisateurs.FindAsync(id);
@@ -103,6 +107,7 @@ namespace NeoEvaluation.API.Controllers
         // 4. METTRE À JOUR UN MEMBRE
         // PUT: api/staff/{id}
         [HttpPut("{id}")]
+        [RequirePermission("add_staff")]
         public async Task<IActionResult> UpdateStaff(Guid id, [FromBody] Utilisateur updateDto)
         {
             try
@@ -127,6 +132,7 @@ namespace NeoEvaluation.API.Controllers
         // 5. SUPPRIMER DÉFINITIVEMENT UN MEMBRE
         // DELETE: api/staff/{id}
         [HttpDelete("{id}")]
+        [RequirePermission("add_staff")]
         public async Task<IActionResult> DeleteStaff(Guid id)
         {
             try

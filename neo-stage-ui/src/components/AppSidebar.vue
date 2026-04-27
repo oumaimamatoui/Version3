@@ -55,86 +55,76 @@
           <i class="fa-solid fa-chevron-right nav-arrow"></i>
         </router-link>
 
-        <!-- Admin Entreprise / Recruteur -->
-        <div v-if="userRole === 'AdminEntreprise' || userRole === 'Recruteur'" class="nav-group">
-
-          <span class="group-label">Gestion système</span>
+        <!-- ESPACE ENTREPRISE (Menu Dynamique basé sur les Permissions) -->
+        <div v-if="userRole !== 'SuperAdmin' && userRole !== 'Candidat'" class="nav-group">
+          
+          <span class="group-label">Général</span>
           <router-link to="/dashboard" class="nav-item">
             <div class="nav-icon"><i class="fa-solid fa-gauge-high"></i></div>
             <span>Vue d'ensemble</span>
           </router-link>
 
-          <span class="group-label">Ressources humaines</span>
-          <router-link to="/candidates-list" class="nav-item">
-            <div class="nav-icon"><i class="fa-solid fa-users-viewfinder"></i></div>
-            <span>Candidats</span>
-          </router-link>
-          <router-link to="/invite" class="nav-item">
-            <div class="nav-icon"><i class="fa-solid fa-paper-plane"></i></div>
-            <span>Invitations</span>
-          </router-link>
-          <router-link to="/groups" class="nav-item">
-            <div class="nav-icon"><i class="fa-solid fa-object-group"></i></div>
-            <span>Groupes</span>
-          </router-link>
+          <template v-if="authStore.hasPermission('view_can') || authStore.hasPermission('inv_can')">
+            <span class="group-label">Recrutement & Candidats</span>
+            <router-link v-if="authStore.hasPermission('view_can')" to="/candidates-list" class="nav-item">
+              <div class="nav-icon"><i class="fa-solid fa-users-viewfinder"></i></div>
+              <span>Liste des candidats</span>
+            </router-link>
+            <router-link v-if="authStore.hasPermission('inv_can')" to="/invite" class="nav-item">
+              <div class="nav-icon"><i class="fa-solid fa-paper-plane"></i></div>
+              <span>Invitations</span>
+            </router-link>
+            <router-link v-if="authStore.hasPermission('view_can')" to="/groups" class="nav-item">
+              <div class="nav-icon"><i class="fa-solid fa-object-group"></i></div>
+              <span>Groupes</span>
+            </router-link>
+          </template>
 
-          <span class="group-label">Évaluations</span>
-          <router-link to="/campaigns" class="nav-item">
-            <div class="nav-icon"><i class="fa-solid fa-rectangle-list"></i></div>
-            <span>Campagnes</span>
-            <span class="nav-badge">{{ campaignCount }}</span>
-          </router-link>
+          <template v-if="authStore.hasPermission('view_tests') || authStore.hasPermission('inv_can') || authStore.hasPermission('edit_bank')">
+            <span class="group-label">Évaluations & Correction</span>
+            <router-link v-if="authStore.hasPermission('view_tests') || authStore.hasPermission('inv_can')" to="/campaigns" class="nav-item">
+              <div class="nav-icon"><i class="fa-solid fa-rectangle-list"></i></div>
+              <span>Campagnes (Tests)</span>
+              <span class="nav-badge">{{ campaignCount }}</span>
+            </router-link>
+            <router-link v-if="authStore.hasPermission('edit_bank')" to="/questions" class="nav-item">
+              <div class="nav-icon"><i class="fa-solid fa-database"></i></div>
+              <span>Banque de questions</span>
+            </router-link>
+            <router-link v-if="authStore.hasPermission('edit_bank')" to="/ai-generator" class="nav-item nav-ai">
+              <div class="nav-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+              <span>Générateur IA</span>
+            </router-link>
+          </template>
 
-          <span class="group-label">Intelligence artificielle</span>
-          <router-link to="/ai-generator" class="nav-item nav-ai">
-            <div class="nav-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
-            <span>Générer des questions</span>
-          </router-link>
-          <router-link to="/questions" class="nav-item">
-            <div class="nav-icon"><i class="fa-solid fa-database"></i></div>
-            <span>Banque de données</span>
-          </router-link>
+          <template v-if="authStore.hasPermission('view_tests')">
+            <span class="group-label">Analytique</span>
+            <router-link to="/analyse-comportementale" class="nav-item">
+              <div class="nav-icon"><i class="fa-solid fa-microchip"></i></div>
+              <span>Smart Analysis</span>
+            </router-link>
+            <router-link to="/stats" class="nav-item">
+              <div class="nav-icon"><i class="fa-solid fa-chart-pie"></i></div>
+              <span>Statistiques</span>
+            </router-link>
+          </template>
 
-          <span class="group-label">Organisation</span>
-          <router-link to="/staff-members" class="nav-item">
-            <div class="nav-icon"><i class="fa-solid fa-user-gear"></i></div>
-            <span>Membres du personnel</span>
-          </router-link>
-          <router-link to="/roles" class="nav-item">
-            <div class="nav-icon"><i class="fa-solid fa-shield-halved"></i></div>
-            <span>Rôles & Permissions</span>
-          </router-link>
-          <router-link to="/settings" class="nav-item">
-            <div class="nav-icon"><i class="fa-solid fa-sliders"></i></div>
-            <span>Paramètres org</span>
-          </router-link>
-        </div>
+          <template v-if="authStore.hasPermission('view_staff') || authStore.hasPermission('view_rol') || userRole === 'AdminEntreprise'">
+            <span class="group-label">Organisation</span>
+            <router-link v-if="authStore.hasPermission('view_staff')" to="/staff-members" class="nav-item">
+              <div class="nav-icon"><i class="fa-solid fa-user-gear"></i></div>
+              <span>Staff & Employés</span>
+            </router-link>
+            <router-link v-if="authStore.hasPermission('view_rol')" to="/roles" class="nav-item">
+              <div class="nav-icon"><i class="fa-solid fa-shield-halved"></i></div>
+              <span>Rôles & Permissions</span>
+            </router-link>
+            <router-link v-if="userRole === 'AdminEntreprise'" to="/settings" class="nav-item">
+              <div class="nav-icon"><i class="fa-solid fa-sliders"></i></div>
+              <span>Paramètres org</span>
+            </router-link>
+          </template>
 
-        <!-- Évaluateur -->
-        <div v-if="userRole === 'Evaluateur'" class="nav-group">
-          <span class="group-label">Outils d'évaluation</span>
-          <router-link to="/questions" class="nav-item">
-            <div class="nav-icon"><i class="fa-solid fa-database"></i></div>
-            <span>Banque de questions</span>
-          </router-link>
-          <router-link to="/campaigns" class="nav-item">
-            <div class="nav-icon"><i class="fa-solid fa-clipboard-check"></i></div>
-            <span>Évaluations en cours</span>
-          </router-link>
-
-          <span class="group-label">IA & Analytics</span>
-          <router-link to="/ai-generator" class="nav-item nav-ai">
-            <div class="nav-icon"><i class="fa-solid fa-brain"></i></div>
-            <span>IA Assistant</span>
-          </router-link>
-          <router-link to="/analyse-comportementale" class="nav-item">
-            <div class="nav-icon"><i class="fa-solid fa-microchip"></i></div>
-            <span>Smart Analysis</span>
-          </router-link>
-          <router-link to="/stats" class="nav-item">
-            <div class="nav-icon"><i class="fa-solid fa-chart-pie"></i></div>
-            <span>Statistiques</span>
-          </router-link>
         </div>
 
         <!-- Super Admin -->

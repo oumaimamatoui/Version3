@@ -72,10 +72,10 @@
                     <button 
                       @click="startExam(c)" 
                       class="btn-primary-cyber" 
-                      :disabled="new Date(c.dateDebut) > new Date()"
+                      :disabled="new Date(c.dateDebut) > now"
                     >
-                      <span v-if="new Date(c.dateDebut) > new Date()">
-                        Ouvre le {{ formatDate(c.dateDebut) }}
+                      <span v-if="new Date(c.dateDebut) > now">
+                        Ouvre dans {{ getCountdown(c.dateDebut) }}
                       </span>
                       <span v-else>
                         Démarrer maintenant <i class="fa-solid fa-play ms-2"></i>
@@ -126,7 +126,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/services/api';
 import AppSidebar from '../components/AppSidebar.vue';
@@ -135,6 +135,8 @@ import AppNavbar from '../components/AppNavbar.vue';
 const router = useRouter();
 const campaigns = ref([]);
 const loading = ref(true);
+const now = ref(new Date());
+let timer = null;
 
 const fetchMyTests = async () => {
   loading.value = true;
@@ -149,11 +151,11 @@ const fetchMyTests = async () => {
 };
 
 const activeTests = computed(() => {
-  return campaigns.value.filter(c => new Date(c.dateFin) >= new Date());
+  return campaigns.value.filter(c => new Date(c.dateFin) >= now.value);
 });
 
 const expiredTests = computed(() => {
-  return campaigns.value.filter(c => new Date(c.dateFin) < new Date());
+  return campaigns.value.filter(c => new Date(c.dateFin) < now.value);
 });
 
 const startExam = (campaign) => {
@@ -161,9 +163,29 @@ const startExam = (campaign) => {
   router.push(`/exam-lobby/${targetId}`);
 };
 
-const formatDate = (d) => d ? new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }) : 'N/A';
+const formatDate = (d) => d ? new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A';
 
-onMounted(fetchMyTests);
+const getCountdown = (dateDebut) => {
+  const diff = new Date(dateDebut) - now.value;
+  if (diff <= 0) return "00:00:00";
+  
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+  
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+};
+
+onMounted(() => {
+  fetchMyTests();
+  timer = setInterval(() => {
+    now.value = new Date();
+  }, 1000);
+});
+
+onUnmounted(() => {
+  if (timer) clearInterval(timer);
+});
 </script>
 
 <style scoped>

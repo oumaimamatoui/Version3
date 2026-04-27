@@ -21,7 +21,7 @@
                 <span class="pulse-dot"></span> ANALYSE NEURALE EN COURS
               </div>
               <h1 class="display-title">Performance <span>IA</span></h1>
-              <p class="brand-subtitle">RAPPORT DÉTAILLÉ : FULLSTACK .NET & VUE.JS</p>
+              <p class="brand-subtitle">RAPPORT DÉTAILLÉ : {{ campaignName }}</p>
             </div>
             
             <div class="d-flex gap-3 align-items-center">
@@ -49,13 +49,16 @@
                 <h6 class="label-heading mb-4">GLOBAL SCORE INDEX</h6>
                 <div class="score-neural-circle mx-auto mb-4">
                   <div class="inner-glow"></div>
-                  <span class="score-value">82</span>
+                  <span class="score-value">{{ globalScore }}</span>
                   <span class="score-percent">%</span>
                 </div>
-                <div class="status-pill-success mb-3">
+                <div class="status-pill-success mb-3" v-if="globalScore >= 70">
                   <i class="fa fa-medal me-2"></i> NIVEAU : AVANCÉ
                 </div>
-                <p class="text-slate-500 small">Positionnement : <span class="text-indigo fw-bold">Top 15%</span> du pool candidat.</p>
+                <div class="status-pill-warning mb-3" v-else>
+                  <i class="fa fa-circle-info me-2"></i> NIVEAU : INTERMÉDIAIRE
+                </div>
+                <p class="text-slate-500 small">Positionnement : <span class="text-indigo fw-bold">{{ globalScore >= 50 ? 'Validé' : 'À revoir' }}</span></p>
               </div>
             </div>
 
@@ -160,17 +163,18 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import api from '@/services/api';
 import AppSidebar from '../components/AppSidebar.vue';
 import AppNavbar from '../components/AppNavbar.vue';
 import Chart from 'chart.js/auto';
 
 const isExporting = ref(false);
-const themes = [
-  { name: 'Architecture Vue.js 3', score: 92, time: 45 },
-  { name: 'Logique .NET 10', score: 65, time: 120 },
-  { name: 'SQL & Entity Framework', score: 78, time: 85 },
-  { name: 'Sécurité SaaS', score: 85, time: 30 }
-];
+const themes = ref([]);
+const globalScore = ref(0);
+const campaignName = ref('CHARGEMENT...');
+const isLoading = ref(true);
+import { useRoute } from 'vue-router';
+const route = useRoute();
 
 const exportRapport = () => {
   isExporting.value = true;
@@ -180,36 +184,55 @@ const exportRapport = () => {
   }, 2000);
 };
 
-onMounted(() => {
-  const ctx = document.getElementById('radarChart');
-  new Chart(ctx, {
-    type: 'radar',
-    data: {
-      labels: ['Vue.js', '.NET', 'SQL', 'IA Concepts', 'Logique', 'SaaS'],
-      datasets: [{
-        data: [92, 65, 78, 85, 90, 85],
-        fill: true,
-        backgroundColor: 'rgba(79, 70, 229, 0.15)',
-        borderColor: '#4f46e5',
-        borderWidth: 2,
-        pointBackgroundColor: '#eab308',
-        pointBorderColor: '#fff',
-        pointRadius: 4
-      }]
-    },
-    options: {
-      maintainAspectRatio: false,
-      scales: {
-        r: {
-          angleLines: { color: 'rgba(148, 163, 184, 0.2)' },
-          grid: { color: 'rgba(148, 163, 184, 0.2)' },
-          pointLabels: { font: { family: 'Plus Jakarta Sans', size: 11, weight: '700' }, color: '#64748b' },
-          ticks: { display: false }
-        }
-      },
-      plugins: { legend: { display: false } }
+onMounted(async () => {
+  try {
+    const cid = route.params.id;
+    if (!cid || cid === 'undefined') {
+        console.error("ID Candidature manquant dans l'URL");
+        campaignName.value = "ERREUR : LIEN INVALIDE";
+        isLoading.value = false;
+        return;
     }
-  });
+    
+    const res = await api.get(`/Examen/results/${cid}`);
+    globalScore.value = Math.round(res.data.scorePourcentage);
+    campaignName.value = res.data.campaignName;
+    themes.value = res.data.themes;
+
+    const ctx = document.getElementById('radarChart');
+    new Chart(ctx, {
+      type: 'radar',
+      data: {
+        labels: themes.value.map(t => t.name),
+        datasets: [{
+          data: themes.value.map(t => t.score),
+          fill: true,
+          backgroundColor: 'rgba(79, 70, 229, 0.15)',
+          borderColor: '#4f46e5',
+          borderWidth: 2,
+          pointBackgroundColor: '#eab308',
+          pointBorderColor: '#fff',
+          pointRadius: 4
+        }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        scales: {
+          r: {
+            angleLines: { color: 'rgba(148, 163, 184, 0.2)' },
+            grid: { color: 'rgba(148, 163, 184, 0.2)' },
+            pointLabels: { font: { family: 'Plus Jakarta Sans', size: 11, weight: '700' }, color: '#64748b' },
+            ticks: { display: false, min: 0, max: 100 }
+          }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+  } catch (err) {
+    console.error("Erreur chargement résultats", err);
+  } finally {
+    isLoading.value = false;
+  }
 });
 </script>
 
