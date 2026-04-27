@@ -15,32 +15,15 @@ namespace NeoEvaluation.API.DTOs
         public Guid Id { get; set; }
         public string Enonce { get; set; } = string.Empty;
         public string Type { get; set; } = string.Empty;
-        public int? DureeSecondes { get; set; }
-        public List<string> Options { get; set; } = new List<string>();
-        public int Points { get; set; }
-    }
-
-    public class SyncDto
-    {
-        public Guid EvaluationId { get; set; }
-        public int CurrentIndex { get; set; }
-        public List<string> ReponsesChoisies { get; set; } = new();
-        public int Integrite { get; set; }
+        public List<string> Options { get; set; } = new();
+        public float Points { get; set; }
     }
 
     public class ReponseDto
     {
         public Guid EvaluationId { get; set; }
         public Guid QuestionId { get; set; }
-        public string Valeur { get; set; } = string.Empty;
+        public string Valeur { get; set; } = string.Empty; // Stocke index, texte ou nom fichier
         public int TempsSecondes { get; set; }
-    }
-
-    public class SubmitAnswerDto
-    {
-        public Guid EvaluationId { get; set; }
-        public Guid QuestionId { get; set; }
-        public string? TexteReponse { get; set; }
-        public List<int>? SelectedIndexes { get; set; }
     }
 }

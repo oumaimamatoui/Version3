@@ -26,136 +26,129 @@ namespace NeoEvaluation.API.Controllers
             _tenantService = tenantService;
         }
 
-        // 1. RÉCUPÉRER TOUS LES RÔLES
         [HttpGet]
         [RequirePermission("view_rol")]
-        public async Task<ActionResult<IEnumerable<Role>>> GetRoles()
+        public async Task<ActionResult> GetRoles()
         {
-            try 
+            var tenantId = _tenantService.GetTenantId();
+            var roles = await _context.Roles
+                .Where(r => r.EntrepriseId == tenantId && r.Nom != "SuperAdmin")
+                .OrderByDescending(r => r.CreeLe)
+                .ToListAsync();
+
+            var result = new List<object>();
+            foreach (var r in roles)
             {
-                // On utilise IgnoreQueryFilters pour être sûr de voir les rôles système si besoin
-                var roles = await _context.Roles.ToListAsync();
-                
-                foreach (var r in roles)
-                {
-                    r.NombreMembres = await _context.Utilisateurs
-                        .IgnoreQueryFilters()
-                        .CountAsync(u => u.RoleId == r.Id);
-                }
-                
-                return Ok(roles.OrderByDescending(r => r.CreeLe));
+                var count = await _context.Utilisateurs.CountAsync(u => u.RoleId == r.Id);
+                result.Add(new { 
+                    r.Id, r.Nom, r.Description, 
+                    Permissions = r.Permissions ?? new List<string>(), 
+                    r.CreeLe, NombreMembres = count, r.Email, r.Prenom, r.NomFamille 
+                });
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[ROLES ERROR] {ex.Message}");
-                return StatusCode(500, ex.Message);
-            }
+            return Ok(result);
         }
 
-        // 2. CRÉATION D'UN RÔLE + INVITATION D'UN PERSONNEL
-        [HttpPost]
-        [RequirePermission("add_rol")]
-        public async Task<ActionResult<Role>> CreateRole(Role role)
-        {
-            // Utilisation d'une transaction pour garantir l'intégrité (Role + Utilisateur + Token)
-            using var transaction = await _context.Database.BeginTransactionAsync();
-            try
-            {
-                // A. Sauvegarde du Rôle
-                role.Id ??= Guid.NewGuid();
-                role.EntrepriseId = _tenantService.GetTenantId();
-                role.CreeLe = DateTime.UtcNow;
-                _context.Roles.Add(role);
-
-                // B. Création de l'utilisateur (Classe concrète Personnel héritant de Utilisateur)
-                var newUser = new Utilisateur 
-                {
-                    Id = Guid.NewGuid(),
-                    EntrepriseId = role.EntrepriseId,
-                    Email = role.Email ?? "",
-                    Nom = role.NomFamille ?? "",
-                    Prenom = role.Prenom ?? "",
-                    RoleNom = role.Nom,
-                    RoleId = role.Id,
-                    EstActif = false, // Inactif jusqu'à l'activation du token
-                    CreeLe = DateTime.UtcNow,
-                    Privileges = role.Permissions ?? new List<string>() // Synchronisation des permissions
-                };
-                _context.Utilisateurs.Add(newUser);
-
-                // C. Génération du Token d'activation
-                // Note: On utilise "_context.TokensActivation" (singulier comme dans votre AppDbContext)
-                var activationToken = new TokensActivation
-                {
-                    Id = Guid.NewGuid(),
-                    Token = Guid.NewGuid(), // Le GUID pour l'URL
-                    UtilisateurId = newUser.Id,
-                    Email = newUser.Email,
-                    DateCreation = DateTime.UtcNow,
-                    DateExpiration = DateTime.UtcNow.AddDays(7),
-                    Utilise = false
-                };
-                _context.TokensActivation.Add(activationToken);
-
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-
-                // D. Envoi de l'email d'activation
-                if (!string.IsNullOrEmpty(role.Email))
-                {
-                    string frontendUrl = _config["AppSettings:FrontendUrl"] ?? "http://localhost:5173";
-                    string activationLink = $"{frontendUrl}/activate-role?token={activationToken.Token}";
-
-                    // DEBUG TERMINAL (Affichage du token/lien de rôle dans la console)
-                    Console.WriteLine("\n--------------------------------------------------");
-                    Console.WriteLine($"[DEBUG] ROLE ACTIVATION LINK FOR: {role.Email}");
-                    Console.WriteLine($"ROLE: {role.Nom}");
-                    Console.WriteLine($"LINK: {activationLink}");
-                    Console.WriteLine("--------------------------------------------------\n");
-
-                    string subject = $"[NeoEvaluation] Activation de votre accès : {role.Nom}";
-                    string body = $@"
-                        <div style='font-family: sans-serif; padding: 25px; border: 1px solid #e2e8f0; border-radius: 12px;'>
-                            <h2 style='color: #0f172a;'>Bienvenue {role.Prenom} !</h2>
-                            <p>Un profil administratif a été créé pour vous avec le rôle : <b>{role.Nom}</b>.</p>
-                            <p>Veuillez cliquer sur le bouton ci-dessous pour activer votre compte et configurer votre mot de passe :</p>
-                            <div style='text-align: center; margin: 30px 0;'>
-                                <a href='{activationLink}' 
-                                   style='background: #0f172a; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;'>
-                                   Activer mes accès
-                                </a>
-                            </div>
-                            <p style='font-size: 11px; color: #64748b; text-align: center;'>Ce lien expirera dans 7 jours.</p>
-                        </div>";
-
-                    await _emailService.SendEmailAsync(role.Email, subject, body);
-                }
-
-                return Ok(role);
-            }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync();
-                return StatusCode(500, $"Erreur interne : {ex.Message}");
-            }
-        }
-
-        // 3. STATISTIQUES
         [HttpGet("stats")]
         [RequirePermission("view_rol")]
         public async Task<ActionResult> GetStats()
         {
-            var totalRoles = await _context.Roles.CountAsync();
-            var totalMembres = await _context.Utilisateurs.CountAsync(u => u.RoleId != null);
+            var tenantId = _tenantService.GetTenantId();
+            var totalRoles = await _context.Roles.CountAsync(r => r.EntrepriseId == tenantId && r.Nom != "SuperAdmin");
+            var totalStaff = await _context.Utilisateurs.CountAsync(u => u.EntrepriseId == tenantId && u.RoleNom != "Candidat");
             
             return Ok(new[] {
-                new { label = "Total Rôles", value = totalRoles.ToString(), icon = "fa-solid fa-shield-halved", color = "#eab308", bg = "#fffbeb" },
-                new { label = "Utilisateurs Staff", value = totalMembres.ToString(), icon = "fa-solid fa-user-group", color = "#10b981", bg = "#ecfdf5" },
-                new { label = "Sécurité", value = "Haute", icon = "fa-solid fa-lock", color = "#f59e0b", bg = "#fff7ed" }
+                new { label = "Rôles Déployés", value = totalRoles.ToString(), icon = "fa-solid fa-shield-halved", color = "#fbbf24", bg = "#fffbeb" },
+                new { label = "Membres Staff", value = totalStaff.ToString(), icon = "fa-solid fa-user-shield", color = "#3b82f6", bg = "#eff6ff" },
+                new { label = "Sécurité Système", value = "ACTIF", icon = "fa-solid fa-vault", color = "#10b981", bg = "#ecfdf5" }
             });
         }
 
-        // 4. SUPPRESSION
+        [HttpPost]
+        [RequirePermission("add_rol")]
+        public async Task<ActionResult> CreateRole([FromBody] Role role)
+        {
+            var tenantId = _tenantService.GetTenantId();
+            
+            // Vérification existence
+            if (await _context.Roles.AnyAsync(r => r.EntrepriseId == tenantId && r.Nom.ToLower() == role.Nom.ToLower()))
+                return BadRequest(new { message = "Ce nom de rôle est déjà utilisé dans votre organisation." });
+
+            string activationToken = null;
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                role.Id = Guid.NewGuid();
+                role.EntrepriseId = tenantId;
+                role.CreeLe = DateTime.UtcNow;
+                _context.Roles.Add(role);
+
+                if (!string.IsNullOrEmpty(role.Email))
+                {
+                    if (await _context.Utilisateurs.AnyAsync(u => u.Email == role.Email))
+                        return BadRequest(new { message = "Cette adresse email est déjà rattachée à un compte." });
+
+                    var newUser = new Utilisateur {
+                        Id = Guid.NewGuid(), EntrepriseId = tenantId, Email = role.Email,
+                        Nom = role.NomFamille ?? "", Prenom = role.Prenom ?? "",
+                        RoleNom = role.Nom, RoleId = role.Id, EstActif = false, CreeLe = DateTime.UtcNow,
+                        Privileges = role.Permissions ?? new List<string>()
+                    };
+                    _context.Utilisateurs.Add(newUser);
+
+                    var token = new TokensActivation {
+                        Id = Guid.NewGuid(), Token = Guid.NewGuid(), UtilisateurId = newUser.Id,
+                        Email = newUser.Email, DateCreation = DateTime.UtcNow, DateExpiration = DateTime.UtcNow.AddDays(7), Utilise = false
+                    };
+                    _context.TokensActivation.Add(token);
+                    activationToken = token.Token.ToString();
+                }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                // ENVOI D'EMAIL : On attend la fin de l'envoi pour éviter le crash "Reader is closed"
+                if (!string.IsNullOrEmpty(role.Email) && activationToken != null)
+                {
+                    try {
+                        await SendActivationEmail(role, activationToken);
+                    } catch (Exception ex) {
+                        // Log de l'erreur mais le rôle est créé
+                        Console.WriteLine($"[AVERTISSEMENT EMAIL] : {ex.Message}");
+                    }
+                }
+
+                return CreatedAtAction(nameof(GetRoles), new { id = role.Id }, role);
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return StatusCode(500, new { message = "Erreur technique lors du déploiement.", details = ex.Message });
+            }
+        }
+
+        [HttpPut("{id}")]
+        [RequirePermission("add_rol")]
+        public async Task<IActionResult> UpdateRole(Guid id, [FromBody] Role roleUpdate)
+        {
+            var existingRole = await _context.Roles.FindAsync(id);
+            if (existingRole == null) return NotFound();
+
+            existingRole.Nom = roleUpdate.Nom;
+            existingRole.Description = roleUpdate.Description;
+            existingRole.Permissions = roleUpdate.Permissions;
+
+            var usersToUpdate = await _context.Utilisateurs.Where(u => u.RoleId == id).ToListAsync();
+            foreach (var user in usersToUpdate) {
+                user.Privileges = roleUpdate.Permissions;
+                user.RoleNom = roleUpdate.Nom;
+            }
+
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
         [HttpDelete("{id}")]
         [RequirePermission("add_rol")]
         public async Task<IActionResult> DeleteRole(Guid id)
@@ -163,40 +156,30 @@ namespace NeoEvaluation.API.Controllers
             var role = await _context.Roles.FindAsync(id);
             if (role == null) return NotFound();
 
-            // Empêcher la suppression si le rôle est utilisé
-            bool isUsed = await _context.Utilisateurs.AnyAsync(u => u.RoleId == id);
-            if (isUsed) return BadRequest(new { message = "Ce rôle est actuellement attribué à des utilisateurs." });
+            if (await _context.Utilisateurs.AnyAsync(u => u.RoleId == id))
+                return BadRequest(new { message = "Impossible de révoquer un rôle assigné à des membres." });
 
             _context.Roles.Remove(role);
             await _context.SaveChangesAsync();
             return NoContent();
         }
 
-        // 5. MISE À JOUR
-        [HttpPut("{id}")]
-        [RequirePermission("add_rol")]
-        public async Task<IActionResult> UpdateRole(Guid id, Role role)
+        private async Task SendActivationEmail(Role role, string token)
         {
-            var existing = await _context.Roles.FindAsync(id);
-            if (existing == null) return NotFound();
+            string frontendUrl = _config["AppSettings:FrontendUrl"] ?? "http://localhost:5173";
+            string link = $"{frontendUrl}/activate-account?token={token}";
+            string subject = $"[SÉCURITÉ] Accréditation de votre accès : {role.Nom}";
+            
+            string body = $@"
+                <div style='font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #e2e8f0; border-radius: 16px; padding: 40px;'>
+                    <h2 style='color: #0f172a;'>Activation de compte</h2>
+                    <p>Un nouvel accès a été configuré pour vous avec le rôle : <b>{role.Nom}</b></p>
+                    <a href='{link}' style='display: inline-block; background: #0f172a; color: #ffffff; padding: 15px 25px; text-decoration: none; border-radius: 8px; font-weight: bold;'>
+                        ACTIVER MON ACCÈS
+                    </a>
+                </div>";
 
-            existing.Nom = role.Nom;
-            existing.Prenom = role.Prenom;
-            existing.NomFamille = role.NomFamille;
-            existing.Email = role.Email;
-            existing.Description = role.Description;
-            existing.Permissions = role.Permissions;
-
-            // Optionnel : Mettre à jour les privilèges des utilisateurs qui possèdent ce rôle
-            var usersToUpdate = await _context.Utilisateurs.Where(u => u.RoleId == id).ToListAsync();
-            foreach (var user in usersToUpdate)
-            {
-                user.Privileges = role.Permissions;
-                user.RoleNom = role.Nom;
-            }
-
-            await _context.SaveChangesAsync();
-            return NoContent();
+            await _emailService.SendEmailAsync(role.Email, subject, body);
         }
     }
 }

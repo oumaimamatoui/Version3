@@ -21,6 +21,9 @@ namespace NeoEvaluation.API.Models
         public int DureeMinutes { get; set; } = 60;
         public string ModeNotation { get; set; } = "STRICT";
 
+        // ✅ AJOUT ICI : Limite de candidats pour la campagne
+        public int? MaxCandidats { get; set; }
+
         [Required]
         public Guid? EntrepriseId { get; set; }
         public Entreprise? Entreprise { get; set; }
