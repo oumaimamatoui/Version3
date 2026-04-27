@@ -48,7 +48,7 @@ namespace NeoEvaluation.API.Controllers
                     .ToListAsync();
 
                 var chart = chartDataRaw.Select(c => new {
-                    name = c.Nom,
+                    name = c.Nom.Length > 12 ? c.Nom.Substring(0, 10) + ".." : c.Nom,
                     score = Math.Round(c.Moyenne, 1)
                 }).ToList();
 

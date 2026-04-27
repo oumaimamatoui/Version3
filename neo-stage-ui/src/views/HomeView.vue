@@ -10,8 +10,9 @@
         <div class="loader-brand">
           <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
             <rect width="36" height="36" rx="10" fill="#eab308"/>
-            <path d="M8 10h20M8 18h14M8 26h17" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
-            <circle cx="26" cy="26" r="4" fill="#0f172a"/>
+            <path d="M10 12h16M10 18h10M10 24h13" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="26" cy="24" r="4" fill="#0f172a"/>
+            <circle cx="26" cy="24" r="2" fill="#eab308"/>
           </svg>
           <span>EVALUA<b>TECH</b></span>
         </div>
@@ -24,11 +25,13 @@
         <nav class="main-navigation">
           <a href="#top" class="brand">
             <div class="brand-logo-wrap">
-              <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
-                <rect width="38" height="38" rx="11" fill="#0f172a"/>
-                <path d="M9 11h20M9 19h15M9 27h18" stroke="#eab308" stroke-width="2.8" stroke-linecap="round"/>
-                <circle cx="27" cy="27" r="4.5" fill="#eab308"/>
-                <circle cx="27" cy="27" r="2" fill="#0f172a"/>
+              <svg width="42" height="42" viewBox="0 0 42 42" fill="none">
+                <rect width="42" height="42" rx="12" fill="#0f172a"/>
+                <rect x="8" y="10" width="16" height="3" rx="1.5" fill="#eab308"/>
+                <rect x="8" y="16" width="11" height="3" rx="1.5" fill="#eab308" opacity="0.7"/>
+                <rect x="8" y="22" width="14" height="3" rx="1.5" fill="#eab308" opacity="0.5"/>
+                <circle cx="30" cy="30" r="7" fill="#eab308"/>
+                <path d="M27 30l2 2 4-4" stroke="#0f172a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </div>
             <span class="brand-name">Evalua<span class="text-amber">Tech</span></span>
@@ -39,21 +42,21 @@
             <li><a href="#services" :class="{ active: activeSection === 'services' }">Services</a></li>
             <li><a href="#process" :class="{ active: activeSection === 'process' }">Processus</a></li>
             <li><a href="#about" :class="{ active: activeSection === 'about' }">À propos</a></li>
-            <li><a href="#pricing">Tarifs</a></li>
+            <li><router-link to="/pricing" :class="{ active: activeSection === 'pricing' }">Tarifs</router-link></li>
           </ul>
 
           <div class="nav-auth">
             <a href="/login" class="btn-text d-none d-sm-inline">Connexion</a>
             <a href="/login" class="btn-amber-pill shadow-amber">
               Essai Gratuit
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="ms-1"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="ms-1"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>
             </a>
           </div>
         </nav>
       </div>
     </header>
 
-    <!-- 3. HERO SECTION (AMÉLIORÉE) -->
+    <!-- 3. HERO SECTION -->
     <section id="top" class="hero-section">
       <div class="hero-bg-grid"></div>
       <div class="hero-orb hero-orb-1"></div>
@@ -82,7 +85,6 @@
               Automatisez la création de tests et analysez les compétences en temps réel.
             </p>
 
-            <!-- Mini stats inline -->
             <div class="hero-stats-inline">
               <div class="stat-pill">
                 <span class="stat-pill-val">1.2M+</span>
@@ -108,9 +110,7 @@
               <a href="#services" class="btn-outline-custom">Découvrir</a>
             </div>
 
-            <div class="hero-divider"></div>
-
-            <div class="hero-trust">
+            <div class="hero-trust mt-4">
               <div class="trust-avatars">
                 <div class="ta" style="background:#6366f1">A</div>
                 <div class="ta" style="background:#8b5cf6">B</div>
@@ -151,12 +151,14 @@
                   <span class="mock-live"><span class="live-dot"></span> Live</span>
                 </div>
                 <div class="mock-body">
-                  <!-- Candidate row -->
+                  <!-- Candidate row - NO name shown -->
                   <div class="mock-candidate">
-                    <div class="candidate-avatar">A</div>
+                    <div class="candidate-avatar">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </div>
                     <div class="candidate-info">
-                      <h4>Ahmed Benali</h4>
-                      <p>Développeur Full-Stack · Senior</p>
+                      <h4>Développeur Full-Stack</h4>
+                      <p>Candidat Senior · Profil #042</p>
                     </div>
                     <div class="score-badge-inline">
                       <span class="sbi-val">84.2</span>
@@ -182,7 +184,7 @@
                           <small class="text-amber fw-bold">{{ skill.val }}%</small>
                         </div>
                         <div class="skill-track">
-                          <div class="skill-fill" :style="{ width: skill.val + '%', animationDelay: (i * 0.2) + 's' }"></div>
+                          <div class="skill-fill" :style="{ width: skill.val + '%' }"></div>
                         </div>
                       </div>
                     </div>
@@ -243,22 +245,52 @@
       </div>
     </section>
 
-    <!-- 5. SERVICES -->
+    <!-- 5. SERVICES (Redesigned) -->
     <section id="services" class="services-section py-5">
       <div class="container py-5">
         <div class="section-heading text-center mb-5">
           <span class="section-tag">Nos Fonctionnalités</span>
           <h2 class="section-title mt-3">Pourquoi choisir <span class="text-amber">EvaluaTech</span> ?</h2>
+          <p class="section-subtitle">Une suite complète d'outils IA pour transformer votre processus d'évaluation</p>
           <div class="h-line"></div>
         </div>
+
+        <!-- Featured top row: 2 large cards -->
+        <div class="row g-4 mb-4">
+          <div class="col-lg-6" v-for="(s, i) in serviceList.slice(0,2)" :key="i">
+            <div class="service-card service-card-large h-100">
+              <div class="service-card-bg"></div>
+              <div class="service-card-inner">
+                <div class="icon-circle-lg" v-html="s.svg"></div>
+                <div class="service-content">
+                  <h4>{{ s.title }}</h4>
+                  <p>{{ s.desc }}</p>
+                </div>
+                <div class="service-arrow-lg">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom row: 3 medium cards + 3 small -->
         <div class="row g-4">
-          <div class="col-lg-3 col-md-6" v-for="(s, i) in serviceList" :key="i">
-            <div class="service-card h-100" :style="{ animationDelay: (i * 0.1) + 's' }">
-              <div class="icon-circle" v-html="s.svg"></div>
-              <h4>{{ s.title }}</h4>
-              <p>{{ s.desc }}</p>
-              <div class="card-arrow">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>
+          <div class="col-lg-4 col-md-6" v-for="(s, i) in serviceList.slice(2,5)" :key="i">
+            <div class="service-card h-100">
+              <div class="service-card-inner-v">
+                <div class="icon-circle" v-html="s.svg"></div>
+                <h4>{{ s.title }}</h4>
+                <p>{{ s.desc }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-4 col-md-6" v-for="(s, i) in serviceList.slice(5,8)" :key="i+5">
+            <div class="service-card h-100">
+              <div class="service-card-inner-v">
+                <div class="icon-circle" v-html="s.svg"></div>
+                <h4>{{ s.title }}</h4>
+                <p>{{ s.desc }}</p>
               </div>
             </div>
           </div>
@@ -266,30 +298,23 @@
       </div>
     </section>
 
-    <!-- 6. PROCESS -->
-    <section id="process" class="process-section py-5 bg-white">
+    <!-- 6. PROCESS (Redesigned) -->
+    <section id="process" class="process-section py-5">
       <div class="container py-5">
-        <div class="section-heading text-center mb-2">
+        <div class="section-heading text-center mb-5">
           <span class="section-tag">Comment ça marche</span>
           <h2 class="section-title mt-3 text-slate-900">Commencer est <span class="text-amber">facile</span></h2>
-          <p class="text-muted mt-2">Suivez ces étapes simples pour un meilleur recrutement</p>
+          <p class="section-subtitle">6 étapes simples pour transformer votre recrutement technique</p>
           <div class="h-line"></div>
         </div>
 
-        <div class="process-connector d-none d-lg-block"></div>
-
-        <div class="row g-4 mt-4 justify-content-center">
-          <div class="col-lg-4 col-md-6" v-for="(step, i) in processSteps" :key="i">
-            <div class="process-card" :class="{ 'process-card-featured': step.featured }">
-              <div class="step-number-wrap">
-                <div class="step-number" :class="{ 'step-amber': step.featured }">{{ i + 1 }}</div>
-                <div class="step-pulse" v-if="step.featured"></div>
-              </div>
-              <div class="process-icon" v-html="step.icon"></div>
-              <h5 class="fw-bold mt-3 text-slate-800">{{ step.title }}</h5>
-              <p class="text-muted small mt-2 line-height-relaxed">{{ step.desc }}</p>
-              <div class="process-badge" v-if="step.badge">{{ step.badge }}</div>
-            </div>
+        <div class="process-grid">
+          <div class="process-card" :class="{ 'process-card-featured': step.featured }" v-for="(step, i) in processSteps" :key="i">
+            <div class="process-step-num" :class="{ 'step-amber': step.featured }">{{ i + 1 }}</div>
+            <div class="process-icon-wrap" v-html="step.icon"></div>
+            <h5>{{ step.title }}</h5>
+            <p>{{ step.desc }}</p>
+            <span class="process-badge" v-if="step.badge">{{ step.badge }}</span>
           </div>
         </div>
       </div>
@@ -311,7 +336,7 @@
                 <span class="text-slate-700 fw-medium">{{ li }}</span>
               </li>
             </ul>
-            <a href="#pricing" class="btn-amber mt-4 d-inline-block">Découvrir nos solutions</a>
+            <router-link to="/pricing" class="btn-amber mt-4 d-inline-block">Découvrir nos solutions</router-link>
           </div>
           <div class="col-lg-6 text-center">
             <div class="about-img-box position-relative">
@@ -399,11 +424,13 @@
         <div class="row gy-4">
           <div class="col-lg-4">
             <div class="d-flex align-items-center gap-2 mb-3">
-              <svg width="36" height="36" viewBox="0 0 38 38" fill="none">
-                <rect width="38" height="38" rx="11" fill="#eab308"/>
-                <path d="M9 11h20M9 19h15M9 27h18" stroke="#0f172a" stroke-width="2.8" stroke-linecap="round"/>
-                <circle cx="27" cy="27" r="4.5" fill="#0f172a"/>
-                <circle cx="27" cy="27" r="2" fill="#eab308"/>
+              <svg width="40" height="40" viewBox="0 0 42 42" fill="none">
+                <rect width="42" height="42" rx="12" fill="#eab308"/>
+                <rect x="8" y="10" width="16" height="3" rx="1.5" fill="#0f172a"/>
+                <rect x="8" y="16" width="11" height="3" rx="1.5" fill="#0f172a" opacity="0.7"/>
+                <rect x="8" y="22" width="14" height="3" rx="1.5" fill="#0f172a" opacity="0.5"/>
+                <circle cx="30" cy="30" r="7" fill="#0f172a"/>
+                <path d="M27 30l2 2 4-4" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
               <h3 class="text-white fw-bold mb-0">Evalua<span class="text-amber">Tech</span></h3>
             </div>
@@ -426,7 +453,7 @@
           <div class="col-lg-2">
             <h5 class="text-white fw-bold mb-4">Produit</h5>
             <ul class="list-unstyled footer-links">
-              <li><a href="#pricing">Tarifs</a></li>
+              <li><router-link to="/pricing">Tarifs</router-link></li>
               <li><a href="#">Documentation</a></li>
               <li><a href="#">API</a></li>
               <li><a href="#">Changelog</a></li>
@@ -498,43 +525,43 @@ const statsData = [
 
 const serviceList = [
   {
-    title: "Banque de Questions",
-    desc: "Bibliothèque structurée par thèmes et niveaux gérée par IA.",
+    title: "Banque de Questions IA",
+    desc: "Bibliothèque intelligente structurée par thèmes, niveaux et domaines. L'IA génère automatiquement des questions adaptées au poste visé, garantissant une évaluation pertinente et exhaustive.",
     svg: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`
   },
   {
-    title: "Surveillance IA",
-    desc: "Système anti-triche intégré (Proctoring) pour garantir l'équité.",
+    title: "Surveillance IA & Proctoring",
+    desc: "Système anti-triche de pointe intégré nativement. Détection en temps réel des comportements suspects via analyse vidéo, audio et comportementale pour garantir l'authenticité à 100%.",
     svg: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`
   },
   {
     title: "Rapports Détaillés",
-    desc: "Analyses automatiques et recommandations personnalisées.",
+    desc: "Analyses automatiques et recommandations personnalisées après chaque évaluation.",
     svg: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>`
   },
   {
     title: "Multi-Entreprises",
-    desc: "Architecture SaaS permettant une gestion isolée sécurisée.",
+    desc: "Architecture SaaS permettant une gestion isolée et sécurisée pour chaque organisation.",
     svg: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>`
   },
   {
     title: "Code Evaluation",
-    desc: "Exécution de code en temps réel avec sandbox sécurisé pour tous les langages.",
+    desc: "Exécution de code en temps réel avec sandbox sécurisé pour tous les langages de programmation.",
     svg: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>`
   },
   {
     title: "Analytics Avancés",
-    desc: "Tableaux de bord interactifs pour suivre l'évolution des compétences.",
+    desc: "Tableaux de bord interactifs pour suivre l'évolution des compétences en temps réel.",
     svg: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`
   },
   {
     title: "Intégration RH",
-    desc: "Compatible avec vos outils RH existants via API et webhooks.",
+    desc: "Compatible avec vos outils RH existants via API REST et webhooks configurables.",
     svg: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7M11 18H8a2 2 0 0 1-2-2V9"/></svg>`
   },
   {
     title: "Tests Adaptatifs",
-    desc: "IA qui ajuste la difficulté en temps réel selon les réponses du candidat.",
+    desc: "L'IA ajuste la difficulté en temps réel selon les performances du candidat.",
     svg: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`
   },
 ];
@@ -556,7 +583,7 @@ const processSteps = [
   },
   {
     title: "Invitez les candidats",
-    desc: "Envoyez les liens d'évaluation par e-mail. Les candidats complètent les tests selon leur horaire, depuis n'importe quel appareil, en toute simplicité.",
+    desc: "Envoyez les liens d'évaluation par e-mail. Les candidats complètent les tests selon leur horaire, depuis n'importe quel appareil.",
     icon: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>`,
     badge: "Multi-Device",
     featured: false
@@ -655,7 +682,6 @@ onUnmounted(() => {
 .text-slate-900 { color: #0f172a; }
 .shadow-amber { box-shadow: 0 8px 24px rgba(234,179,8,0.25) !important; }
 .max-w-600 { max-width: 600px; }
-.line-height-relaxed { line-height: 1.75; }
 
 /* ===== PRELOADER ===== */
 .js-preloader {
@@ -680,29 +706,33 @@ onUnmounted(() => {
 
 /* ===== NAVBAR ===== */
 .header-nav {
-  background: rgba(255,255,255,0.9);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(241,245,249,0.8);
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(241,245,249,0.9);
   z-index: 1100;
-  transition: box-shadow 0.3s;
+  transition: box-shadow 0.3s, background 0.3s;
 }
-.header-nav.scrolled { box-shadow: 0 4px 30px rgba(0,0,0,0.06); }
-.main-navigation { height: 80px; display: flex; align-items: center; justify-content: space-between; }
+.header-nav.scrolled {
+  box-shadow: 0 4px 30px rgba(0,0,0,0.07);
+  background: rgba(255,255,255,0.97);
+}
+.main-navigation { height: 72px; display: flex; align-items: center; justify-content: space-between; }
 .brand { text-decoration: none; display: flex; align-items: center; gap: 10px; }
-.brand-logo-wrap { flex-shrink: 0; }
-.brand-name { font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
-.nav-links { list-style: none; margin: 0; padding: 0; display: flex; gap: 30px; }
-.nav-links a { text-decoration: none; color: #64748b; font-weight: 700; font-size: 15px; transition: 0.2s; position: relative; }
-.nav-links a::after { content: ''; position: absolute; bottom: -4px; left: 0; width: 0; height: 2px; background: #eab308; border-radius: 10px; transition: 0.3s; }
-.nav-links a:hover::after, .nav-links a.active::after { width: 100%; }
-.nav-links a:hover, .nav-links a.active { color: #eab308; }
-.btn-text { text-decoration: none; color: #0f172a; font-weight: 700; font-size: 15px; transition: 0.2s; margin-right: 8px; }
+.brand-name { font-size: 21px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
+.nav-links { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; }
+.nav-links a, .nav-links .router-link-active {
+  text-decoration: none; color: #64748b; font-weight: 600; font-size: 14px;
+  padding: 8px 14px; border-radius: 10px; transition: 0.2s; display: block;
+}
+.nav-links a:hover, .nav-links a.active,
+.nav-links .router-link-active { color: #0f172a; background: #fefce8; }
+.btn-text { text-decoration: none; color: #64748b; font-weight: 600; font-size: 14px; transition: 0.2s; margin-right: 4px; }
 .btn-text:hover { color: #eab308; }
 .btn-amber-pill {
-  background: #eab308; color: #fff; padding: 12px 26px; border-radius: 50px;
+  background: #eab308; color: #0f172a; padding: 10px 22px; border-radius: 50px;
   text-decoration: none; font-weight: 800; font-size: 14px; display: inline-flex; align-items: center; transition: 0.3s;
 }
-.btn-amber-pill:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(234,179,8,0.35); color: #fff; }
+.btn-amber-pill:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(234,179,8,0.4); color: #0f172a; }
 
 /* ===== HERO ===== */
 .hero-section {
@@ -743,25 +773,16 @@ onUnmounted(() => {
 .badge-dot { width: 7px; height: 7px; background: #eab308; border-radius: 50%; animation: pulse-dot 2s ease-in-out infinite; }
 @keyframes pulse-dot { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.5);opacity:0.7} }
 
-/* Hero eyebrow */
 .hero-eyebrow {
   font-size: 12px; font-weight: 700; color: #eab308;
   text-transform: uppercase; letter-spacing: 2px; margin-bottom: 14px;
 }
 
-/* Hero title */
 .hero-title { font-size: 62px; font-weight: 800; letter-spacing: -3px; line-height: 1.05; color: #0f172a; margin-bottom: 22px; }
-.hero-highlight { color: #eab308; font-style: italic; position: relative; }
-.hero-highlight::after {
-  content: ''; position: absolute; bottom: -4px; left: 0; right: 0; height: 4px;
-  background: linear-gradient(90deg, #eab308, transparent);
-  border-radius: 10px;
-}
+.hero-highlight { color: #eab308; font-style: italic; }
 
-/* Hero desc */
-.hero-desc { font-size: 18px; color: #475569; margin-bottom: 28px; line-height: 1.65; max-width: 520px; }
+.hero-desc { font-size: 17px; color: #475569; margin-bottom: 28px; line-height: 1.7; max-width: 520px; }
 
-/* Hero inline stats */
 .hero-stats-inline {
   display: flex; gap: 28px; align-items: center;
   margin-bottom: 32px;
@@ -774,33 +795,28 @@ onUnmounted(() => {
 .stat-pill-label { font-size: 10px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; }
 .stat-sep { width: 1px; height: 36px; background: #e2e8f0; }
 
-/* Hero buttons */
 .hero-btns { margin-bottom: 0; }
 .btn-amber-lg, .btn-amber {
-  background: #eab308; color: #fff; padding: 18px 40px; border-radius: 16px;
+  background: #eab308; color: #0f172a; padding: 16px 36px; border-radius: 14px;
   text-decoration: none; font-weight: 800; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px;
 }
-.btn-amber-lg:hover, .btn-amber:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(234,179,8,0.35); color: #fff; }
+.btn-amber-lg:hover, .btn-amber:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(234,179,8,0.35); color: #0f172a; }
 .btn-outline-custom {
-  border: 2px solid #e2e8f0; color: #0f172a; padding: 18px 40px; border-radius: 16px;
-  text-decoration: none; font-weight: 800; transition: 0.3s; display: inline-flex; align-items: center;
+  border: 2px solid #e2e8f0; color: #0f172a; padding: 16px 36px; border-radius: 14px;
+  text-decoration: none; font-weight: 700; transition: 0.3s; display: inline-flex; align-items: center;
 }
 .btn-outline-custom:hover { background: #0f172a; color: #fff; border-color: #0f172a; }
 
-/* Hero divider */
-.hero-divider { width: 100%; height: 1px; background: #f1f5f9; margin: 28px 0; }
-
-/* Hero trust */
 .hero-trust { display: flex; align-items: center; gap: 14px; }
 .trust-avatars { display: flex; }
 .ta {
-  width: 36px; height: 36px; border-radius: 50%; border: 3px solid white;
-  display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; color: white;
+  width: 34px; height: 34px; border-radius: 50%; border: 3px solid white;
+  display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; color: white;
   margin-left: -8px;
 }
 .ta:first-child { margin-left: 0; }
 .trust-info { display: flex; flex-direction: column; gap: 1px; }
-.trust-count { font-size: 15px; font-weight: 800; color: #0f172a; }
+.trust-count { font-size: 14px; font-weight: 800; color: #0f172a; }
 .trust-sub { font-size: 12px; color: #94a3b8; }
 
 /* Hero mockup */
@@ -815,20 +831,18 @@ onUnmounted(() => {
 }
 .mock-title { font-size: 12px; font-weight: 700; color: #94a3b8; margin-left: 10px; flex: 1; }
 .mock-live { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; color: #22c55e; }
-.live-dot { width: 6px; height: 6px; background: #22c55e; border-radius: 50%; }
+.live-dot { width: 6px; height: 6px; background: #22c55e; border-radius: 50%; animation: pulse-dot 1.5s ease-in-out infinite; }
 .m-dot { width: 10px; height: 10px; border-radius: 50%; }
 .m-dot.red { background: #ff5f56; } .m-dot.yellow { background: #ffbd2e; } .m-dot.green { background: #27c93f; }
 .mock-body { padding: 24px; }
 
-/* Candidate row */
 .mock-candidate {
   display: flex; align-items: center; gap: 12px;
   margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9;
 }
 .candidate-avatar {
   width: 40px; height: 40px; background: #fefce8; border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 800; font-size: 16px; color: #eab308; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .candidate-info { flex: 1; }
 .candidate-info h4 { font-size: 13px; font-weight: 800; color: #0f172a; margin: 0 0 2px; }
@@ -837,7 +851,6 @@ onUnmounted(() => {
 .sbi-val { font-size: 26px; font-weight: 800; color: #0f172a; line-height: 1; }
 .sbi-label { font-size: 9px; font-weight: 700; color: #eab308; text-transform: uppercase; letter-spacing: 1px; }
 
-/* Score row */
 .score-row { display: flex; gap: 24px; align-items: center; }
 .score-circle { position: relative; width: 110px; height: 110px; flex-shrink: 0; }
 .score-svg { width: 110px; height: 110px; }
@@ -852,17 +865,14 @@ onUnmounted(() => {
 .skill-track { height: 6px; background: #f1f5f9; border-radius: 10px; overflow: hidden; }
 .skill-fill {
   height: 100%; background: linear-gradient(90deg, #eab308, #f59e0b);
-  border-radius: 10px; animation: fill-bar 1.5s ease forwards;
-  animation-delay: 1.2s; width: 0;
+  border-radius: 10px;
 }
-@keyframes fill-bar { to { width: var(--w); } }
 .mock-tags { display: flex; gap: 8px; flex-wrap: wrap; }
 .mock-tag { padding: 4px 10px; border-radius: 100px; font-size: 11px; font-weight: 700; }
 .mock-tag.green { background: #dcfce7; color: #16a34a; }
 .mock-tag.blue { background: #dbeafe; color: #2563eb; }
 .mock-tag.amber { background: #fef9c3; color: #a16207; }
 
-/* Mock footer */
 .mock-footer {
   padding: 12px 20px; background: #f8fafc; border-top: 1px solid #f1f5f9;
   display: flex; justify-content: space-between; align-items: center;
@@ -870,7 +880,6 @@ onUnmounted(() => {
 .mf-label { font-size: 11px; color: #94a3b8; font-weight: 600; }
 .mf-action { font-size: 11px; font-weight: 700; color: #eab308; }
 
-/* Float badges (new 3-badge design) */
 .float-badge {
   position: absolute; background: white; border: 1px solid #f1f5f9;
   border-radius: 14px; padding: 10px 14px; display: flex; align-items: center;
@@ -928,76 +937,94 @@ onUnmounted(() => {
 }
 .section-tag.light { background: rgba(255,255,255,0.15); color: white; border-color: rgba(255,255,255,0.3); }
 .section-title { font-size: 44px; font-weight: 800; letter-spacing: -1.5px; color: #0f172a; }
-.h-line { width: 60px; height: 4px; background: #eab308; margin: 20px auto; border-radius: 10px; }
+.section-subtitle { font-size: 16px; color: #64748b; margin-top: 12px; }
+.h-line { width: 60px; height: 4px; background: #eab308; margin: 20px auto 0; border-radius: 10px; }
 
-/* ===== SERVICES ===== */
+/* ===== SERVICES (Redesigned) ===== */
 .services-section { background: #fff; }
-.service-card {
-  padding: 36px 28px; background: #fff; border: 1px solid #f1f5f9;
-  border-radius: 24px; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  text-align: center; position: relative; overflow: hidden;
+
+.service-card-large {
+  border-radius: 24px; overflow: hidden; position: relative;
+  border: 1px solid #f1f5f9; transition: 0.4s;
+  background: #fff;
 }
-.service-card::before {
-  content: ''; position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(234,179,8,0.04) 0%, transparent 60%);
+.service-card-large:hover { transform: translateY(-6px); box-shadow: 0 24px 50px rgba(0,0,0,0.07); border-color: #fde68a; }
+.service-card-bg {
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, #fefce8 0%, #fff 60%);
   opacity: 0; transition: 0.4s;
 }
-.service-card:hover { transform: translateY(-10px); box-shadow: 0 24px 50px rgba(0,0,0,0.06); border-color: #fde68a; }
-.service-card:hover::before { opacity: 1; }
-.service-card:hover .card-arrow { opacity: 1; }
-.icon-circle {
-  width: 64px; height: 64px; background: #fefce8; color: #eab308;
+.service-card-large:hover .service-card-bg { opacity: 1; }
+.service-card-inner {
+  position: relative; z-index: 2;
+  display: flex; align-items: flex-start; gap: 20px; padding: 36px 32px;
+}
+.icon-circle-lg {
+  width: 60px; height: 60px; min-width: 60px; background: #fefce8; color: #eab308;
   border-radius: 18px; display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 24px; transition: 0.3s;
-}
-.service-card:hover .icon-circle { background: #eab308; color: white; transform: rotate(5deg) scale(1.05); }
-.service-card h4 { font-size: 17px; font-weight: 800; color: #0f172a; margin-bottom: 12px; }
-.service-card p { font-size: 14px; color: #64748b; line-height: 1.6; margin: 0; }
-.card-arrow {
-  position: absolute; bottom: 20px; right: 20px;
-  width: 32px; height: 32px; background: #eab308; color: white;
-  border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  opacity: 0; transition: 0.3s;
-}
-
-/* ===== PROCESS ===== */
-.process-section { background: #ffffff; }
-.process-connector {
-  position: absolute; top: 50%; left: 50%;
-  transform: translate(-50%,0);
-  width: 70%; height: 2px;
-  background: linear-gradient(90deg, transparent, #fde68a, #eab308, #fde68a, transparent);
-}
-.process-card {
-  padding: 36px 28px; border-radius: 24px;
-  background: #fff; border: 1px solid #f1f5f9;
-  transition: 0.4s; position: relative; text-align: center;
-}
-.process-card:hover { transform: translateY(-8px); box-shadow: 0 20px 50px rgba(0,0,0,0.06); border-color: #fde68a; }
-.process-card-featured { border-color: #eab308; background: linear-gradient(135deg, #fffbeb, #fff); }
-.process-card-featured:hover { box-shadow: 0 20px 50px rgba(234,179,8,0.15); }
-.step-number-wrap { position: relative; display: inline-block; margin-bottom: 20px; }
-.step-number {
-  width: 52px; height: 52px; background: #f1f5f9; color: #94a3b8;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 800; font-size: 22px; border-radius: 14px; margin: 0 auto;
   transition: 0.3s;
 }
-.step-number.step-amber { background: #eab308; color: white; }
-.process-card:hover .step-number { background: #eab308; color: white; }
-.step-pulse {
-  position: absolute; inset: -6px;
-  border-radius: 20px; border: 2px solid rgba(234,179,8,0.4);
-  animation: pulse-ring 2s ease-in-out infinite;
+.service-card-large:hover .icon-circle-lg { background: #eab308; color: white; }
+.service-content { flex: 1; }
+.service-content h4 { font-size: 19px; font-weight: 800; color: #0f172a; margin-bottom: 10px; }
+.service-content p { font-size: 14px; color: #64748b; line-height: 1.7; margin: 0; }
+.service-arrow-lg {
+  width: 36px; height: 36px; min-width: 36px; background: #f1f5f9; color: #94a3b8;
+  border-radius: 10px; display: flex; align-items: center; justify-content: center;
+  transition: 0.3s; align-self: center;
 }
-@keyframes pulse-ring { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.1)} }
-.process-icon { margin-bottom: 8px; }
-.process-card h5 { font-size: 18px; font-weight: 800; }
-.process-card p { font-size: 14px; }
+.service-card-large:hover .service-arrow-lg { background: #eab308; color: #0f172a; }
+
+.service-card {
+  padding: 28px 24px; background: #fff; border: 1px solid #f1f5f9;
+  border-radius: 20px; transition: 0.35s;
+  position: relative; overflow: hidden;
+}
+.service-card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0,0,0,0.06); border-color: #fde68a; }
+.service-card-inner-v { display: flex; flex-direction: column; gap: 14px; height: 100%; }
+.icon-circle {
+  width: 54px; height: 54px; background: #fefce8; color: #eab308;
+  border-radius: 16px; display: flex; align-items: center; justify-content: center;
+  transition: 0.3s;
+}
+.service-card:hover .icon-circle { background: #eab308; color: white; }
+.service-card h4 { font-size: 16px; font-weight: 800; color: #0f172a; margin: 0; }
+.service-card p { font-size: 14px; color: #64748b; line-height: 1.6; margin: 0; }
+
+/* ===== PROCESS (Redesigned) ===== */
+.process-section { background: #f8fafc; }
+.process-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+.process-card {
+  padding: 32px 28px; border-radius: 22px;
+  background: #fff; border: 1px solid #f1f5f9;
+  transition: 0.35s; position: relative; text-align: center;
+}
+.process-card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0,0,0,0.06); border-color: #fde68a; }
+.process-card-featured {
+  border-color: #eab308 !important;
+  background: linear-gradient(135deg, #fffbeb 0%, #fff 60%);
+  box-shadow: 0 8px 30px rgba(234,179,8,0.12);
+}
+.process-card-featured:hover { box-shadow: 0 20px 50px rgba(234,179,8,0.18); }
+.process-step-num {
+  width: 44px; height: 44px; background: #f1f5f9; color: #94a3b8;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 18px; border-radius: 12px; margin: 0 auto 16px;
+  transition: 0.3s;
+}
+.step-amber { background: #eab308 !important; color: #0f172a !important; }
+.process-card:hover .process-step-num { background: #eab308; color: #0f172a; }
+.process-icon-wrap { margin-bottom: 12px; }
+.process-card h5 { font-size: 17px; font-weight: 800; color: #0f172a; margin: 0 0 8px; }
+.process-card p { font-size: 13px; color: #64748b; line-height: 1.7; margin: 0; }
 .process-badge {
   display: inline-block; background: #fefce8; color: #a16207; border: 1px solid #fde68a;
-  padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 800;
-  text-transform: uppercase; letter-spacing: 1px; margin-top: 16px;
+  padding: 4px 12px; border-radius: 100px; font-size: 10px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 1px; margin-top: 14px;
 }
 
 /* ===== ABOUT ===== */
@@ -1020,12 +1047,12 @@ onUnmounted(() => {
 .icon-bg-amber { width: 48px; height: 48px; background: #eab308; border-radius: 14px; display: flex; align-items: center; justify-content: center; }
 
 /* ===== TESTIMONIALS ===== */
-.testimonials { background: #f8fafc; }
+.testimonials { background: #fff; }
 .testimonial-card {
-  padding: 36px 30px; background: #fff; border: 1px solid #f1f5f9;
+  padding: 36px 30px; background: #f8fafc; border: 1px solid #f1f5f9;
   border-radius: 24px; transition: 0.3s; position: relative; overflow: hidden;
 }
-.testimonial-featured { border-color: #eab308; }
+.testimonial-featured { border-color: #eab308; background: #fffbeb; }
 .testimonial-featured::before {
   content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: #eab308;
 }
@@ -1070,8 +1097,11 @@ onUnmounted(() => {
 
 /* ===== FOOTER ===== */
 .footer-dark { background: #0f172a; border-radius: 40px 40px 0 0; margin-top: 40px; }
-.footer-links a { color: #94a3b8; text-decoration: none; transition: 0.2s; display: block; line-height: 2.5; font-weight: 600; font-size: 14px; }
-.footer-links a:hover { color: #eab308; padding-left: 6px; }
+.footer-links a, .footer-links .router-link-active {
+  color: #94a3b8; text-decoration: none; transition: 0.2s; display: block;
+  line-height: 2.5; font-weight: 600; font-size: 14px;
+}
+.footer-links a:hover, .footer-links .router-link-active:hover { color: #eab308; padding-left: 6px; }
 .footer-socials { display: flex; gap: 10px; }
 .social-icon {
   width: 38px; height: 38px; border-radius: 10px; background: rgba(255,255,255,0.06);
@@ -1087,12 +1117,11 @@ onUnmounted(() => {
 }
 .newsletter-input::placeholder { color: #64748b; }
 .newsletter-btn {
-  width: 48px; background: #eab308; border: none; color: white;
+  width: 48px; background: #eab308; border: none; color: #0f172a;
   font-size: 20px; font-weight: bold; border-radius: 0 12px 12px 0; cursor: pointer;
   transition: 0.2s;
 }
 .newsletter-btn:hover { background: #d97706; }
-.newsletter-input, .newsletter-btn { vertical-align: middle; }
 .footer-newsletter { display: flex; }
 
 /* ===== ANIMATIONS ===== */
@@ -1100,30 +1129,30 @@ onUnmounted(() => {
 @keyframes float-slow { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
 .animate-float { animation: float 6s ease-in-out infinite; }
 .animate-float-slow { animation: float-slow 8s ease-in-out infinite; }
-.animate-float-delayed { animation: float 6s ease-in-out infinite; animation-delay: 2s; }
+.animate-float-delayed { animation: float 6s ease-in-out infinite 2s; }
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1199px) {
   .stats-inner { grid-template-columns: repeat(3, 1fr); }
   .stat-item:nth-child(3) { border-right: none; }
   .stat-item:nth-child(4) { border-top: 1px solid #f1f5f9; }
+  .process-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 991px) {
   .hero-section { min-height: auto; padding: 100px 0 60px; }
   .hero-title { font-size: 40px; text-align: center; }
-  .hero-eyebrow { text-align: center; }
-  .hero-desc { text-align: center; margin: 20px auto; }
+  .hero-eyebrow, .hero-desc, .hero-badge { text-align: center; margin-left: auto; margin-right: auto; }
   .hero-btns { justify-content: center; flex-direction: column; }
-  .hero-badge { margin: 0 auto 16px; }
   .hero-trust { justify-content: center; }
   .hero-stats-inline { justify-content: center; }
-  .hero-divider { display: none; }
   .section-title { font-size: 34px; }
   .floating-badge, .floating-badge-2 { display: none; }
   .footer-dark { border-radius: 24px 24px 0 0; }
   .stats-inner { grid-template-columns: repeat(2, 1fr); }
   .stat-item { border-right: none; border-bottom: 1px solid #f1f5f9; }
   .fb1, .fb2, .fb3 { display: none; }
+  .service-card-inner { flex-direction: column; }
+  .process-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 575px) {
   .hero-title { font-size: 32px; letter-spacing: -1.5px; }

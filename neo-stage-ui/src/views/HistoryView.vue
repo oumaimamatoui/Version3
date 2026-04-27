@@ -1,203 +1,277 @@
 <template>
-  <div class="d-flex admin-body">
-    <!-- 1. SIDEBAR -->
+  <div class="admin-layout">
+    <div class="bg-mesh"></div>
+    
+    <!-- Navigation latérale -->
     <AppSidebar />
 
-    <div class="content flex-grow-1">
-      <!-- 2. NAVBAR -->
+    <div class="main-viewport animate__animated animate__fadeIn">
+      <!-- Barre de navigation haute -->
       <AppNavbar />
 
-      <main class="p-4 animate-fade-in">
-        <!-- HEADER SECTION -->
-        <div class="d-flex justify-content-between align-items-end mb-4">
-          <div>
-            <nav class="breadcrumb-cyber mb-2">TABLEAU DE BORD / MON_HISTORIQUE</nav>
-            <h2 class="fw-800 text-navy m-0">
-              <i class="fa-solid fa-clock-rotate-left me-2 text-amber"></i> 
-              Mon <span>Historique</span>
-            </h2>
-          </div>
-          <div class="text-end d-none d-md-block">
-            <span class="badge-status actives px-3">
-              {{ history.length }} TESTS TERMINÉS
-            </span>
+      <div class="container-fluid px-lg-5 pt-4">
+        
+        <!-- BREADCRUMB / STATUS BAR -->
+        <div class="status-bar mb-4">
+          <div class="d-flex justify-content-between align-items-center px-4">
+            <div class="breadcrumb-path">
+              <span class="root">TABLEAU DE BORD</span>
+              <span class="sep">/</span>
+              <span class="current">MON HISTORIQUE DES TESTS</span>
+            </div>
           </div>
         </div>
 
-        <!-- FILTRES & RECHERCHE (Look Pro) -->
-        <div class="glass-card p-3 mb-4 d-flex flex-wrap gap-3 align-items-center shadow-sm border-0">
+        <!-- HEADER SECTION -->
+        <div class="d-flex justify-content-between align-items-end mb-5">
+          <div>
+            <h1 class="page-title mb-1">Mon <span class="accent-word">Historique</span></h1>
+            <p class="page-subtitle">Consultez vos scores et l'analyse détaillée de vos sessions terminées.</p>
+          </div>
+          <div class="stats-row">
+            <div class="stat-pill dark">
+              <span class="pill-count">{{ historyData.length }}</span>
+              <span class="pill-label">Tests validés</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- BARRE DE RECHERCHE ET FILTRES -->
+        <div class="glass-card-filter p-3 mb-4 d-flex flex-wrap gap-3 align-items-center shadow-sm">
           <div class="search-vessel flex-grow-1">
             <i class="fa-solid fa-magnifying-glass ms-3 text-muted"></i>
-            <input type="text" v-model="searchQuery" placeholder="Rechercher un test ou un groupe..." class="cyber-input">
+            <input 
+              type="text" 
+              v-model="searchQuery" 
+              placeholder="Rechercher un test par son nom..." 
+              class="cyber-input"
+            >
           </div>
           <select class="form-select-pro" v-model="filterScore">
             <option value="all">Tous les scores</option>
-            <option value="high">Plus de 80%</option>
-            <option value="medium">50% - 80%</option>
-            <option value="low">Moins de 50%</option>
+            <option value="high">Excellence (> 80%)</option>
+            <option value="mid">Réussis (50% - 80%)</option>
+            <option value="low">À améliorer (< 50%)</option>
           </select>
         </div>
 
-        <!-- LISTE DE L'HISTORIQUE -->
-        <div class="history-stack">
-          <TransitionGroup name="list">
-            <div class="col-12 mb-3" v-for="test in filteredHistory" :key="test.id">
-              <div class="history-card glass-card p-4 d-flex flex-wrap justify-content-between align-items-center">
+        <!-- LOADER PENDANT LA RÉCUPÉRATION -->
+        <div v-if="loading" class="text-center py-5">
+          <div class="spinner-ring"></div>
+          <p class="mt-4 loading-text">Extraction de vos performances...</p>
+        </div>
+
+        <!-- LISTE DES TESTS TERMINÉS -->
+        <div v-else>
+          <div class="row g-4">
+            <!-- État vide -->
+            <div v-if="filteredHistory.length === 0" class="col-12">
+              <div class="empty-panel py-5">
+                <i class="fa-solid fa-卒業生 fa-3x mb-3 opacity-20"></i>
+                <p class="m-0">Aucun historique disponible pour le moment.</p>
+                <small class="text-muted">Terminez votre premier test pour voir vos résultats ici.</small>
+              </div>
+            </div>
+
+            <!-- Cartes d'historique -->
+            <div v-for="test in filteredHistory" :key="test.id" class="col-12">
+              <div class="history-item-card animate__animated animate__fadeInUp">
                 
-                <!-- Info Test -->
-                <div class="d-flex align-items-center gap-4 flex-grow-1">
-                  <div class="icon-vessel-lg shadow-sm" :class="getScoreClass(test.score)">
-                    <i class="fa-solid fa-file-invoice"></i>
+                <!-- Section Identité du Test -->
+                <div class="d-flex align-items-center gap-4 flex-grow-1 min-w-0">
+                  <div class="score-icon-vessel" :class="getScoreCategory(test.score)">
+                    <i class="fa-solid fa-award"></i>
                   </div>
-                  <div>
-                    <h5 class="fw-bold text-navy m-0">{{ test.title }}</h5>
-                    <div class="d-flex gap-3 mt-1 align-items-center">
-                      <span class="tiny fw-bold text-muted uppercase"><i class="fa-solid fa-layer-group me-1"></i> {{ test.group }}</span>
-                      <span class="tiny fw-bold text-muted uppercase"><i class="fa-solid fa-calendar-day me-1"></i> {{ test.date }}</span>
+                  <div class="text-truncate">
+                    <h5 class="test-name text-truncate">{{ test.nom }}</h5>
+                    <div class="test-meta">
+                      <span><i class="fa-solid fa-calendar-check me-1"></i> Terminé le {{ formatDate(test.dateFin) }}</span>
+                      <span class="mx-3 text-silver">|</span>
+                      <span><i class="fa-solid fa-stopwatch me-1"></i> Session de {{ test.dureeMinutes }} min</span>
                     </div>
                   </div>
                 </div>
 
-                <!-- Métriques Techniques -->
-                <div class="d-flex gap-5 px-4 my-3 my-lg-0 border-start-cyber border-end-cyber">
-                  <div class="text-center">
-                    <div class="tiny fw-bold text-muted uppercase mb-1">Questions</div>
-                    <div class="fw-800 text-navy">{{ test.qCount }}</div>
-                  </div>
-                  <div class="text-center">
-                    <div class="tiny fw-bold text-muted uppercase mb-1">Durée</div>
-                    <div class="fw-bold text-navy">{{ test.timeSpent }} min</div>
+                <!-- Section Score Central -->
+                <div class="score-section px-lg-5">
+                  <div class="score-label">RÉSULTAT FINAL</div>
+                  <div class="score-value" :style="{ color: getScoreColor(test.score) }">
+                    {{ test.score }}%
                   </div>
                 </div>
 
-                <!-- Score IA & Action -->
-                <div class="d-flex align-items-center gap-4 ps-lg-4">
-                  <div class="text-center">
-                    <div class="tiny fw-bold text-muted uppercase mb-1">Index IA</div>
-                    <div class="h3 fw-800 m-0" :style="{ color: getScoreColor(test.score) }">
-                      {{ test.score }}%
-                    </div>
-                  </div>
-                  <router-link to="/results" class="btn-ia-action">
-                    <span>ANALYSE IA</span>
-                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <!-- Section Action (Lien vers la correction) -->
+                <div class="action-section">
+                  <router-link :to="`/exam-lobby/${test.id}`" class="btn-action-pro">
+                    <span>REVOIR L'AUDIT</span>
+                    <i class="fa-solid fa-chevron-right"></i>
                   </router-link>
                 </div>
 
               </div>
             </div>
-          </TransitionGroup>
+          </div>
         </div>
 
-        <!-- EMPTY STATE -->
-        <div v-if="filteredHistory.length === 0" class="text-center py-5">
-          <i class="fa-solid fa-box-open fa-3x text-muted opacity-20 mb-3"></i>
-          <p class="text-muted">Aucun test ne correspond à vos critères.</p>
-        </div>
-      </main>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import api from '@/services/api';
 import AppSidebar from '../components/AppSidebar.vue';
 import AppNavbar from '../components/AppNavbar.vue';
 
+const loading = ref(true);
 const searchQuery = ref('');
 const filterScore = ref('all');
+const historyData = ref([]);
 
-const history = ref([
-  { id: 1, title: 'Architecture Cloud Senior', group: 'Tech IT', score: 85, date: '15 Fév 2026', qCount: 40, timeSpent: 42 },
-  { id: 2, title: 'Logique & Algorithmique', group: 'Stagiaires', score: 62, date: '02 Fév 2026', qCount: 20, timeSpent: 15 },
-  { id: 3, title: 'Sécurité Réseaux v2', group: 'Tech IT', score: 45, date: '20 Jan 2026', qCount: 30, timeSpent: 28 },
-]);
+// Récupération des données depuis le nouvel endpoint
+const fetchHistory = async () => {
+  loading.value = true;
+  try {
+    const res = await api.get('/Examen/mon-historique');
+    historyData.value = res.data;
+  } catch (err) {
+    console.error("Erreur lors de la récupération de l'historique:", err);
+  } finally {
+    loading.value = false;
+  }
+};
 
+// Filtrage dynamique (Recherche + Score)
 const filteredHistory = computed(() => {
-  return history.value.filter(item => {
-    const matchesSearch = item.title.toLowerCase().includes(searchQuery.value.toLowerCase()) || 
-                         item.group.toLowerCase().includes(searchQuery.value.toLowerCase());
+  return historyData.value.filter(item => {
+    const matchesSearch = item.nom.toLowerCase().includes(searchQuery.value.toLowerCase());
     
     let matchesScore = true;
     if (filterScore.value === 'high') matchesScore = item.score >= 80;
-    else if (filterScore.value === 'medium') matchesScore = item.score >= 50 && item.score < 80;
-    else if (filterScore.value === 'low') matchesScore = item.score < 50;
+    if (filterScore.value === 'mid') matchesScore = item.score >= 50 && item.score < 80;
+    if (filterScore.value === 'low') matchesScore = item.score < 50;
 
     return matchesSearch && matchesScore;
   });
 });
 
-const getScoreColor = (score) => {
-  if (score >= 80) return '#10B981'; // Success
-  if (score >= 50) return '#EAB308'; // Warning/Amber
-  return '#EF4444'; // Danger
+// Utilitaires de formatage
+const formatDate = (d) => {
+  if (!d) return 'N/A';
+  return new Date(d).toLocaleDateString('fr-FR', { 
+    day: '2-digit', 
+    month: 'long', 
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 };
 
-const getScoreClass = (score) => {
-  if (score >= 80) return 'bg-success-soft text-success';
-  if (score >= 50) return 'bg-amber-soft text-amber';
-  return 'bg-danger-soft text-danger';
+const getScoreColor = (score) => {
+  if (score >= 80) return '#10b981'; // Vert
+  if (score >= 50) return '#f59e0b'; // Ambre
+  return '#ef4444'; // Rouge
 };
+
+const getScoreCategory = (score) => {
+  if (score >= 80) return 'cat-high';
+  if (score >= 50) return 'cat-mid';
+  return 'cat-low';
+};
+
+onMounted(fetchHistory);
 </script>
 
 <style scoped>
-/* --- TYPOGRAPHIE --- */
-.breadcrumb-cyber { font-family: monospace; font-size: 10px; color: #94a3b8; letter-spacing: 2px; }
-.fw-800 { font-weight: 800; }
-.ls-1 { letter-spacing: 1px; }
+/* ─── Layout & Fond ─── */
+.admin-layout { min-height: 100vh; display: flex; background: #f8fafc; position: relative; }
+.bg-mesh {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: radial-gradient(circle at 80% 20%, rgba(251, 191, 36, 0.08) 0%, transparent 50%),
+              linear-gradient(160deg, #f8fafc 0%, #f1f5f9 100%);
+}
+.main-viewport { flex-grow: 1; z-index: 5; position: relative; padding-bottom: 50px; }
 
-/* --- CARDS & ITEMS --- */
-.history-card {
-  border: 1px solid #f1f5f9;
+/* ─── Barre de statut ─── */
+.status-bar {
+  background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px);
+  border: 1px solid white; border-radius: 16px; padding: 12px 0;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+}
+.breadcrumb-path { font-size: 10px; font-weight: 800; letter-spacing: 1.2px; color: #94a3b8; }
+
+/* ─── Titres ─── */
+.page-title { font-size: 32px; font-weight: 900; color: #0f172a; letter-spacing: -0.5px; }
+.accent-word { color: #fbbf24; position: relative; }
+.page-subtitle { color: #64748b; font-size: 15px; }
+
+/* ─── Filtres Glass ─── */
+.glass-card-filter {
+  background: white; border-radius: 20px; border: 1px solid #e2e8f0;
+}
+.search-vessel { display: flex; align-items: center; background: #f1f5f9; border-radius: 12px; }
+.cyber-input { border: none; background: transparent; outline: none; width: 100%; padding: 12px; font-size: 14px; color: #1e293b; }
+.form-select-pro {
+  border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 20px; font-size: 14px; font-weight: 600; color: #475569; outline: none; cursor: pointer;
+}
+
+/* ─── Cartes Historique ─── */
+.history-item-card {
+  background: white; border: 1px solid #f1f5f9; border-radius: 24px;
+  padding: 24px 35px; display: flex; align-items: center; justify-content: space-between;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.history-card:hover {
-  transform: translateY(-3px) scale(1.005);
-  box-shadow: 0 15px 30px -10px rgba(0,0,0,0.05) !important;
-  border-color: #EAB308;
+.history-item-card:hover {
+  transform: translateY(-5px) scale(1.005);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06);
+  border-color: #fbbf24;
 }
 
-.icon-vessel-lg {
-  width: 55px; height: 55px;
-  border-radius: 16px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.5rem;
+.score-icon-vessel {
+  width: 56px; height: 56px; border-radius: 18px;
+  display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+}
+.cat-high { background: #ecfdf5; color: #10b981; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.1); }
+.cat-mid { background: #fffbeb; color: #f59e0b; box-shadow: 0 10px 20px rgba(245, 158, 11, 0.1); }
+.cat-low { background: #fef2f2; color: #ef4444; box-shadow: 0 10px 20px rgba(239, 68, 68, 0.1); }
+
+.test-name { font-weight: 800; color: #1e293b; margin: 0; font-size: 1.2rem; }
+.test-meta { font-size: 13px; color: #94a3b8; font-weight: 600; margin-top: 6px; }
+
+.score-section { text-align: center; border-left: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; min-width: 200px; }
+.score-label { font-size: 10px; font-weight: 800; color: #cbd5e1; letter-spacing: 1.5px; margin-bottom: 5px; }
+.score-value { font-size: 32px; font-weight: 950; line-height: 1; }
+
+.btn-action-pro {
+  background: #0f172a; color: white; text-decoration: none;
+  padding: 14px 28px; border-radius: 16px; font-weight: 700; font-size: 13px;
+  display: flex; align-items: center; gap: 12px; transition: 0.3s;
+}
+.btn-action-pro:hover { background: #fbbf24; color: #0f172a; transform: scale(1.05); }
+
+/* ─── Utils ─── */
+.stat-pill.dark { background: #0f172a; color: white; padding: 12px 25px; border-radius: 100px; box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2); }
+.pill-count { color: #fbbf24; font-weight: 900; font-size: 1.4rem; margin-right: 10px; }
+.pill-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; }
+
+.spinner-ring {
+  width: 45px; height: 45px; border: 4px solid #e2e8f0;
+  border-top-color: #fbbf24; border-radius: 50%; animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty-panel { 
+    text-align: center; color: #94a3b8; font-weight: 600; 
+    border: 2px dashed #e2e8f0; border-radius: 30px; 
+    background: rgba(255,255,255,0.4);
 }
 
-.bg-success-soft { background: #ecfdf5; color: #10b981; }
-.bg-amber-soft { background: #fffbeb; color: #eab308; }
-.bg-danger-soft { background: #fff1f2; color: #ef4444; }
-
-/* --- INPUTS PRO --- */
-.cyber-input {
-  flex: 1; background: transparent; border: none; padding: 10px;
-  font-size: 14px; outline: none; color: #0F172A;
+@media (max-width: 992px) {
+  .history-item-card { flex-direction: column; text-align: center; gap: 25px; }
+  .score-section { border: none; padding: 0; }
+  .action-section { width: 100%; }
+  .btn-action-pro { justify-content: center; }
 }
-.form-select-pro {
-  background-color: #f8fafc; border: 1px solid #e2e8f0;
-  border-radius: 10px; padding: 8px 15px; font-size: 13px;
-  font-weight: 700; color: #64748b; outline: none;
-}
-
-/* --- BUTTON IA --- */
-.btn-ia-action {
-  background: #0F172A; color: white;
-  text-decoration: none; padding: 12px 20px;
-  border-radius: 50px; font-weight: 800; font-size: 11px;
-  display: flex; align-items: center; gap: 10px;
-  transition: 0.3s;
-  border: 2px solid transparent;
-}
-.btn-ia-action:hover {
-  background: #EAB308; color: #0F172A;
-  box-shadow: 0 5px 15px rgba(234, 179, 8, 0.3);
-}
-
-/* --- UTILS --- */
-.border-start-cyber { border-left: 1px solid #f1f5f9; }
-.border-end-cyber { border-right: 1px solid #f1f5f9; }
-
-/* --- ANIMATIONS --- */
-.list-move, .list-enter-active, .list-leave-active { transition: all 0.4s ease; }
-.list-enter-from, .list-leave-to { opacity: 0; transform: translateX(30px); }
 </style>

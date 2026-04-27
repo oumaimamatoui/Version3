@@ -4,12 +4,12 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace NeoEvaluation.API.Data.Migrations
 {
-    /// <inheritdoc />
     public partial class AddQuestionTypeAndDuration : Migration
     {
-        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            // On commente car ces colonnes sont déjà créées dans FreshStart
+            /*
             migrationBuilder.AddColumn<int>(
                 name: "Type",
                 table: "Questions",
@@ -22,11 +22,12 @@ namespace NeoEvaluation.API.Data.Migrations
                 table: "Questions",
                 type: "integer",
                 nullable: true);
+            */
         }
 
-        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            /*
             migrationBuilder.DropColumn(
                 name: "Type",
                 table: "Questions");
@@ -34,6 +35,7 @@ namespace NeoEvaluation.API.Data.Migrations
             migrationBuilder.DropColumn(
                 name: "DureeSecondes",
                 table: "Questions");
+            */
         }
     }
 }

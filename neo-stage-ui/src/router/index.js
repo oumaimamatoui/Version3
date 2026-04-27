@@ -67,7 +67,8 @@ const routes = [
   { path: '/login', name: 'login', component: LoginView },
   { path: '/register', name: 'register', component: RegisterView },
   { path: '/pricing', name: 'pricing', component: TarificationView },
-  { path: '/activate-role', name: 'activation', component: ActivationView },
+ // Remplacez la ligne existante par celle-ci :
+{ path: '/activate-account', name: 'activation', component: ActivationView },
   { path: '/forgot-password', name: 'forgot-password', component: ForgotPasswordView },
   { path: '/reset-password', name: 'reset-password', component: ResetPasswordView },
   { path: '/definir-mot-de-passe', name: 'definir-mot-de-passe', component: DefinirMotDePasseView },

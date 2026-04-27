@@ -1,124 +1,150 @@
 <template>
-  <div class="admin-layout">
-    <div class="background-overlay"></div>
-    <div class="tech-grid-subtle"></div>
-    <div class="glow-orb orb-amber"></div>
+  <div class="admin-layout elite-dashboard-root">
+    <!-- Fond Immersif Elite (Identique au Login) -->
+    <div class="luxury-bg">
+      <div class="aura-sphere sphere-amber"></div>
+      <div class="aura-sphere sphere-blue"></div>
+      <div class="aura-sphere sphere-rose"></div>
+      <div class="mesh-grain"></div>
+    </div>
     
     <AppSidebar />
     
-    <div class="main-viewport animate__animated animate__fadeIn">
+    <div class="main-viewport">
       <AppNavbar />
 
-      <div class="container-fluid px-lg-5 pt-4">
-        <div class="terminal-status-bar mb-4">
-          <div class="d-flex justify-content-between align-items-center px-4">
-            <div class="breadcrumb-cyber">
-              <span class="root">EXAMEN</span>
-              <span class="sep">/</span>
-              <span class="current">MES TESTS DISPONIBLES</span>
+      <div class="container-fluid px-xl-5 pt-4 content-container">
+        <!-- Header Section style Bento -->
+        <header class="content-header animate__animated animate__fadeIn">
+          <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-4 mb-5">
+            <div>
+              <nav class="elite-breadcrumb mb-2">
+                <span class="root">PLATEFORME</span>
+                <i class="fa-solid fa-chevron-right mx-2"></i>
+                <span class="current">TABLEAU DE BORD</span>
+              </nav>
+              <h1 class="main-title">
+                Mes <span class="text-amber-gradient">Évaluations</span>
+              </h1>
+              <p class="subtitle">Prêt pour votre prochaine étape professionnelle ?</p>
+            </div>
+
+            <div class="stats-bento-container">
+              <div class="stat-item">
+                <div class="stat-value">{{ activeTests.length }}</div>
+                <div class="stat-label">DISPONIBLES</div>
+              </div>
+              <div class="stat-divider"></div>
+              <div class="stat-item">
+                <div class="stat-value text-muted">{{ expiredTests.length }}</div>
+                <div class="stat-label">ARCHIVÉS</div>
+              </div>
             </div>
           </div>
+        </header>
+
+        <!-- Loader State avec le Robot -->
+        <div v-if="loading" class="loader-portal">
+          <div class="robot-mini-float">
+             <svg class="mini-bot" viewBox="0 0 200 200">
+                <rect x="55" y="55" width="90" height="90" rx="42" fill="white" stroke="#f1f5f9" stroke-width="1"/>
+                <rect x="65" y="75" width="70" height="42" rx="18" fill="#0f172a" />
+                <circle cx="85" cy="95" r="4.5" fill="#fbbf24" class="led-blink" />
+                <circle cx="115" cy="95" r="4.5" fill="#fbbf24" class="led-blink" />
+             </svg>
+          </div>
+          <span class="loading-text">Synchronisation de vos accès...</span>
         </div>
 
-        <div class="d-flex justify-content-between align-items-end mb-4">
-          <div>
-            <h1 class="display-title-cyber mb-1">Passer un <span class="text-gradient-amber">test</span></h1>
-            <p class="text-muted">Sélectionnez une évaluation pour commencer votre session.</p>
-          </div>
-          <div class="test-stats-group">
-            <div class="test-count-badge active">
-              <span class="count">{{ activeTests.length }}</span>
-              <span class="label">Disponibles</span>
-            </div>
-            <div class="test-count-badge expired">
-              <span class="count">{{ expiredTests.length }}</span>
-              <span class="label">Terminés/Expirés</span>
-            </div>
-          </div>
-        </div>        <div v-if="loading" class="text-center py-5">
-          <div class="loader-ripple"><div></div><div></div></div>
-          <p class="mt-3 text-muted fw-semibold">Chargement de vos tests...</p>
-        </div>
-
-        <div v-else>
+        <div v-else class="content-body">
           <!-- SECTION 1: TESTS ACTIFS -->
-          <div class="mb-5">
-            <h4 class="section-subtitle mb-4"><i class="fa-solid fa-bolt text-warning me-2"></i> TESTS ACTIFS & À VENIR</h4>
+          <section class="test-section mb-5">
+            <div class="section-tag mb-4">
+              <span class="pulse-amber"></span>
+              SESSIONS ACTIVES
+            </div>
+
             <div class="row g-4">
+              <!-- Empty State -->
               <div v-if="activeTests.length === 0" class="col-12">
-                <div class="empty-state-panel py-4">
-                  <p class="text-muted m-0">Aucun test actif pour le moment.</p>
+                <div class="bento-empty-card">
+                  <i class="fa-solid fa- inbox mb-3"></i>
+                  <p>Aucune session n'est programmée pour le moment.</p>
                 </div>
               </div>
 
-              <div v-for="c in activeTests" :key="c.id" class="col-md-6 col-xl-4">
-                <div class="campaign-card-glass" :class="{ 'upcoming': new Date(c.dateDebut) > new Date() }">
-                  <div class="card-header-tech">
-                    <span class="category-tag">DISPONIBLE</span>
-                    <div class="duration-tag"><i class="fa-regular fa-clock me-1"></i> {{ c.dureeMinutes }}min</div>
+              <!-- Test Cards -->
+              <div 
+                v-for="(c, index) in activeTests" 
+                :key="c.id" 
+                class="col-md-6 col-xl-4 animate__animated animate__fadeInUp"
+                :style="{ animationDelay: `${index * 0.1}s` }"
+              >
+                <div class="card-bento-elite" :class="{ 'is-upcoming': isUpcoming(c.dateDebut) }">
+                  <div class="card-top-info">
+                    <span class="status-badge" v-if="!isUpcoming(c.dateDebut)">
+                      <i class="fa-solid fa-circle-play me-1"></i> OUVERT
+                    </span>
+                    <span class="status-badge-waiting" v-else>
+                      <i class="fa-regular fa-clock me-1"></i> ATTENTE
+                    </span>
+                    <div class="time-pill">
+                      <i class="fa-solid fa-stopwatch me-2"></i>{{ c.dureeMinutes }} min
+                    </div>
                   </div>
                   
-                  <div class="p-4 pt-3">
-                    <h5 class="campaign-title">{{ c.nom }}</h5>
-                    <p class="campaign-description">{{ c.description || 'Test de compétences techniques.' }}</p>
+                  <div class="card-main-content">
+                    <h3 class="test-title">{{ c.nom }}</h3>
+                    <p class="test-summary">{{ c.description || 'Évaluation technique de haut niveau pour valider vos compétences.' }}</p>
                     
-                    <div class="campaign-info-grid">
-                      <div class="info-item">
-                        <span class="label">Échéance</span>
-                        <span class="value">{{ formatDate(c.dateFin) }}</span>
+                    <div class="meta-bento-row">
+                      <div class="meta-box">
+                        <label>VALIDE JUSQU'AU</label>
+                        <span>{{ formatDate(c.dateFin) }}</span>
                       </div>
                     </div>
+                  </div>
 
+                  <div class="card-action-area">
                     <button 
                       @click="startExam(c)" 
-                      class="btn-primary-cyber" 
-                      :disabled="new Date(c.dateDebut) > now"
+                      class="btn-sunburst-elite" 
+                      :disabled="isUpcoming(c.dateDebut)"
                     >
-                      <span v-if="new Date(c.dateDebut) > now">
-                        Ouvre dans {{ getCountdown(c.dateDebut) }}
-                      </span>
-                      <span v-else>
-                        Démarrer maintenant <i class="fa-solid fa-play ms-2"></i>
-                      </span>
+                      <div class="btn-label" v-if="isUpcoming(c.dateDebut)">
+                        OUVERTURE : <span class="mono-timer">{{ getCountdown(c.dateDebut) }}</span>
+                      </div>
+                      <div class="btn-label" v-else>
+                        DÉMARRER LA SESSION <i class="fa-solid fa-arrow-right-long ms-2"></i>
+                      </div>
+                      <div class="shine-sweep"></div>
                     </button>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          </section>
 
-          <!-- SECTION 2: TESTS EXPIRÉS -->
-          <div>
-            <h4 class="section-subtitle mb-4"><i class="fa-solid fa-calendar-xmark text-danger me-2"></i> TESTS EXPIRÉS</h4>
+          <!-- SECTION 2: ARCHIVES -->
+          <section class="test-section archives-section">
+            <h2 class="section-tag mb-4">HISTORIQUE RÉCENT</h2>
             <div class="row g-4">
-              <div v-if="expiredTests.length === 0" class="col-12">
-                <div class="empty-state-panel py-4">
-                  <p class="text-muted m-0">Aucun test expiré.</p>
-                </div>
-              </div>
-
-              <div v-for="c in expiredTests" :key="c.id" class="col-md-6 col-xl-4 opacity-75">
-                <div class="campaign-card-glass expired">
-                  <div class="card-header-tech">
-                    <span class="category-tag bg-slate-200 text-slate-500">EXPIRÉ</span>
-                    <div class="duration-tag">{{ c.dureeMinutes }}min</div>
-                  </div>
-                  
-                  <div class="p-4 pt-3">
-                    <h5 class="campaign-title">{{ c.nom }}</h5>
-                    <div class="expired-overlay">TEMPS ÉCOULÉ</div>
-                    <div class="campaign-info-grid">
-                      <div class="info-item">
-                        <span class="label">Fermé le</span>
-                        <span class="value text-danger">{{ formatDate(c.dateFin) }}</span>
-                      </div>
+              <div v-for="c in expiredTests" :key="c.id" class="col-md-6 col-xl-4">
+                <div class="card-bento-elite expired">
+                  <div class="card-main-content">
+                    <div class="d-flex justify-content-between">
+                       <h3 class="test-title">{{ c.nom }}</h3>
+                       <span class="badge-expired">TERMINÉ</span>
                     </div>
-                    <button class="btn-disabled-cyber" disabled>SESSION FERMÉE</button>
+                    <div class="meta-box mt-3">
+                      <label>Session fermée le</label>
+                      <span>{{ formatDate(c.dateFin) }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          </section>
         </div>
       </div>
     </div>
@@ -139,105 +165,196 @@ const now = ref(new Date());
 let timer = null;
 
 const fetchMyTests = async () => {
-  loading.value = true;
   try {
     const res = await api.get('/Campagnes');
     campaigns.value = res.data;
   } catch (err) {
-    console.error("Erreur:", err);
+    console.error("Erreur API:", err);
   } finally {
     loading.value = false;
   }
 };
 
-const activeTests = computed(() => {
-  return campaigns.value.filter(c => new Date(c.dateFin) >= now.value);
-});
-
-const expiredTests = computed(() => {
-  return campaigns.value.filter(c => new Date(c.dateFin) < now.value);
-});
+const activeTests = computed(() => campaigns.value.filter(c => new Date(c.dateFin) >= now.value));
+const expiredTests = computed(() => campaigns.value.filter(c => new Date(c.dateFin) < now.value));
+const isUpcoming = (date) => new Date(date) > now.value;
 
 const startExam = (campaign) => {
   const targetId = campaign.candidatureId || campaign.id;
   router.push(`/exam-lobby/${targetId}`);
 };
 
-const formatDate = (d) => d ? new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A';
+const formatDate = (d) => d ? new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '---';
 
 const getCountdown = (dateDebut) => {
   const diff = new Date(dateDebut) - now.value;
   if (diff <= 0) return "00:00:00";
-  
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-  
-  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
+  const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+  const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+  return `${h}:${m}:${s}`;
 };
 
 onMounted(() => {
   fetchMyTests();
-  timer = setInterval(() => {
-    now.value = new Date();
-  }, 1000);
+  timer = setInterval(() => now.value = new Date(), 1000);
 });
 
-onUnmounted(() => {
-  if (timer) clearInterval(timer);
-});
+onUnmounted(() => clearInterval(timer));
 </script>
 
 <style scoped>
-.admin-layout { min-height: 100vh; background-color: #f1f5f9; position: relative; overflow-x: hidden; display: flex; }
-.main-viewport { flex-grow: 1; z-index: 5; position: relative; padding-bottom: 50px; }
-.background-overlay { position: absolute; inset: 0; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); z-index: 0; }
-.tech-grid-subtle { position: absolute; inset: 0; background-image: radial-gradient(#cbd5e1 0.8px, transparent 0.8px); background-size: 32px 32px; opacity: 0.3; }
-.glow-orb { position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.12; width: 500px; height: 500px; background: #fbbf24; top: -10%; right: -5%; }
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
 
-.terminal-status-bar { background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.8); border-radius: 20px; padding: 12px 0; }
-.breadcrumb-cyber { font-size: 11px; font-weight: 800; letter-spacing: 1px; color: #64748b; }
+/* --- FOND ELITE (IDENTIQUE LOGIN) --- */
+.elite-dashboard-root {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background-color: #fdfdfd;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
 
-.display-title-cyber { font-weight: 800; color: #0f172a; font-size: 32px; letter-spacing: -1px; }
-.text-gradient-amber { background: linear-gradient(135deg, #fbbf24, #d97706); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.luxury-bg { position: fixed; inset: 0; z-index: 0; }
+.aura-sphere { position: absolute; border-radius: 50%; filter: blur(140px); opacity: 0.2; }
+.sphere-amber { width: 600px; height: 600px; background: #fbbf24; top: -10%; right: -5%; }
+.sphere-blue { width: 500px; height: 500px; background: #60a5fa; bottom: -10%; left: -5%; }
+.sphere-rose { width: 400px; height: 400px; background: #fda4af; top: 30%; left: 20%; opacity: 0.05; }
+.mesh-grain { position: absolute; inset: 0; opacity: 0.02; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3e%3cfilter id='n'%3e%3cfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3'/%3e%3c/filter%3e%3crect width='100%25' height='100%25' filter='url(%23n)'/%3e%3c/svg%3e"); }
 
-.section-subtitle { font-size: 14px; font-weight: 800; color: #475569; letter-spacing: 1px; border-left: 4px solid #fbbf24; padding-left: 15px; }
+.main-viewport { position: relative; z-index: 1; }
 
-.test-stats-group { display: flex; gap: 15px; }
-.test-count-badge { border-radius: 20px; padding: 10px 25px; display: flex; align-items: center; gap: 12px; min-width: 150px; }
-.test-count-badge.active { background: #0f172a; color: white; border: 1px solid #1e293b; box-shadow: 0 4px 15px rgba(15, 23, 42, 0.15); }
-.test-count-badge.expired { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+/* --- TYPOGRAPHIE & HEADER --- */
+.elite-breadcrumb {
+  font-size: 11px; font-weight: 800; color: #94a3b8; letter-spacing: 1.5px;
+}
+.elite-breadcrumb .current { color: #fbbf24; }
 
-.test-count-badge .count { font-size: 24px; font-weight: 900; line-height: 1; }
-.test-count-badge.active .count { color: #fbbf24; }
-.test-count-badge .label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; }
+.main-title { font-size: 2.5rem; font-weight: 900; color: #0f172a; letter-spacing: -1.5px; }
+.text-amber-gradient {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.subtitle { color: #64748b; font-size: 1rem; font-weight: 500; }
 
-.campaign-card-glass { background: rgba(255, 255, 255, 0.9); border: 1px solid white; border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); transition: 0.3s; height: 100%; display: flex; flex-direction: column; position: relative; }
-.campaign-card-glass:hover:not(.expired) { transform: translateY(-8px); border-color: #fbbf24; }
-.campaign-card-glass.upcoming { border-left: 6px solid #6366f1; }
-.campaign-card-glass.expired { background: #f8fafc; border: 1px solid #e2e8f0; }
+/* --- STATS BENTO --- */
+.stats-bento-container {
+  background: white; border: 1px solid white; border-radius: 25px;
+  display: flex; padding: 15px 30px; align-items: center;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.03);
+}
+.stat-item { text-align: center; }
+.stat-value { font-size: 1.8rem; font-weight: 800; color: #0f172a; line-height: 1; }
+.stat-label { font-size: 10px; font-weight: 800; color: #94a3b8; letter-spacing: 1px; margin-top: 5px; }
+.stat-divider { width: 1px; height: 30px; background: #f1f5f9; margin: 0 25px; }
 
-.expired-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-15deg); font-size: 24px; font-weight: 900; color: rgba(239, 68, 68, 0.1); pointer-events: none; }
+/* --- CARTES BENTO --- */
+.card-bento-elite {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  border: 1px solid white;
+  border-radius: 35px;
+  padding: 30px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+}
 
-.card-header-tech { padding: 20px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; }
-.category-tag { font-size: 9px; font-weight: 900; background: #ecfdf5; color: #10b981; padding: 5px 12px; border-radius: 10px; }
-.category-tag.bg-slate-200 { background: #e2e8f0; color: #64748b; }
+.card-bento-elite:hover {
+  transform: translateY(-8px);
+  background: white;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.06);
+  border-color: #fbbf24;
+}
 
-.campaign-title { font-weight: 800; font-size: 18px; margin-bottom: 10px; color: #1e293b; }
-.campaign-description { font-size: 13px; color: #64748b; line-height: 1.6; margin-bottom: 20px; flex-grow: 1; }
+.card-top-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
 
-.campaign-info-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 25px; background: rgba(248, 250, 252, 0.8); padding: 15px; border-radius: 20px; }
-.info-item .label { display: block; font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; }
-.info-item .value { font-size: 14px; font-weight: 800; color: #1e293b; }
+.status-badge {
+  background: #ecfdf5; color: #10b981; font-size: 10px; font-weight: 800;
+  padding: 6px 14px; border-radius: 12px;
+}
+.status-badge-waiting {
+  background: #fffbeb; color: #d97706; font-size: 10px; font-weight: 800;
+  padding: 6px 14px; border-radius: 12px;
+}
 
-.btn-primary-cyber { width: 100%; background: #0f172a; color: white; border: none; padding: 15px; border-radius: 18px; font-weight: 700; font-size: 14px; transition: 0.3s; }
-.btn-primary-cyber:hover { background: #1e293b; transform: scale(1.02); }
-.btn-disabled-cyber { width: 100%; background: #cbd5e1; color: #64748b; border: none; padding: 15px; border-radius: 18px; font-weight: 700; font-size: 12px; cursor: not-allowed; }
+.time-pill { font-size: 12px; font-weight: 700; color: #94a3b8; }
 
-.empty-state-panel { text-align: center; background: rgba(255,255,255,0.3); border: 1px dashed #cbd5e1; border-radius: 20px; }
+.test-title { font-size: 1.4rem; font-weight: 800; color: #0f172a; margin-bottom: 12px; }
+.test-summary { font-size: 0.95rem; color: #64748b; line-height: 1.6; margin-bottom: 20px; flex-grow: 1; }
 
-.loader-ripple { display: inline-block; position: relative; width: 80px; height: 80px; }
-.loader-ripple div { position: absolute; border: 4px solid #fbbf24; opacity: 1; border-radius: 50%; animation: loader-ripple 1s cubic-bezier(0, 0.2, 0.8, 1) infinite; }
-.loader-ripple div:nth-child(2) { animation-delay: -0.5s; }
-@keyframes loader-ripple { 0% { top: 36px; left: 36px; width: 0; height: 0; opacity: 0; } 4.9% { top: 36px; left: 36px; width: 0; height: 0; opacity: 0; } 5% { top: 36px; left: 36px; width: 0; height: 0; opacity: 1; } 100% { top: 0px; left: 0px; width: 72px; height: 72px; opacity: 0; } }
+.meta-box label { display: block; font-size: 10px; font-weight: 800; color: #cbd5e1; margin-bottom: 4px; text-transform: uppercase; }
+.meta-box span { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; color: #475569; }
+
+/* --- BOUTON ELITE (STYLE LOGIN) --- */
+.card-action-area { margin-top: 25px; }
+
+.btn-sunburst-elite {
+  width: 100%; padding: 16px; border-radius: 20px; border: none;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #0f172a; font-weight: 800; font-size: 0.85rem; cursor: pointer;
+  position: relative; overflow: hidden; transition: 0.4s;
+  box-shadow: 0 10px 20px rgba(251, 191, 36, 0.2);
+}
+
+.btn-sunburst-elite:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 30px rgba(251, 191, 36, 0.3);
+}
+
+.btn-sunburst-elite:disabled {
+  background: #f1f5f9; color: #94a3b8; cursor: not-allowed; box-shadow: none;
+}
+
+.shine-sweep {
+  position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: sweep 4s infinite;
+}
+@keyframes sweep { 0% { left: -120%; } 30% { left: 150%; } 100% { left: 150%; } }
+
+/* --- SECTION TAG & DECOR --- */
+.section-tag {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-size: 11px; font-weight: 800; color: #0f172a; letter-spacing: 1px;
+}
+.pulse-amber {
+  width: 8px; height: 8px; background: #fbbf24; border-radius: 50%;
+  box-shadow: 0 0 0 rgba(251, 191, 36, 0.4); animation: pulse-ring 2s infinite;
+}
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(251, 191, 36, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+}
+
+/* --- LOADER --- */
+.loader-portal {
+  display: flex; flex-direction: column; align-items: center; padding: 100px 0;
+}
+.mini-bot { width: 100px; height: 100px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.05)); }
+.loading-text { margin-top: 20px; font-weight: 700; color: #94a3b8; font-size: 0.9rem; }
+.led-blink { animation: blink 2s infinite; transform-origin: center; }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+/* --- EMPTY STATE --- */
+.bento-empty-card {
+  padding: 60px; text-align: center; background: rgba(255,255,255,0.4);
+  border: 2px dashed #e2e8f0; border-radius: 40px; color: #94a3b8;
+}
+.bento-empty-card i { font-size: 3rem; opacity: 0.3; }
+
+/* --- ARCHIVES --- */
+.card-bento-elite.expired { opacity: 0.7; background: rgba(248, 250, 252, 0.6); }
+.badge-expired { font-size: 9px; font-weight: 800; color: #94a3b8; border: 1px solid #e2e8f0; padding: 4px 10px; border-radius: 8px; }
+
+.mono-timer { font-family: 'JetBrains Mono', monospace; color: #0f172a; }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #fbbf24; }
 </style>

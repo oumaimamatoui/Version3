@@ -4,6 +4,10 @@ using Microsoft.EntityFrameworkCore;
 using NeoEvaluation.API.Data;
 using NeoEvaluation.API.Models;
 using NeoEvaluation.API.Services;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace NeoEvaluation.API.Controllers
 {
@@ -21,6 +25,7 @@ namespace NeoEvaluation.API.Controllers
             _tenantService = tenantService;
         }
 
+        // GET: api/Campagnes
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetCampagnes()
         {
@@ -29,19 +34,18 @@ namespace NeoEvaluation.API.Controllers
                 var userRole = _tenantService.GetUserRole();
                 var userId = _tenantService.GetUserId();
 
-                // On inclut les questionnaires liés via la table CampagneQuestionnaires
                 IQueryable<Campagne> query = _context.Campagnes
                     .Include(c => c.CampagneQuestionnaires)
                         .ThenInclude(cq => cq.Questionnaire)
                     .Include(c => c.Candidatures);
 
-                // --- Logique Candidat ---
+                // --- Filtrage Candidat ---
                 if (userRole == "Candidat" && userId.HasValue)
                 {
                     var currentUser = await _context.Utilisateurs.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId.Value);
                     if (currentUser == null) return Unauthorized();
+                    
                     var email = currentUser.Email.ToLower();
-
                     var campaignIds = await _context.Candidatures
                         .IgnoreQueryFilters()
                         .Where(c => c.Candidat != null && c.Candidat.Email.ToLower() == email)
@@ -51,26 +55,23 @@ namespace NeoEvaluation.API.Controllers
                     query = query.IgnoreQueryFilters().Where(c => campaignIds.Contains(c.Id));
                 }
 
-                // --- Projection pour le Frontend ---
+                // --- Projection pour le Frontend Vue.js ---
                 var list = await query
                     .Select(c => new {
                         c.Id,
                         c.Nom,
                         c.Description,
-                        // Convertir l'Enum en int pour que le CSS (status-1, etc.) fonctionne
                         Statut = (int)c.Statut, 
                         c.DateDebut,
                         c.DateFin,
                         c.DureeMinutes,
                         c.CreeLe,
-                        // ✅ FIX "Non défini" : On aplatit le QuestionnaireId pour le JS
-                        // On prend le premier questionnaire lié comme référence principale
+                        // ✅ Renvoie la valeur à Vue.js
+                        c.MaxCandidats, 
                         QuestionnaireId = c.CampagneQuestionnaires
                                             .Select(cq => cq.QuestionnaireId)
                                             .FirstOrDefault(),
-                        // On renvoie aussi le nombre actuel de candidats inscrits
                         NbCandidats = c.Candidatures.Count,
-                        // ✅ NOUVEAU : ID de candidature pour le lobby (très important)
                         CandidatureId = c.Candidatures
                                          .Where(cand => cand.CandidatId == userId)
                                          .Select(cand => cand.Id)
@@ -87,6 +88,7 @@ namespace NeoEvaluation.API.Controllers
             }
         }
 
+        // POST: api/Campagnes
         [HttpPost]
         public async Task<ActionResult<Campagne>> PostCampagne([FromBody] CampagneCreateDto dto)
         {
@@ -97,44 +99,35 @@ namespace NeoEvaluation.API.Controllers
 
             using var trans = await _context.Database.BeginTransactionAsync();
             try {
-                // VALIDATION : Le questionnaire doit avoir au moins 3 questions
                 if (!dto.QuestionnaireId.HasValue || dto.QuestionnaireId == Guid.Empty)
                 {
-                    return BadRequest(new { message = "Vous devez lier un questionnaire (banque de questions) à cette évaluation." });
-                }
-
-                var questionCount = await _context.QuestionnaireQuestions.CountAsync(q => q.QuestionnaireId == dto.QuestionnaireId.Value);
-                if (questionCount < 3)
-                {
-                    return BadRequest(new { message = $"Opération impossible. Ce questionnaire ne contient que {questionCount} question(s). Il en faut au moins 3 pour lancer une évaluation." });
+                    return BadRequest(new { message = "Un questionnaire est requis." });
                 }
 
                 var nouvelle = new Campagne {
                     Id = Guid.NewGuid(),
                     Nom = dto.Nom, 
                     Description = dto.Description,
-                    // Conversion du int vers l'Enum StatutCampagne
                     Statut = (StatutCampagne)dto.Statut, 
                     EntrepriseId = entId.Value,
                     DateDebut = dto.DateDebut.ToUniversalTime(), 
                     DateFin = dto.DateFin.ToUniversalTime(),
                     DureeMinutes = dto.DureeMinutes,
+                    // ✅ Sauvegarde la valeur reçue du DTO
+                    MaxCandidats = dto.MaxCandidats, 
                     ModeNotation = dto.ModeNotation ?? "STRICT",
                     CreeLe = DateTime.UtcNow
                 };
                 
                 _context.Campagnes.Add(nouvelle);
 
-                // ✅ Liaison avec le questionnaire (Table M2M)
-                if (dto.QuestionnaireId.HasValue && dto.QuestionnaireId != Guid.Empty)
-                {
-                    _context.CampagneQuestionnaires.Add(new CampagneQuestionnaire {
-                        CampagneId = nouvelle.Id,
-                        QuestionnaireId = dto.QuestionnaireId.Value
-                    });
-                }
+                // Liaison M2M Questionnaire
+                _context.CampagneQuestionnaires.Add(new CampagneQuestionnaire {
+                    CampagneId = nouvelle.Id,
+                    QuestionnaireId = dto.QuestionnaireId.Value
+                });
 
-                // ✅ Ajout des candidatures
+                // Ajout des candidats
                 if (dto.SelectedCandidatesIds != null) {
                     foreach (var candId in dto.SelectedCandidatesIds) {
                         _context.Candidatures.Add(new Candidature {
@@ -165,7 +158,6 @@ namespace NeoEvaluation.API.Controllers
 
             if (c == null) return NotFound();
 
-            // Nettoyage des tables liées avant suppression de la campagne
             _context.CampagneQuestionnaires.RemoveRange(c.CampagneQuestionnaires);
             _context.Candidatures.RemoveRange(c.Candidatures);
             _context.Campagnes.Remove(c);
@@ -174,4 +166,6 @@ namespace NeoEvaluation.API.Controllers
             return Ok(new { message = "Campagne supprimée." });
         }
     }
+
+
 }
