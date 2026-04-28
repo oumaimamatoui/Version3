@@ -34,6 +34,10 @@ namespace NeoEvaluation.API.Controllers
             var user = await _context.Utilisateurs.FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null) return NotFound();
 
+            var entrepriseNom = user.EntrepriseId.HasValue 
+                ? await _context.Entreprises.Where(e => e.Id == user.EntrepriseId).Select(e => e.Nom).FirstOrDefaultAsync() 
+                : null;
+
             return Ok(new UserProfileDto {
                 Nom = user.Nom,
                 Prenom = user.Prenom,
@@ -41,7 +45,8 @@ namespace NeoEvaluation.API.Controllers
                 PhotoUrl = user.PhotoUrl,
                 Bio = user.Bio,
                 JoinDate = user.CreeLe.ToString("MMMM yyyy"),
-                ThemePreference = user.ThemePreference
+                ThemePreference = user.ThemePreference,
+                EntrepriseNom = entrepriseNom
             });
         }
 

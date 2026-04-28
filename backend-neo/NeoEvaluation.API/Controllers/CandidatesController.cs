@@ -44,6 +44,7 @@ namespace NeoEvaluation.API.Controllers
             var tenantId = _tenantService.GetTenantId();
 
             var query = await _context.Candidatures
+                .IgnoreQueryFilters()
                 .Include(c => c.Candidat)
                 .Include(c => c.Campagne)
                 .Where(c => c.Campagne.EntrepriseId == tenantId)
@@ -72,6 +73,7 @@ namespace NeoEvaluation.API.Controllers
             var tenantId = _tenantService.GetTenantId();
 
             var candidature = await _context.Candidatures
+                .IgnoreQueryFilters()
                 .Include(c => c.Candidat)
                 .Include(c => c.Campagne)
                 .Where(c => c.CandidatId == id && c.Campagne.EntrepriseId == tenantId)

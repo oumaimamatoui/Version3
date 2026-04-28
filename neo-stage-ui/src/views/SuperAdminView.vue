@@ -155,28 +155,6 @@
         </div>
 
       
-        <div class="section-recent-sessions">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h6 class="fw-bold m-0"><i class="fa-solid fa-bolt-lightning text-warning me-2"></i>Activité Récente</h6>
-            <button class="btn btn-link-pro">Historique complet</button>
-          </div>
-          <div class="row g-3">
-            <div class="col-md-4" v-for="i in 3" :key="i">
-              <div class="card-premium session-card-mini">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                   <span class="badge-status-pro" :class="i === 1 ? 'active' : 'completed'">
-                     {{ i === 1 ? 'Live' : 'Terminé' }}
-                   </span>
-                   <span class="tiny text-muted">Il y a {{ i*5 }}m</span>
-                </div>
-                <h6 class="fw-bold mb-1">Recrutement Senior Dev #{{ 450 + i }}</h6>
-                <div class="d-flex align-items-center gap-2 text-muted tiny">
-                   <i class="fa-solid fa-users"></i> 8 candidats inscrits
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -429,8 +407,8 @@ onMounted(async () => {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
 
-.admin-body { background: #fcfcfd; font-family: 'Inter', sans-serif; color: #1e293b; }
-.card-premium { background: white; border: 1px solid rgba(226, 232, 240, 0.8); border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02); transition: all 0.3s ease; }
+.admin-body { background: #f1f5f9; font-family: 'Inter', sans-serif; color: #1e293b; min-height: 100vh; }
+.card-premium { background: white; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01); transition: all 0.3s ease; }
 .page-title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; letter-spacing: -0.03em; color: #0f172a; }
 
 .modal-backdrop-custom { 
@@ -455,11 +433,11 @@ onMounted(async () => {
 
 .form-control-photo, .form-select-photo { 
     width: 100%; padding: 11px 15px; border-radius: 8px; 
-    border: 1px solid #f59e0b; font-size: 14px; color: #1e293b; 
-    background: #fff; outline: none; transition: border 0.2s;
+    border: 1px solid #e2e8f0; font-size: 14px; color: #1e293b; 
+    background: #f8fafc; outline: none; transition: all 0.2s;
 }
 
-.form-control-photo:focus { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1); }
+.form-control-photo:focus, .form-select-photo:focus { border-color: #f59e0b; background: white; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1); }
 
 .alert-info-photo { 
     background-color: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; 
@@ -491,7 +469,8 @@ onMounted(async () => {
 .trend-badge.up { background: #ecfdf5; color: #059669; }
 .filter-bar { padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
 .search-box { position: relative; flex-grow: 1; max-width: 400px; }
-.search-box input { width: 100%; padding: 10px 15px 10px 42px; border-radius: 10px; border: 1px solid #f59e0b; background: #f8fafc; font-size: 14px; outline: none; }
+.search-box input { width: 100%; padding: 10px 15px 10px 42px; border-radius: 10px; border: 1px solid #e2e8f0; background: #f8fafc; font-size: 14px; outline: none; transition: 0.2s; }
+.search-box input:focus { border-color: #f59e0b; background: white; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1); }
 .avatar-letter { width: 38px; height: 38px; background: #eef2ff; color: #4f46e5; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; border: 1px solid #e0e7ff; }
 .btn-circle { width: 32px; height: 32px; border-radius: 8px; border: none; display: inline-flex; align-items: center; justify-content: center; transition: 0.2s; }
 .btn-circle.approve { background: #ecfdf5; color: #10b981; }

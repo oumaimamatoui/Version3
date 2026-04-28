@@ -426,6 +426,12 @@ const openModal = (q = null) => {
 
 const save = async () => {
   if(!form.enonce.trim()) return;
+  const hasEmpty = form.reponses.some(r => !r.texte || r.texte.trim() === '');
+  if ([0, 1].includes(form.type) && hasEmpty) {
+    alert("Veuillez remplir toutes les options ou supprimer celles qui sont vides.");
+    return;
+  }
+
   const validChoices = form.reponses.map(r => r.texte).filter(t => t && t.trim() !== '');
   if ([0, 1, 2].includes(form.type) && validChoices.length < 2) {
     alert("Veuillez saisir au moins 2 options.");
@@ -630,6 +636,17 @@ onMounted(fetchData);
 .btn-p-save { background: #0f172a; color: #fff; border: none; padding: 16px 40px; border-radius: 18px; font-weight: 800; transition: 0.3s; }
 .btn-p-save:hover { background: #eab308; color: #0f172a; transform: translateY(-2px); }
 
+/* ----- OPTIONS LIST (QCM) ----- */
+.p-options-list { display: flex; flex-direction: column; gap: 12px; }
+.p-option-row { display: flex; align-items: center; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; transition: 0.2s; overflow: hidden; }
+.p-option-row:focus-within { border-color: #eab308; box-shadow: 0 4px 12px rgba(234, 179, 8, 0.1); background: #fff; }
+.p-check-wrap { padding: 0 15px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; align-self: stretch; border-right: 1px solid #e2e8f0; }
+.p-input-clean { flex: 1; border: none; background: transparent; padding: 12px 15px; outline: none; font-weight: 600; font-size: 14px; color: #0f172a; width: 100%; }
+.btn-p-del-opt { background: none; border: none; color: #ef4444; padding: 0 15px; cursor: pointer; opacity: 0.7; transition: 0.3s; }
+.btn-p-del-opt:hover { opacity: 1; transform: scale(1.1); }
+.btn-p-add-opt { background: #f1f5f9; color: #0f172a; border: 1px solid #e2e8f0; padding: 8px 16px; border-radius: 10px; font-weight: 800; font-size: 11px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; }
+.btn-p-add-opt:hover { background: #0f172a; color: #fff; border-color: #0f172a; }
+
 /* ----- CATEGORY MANAGER CARDS ----- */
 .struct-card-p { background: #f8fafc; border-radius: 24px; border: 1.5px solid #eef2f6; padding: 22px; height: 100%; transition: 0.3s; }
 .struct-head-p { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eef2f6; padding-bottom: 12px; margin-bottom: 15px; }
@@ -655,4 +672,78 @@ onMounted(fetchData);
 .font-monospace { font-family: 'JetBrains Mono', monospace !important; }
 .custom-scrollbar::-webkit-scrollbar { width: 6px; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+
+/* ════════════════════════════════════════════
+   DARK MODE OVERRIDES
+════════════════════════════════════════════ */
+[data-theme="dark"] .admin-layout { background-color: #0d1117; color: #f0f6fc; }
+[data-theme="dark"] .brand-title { color: #f0f6fc; }
+[data-theme="dark"] .vault-text { color: #8b949e; border-left-color: rgba(255,255,255,0.1); }
+[data-theme="dark"] .brand-subtitle { color: #8b949e; }
+[data-theme="dark"] .status-badge-premium { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); color: #f0f6fc; }
+
+[data-theme="dark"] .search-cyber-container { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); }
+[data-theme="dark"] .search-cyber-container input { color: #f0f6fc; }
+[data-theme="dark"] .search-cyber-container:focus-within { border-color: #d97706; box-shadow: 0 5px 15px rgba(217,119,6,0.15); }
+[data-theme="dark"] .search-kbd { background: rgba(255,255,255,0.1); color: #8b949e; }
+
+[data-theme="dark"] .btn-glass-secondary { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); color: #f0f6fc; }
+[data-theme="dark"] .btn-glass-secondary:hover { border-color: #d97706; background: rgba(217,119,6,0.1); color: #d97706; }
+
+[data-theme="dark"] .kpi-card-modern { background: rgba(22, 27, 34, 0.7); border-color: rgba(255,255,255,0.05); box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+[data-theme="dark"] .kpi-val { color: #f0f6fc; }
+
+[data-theme="dark"] .filter-bar-pro { background: #161b22; border-color: rgba(255,255,255,0.08); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+[data-theme="dark"] .premium-chip { background: rgba(255,255,255,0.05); color: #8b949e; }
+[data-theme="dark"] .premium-chip:hover { background: rgba(255,255,255,0.1); color: #f0f6fc; }
+[data-theme="dark"] .premium-chip.active { background: #d97706; color: #0d1117; }
+[data-theme="dark"] .select-premium-box { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.05); }
+[data-theme="dark"] .select-clean { color: #f0f6fc; }
+[data-theme="dark"] .select-clean option { background: #161b22; color: #f0f6fc; }
+
+[data-theme="dark"] .asset-card-pro { background: #161b22; border-color: rgba(255,255,255,0.08); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+[data-theme="dark"] .asset-card-pro:hover { border-color: #d97706; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+[data-theme="dark"] .cat-pill { background: rgba(255,255,255,0.05); color: #8b949e; border-color: rgba(255,255,255,0.1); }
+[data-theme="dark"] .action-btn { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.05); color: #8b949e; }
+[data-theme="dark"] .action-btn:hover { color: #f0f6fc; border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); }
+[data-theme="dark"] .action-btn.del:hover { color: #ef4444; border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.1); }
+[data-theme="dark"] .question-title { color: #f0f6fc; }
+[data-theme="dark"] .type-badge-premium { background: rgba(255,255,255,0.05); color: #8b949e; }
+[data-theme="dark"] .type-icon { color: #f0f6fc; }
+[data-theme="dark"] .comp-bar-bg { background: rgba(255,255,255,0.1); }
+
+[data-theme="dark"] .modal-card-p { background: #161b22; border-color: rgba(255,255,255,0.1); box-shadow: 0 50px 100px rgba(0,0,0,0.8); }
+[data-theme="dark"] .modal-header-p { border-bottom-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .modal-header-p h3 { color: #f0f6fc; }
+[data-theme="dark"] .p-input-label { color: #8b949e; }
+[data-theme="dark"] .p-textarea, [data-theme="dark"] .p-select { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); color: #f0f6fc; }
+[data-theme="dark"] .p-textarea:focus, [data-theme="dark"] .p-select:focus { border-color: #d97706; background: rgba(255,255,255,0.08); }
+[data-theme="dark"] .p-select option { background: #161b22; color: #f0f6fc; }
+
+[data-theme="dark"] .p-option-row { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .p-option-row:focus-within { border-color: #d97706; background: rgba(217,119,6,0.05); }
+[data-theme="dark"] .p-check-wrap { background: rgba(255,255,255,0.05); border-right-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .p-input-clean { color: #f0f6fc; }
+[data-theme="dark"] .btn-p-add-opt { background: rgba(255,255,255,0.05); color: #f0f6fc; border-color: rgba(255,255,255,0.1); }
+[data-theme="dark"] .btn-p-add-opt:hover { background: #d97706; color: #0d1117; border-color: #d97706; }
+
+[data-theme="dark"] .p-type-item { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.05); }
+[data-theme="dark"] .p-type-item.active { background: rgba(217,119,6,0.1); border-color: #d97706; }
+[data-theme="dark"] .p-type-item.active i, [data-theme="dark"] .p-type-item.active span { color: #d97706; }
+
+[data-theme="dark"] .p-editor-container { border-color: rgba(255,255,255,0.1); }
+[data-theme="dark"] .editor-bar { background: rgba(255,255,255,0.05); border-bottom-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .p-editor-area { background: #0d1117; color: #f0f6fc; }
+
+[data-theme="dark"] .modal-footer-p { background: rgba(255,255,255,0.02); }
+
+[data-theme="dark"] .struct-card-p { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .struct-head-p { border-bottom-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .struct-add-box input { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.08); color: #f0f6fc; }
+[data-theme="dark"] .sub-pill-item { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); color: #f0f6fc; }
+
+[data-theme="dark"] .p-toast { background: #161b22; color: #f0f6fc; box-shadow: 0 15px 50px rgba(0,0,0,0.5); }
+[data-theme="dark"] .toast-ico-box { background: rgba(255,255,255,0.05); }
+[data-theme="dark"] .empty-state-box h3 { color: #f0f6fc; }
+[data-theme="dark"] .empty-state-box p { color: #8b949e; }
 </style>

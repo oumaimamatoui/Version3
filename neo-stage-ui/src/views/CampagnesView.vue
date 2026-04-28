@@ -1146,34 +1146,42 @@ const handleTimerBlur = (element) => {
   }
 };
 
-/* ─── DATA FETCHING ───────────────────────────────────────────── */
+/* ─── DATA FETCHING ────────nafs les qestion walaw ───────────────────────────────────── */
 const fetchInitialData = async () => {
   loading.value = true;
   try {
-    const [resCamp, resQuest, resCand, resBank] = await Promise.all([
+    const results = await Promise.allSettled([
       api.get(`/Campagnes`),
       api.get(`/Questionnaires`),
       api.get(`/Candidates`),
       api.get(`/Questions`),
     ]);
-    campaigns.value           = resCamp.data;
-    questionnairesList.value  = resQuest.data;
-    candidateMasterPool.value = resCand.data;
-    bankGlobalReference.value = resBank.data.map(q => ({
-      ...q,
-      difficulty:  q.difficulty  || getDifficultyFromPoints(q.points),
-      explication: q.explication || q.bonneReponse || 'Justification UML standard.',
-      texte:       q.texte       || q.enonce || '',
-      poids:       q.poids       || q.points || 10,
-    }));
+
+    if (results[0].status === 'fulfilled') campaigns.value = results[0].value.data;
+    if (results[1].status === 'fulfilled') questionnairesList.value = results[1].value.data;
+    if (results[2].status === 'fulfilled') candidateMasterPool.value = results[2].value.data;
+    if (results[3].status === 'fulfilled') {
+      bankGlobalReference.value = results[3].value.data.map(q => ({
+        ...q,
+        difficulty:  q.difficulty  || getDifficultyFromPoints(q.points),
+        explication: q.explication || q.bonneReponse || 'Justification UML standard.',
+        texte:       q.texte       || q.enonce || '',
+        poids:       q.poids       || q.points || 10,
+      }));
+    }
+
     try {
       const resCat = await api.get(`/Categories`);
       categoriesList.value = resCat.data;
     } catch { /* silencieux */ }
+
+    if (results.every(r => r.status === 'rejected')) {
+      console.warn("API Offline, utilisation des mocks");
+      showPulseToast('Mode local activé (API Offline).', 'warn', 'fa-solid fa-plug-circle-xmark');
+      generateMocks();
+    }
   } catch (err) {
-    console.warn("API Offline, utilisation des mocks");
-    showPulseToast('Mode local activé (API Offline).', 'warn', 'fa-solid fa-plug-circle-xmark');
-    generateMocks();
+    console.error("Erreur inattendue:", err);
   } finally {
     loading.value = false;
   }
@@ -2066,4 +2074,77 @@ kbd { background: #0f172a; color: white; padding: 4px 10px; border-radius: 8px; 
 .text-danger  { color: #f43f5e !important; }
 .fw-800 { font-weight: 800 !important; }
 .fw-900 { font-weight: 900 !important; }
+
+/* ════════════════════════════════════════════
+   DARK MODE OVERRIDES (CAMPAGNES VIEW)
+════════════════════════════════════════════ */
+[data-theme="dark"] .canvas-engine { background: #0d1117; color: #f0f6fc; }
+[data-theme="dark"] .enigma-master-root { background: #0d1117; color: #f0f6fc; }
+[data-theme="dark"] .premium-title, [data-theme="dark"] .main-title-v2 { color: #f0f6fc; }
+
+[data-theme="dark"] .stat-card-premium { background: rgba(22, 27, 34, 0.7); border-color: rgba(255,255,255,0.05); }
+[data-theme="dark"] .stat-value { color: #f0f6fc; }
+
+[data-theme="dark"] .analytics-card-pro { background: #161b22; border-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .analytics-card-pro h6 { color: #f0f6fc; }
+
+[data-theme="dark"] .campaign-card-modern { background: #161b22; border-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .campaign-card-modern:hover { border-color: #d97706; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+[data-theme="dark"] .campaign-title-modern { color: #f0f6fc; }
+[data-theme="dark"] .test-attachment-box { background: rgba(255,255,255,0.05) !important; color: #f0f6fc; }
+
+[data-theme="dark"] .enigma-card { background: #161b22; border-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .enigma-card h6 { color: #8b949e !important; }
+[data-theme="dark"] .preview-field-box .fw-800 { color: #f0f6fc; }
+
+[data-theme="dark"] .tabs-container .bg-white { background: #161b22 !important; border-color: rgba(255,255,255,0.08) !important; }
+[data-theme="dark"] .nav-tab-btn-modern { color: #8b949e; }
+[data-theme="dark"] .nav-tab-btn-modern.active { background: #0d1117; color: #f0f6fc; }
+
+[data-theme="dark"] .search-inline-box, [data-theme="dark"] .sort-select-pro { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.08); color: #f0f6fc; }
+[data-theme="dark"] .search-inline-input { color: #f0f6fc; }
+
+[data-theme="dark"] .list-row-item { background: #161b22; border-color: rgba(255,255,255,0.08); color: #f0f6fc; }
+[data-theme="dark"] .list-row-item:hover { background: rgba(255,255,255,0.03); }
+
+[data-theme="dark"] .studio-header-v2 { background: #161b22; border-bottom-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .engine-pane { background: #0d1117; color: #f0f6fc; }
+
+[data-theme="dark"] .enigma-field, [data-theme="dark"] .theme-select { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.08); color: #f0f6fc; }
+[data-theme="dark"] .enigma-field:focus { border-color: #d97706; background: rgba(255,255,255,0.08); }
+
+[data-theme="dark"] .asset-card-v8 { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .asset-title-v8 { color: #f0f6fc; }
+[data-theme="dark"] .timer-input-field { background: rgba(255,255,255,0.05); color: #f0f6fc; border-color: rgba(255,255,255,0.1); }
+
+[data-theme="dark"] .talent-card-v8 { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .talent-card-v8.active { background: rgba(217,119,6,0.1); border-color: #d97706; }
+[data-theme="dark"] .talent-card-v8 b { color: #f0f6fc; }
+
+[data-theme="dark"] .sidebar-analytics-engine .analytics-hub-glass { background: #161b22; border-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .activity-feed-widget { background: #161b22; border-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .hub-title-v2 { color: #f0f6fc; }
+[data-theme="dark"] .feed-item { border-bottom-color: rgba(255,255,255,0.05); }
+
+[data-theme="dark"] .quantum-vault-window { background: #0d1117; }
+[data-theme="dark"] .qv-header { background: #161b22; border-bottom-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .qv-header h2 { color: #f0f6fc; }
+[data-theme="dark"] .qv-filter-tabs { background: #161b22; border-bottom-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .qv-sidebar { background: #161b22; border-right-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .qv-list { background: #0d1117; }
+[data-theme="dark"] .qv-bank-stats { background: rgba(255,255,255,0.03) !important; }
+
+[data-theme="dark"] .qv-item-card { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .qv-item-card:hover { border-color: rgba(255,255,255,0.2); }
+[data-theme="dark"] .qv-item-card.active { border-color: #d97706; }
+[data-theme="dark"] .qv-item-card.checked { background: rgba(16,185,129,0.1); border-color: #10b981; }
+[data-theme="dark"] .qv-item-text { color: #f0f6fc; }
+
+[data-theme="dark"] .btn-glass-secondary, [data-theme="dark"] .btn-outline-pro { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); color: #f0f6fc; }
+[data-theme="dark"] .btn-glass-secondary:hover, [data-theme="dark"] .btn-outline-pro:hover { border-color: #d97706; background: rgba(217,119,6,0.1); }
+
+[data-theme="dark"] .dropdown-menu { background: #161b22; border: 1px solid rgba(255,255,255,0.08) !important; }
+[data-theme="dark"] .dropdown-item { color: #f0f6fc; }
+[data-theme="dark"] .dropdown-item:hover { background: rgba(255,255,255,0.08); color: #f0f6fc; }
+[data-theme="dark"] .dropdown-divider { border-color: rgba(255,255,255,0.1); }
 </style> 

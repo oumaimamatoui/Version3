@@ -199,9 +199,10 @@ const allTabs = [
 
 const filteredTabs = computed(() => {
   const currentRole = (role.value || '').toLowerCase();
-  return allTabs.filter(tab => 
-    tab.roles.some(r => r.toLowerCase() === currentRole)
-  );
+  return allTabs.filter(tab => {
+    if (tab.id === 'profile' || tab.id === 'security') return true; // Toujours visible
+    return tab.roles.some(r => r.toLowerCase() === currentRole);
+  });
 });
 
 const roleDisplay = computed(() => {
@@ -211,7 +212,7 @@ const roleDisplay = computed(() => {
     'evaluateur': 'Évaluateur', 
     'candidat': 'Candidat' 
   };
-  return map[(role.value || '').toLowerCase()] || 'User';
+  return map[(role.value || '').toLowerCase()] || role.value || 'User';
 });
 
 // --- ACTIONS BACKEND ---
