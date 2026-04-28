@@ -230,6 +230,8 @@ const t = (key) => ({
 
 // ── Logout ──
 const logout = () => {
+  applyTheme('light');
+  isDark.value = false;
   authStore.logout();
   router.push('/login');
 };

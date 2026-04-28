@@ -57,6 +57,16 @@
                   <label class="tiny text-muted uppercase d-block mb-1">Description / Bio</label>
                   <p class="text-black fw-semibold mt-2 leading-relaxed whitespace-pre-line" style="font-size: 15px; letter-spacing: -0.2px;">{{ user.bio }}</p>
                 </div>
+                
+                <div class="col-md-12" v-if="user.entrepriseNom && authStore.role !== 'Candidat'">
+                  <div class="alert alert-info border-0 rounded-4 d-flex align-items-center mt-2" style="background-color: #eef2ff;">
+                    <i class="fa fa-building fs-4 me-3 text-indigo"></i>
+                    <div>
+                      <span class="d-block tiny text-muted uppercase">Organisation</span>
+                      <strong class="text-slate-800 fs-6">Vous appartenez à l'entreprise : {{ user.entrepriseNom }}</strong>
+                    </div>
+                  </div>
+                </div>
                 <!-- Vous pourrez ajouter d'autres champs réels ici (Téléphone, Poste, etc.) -->
               </div>
             </div>
@@ -79,7 +89,7 @@ import AppNavbar from '../components/AppNavbar.vue';
 const router = useRouter();
 const authStore = useAuthStore();
 
-const user = ref({ nom: '', prenom: '', email: '', photoUrl: '', joinDate: '' });
+const user = ref({ nom: '', prenom: '', email: '', photoUrl: '', joinDate: '', entrepriseNom: '' });
 const loading = ref(true);
 
 const profileDisplayUrl = computed(() => {
@@ -97,7 +107,7 @@ const roleDisplay = computed(() => {
     'Evaluateur': 'Évaluateur Expert', 
     'Candidat': 'Candidat' 
   };
-  return map[authStore.role] || 'Chargement...';
+  return map[authStore.role] || authStore.role || 'Chargement...';
 });
 
 const fetchProfile = async () => {

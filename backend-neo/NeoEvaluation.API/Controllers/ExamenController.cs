@@ -153,13 +153,14 @@ namespace NeoEvaluation.API.Controllers
         [HttpGet("mon-historique")]
         public async Task<IActionResult> GetMonHistorique()
         {
-            // Note: Si vous avez une gestion d'utilisateurs, filtrez par CandidatId ici
-            // var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdClaim, out Guid userId)) return Unauthorized();
 
             var historique = await _context.Candidatures
+                .IgnoreQueryFilters()
                 .Include(c => c.Campagne)
                 .Include(c => c.Evaluation)
-                .Where(c => c.Evaluation != null && c.Evaluation.Statut == StatutPassage.TERMINE)
+                .Where(c => c.CandidatId == userId && c.Evaluation != null && c.Evaluation.Statut == StatutPassage.TERMINE)
                 .Select(c => new {
                     Id = c.Id,
                     EvaluationId = c.Evaluation.Id,

@@ -103,6 +103,12 @@ namespace NeoEvaluation.API.Controllers
                     };
                     _context.TokensActivation.Add(token);
                     activationToken = token.Token.ToString();
+                    Console.WriteLine($"\n========================================");
+                    Console.WriteLine($"[NOUVEAU RÔLE] Rôle : {role.Nom}");
+                    Console.WriteLine($"[EMAIL]        : {role.Email}");
+                    Console.WriteLine($"[TOKEN]        : {activationToken}");
+                    Console.WriteLine($"[LIEN]         : {_config["AppSettings:FrontendUrl"] ?? "http://localhost:5173"}/activate-account?token={activationToken}");
+                    Console.WriteLine($"========================================\n");
                 }
 
                 await _context.SaveChangesAsync();

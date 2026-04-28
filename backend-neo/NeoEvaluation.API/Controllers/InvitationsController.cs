@@ -101,7 +101,7 @@ namespace NeoEvaluation.API.Controllers
                         await _context.SaveChangesAsync();
 
                         // 4. Préparation du lien
-                        activationLink = $"http://localhost:5173/activate-role?token={token.Token}";
+                        activationLink = $"http://localhost:5173/activate-account?token={token.Token}";
                     }
                     
                     //  DEBUG TERMINAL (Pour toi en VS Code)
@@ -214,7 +214,7 @@ namespace NeoEvaluation.API.Controllers
                 await _context.SaveChangesAsync();
 
                 // 5. Préparation du lien et de l'email
-                string activationLink = $"http://localhost:5173/activate-role?token={token.Token}";
+                string activationLink = $"http://localhost:5173/activate-account?token={token.Token}";
                 
                 Console.WriteLine("\n--------------------------------------------------");
                 Console.WriteLine($"[DEBUG] STAFF INVITATION LINK: {request.Email}");

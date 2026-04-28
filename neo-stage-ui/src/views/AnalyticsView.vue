@@ -109,7 +109,7 @@
                         <div class="pillar-particles"></div>
                       </div>
                     </div>
-                    <span class="pillar-label">{{ item.name }}</span>
+                    <span class="pillar-label" :title="item.name">{{ item.name }}</span>
                   </div>
                 </div>
               </div>
@@ -178,7 +178,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import axios from 'axios';
+import api from '@/services/api';
 import AppSidebar from '../components/AppSidebar.vue';
 import AppNavbar from '../components/AppNavbar.vue';
 
@@ -207,14 +207,14 @@ const fetchData = async () => {
   try {
     refreshing.value = true;
     const [statsRes, globalRes, auditRes] = await Promise.all([
-      axios.get('http://localhost:5105/api/SuperAdmin/stats'),
-      axios.get('http://localhost:5105/api/Dashboard/global-stats'),
-      axios.get('http://localhost:5105/api/SuperAdmin/audit-logs')
+      api.get('/SuperAdmin/stats'),
+      api.get('/Dashboard/global-stats'),
+      api.get('/SuperAdmin/audit-logs')
     ]);
 
     masterKpis.value[0].val = statsRes.data.totalEntreprises;
     masterKpis.value[1].val = statsRes.data.totalUtilisateurs;
-    masterKpis.value[2].val = statsRes.data.sessionsIARecentes;
+    masterKpis.value[2].val = statsRes.data.totalTests || '0';
     
     apiChartData.value = globalRes.data.chart || [];
     leaders.value = globalRes.data.leaders || [];
@@ -297,7 +297,36 @@ onMounted(() => fetchData());
 .pillar-fill { width: 100%; position: absolute; bottom: 0; background: linear-gradient(180deg, #fbbf24, #f59e0b); border-radius: 100px; transition: height 1.5s cubic-bezier(0.19, 1, 0.22, 1); }
 .pillar-light-beam { position: absolute; top: 0; left: 15%; width: 25%; height: 100%; background: rgba(255,255,255,0.2); filter: blur(4px); }
 .pillar-value { font-size: 12px; font-weight: 900; color: #0f172a; }
-.pillar-label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; }
+.pillar-label { 
+  font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 65px; text-align: center;
+}
+
+/* --- TOP TALENTS --- */
+.talent-row-pro { display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; background: #f8fafc; border-radius: 16px; margin-bottom: 10px; transition: 0.3s; border: 1px solid transparent; }
+.talent-row-pro:hover { border-color: #fbbf24; background: white; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+.talent-rank { width: 30px; height: 30px; background: #e2e8f0; color: #475569; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; }
+.talent-details { flex-grow: 1; padding: 0 15px; display: flex; flex-direction: column; }
+.t-name { font-weight: 800; font-size: 13px; color: #0f172a; }
+.t-meta { font-size: 10px; color: #94a3b8; font-weight: 600; }
+.t-score-badge { background: #0f172a; color: #fbbf24; padding: 5px 10px; border-radius: 8px; font-weight: 900; font-size: 12px; }
+
+/* --- DARK MODE OVERRIDES --- */
+[data-theme="dark"] .grandmaster-root { background: #0f172a; color: #f8fafc; }
+[data-theme="dark"] .display-title { color: white; }
+[data-theme="dark"] .metric-card-pro, [data-theme="dark"] .engine-panel {
+  background: rgba(30, 41, 59, 0.8); border-color: rgba(255, 255, 255, 0.1); box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+}
+[data-theme="dark"] .pro-title, [data-theme="dark"] .small-label, [data-theme="dark"] .system-path, [data-theme="dark"] .bot-status-text .name { color: #cbd5e1; }
+[data-theme="dark"] .big-value, [data-theme="dark"] .pillar-value { color: white; }
+[data-theme="dark"] .status-badge, [data-theme="dark"] .ai-companion-vessel, [data-theme="dark"] .icon-vessel-pro { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .bot-shell rect[fill="white"] { fill: #1e293b; stroke: #334155; }
+[data-theme="dark"] .talent-row-pro { background: #1e293b; border-color: transparent; }
+[data-theme="dark"] .talent-row-pro:hover { background: #334155; border-color: #fbbf24; }
+[data-theme="dark"] .t-name { color: white; }
+[data-theme="dark"] .talent-rank { background: #475569; color: white; }
+[data-theme="dark"] .stage-grid { background-image: linear-gradient(#334155 1px, transparent 1px), linear-gradient(90deg, #334155 1px, transparent 1px); }
+
 
 /* --- NEURAL FOOTER --- */
 .neural-footer-bar { background: #0f172a; color: white; padding: 15px 30px; border-radius: 25px; display: flex; align-items: center; gap: 20px; font-family: 'JetBrains Mono'; font-size: 12px; box-shadow: 0 15px 40px rgba(15, 23, 42, 0.2); }
