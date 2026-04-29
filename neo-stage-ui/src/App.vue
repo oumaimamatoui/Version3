@@ -17,22 +17,15 @@ const route = useRoute();
 const authStore = useAuthStore();
 
 const applyThemeForCurrentRoute = () => {
-  const publicPages = ['/', '/login', '/register', '/pricing', '/activate-role', '/forgot-password', '/reset-password', '/definir-mot-de-passe'];
+  // Try to get theme from localStorage first (works for guests too)
+  const dbTheme = authStore.user?.themePreference;
+  const themeKey = authStore.user?.id ? `theme_${authStore.user.id}` : 'theme_guest';
+  const localTheme = localStorage.getItem(themeKey) || localStorage.getItem('theme_guest');
   
-  if (publicPages.includes(route.path) || !route.meta || !route.meta.requiresAuth || !authStore.user) {
-    // Force light mode on public pages or if not logged in
-    document.documentElement.setAttribute('data-theme', 'light');
-    document.documentElement.classList.remove('dark-mode');
-  } else {
-    // Apply user-specific preference from DB or specific localStorage key
-    const dbTheme = authStore.user.themePreference;
-    const themeKey = `theme_${authStore.user.id}`;
-    const localTheme = localStorage.getItem(themeKey);
-    const savedTheme = dbTheme || localTheme || 'light';
-    
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    document.documentElement.classList.toggle('dark-mode', savedTheme === 'dark');
-  }
+  const savedTheme = dbTheme || localTheme || 'light';
+  
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  document.documentElement.classList.toggle('dark-mode', savedTheme === 'dark');
 };
 
 onMounted(() => {
@@ -46,12 +39,13 @@ watch(
   }
 );
 
-// Watch for user changes (login/logout) to update theme immediately
+// Watch for user changes or theme preference changes to update theme immediately
 watch(
-  () => authStore.user?.id,
+  () => [authStore.user?.id, authStore.user?.themePreference, route.path],
   () => {
     applyThemeForCurrentRoute();
-  }
+  },
+  { deep: true }
 );
 </script>
 
