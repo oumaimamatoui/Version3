@@ -184,7 +184,7 @@ namespace NeoEvaluation.API.Data
                 .HasQueryFilter(e => IsSuperAdmin || e.EntrepriseId == CurrentTenantId);
 
             modelBuilder.Entity<Candidature>()
-                .HasQueryFilter(e => IsSuperAdmin || e.Campagne.EntrepriseId == CurrentTenantId || e.UtilisateurId == CurrentUserId);
+                .HasQueryFilter(e => IsSuperAdmin || e.Campagne.EntrepriseId == CurrentTenantId || e.CandidatId == CurrentUserId);
 
             modelBuilder.Entity<Evaluation>()
                 .HasQueryFilter(e => IsSuperAdmin || e.Candidature.Campagne.EntrepriseId == CurrentTenantId || e.CandidatId == CurrentUserId);
