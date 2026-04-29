@@ -1,15 +1,34 @@
-venv/
-.venv/
-__pycache__/
-*.pyc
+# .NET Core
 bin/
 obj/
+out/
+[Dd]ebug/
+[Rr]elease/
+*.user
+*.userosscache
+*.sln.docstates
 .vs/
-.idea/
+
+# Node.js
 node_modules/
-echo AiEvaluationPlatform/ai-service-python/venv/ > .gitignore
-echo node_modules/ >> .gitignore
-echo .vs/ >> .gitignore
-echo bin/ >> .gitignore
-echo obj/ >> .gitignore
-.env.env 
+dist/
+.DS_Store
+.env
+.env.local
+.env.*.local
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.bak
+
+# Logs
+*.log
+audit_logs.json
+
+# Configuration
+appsettings.json
+appsettings.Development.json
+# Ignore user uploads
+backend-neo/NeoEvaluation.API/wwwroot/uploads/**/*

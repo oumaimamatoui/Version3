@@ -184,13 +184,13 @@ namespace NeoEvaluation.API.Data
                 .HasQueryFilter(e => IsSuperAdmin || e.EntrepriseId == CurrentTenantId);
 
             modelBuilder.Entity<Candidature>()
-                .HasQueryFilter(e => IsSuperAdmin || e.Campagne.EntrepriseId == CurrentTenantId);
+                .HasQueryFilter(e => IsSuperAdmin || e.Campagne.EntrepriseId == CurrentTenantId || e.CandidatId == CurrentUserId);
 
             modelBuilder.Entity<Evaluation>()
-                .HasQueryFilter(e => IsSuperAdmin || e.Candidature.Campagne.EntrepriseId == CurrentTenantId);
+                .HasQueryFilter(e => IsSuperAdmin || e.Candidature.Campagne.EntrepriseId == CurrentTenantId || e.CandidatId == CurrentUserId);
 
             modelBuilder.Entity<Rapport>()
-                .HasQueryFilter(e => IsSuperAdmin || e.Evaluation.Candidature.Campagne.EntrepriseId == CurrentTenantId);
+                .HasQueryFilter(e => IsSuperAdmin || e.Evaluation.Candidature.Campagne.EntrepriseId == CurrentTenantId || e.Evaluation.CandidatId == CurrentUserId);
 
             // Filtres secondaires pour supprimer les warnings EF
             modelBuilder.Entity<QuestionnaireQuestion>()

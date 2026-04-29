@@ -4,59 +4,49 @@ using NeoEvaluation.API.Data;
 using NeoEvaluation.API.Models;
 using NeoEvaluation.API.DTOs;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
 
 namespace NeoEvaluation.API.Controllers
 {
-    [Authorize] // Sécurise tout le contrôleur (nécessite un Token JWT)
     [ApiController]
     [Route("api/[controller]")]
     public class ExamenController : ControllerBase
     {
         private readonly AppDbContext _context;
 
-        public ExamenController(AppDbContext context)
-        {
-            _context = context;
-        }
+        public ExamenController(AppDbContext context) => _context = context;
 
-        // ============================================================
-        // 1. SETUP EXAMEN (LOBBY) - Récupère infos et questions
-        // ============================================================
+        // ==========================================
+        // 1. CHARGER L'EXAMEN (LOBBY / START)
+        // ==========================================
         [HttpGet("setup/{candidatureId}")]
         public async Task<IActionResult> GetSetup(string candidatureId)
         {
             if (!Guid.TryParse(candidatureId, out Guid guidId))
-                return BadRequest(new { message = "ID Candidature invalide" });
+                return BadRequest(new { message = "ID invalide" });
 
             var cand = await _context.Candidatures
                 .IgnoreQueryFilters()
                 .Include(c => c.Evaluation)
-                .Include(c => c.Campagne)
-                    .ThenInclude(cp => cp!.CampagneQuestionnaires)
-                    .ThenInclude(cq => cq.Questionnaire)
+                .Include(c => c.Campagne).ThenInclude(cp => cp.CampagneQuestionnaires).ThenInclude(cq => cq.Questionnaire)
                 .FirstOrDefaultAsync(c => c.Id == guidId);
 
-            if (cand == null) return NotFound(new { message = "Candidature introuvable" });
+            if (cand == null) return NotFound(new { message = "Candidature non trouvée" });
 
-            // Si l'évaluation n'existe pas encore, on la crée (Start)
+            // Initialiser l'évaluation si elle n'existe pas encore
             if (cand.Evaluation == null)
             {
-                cand.Evaluation = new Evaluation
-                {
-                    Id = Guid.NewGuid(),
+                cand.Evaluation = new Evaluation {
+                    Id = Guid.NewGuid(), 
                     CandidatureId = cand.Id,
-                    Statut = StatutPassage.EN_COURS,
+                    Statut = StatutPassage.EN_COURS, 
                     DateDebut = DateTime.UtcNow
                 };
                 _context.Evaluations.Add(cand.Evaluation);
                 await _context.SaveChangesAsync();
             }
 
-            // Récupération de toutes les questions liées à la campagne
-            var questionnaireIds = cand.Campagne?.CampagneQuestionnaires
-                                    .Select(cq => cq.QuestionnaireId).ToList() ?? new List<Guid>();
-
+            var questionnaireIds = cand.Campagne?.CampagneQuestionnaires.Select(cq => cq.QuestionnaireId).ToList() ?? new List<Guid>();
+            
             var questions = await _context.QuestionnaireQuestions
                 .IgnoreQueryFilters()
                 .Where(qq => questionnaireIds.Contains(qq.QuestionnaireId))
@@ -64,58 +54,51 @@ namespace NeoEvaluation.API.Controllers
                 .Select(qq => qq.Question)
                 .ToListAsync();
 
-            return Ok(new
-            {
+            return Ok(new {
                 EvaluationId = cand.Evaluation.Id,
-                CampagneNom = cand.Campagne?.Nom ?? "Évaluation Technique",
+                CampagneNom = cand.Campagne?.Nom ?? "Examen",
                 Statut = cand.Evaluation.Statut.ToString(),
                 TempsLimite = (cand.Campagne?.DureeMinutes ?? 45) * 60,
-                Questions = questions.Select(q => new
-                {
-                    q!.Id,
-                    q.Enonce,
+                Questions = questions.Select(q => new {
+                    Id = q.Id, 
+                    Enonce = q.Enonce, 
                     Type = q.Type.ToString(),
-                    Options = q.Choix ?? new List<string>(),
-                    q.Points
-                })
+                    Options = q.Choix ?? new List<string>(), 
+                    Points = q.Points
+                }).ToList()
             });
         }
 
-        // ============================================================
-        // 2. AUTO-SAVE (Sauvegarde chaque réponse en temps réel)
-        // ============================================================
+        // ==========================================
+        // 2. SAUVEGARDER UNE RÉPONSE (AUTO-SAVE)
+        // ==========================================
         [HttpPost("save-response")]
         public async Task<IActionResult> SaveResponse([FromBody] ReponseDto dto)
         {
-            var rep = await _context.Reponses
-                .FirstOrDefaultAsync(r => r.EvaluationId == dto.EvaluationId && r.QuestionId == dto.QuestionId);
-
-            if (rep == null)
-            {
-                _context.Reponses.Add(new Reponse
-                {
-                    Id = Guid.NewGuid(),
-                    EvaluationId = dto.EvaluationId,
-                    QuestionId = dto.QuestionId,
-                    Valeur = dto.Valeur,
+            var rep = await _context.Reponses.FirstOrDefaultAsync(r => r.EvaluationId == dto.EvaluationId && r.QuestionId == dto.QuestionId);
+            
+            if (rep == null) {
+                _context.Reponses.Add(new Reponse { 
+                    Id = Guid.NewGuid(), 
+                    EvaluationId = dto.EvaluationId, 
+                    QuestionId = dto.QuestionId, 
+                    Valeur = dto.Valeur, 
                     TempsSecondes = dto.TempsSecondes,
                     SoumisLe = DateTime.UtcNow
                 });
-            }
-            else
-            {
+            } else {
                 rep.Valeur = dto.Valeur;
                 rep.TempsSecondes = dto.TempsSecondes;
                 rep.SoumisLe = DateTime.UtcNow;
             }
-
+            
             await _context.SaveChangesAsync();
             return Ok();
         }
 
-        // ============================================================
-        // 3. TERMINER (Calcul du score final)
-        // ============================================================
+        // ==========================================
+        // 3. TERMINER L'EXAMEN ET CALCULER LE SCORE
+        // ==========================================
         [HttpPost("terminer/{evaluationId}")]
         public async Task<IActionResult> Terminer(Guid evaluationId)
         {
@@ -128,22 +111,31 @@ namespace NeoEvaluation.API.Controllers
             float scoreObtenu = 0;
             float totalPointsPossibles = 0;
 
-            foreach (var r in eval.Reponses)
-            {
+            foreach(var r in eval.Reponses) {
                 var q = await _context.Questions.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == r.QuestionId);
                 if (q == null) continue;
 
                 float questionPoints = q.Points > 0 ? q.Points : 1;
                 totalPointsPossibles += questionPoints;
 
-                // Logique de correction simple
+                bool isCorrect = false;
                 string userVal = (r.Valeur ?? "").Trim().ToLower();
                 string correctVal = (q.BonneReponse ?? "").Trim().ToLower();
 
-                if (userVal == correctVal)
-                {
-                    scoreObtenu += questionPoints;
+                // Logique de validation QCU / QCM / VRAI_FAUX
+                if (q.Type == TypeQuestion.QCU || q.Type == TypeQuestion.VRAI_FAUX) {
+                    if (userVal == correctVal) isCorrect = true;
+                    else if (int.TryParse(userVal, out int uIdx) && q.Choix != null && uIdx < q.Choix.Count) {
+                        if (q.Choix[uIdx].Trim().ToLower() == correctVal) isCorrect = true;
+                    }
                 }
+                else if (q.Type == TypeQuestion.QCM) {
+                    var uList = userVal.Split(';').Select(s => s.Trim()).OrderBy(s => s);
+                    var cList = correctVal.Split(';').Select(s => s.Trim()).OrderBy(s => s);
+                    isCorrect = uList.SequenceEqual(cList);
+                }
+
+                if (isCorrect) scoreObtenu += questionPoints;
             }
 
             eval.ScoreTotal = scoreObtenu;
@@ -155,38 +147,41 @@ namespace NeoEvaluation.API.Controllers
             return Ok(new { score = eval.ScoreTotal, pourcentage = (int)Math.Round(eval.ScorePourcentage) });
         }
 
-        // ============================================================
-        // 4. MON HISTORIQUE (Fix 401 et Données Vides)
-        // ============================================================
-  [HttpGet("mon-historique")]
-public async Task<IActionResult> GetMonHistorique()
-{
-    // ON IGNORE LE FILTRE USERID POUR TESTER
-    var historique = await _context.Candidatures
-        .IgnoreQueryFilters()
-        .Include(c => c.Campagne)
-        .Include(c => c.Evaluation)
-        // On enlève "c.CandidatId == userId" juste pour voir si n'importe quoi remonte
-        .Where(c => c.Evaluation != null) 
-        .Select(c => new {
-            EvaluationId = c.Evaluation!.Id,
-            Nom = c.Campagne != null ? c.Campagne.Nom : "Examen Test",
-            DateFin = c.Evaluation.DateFin,
-            Score = (int)Math.Round(c.Evaluation.ScorePourcentage)
-        })
-        .ToListAsync();
+        // ==========================================
+        // 4. HISTORIQUE (POUR DASHBOARD) - LA SOLUTION
+        // ==========================================
+        [HttpGet("mon-historique")]
+        public async Task<IActionResult> GetMonHistorique()
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdClaim, out Guid userId)) return Unauthorized();
 
-    return Ok(historique);
-}
+            var historique = await _context.Candidatures
+                .IgnoreQueryFilters()
+                .Include(c => c.Campagne)
+                .Include(c => c.Evaluation)
+                .Where(c => c.CandidatId == userId && c.Evaluation != null && c.Evaluation.Statut == StatutPassage.TERMINE)
+                .Select(c => new {
+                    Id = c.Id,
+                    EvaluationId = c.Evaluation.Id,
+                    Nom = c.Campagne.Nom,
+                    DateFin = c.Evaluation.DateFin, 
+                    DureeMinutes = c.Campagne.DureeMinutes,
+                    Score = (int)Math.Round(c.Evaluation.ScorePourcentage)
+                })
+                .OrderByDescending(c => c.DateFin)
+                .ToListAsync();
 
-        // ============================================================
-        // 5. RÉSULTATS DÉTAILLÉS (Pour ResultsView)
-        // ============================================================
+            return Ok(historique);
+        }
+
+        // ==========================================
+        // 5. RÉSULTATS DÉTAILLÉS (CORRECTION)
+        // ==========================================
         [HttpGet("results/{evaluationId}")]
         public async Task<IActionResult> GetResults(Guid evaluationId)
         {
             var eval = await _context.Evaluations
-                .Include(e => e.Candidature).ThenInclude(c => c!.Campagne)
                 .Include(e => e.Reponses)
                 .FirstOrDefaultAsync(e => e.Id == evaluationId);
 
@@ -198,18 +193,26 @@ public async Task<IActionResult> GetMonHistorique()
                 var q = await _context.Questions.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == r.QuestionId);
                 if (q == null) continue;
 
-                detailed.Add(new
-                {
-                    Name = q.Enonce, // Utilisé pour Chart.js ou liste
-                    Score = (r.Valeur?.Trim().ToLower() == q.BonneReponse?.Trim().ToLower()) ? 100 : 0
+                string uVal = (r.Valeur ?? "").Trim().ToLower();
+                string cVal = (q.BonneReponse ?? "").Trim().ToLower();
+                
+                // On réutilise la même logique hybride que dans Terminer()
+                bool isCorrect = (uVal == cVal);
+                if (!isCorrect && int.TryParse(uVal, out int idx) && q.Choix != null && idx < q.Choix.Count)
+                    isCorrect = q.Choix[idx].Trim().ToLower() == cVal;
+
+                detailed.Add(new {
+                    Enonce = q.Enonce,
+                    UserAnswer = r.Valeur,
+                    CorrectAnswer = q.BonneReponse,
+                    IsCorrect = isCorrect
                 });
             }
 
-            return Ok(new
-            {
-                CampaignName = eval.Candidature?.Campagne?.Nom ?? "Rapport d'évaluation",
-                ScorePourcentage = eval.ScorePourcentage,
-                Themes = detailed // Liste envoyée pour le Radar Chart
+            return Ok(new {
+                ScoreTotal = eval.ScoreTotal,
+                Pourcentage = (int)Math.Round(eval.ScorePourcentage),
+                DetailedCorrection = detailed
             });
         }
     }

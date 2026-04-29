@@ -1,26 +1,43 @@
 import polars as pl
-from datasets import load_dataset
-import os
+import xgboost as xgb
+import joblib
+from sklearn.preprocessing import LabelEncoder
 
-def build_mega_dataset():
-    print("🚀 [BIG DATA] Downloading Technical Bank...")
-    subjects = ["college_computer_science", "machine_learning", "computer_security"]
-    all_dfs = []
+print("🧠 [ENTRAÎNEMENT IA] Fusion des 3 Datasets en cours...")
 
-    for s in subjects:
-        try:
-            ds = load_dataset("cais/mmlu", s, split="test")
-            df = pl.from_pandas(ds.to_pandas()).with_columns([
-                pl.lit(s).alias("sub_theme"),
-                pl.col("question").alias("question_en"),
-                pl.col("choices").map_elements(lambda x: "|".join(map(str, x)), return_dtype=pl.String).alias("options")
-            ])
-            all_dfs.append(df.select(["sub_theme", "question_en", "options", "answer"]))
-        except: continue
+try:
+    # --- 1. SOURCE : Placement_Data (Données de Recrutement) ---
+    # On apprend à l'IA qui est "Recrutable" et quel est le "Juste Salaire"
+    df_p = pl.read_csv('Placement_Data_Full_Class.csv').to_pandas()
+    le = LabelEncoder()
+    df_p['workex'] = le.fit_transform(df_p['workex'])
+    df_p['status'] = le.fit_transform(df_p['status']) # Placed = 1
 
-    if all_dfs:
-        pl.concat(all_dfs).write_parquet("questions_bank.parquet")
-        print(f"✅ Success: questions_bank.parquet created!")
+    features = ['ssc_p', 'hsc_p', 'degree_p', 'mba_p', 'workex']
+    
+    # Modèle 1 : Prédiction de recrutement (Classification)
+    hiring_model = xgb.XGBClassifier(n_estimators=300).fit(df_p[features], df_p['status'])
+    joblib.dump(hiring_model, 'hiring_brain.pkl')
+    
+    # Modèle 2 : Estimation du salaire (Regression)
+    df_sal = df_p[df_p['status'] == 1].copy()
+    salary_model = xgb.XGBRegressor().fit(df_sal[features], df_sal['salary'].fillna(df_p['salary'].median()))
+    joblib.dump(salary_model, 'salary_brain.pkl')
+    joblib.dump(features, 'feature_names.pkl')
+    print("✅ Modèles de Recrutement et Salaire générés.")
 
-if __name__ == "__main__":
-    build_mega_dataset()
+    # --- 2. SOURCE : StudentsPerformance (Données Académiques) ---
+    # On analyse les thèmes où les gens échouent pour suggérer des questions intelligentes
+    df_s = pl.read_csv('StudentsPerformance.csv')
+    stats_acad = {
+        "mathématiques": df_s.select(pl.col("math score").mean()).item(),
+        "lecture": df_s.select(pl.col("reading score").mean()).item(),
+        "écriture": df_s.select(pl.col("writing score").mean()).item()
+    }
+    joblib.dump(stats_acad, 'subject_difficulty.pkl')
+    print("✅ Analyse de difficulté académique terminée.")
+
+    print("\n🚀 [SUCCÈS] Tous les modèles locaux sont prêts pour l'API !")
+
+except Exception as e:
+    print(f"❌ Erreur lors de l'entraînement : {e}")

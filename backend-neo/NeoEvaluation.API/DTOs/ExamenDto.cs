@@ -19,11 +19,11 @@ namespace NeoEvaluation.API.DTOs
         public float Points { get; set; }
     }
 
-public class ReponseDto
-{
-    public Guid EvaluationId { get; set; }
-    public Guid QuestionId { get; set; }
-    public string Valeur { get; set; } = ""; // ex: "0" ou "0;2;3"
-    public int TempsSecondes { get; set; }
-}
+    public class ReponseDto
+    {
+        public Guid EvaluationId { get; set; }
+        public Guid QuestionId { get; set; }
+        public string Valeur { get; set; } = string.Empty; // Stocke index, texte ou nom fichier
+        public int TempsSecondes { get; set; }
+    }
 }

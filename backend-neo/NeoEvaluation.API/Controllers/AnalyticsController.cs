@@ -20,72 +20,89 @@ namespace NeoEvaluation.API.Controllers
         [HttpGet("overview")]
         public async Task<IActionResult> GetOverview()
         {
-            // 1. Récupération de l'entreprise
-            var entreprise = await _context.Entreprises.FirstOrDefaultAsync();
-            if (entreprise == null) 
-                return Ok(new { Insight = "Aucune entreprise detectee en base." });
-            
-            Guid entId = entreprise.Id;
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var roleClaim = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+            var entIdClaim = User.FindFirst("entrepriseId")?.Value;
 
-            // 2. Statistiques KPI
-            var talentsCount = await _context.Utilisateurs
-                .CountAsync(u => u.EntrepriseId == entId && u.RoleNom == "Candidat");
+            if (string.IsNullOrEmpty(roleClaim)) return Unauthorized();
 
-            var testsEnCours = await _context.Evaluations
-                .CountAsync(e => e.Candidature.Campagne.EntrepriseId == entId && e.Statut == StatutPassage.EN_COURS);
-
-            var queryTermines = _context.Evaluations
-                .Where(e => e.Candidature.Campagne.EntrepriseId == entId && e.Statut == StatutPassage.TERMINE);
-
-            double taux = await queryTermines.AnyAsync() 
-                ? Math.Round(await queryTermines.AverageAsync(e => e.ScorePourcentage), 1) 
-                : 0;
-
-            // 3. Activités récentes
-            var activities = await _context.Evaluations
-                .Include(e => e.Candidat)
-                .Include(e => e.Candidature.Campagne)
-                .Where(e => e.Candidature.Campagne.EntrepriseId == entId)
-                .OrderByDescending(e => e.DateDebut)
-                .Take(5)
-                .Select(e => new {
-                    User = e.Candidat != null ? (e.Candidat.Prenom + " " + e.Candidat.Nom) : "Anonyme",
-                    Action = e.Statut == StatutPassage.TERMINE ? "a termine son evaluation" : "a rejoint une session",
-                    Campagne = e.Candidature.Campagne.Nom,
-                    Time = "Recent",
-                    Color = e.Statut == StatutPassage.TERMINE ? "#10b981" : "#fbbf24"
-                })
-                .ToListAsync();
-
-            // 4. Graphique : Nombre de candidatures par jour (7 derniers jours)
-            var chartData = new List<object>();
-            for (int i = 6; i >= 0; i--)
+            // CAS 1 : CANDIDAT
+            if (roleClaim == "Candidat" && Guid.TryParse(userIdClaim, out Guid userId))
             {
-                var dateTarget = DateTime.UtcNow.Date.AddDays(-i);
-                
-                // Compte des candidatures via PostuleLe
-                var count = await _context.Candidatures
-                    .CountAsync(c => c.Campagne.EntrepriseId == entId && c.PostuleLe.Date == dateTarget);
-                
-                chartData.Add(new { 
-                    Day = dateTarget.ToString("ddd"), // lun., mar., etc.
-                    Count = count 
+                var testsEnAttente = await _context.Evaluations
+                    .CountAsync(e => e.CandidatId == userId && (e.Statut == StatutPassage.EN_COURS || e.Statut == StatutPassage.NON_COMMENCE));
+
+                var termines = await _context.Evaluations
+                    .Where(e => e.CandidatId == userId && e.Statut == StatutPassage.TERMINE)
+                    .ToListAsync();
+
+                double avgScore = termines.Any() ? Math.Round(termines.Average(e => e.ScorePourcentage), 1) : 0;
+
+                return Ok(new
+                {
+                    Kpis = new {
+                        TalentsActifs = 1,
+                        TauxReussite = avgScore + "%",
+                        TestsEnCours = testsEnAttente,
+                        IaScore = avgScore > 0 ? $"{avgScore}/100" : "0/100"
+                    },
+                    RecentActivities = termines.OrderByDescending(e => e.DateFin).Take(5).Select(e => new {
+                        User = "Vous",
+                        Action = "avez terminé l'évaluation",
+                        Campagne = "Session terminée",
+                        Time = e.DateFin?.ToString("dd/MM"),
+                        Color = "#10b981"
+                    }),
+                    Insight = avgScore > 0 ? "Vos performances sont stables." : "Prêt pour votre premier test ?"
                 });
             }
 
-            // 5. Réponse structurée pour Aura Talent Dashboard
-            return Ok(new
+            // CAS 2 : ADMIN ENTREPRISE
+            if (Guid.TryParse(entIdClaim, out Guid entId))
             {
-                Kpis = new {
-                    TalentsActifs = talentsCount,
-                    TauxReussite = taux + "%",
-                    TestsEnCours = testsEnCours,
-                    IaScore = "92.4/100"
-                },
-                RecentActivities = activities,
-                ChartData = chartData,
-                Insight = $"Aura IA : Analyse terminee pour {entreprise.Nom}. Vos flux sont optimises."
-            });
+                var talentsCount = await _context.Utilisateurs
+                    .CountAsync(u => u.EntrepriseId == entId && u.RoleNom == "Candidat");
+
+                var testsEnCours = await _context.Evaluations
+                    .CountAsync(e => e.Candidature.Campagne.EntrepriseId == entId && e.Statut == StatutPassage.EN_COURS);
+
+                var queryTermines = _context.Evaluations
+                    .Where(e => e.Candidature.Campagne.EntrepriseId == entId && e.Statut == StatutPassage.TERMINE);
+
+                double taux = await queryTermines.AnyAsync() 
+                    ? Math.Round(await queryTermines.AverageAsync(e => e.ScorePourcentage), 1) 
+                    : 0;
+
+                var activities = await _context.Evaluations
+                    .Include(e => e.Candidat)
+                    .Include(e => e.Candidature.Campagne)
+                    .Where(e => e.Candidature.Campagne.EntrepriseId == entId)
+                    .OrderByDescending(e => e.DateDebut)
+                    .Take(5)
+                    .Select(e => new {
+                        User = e.Candidat != null ? (e.Candidat.Prenom + " " + e.Candidat.Nom) : "Anonyme",
+                        Action = e.Statut == StatutPassage.TERMINE ? "a terminé son évaluation" : "a rejoint une session",
+                        Campagne = e.Candidature.Campagne.Nom,
+                        Time = "Récent",
+                        Color = e.Statut == StatutPassage.TERMINE ? "#10b981" : "#fbbf24"
+                    })
+                    .ToListAsync();
+
+                return Ok(new
+                {
+                    Kpis = new {
+                        TalentsActifs = talentsCount,
+                        TauxReussite = taux + "%",
+                        TestsEnCours = testsEnCours,
+                        IaScore = talentsCount > 0 ? "Calculé" : "0/100"
+                    },
+                    RecentActivities = activities,
+                    Insight = $"Analyse terminée. Flux optimisés pour votre organisation."
+                });
+            }
+
+            return Ok(new { Insight = "Accès restreint." });
         }
+
     }
 }

@@ -193,22 +193,20 @@ const closeDropdown = () => { openDropdown.value = null; };
 // ── Thème ──
 const getThemeKey = () => authStore.user?.id ? `theme_${authStore.user.id}` : 'theme_guest';
 
-const applyTheme = (theme) => {
-  document.documentElement.setAttribute('data-theme', theme);
-  document.documentElement.classList.toggle('dark-mode', theme === 'dark');
-};
-
 const toggleTheme = async () => {
   isDark.value = !isDark.value;
   const theme = isDark.value ? 'dark' : 'light';
-  applyTheme(theme);
+  
+  // App.vue gérera le DOM via le watch sur localStorage ou authStore
   localStorage.setItem(getThemeKey(), theme);
+  
   if (authStore.user) {
     try {
       await api.post('/Settings/theme', JSON.stringify(theme), {
         headers: { 'Content-Type': 'application/json' },
       });
       authStore.user.themePreference = theme;
+      // Mettre à jour l'authStore pour déclencher le watch dans App.vue
       localStorage.setItem('user', JSON.stringify(authStore.user));
     } catch (err) {
       console.error('Erreur sauvegarde thème:', err);
@@ -230,10 +228,11 @@ const t = (key) => ({
 
 // ── Logout ──
 const logout = () => {
-  applyTheme('light');
-  isDark.value = false;
   authStore.logout();
-  router.push('/login');
+  window.location.href = '/login';
+  setTimeout(() => {
+    window.location.reload();
+  }, 100);
 };
 
 // ── Shortcut ⌘K ──
@@ -248,7 +247,6 @@ const handleKeyDown = (e) => {
 onMounted(() => {
   const saved = authStore.user?.themePreference || localStorage.getItem(getThemeKey()) || 'light';
   isDark.value = saved === 'dark';
-  applyTheme(saved);
   window.addEventListener('keydown', handleKeyDown);
 });
 

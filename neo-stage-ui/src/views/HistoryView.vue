@@ -1,221 +1,277 @@
 <template>
-  <div class="admin-layout elite-dashboard-root">
-    <!-- Fond High-Tech Sublimé -->
-    <div class="luxury-bg">
-      <div class="tech-grid"></div>
-      <div class="aura-sphere sphere-indigo"></div>
-      <div class="aura-sphere sphere-amber"></div>
-      <div class="grain-overlay"></div>
-    </div>
-
-    <AppSidebar />
+  <div class="admin-layout">
+    <div class="bg-mesh"></div>
     
-    <div class="main-viewport">
-      <AppNavbar />
-      
-      <main class="container-fluid px-xl-5 pt-5">
-        <!-- Header Style "Executive" -->
-        <header class="mb-5 animate__animated animate__fadeIn">
-          <div class="d-flex align-items-center gap-2 mb-3">
-            <div class="live-indicator"></div>
-            <span class="top-label">PORTAL ANALYTICS</span>
-          </div>
-          <h1 class="main-title">Mes <span class="text-amber-gradient">Performances</span></h1>
-          <p class="subtitle">Analyse statistique de vos compétences et historique des sessions.</p>
-        </header>
+    <!-- Navigation latérale -->
+    <AppSidebar />
 
-        <!-- Loader Futuriste -->
-        <div v-if="loading" class="loader-portal">
-          <div class="scanner-line"></div>
-          <div class="robot-ring"></div>
-          <span class="loading-text">CHARGEMENT DES DONNÉES</span>
+    <div class="main-viewport animate__animated animate__fadeIn">
+      <!-- Barre de navigation haute -->
+      <AppNavbar />
+
+      <div class="container-fluid px-lg-5 pt-4">
+        
+        <!-- BREADCRUMB / STATUS BAR -->
+        <div class="status-bar mb-4">
+          <div class="d-flex justify-content-between align-items-center px-4">
+            <div class="breadcrumb-path">
+              <span class="root">TABLEAU DE BORD</span>
+              <span class="sep">/</span>
+              <span class="current">MON HISTORIQUE DES TESTS</span>
+            </div>
+          </div>
         </div>
 
-        <div v-else class="content-body">
-          <!-- State Vide (Design Épuré) -->
-          <div v-if="historyData.length === 0" class="bento-empty-card">
-            <div class="empty-visual">
-              <i class="fa-solid fa-layer-group"></i>
-              <div class="pulse-ring"></div>
-            </div>
-            <h3>Aucun historique</h3>
-            <p class="text-muted">Votre parcours de certification commence ici.</p>
-            <router-link to="/dashboard" class="btn-premium-action mt-4">
-              DÉMARRER MAINTENANT
-            </router-link>
+        <!-- HEADER SECTION -->
+        <div class="d-flex justify-content-between align-items-end mb-5">
+          <div>
+            <h1 class="page-title mb-1">Mon <span class="accent-word">Historique</span></h1>
+            <p class="page-subtitle">Consultez vos scores et l'analyse détaillée de vos sessions terminées.</p>
           </div>
+          <div class="stats-row">
+            <div class="stat-pill dark">
+              <span class="pill-count">{{ historyData.length }}</span>
+              <span class="pill-label">Tests validés</span>
+            </div>
+          </div>
+        </div>
 
-          <!-- Liste des Tests (Style Elite) -->
-          <div v-else class="row g-4">
-            <div v-for="test in historyData" :key="test.evaluationId" class="col-12">
-              <div class="history-item-card">
-                <!-- Accent décoratif sur le côté -->
-                <div class="card-accent" :class="test.score >= 50 ? 'bg-success' : 'bg-danger'"></div>
+        <!-- BARRE DE RECHERCHE ET FILTRES -->
+        <div class="glass-card-filter p-3 mb-4 d-flex flex-wrap gap-3 align-items-center shadow-sm">
+          <div class="search-vessel flex-grow-1">
+            <i class="fa-solid fa-magnifying-glass ms-3 text-muted"></i>
+            <input 
+              type="text" 
+              v-model="searchQuery" 
+              placeholder="Rechercher un test par son nom..." 
+              class="cyber-input"
+            >
+          </div>
+          <select class="form-select-pro" v-model="filterScore">
+            <option value="all">Tous les scores</option>
+            <option value="high">Excellence (> 80%)</option>
+            <option value="mid">Réussis (50% - 80%)</option>
+            <option value="low">À améliorer (< 50%)</option>
+          </select>
+        </div>
+
+        <!-- LOADER PENDANT LA RÉCUPÉRATION -->
+        <div v-if="loading" class="text-center py-5">
+          <div class="spinner-ring"></div>
+          <p class="mt-4 loading-text">Extraction de vos performances...</p>
+        </div>
+
+        <!-- LISTE DES TESTS TERMINÉS -->
+        <div v-else>
+          <div class="row g-4">
+            <!-- État vide -->
+            <div v-if="filteredHistory.length === 0" class="col-12">
+              <div class="empty-panel py-5">
+                <i class="fa-solid fa-卒業生 fa-3x mb-3 opacity-20"></i>
+                <p class="m-0">Aucun historique disponible pour le moment.</p>
+                <small class="text-muted">Terminez votre premier test pour voir vos résultats ici.</small>
+              </div>
+            </div>
+
+            <!-- Cartes d'historique -->
+            <div v-for="test in filteredHistory" :key="test.id" class="col-12">
+              <div class="history-item-card animate__animated animate__fadeInUp">
                 
-                <div class="row align-items-center g-0">
-                  <!-- Section Score : Design "Data-Viz" -->
-                  <div class="col-md-2 p-4 text-center border-end-glass">
-                    <div class="score-display">
-                      <svg class="score-circle" viewBox="0 0 36 36">
-                        <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <path class="circle-fill" :style="`stroke-dasharray: ${test.score}, 100`" :class="test.score >= 50 ? 'stroke-success' : 'stroke-danger'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                      </svg>
-                      <div class="score-text">
-                        <span class="num">{{ test.score }}</span><span class="per">%</span>
-                      </div>
-                    </div>
+                <!-- Section Identité du Test -->
+                <div class="d-flex align-items-center gap-4 flex-grow-1 min-w-0">
+                  <div class="score-icon-vessel" :class="getScoreCategory(test.score)">
+                    <i class="fa-solid fa-award"></i>
                   </div>
-                  
-                  <!-- Section Infos : Typographie travaillée -->
-                  <div class="col-md-7 px-md-5 py-4">
-                    <div class="d-flex align-items-center gap-3 mb-2">
-                      <span class="badge-glass">SESSION TERMINÉE</span>
-                      <span class="date-text">{{ formatDate(test.dateFin) }}</span>
+                  <div class="text-truncate">
+                    <h5 class="test-name text-truncate">{{ test.nom }}</h5>
+                    <div class="test-meta">
+                      <span><i class="fa-solid fa-calendar-check me-1"></i> Terminé le {{ formatDate(test.dateFin) }}</span>
+                      <span class="mx-3 text-silver">|</span>
+                      <span><i class="fa-solid fa-stopwatch me-1"></i> Session de {{ test.dureeMinutes }} min</span>
                     </div>
-                    <h3 class="test-name">{{ test.nom }}</h3>
-                    <div class="meta-info">
-                      <i class="fa-solid fa-shield-halved me-2"></i> Évaluation technique certifiée
-                    </div>
-                  </div>
-
-                  <!-- Section Action : Bouton Premium -->
-                  <div class="col-md-3 p-4 text-end">
-                    <router-link :to="`/results/${test.evaluationId}`" class="btn-elite-action">
-                      <span>VOIR RAPPORT</span>
-                      <div class="icon-box">
-                        <i class="fa-solid fa-arrow-right-long"></i>
-                      </div>
-                    </router-link>
                   </div>
                 </div>
+
+                <!-- Section Score Central -->
+                <div class="score-section px-lg-5">
+                  <div class="score-label">RÉSULTAT FINAL</div>
+                  <div class="score-value" :style="{ color: getScoreColor(test.score) }">
+                    {{ test.score }}%
+                  </div>
+                </div>
+
+                <!-- Section Action (Lien vers la correction) -->
+                <div class="action-section">
+                  <router-link :to="`/exam-lobby/${test.id}`" class="btn-action-pro">
+                    <span>REVOIR L'AUDIT</span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                  </router-link>
+                </div>
+
               </div>
             </div>
           </div>
         </div>
-      </main>
+
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import api from '@/services/api';
 import AppSidebar from '../components/AppSidebar.vue';
 import AppNavbar from '../components/AppNavbar.vue';
 
-const historyData = ref([]);
 const loading = ref(true);
+const searchQuery = ref('');
+const filterScore = ref('all');
+const historyData = ref([]);
 
+// Récupération des données depuis le nouvel endpoint
 const fetchHistory = async () => {
+  loading.value = true;
   try {
     const res = await api.get('/Examen/mon-historique');
     historyData.value = res.data;
   } catch (err) {
-    console.error("Erreur historique:", err);
+    console.error("Erreur lors de la récupération de l'historique:", err);
   } finally {
     loading.value = false;
   }
 };
 
-const formatDate = (d) => new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+// Filtrage dynamique (Recherche + Score)
+const filteredHistory = computed(() => {
+  return historyData.value.filter(item => {
+    const matchesSearch = item.nom.toLowerCase().includes(searchQuery.value.toLowerCase());
+    
+    let matchesScore = true;
+    if (filterScore.value === 'high') matchesScore = item.score >= 80;
+    if (filterScore.value === 'mid') matchesScore = item.score >= 50 && item.score < 80;
+    if (filterScore.value === 'low') matchesScore = item.score < 50;
+
+    return matchesSearch && matchesScore;
+  });
+});
+
+// Utilitaires de formatage
+const formatDate = (d) => {
+  if (!d) return 'N/A';
+  return new Date(d).toLocaleDateString('fr-FR', { 
+    day: '2-digit', 
+    month: 'long', 
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+const getScoreColor = (score) => {
+  if (score >= 80) return '#10b981'; // Vert
+  if (score >= 50) return '#f59e0b'; // Ambre
+  return '#ef4444'; // Rouge
+};
+
+const getScoreCategory = (score) => {
+  if (score >= 80) return 'cat-high';
+  if (score >= 50) return 'cat-mid';
+  return 'cat-low';
+};
 
 onMounted(fetchHistory);
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;800&display=swap');
-
-/* CONFIGURATION GÉNÉRALE */
-.admin-layout { 
-  display: flex; 
-  min-height: 100vh; 
-  background-color: #f8fafc; 
-  font-family: 'Plus Jakarta Sans', sans-serif; 
+/* ─── Layout & Fond ─── */
+.admin-layout { min-height: 100vh; display: flex; background: #f8fafc; position: relative; }
+.bg-mesh {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: radial-gradient(circle at 80% 20%, rgba(251, 191, 36, 0.08) 0%, transparent 50%),
+              linear-gradient(160deg, #f8fafc 0%, #f1f5f9 100%);
 }
-.main-viewport { flex: 1; position: relative; z-index: 1; }
+.main-viewport { flex-grow: 1; z-index: 5; position: relative; padding-bottom: 50px; }
 
-/* LUXURY BG & TECH GRID */
-.luxury-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; background: #ffffff; }
-.tech-grid { 
-  position: absolute; inset: 0; 
-  background-image: radial-gradient(#e2e8f0 1.2px, transparent 1.2px); 
-  background-size: 40px 40px; 
-  opacity: 0.4; 
+/* ─── Barre de statut ─── */
+.status-bar {
+  background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px);
+  border: 1px solid white; border-radius: 16px; padding: 12px 0;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
 }
-.aura-sphere { position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.18; }
-.sphere-indigo { width: 800px; height: 800px; background: #6366f1; top: -15%; right: -10%; }
-.sphere-amber { width: 600px; height: 600px; background: #fbbf24; bottom: -10%; left: -5%; }
-.grain-overlay { position: absolute; inset: 0; opacity: 0.03; background-image: url("https://grainy-gradients.vercel.app/noise.svg"); }
+.breadcrumb-path { font-size: 10px; font-weight: 800; letter-spacing: 1.2px; color: #94a3b8; }
 
-/* HEADER ELEMENTS */
-.top-label { font-size: 0.7rem; font-weight: 800; color: #64748b; letter-spacing: 0.2em; }
-.live-indicator { width: 8px; height: 8px; background: #fbbf24; border-radius: 50%; box-shadow: 0 0 10px #fbbf24; animation: pulse 2s infinite; }
-.main-title { font-size: 3.5rem; font-weight: 800; color: #0f172a; letter-spacing: -0.04em; }
-.text-amber-gradient { background: linear-gradient(135deg, #f59e0b, #d97706); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.subtitle { color: #64748b; font-size: 1.1rem; font-weight: 500; }
+/* ─── Titres ─── */
+.page-title { font-size: 32px; font-weight: 900; color: #0f172a; letter-spacing: -0.5px; }
+.accent-word { color: #fbbf24; position: relative; }
+.page-subtitle { color: #64748b; font-size: 15px; }
 
-/* CARDS DESIGN (ELITE) */
+/* ─── Filtres Glass ─── */
+.glass-card-filter {
+  background: white; border-radius: 20px; border: 1px solid #e2e8f0;
+}
+.search-vessel { display: flex; align-items: center; background: #f1f5f9; border-radius: 12px; }
+.cyber-input { border: none; background: transparent; outline: none; width: 100%; padding: 12px; font-size: 14px; color: #1e293b; }
+.form-select-pro {
+  border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 20px; font-size: 14px; font-weight: 600; color: #475569; outline: none; cursor: pointer;
+}
+
+/* ─── Cartes Historique ─── */
 .history-item-card {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(15px);
-  border: 1px solid rgba(226, 232, 240, 0.7);
-  border-radius: 2rem;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  background: white; border: 1px solid #f1f5f9; border-radius: 24px;
+  padding: 24px 35px; display: flex; align-items: center; justify-content: space-between;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .history-item-card:hover {
-  transform: translateX(12px) scale(1.01);
-  background: #ffffff;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-5px) scale(1.005);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06);
   border-color: #fbbf24;
 }
 
-.card-accent { position: absolute; left: 0; top: 0; bottom: 0; width: 6px; }
-.border-end-glass { border-right: 1px solid rgba(0,0,0,0.05); }
-
-/* SCORE DISPLAY DATA-VIZ */
-.score-display { position: relative; width: 80px; height: 80px; margin: 0 auto; }
-.score-circle { transform: rotate(-90deg); }
-.circle-bg { fill: none; stroke: #f1f5f9; stroke-width: 3.5; }
-.circle-fill { fill: none; stroke-width: 3.5; stroke-linecap: round; transition: stroke-dasharray 1s ease; }
-.stroke-success { stroke: #10b981; filter: drop-shadow(0 0 5px rgba(16, 185, 129, 0.3)); }
-.stroke-danger { stroke: #ef4444; }
-.score-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono'; flex-direction: row; }
-.score-text .num { font-size: 1.5rem; font-weight: 800; color: #0f172a; }
-.score-text .per { font-size: 0.7rem; color: #94a3b8; font-weight: 700; margin-left: 1px; }
-
-/* CONTENT DETAILS */
-.test-name { font-size: 1.5rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em; }
-.badge-glass { background: #f1f5f9; color: #475569; font-size: 0.65rem; font-weight: 800; padding: 4px 10px; border-radius: 8px; letter-spacing: 0.05em; }
-.date-text { font-size: 0.85rem; color: #94a3b8; font-weight: 600; }
-.meta-info { font-size: 0.8rem; color: #64748b; font-weight: 500; }
-
-/* ELITE ACTION BUTTON */
-.btn-elite-action {
-  display: inline-flex; align-items: center; gap: 15px; text-decoration: none;
-  background: #0f172a; padding: 8px 8px 8px 24px; border-radius: 100px;
-  color: white; font-weight: 700; font-size: 0.75rem; transition: all 0.3s ease;
+.score-icon-vessel {
+  width: 56px; height: 56px; border-radius: 18px;
+  display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
 }
-.icon-box {
-  width: 40px; height: 40px; background: rgba(255,255,255,0.1); border-radius: 50%;
-  display: flex; align-items: center; justify-content: center; transition: 0.3s;
+.cat-high { background: #ecfdf5; color: #10b981; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.1); }
+.cat-mid { background: #fffbeb; color: #f59e0b; box-shadow: 0 10px 20px rgba(245, 158, 11, 0.1); }
+.cat-low { background: #fef2f2; color: #ef4444; box-shadow: 0 10px 20px rgba(239, 68, 68, 0.1); }
+
+.test-name { font-weight: 800; color: #1e293b; margin: 0; font-size: 1.2rem; }
+.test-meta { font-size: 13px; color: #94a3b8; font-weight: 600; margin-top: 6px; }
+
+.score-section { text-align: center; border-left: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; min-width: 200px; }
+.score-label { font-size: 10px; font-weight: 800; color: #cbd5e1; letter-spacing: 1.5px; margin-bottom: 5px; }
+.score-value { font-size: 32px; font-weight: 950; line-height: 1; }
+
+.btn-action-pro {
+  background: #0f172a; color: white; text-decoration: none;
+  padding: 14px 28px; border-radius: 16px; font-weight: 700; font-size: 13px;
+  display: flex; align-items: center; gap: 12px; transition: 0.3s;
 }
-.btn-elite-action:hover { background: #fbbf24; color: #0f172a; transform: scale(1.05); }
-.btn-elite-action:hover .icon-box { background: #0f172a; color: white; transform: rotate(-45deg); }
+.btn-action-pro:hover { background: #fbbf24; color: #0f172a; transform: scale(1.05); }
 
-/* LOADER & ANIMATIONS */
-.loader-portal { display: flex; flex-direction: column; align-items: center; padding: 120px 0; position: relative; }
-.robot-ring { width: 60px; height: 60px; border: 3px solid #f1f5f9; border-top-color: #fbbf24; border-radius: 50%; animation: spin 1s infinite linear; }
-.loading-text { margin-top: 20px; font-weight: 800; color: #94a3b8; font-size: 0.7rem; letter-spacing: 0.4em; }
+/* ─── Utils ─── */
+.stat-pill.dark { background: #0f172a; color: white; padding: 12px 25px; border-radius: 100px; box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2); }
+.pill-count { color: #fbbf24; font-weight: 900; font-size: 1.4rem; margin-right: 10px; }
+.pill-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; }
 
+.spinner-ring {
+  width: 45px; height: 45px; border: 4px solid #e2e8f0;
+  border-top-color: #fbbf24; border-radius: 50%; animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
 @keyframes spin { to { transform: rotate(360deg); } }
-@keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
 
-@media (max-width: 768px) {
-  .border-end-glass { border-right: none; border-bottom: 1px solid rgba(0,0,0,0.05); }
-  .history-item-card { margin-left: 0 !important; text-align: center; }
-  .btn-elite-action { width: 100%; justify-content: space-between; }
+.empty-panel { 
+    text-align: center; color: #94a3b8; font-weight: 600; 
+    border: 2px dashed #e2e8f0; border-radius: 30px; 
+    background: rgba(255,255,255,0.4);
+}
+
+@media (max-width: 992px) {
+  .history-item-card { flex-direction: column; text-align: center; gap: 25px; }
+  .score-section { border: none; padding: 0; }
+  .action-section { width: 100%; }
+  .btn-action-pro { justify-content: center; }
 }
 </style>
