@@ -247,7 +247,6 @@ const handleKeyDown = (e) => {
 onMounted(() => {
   const saved = authStore.user?.themePreference || localStorage.getItem(getThemeKey()) || 'light';
   isDark.value = saved === 'dark';
-  applyTheme(saved);
   window.addEventListener('keydown', handleKeyDown);
 });
 
