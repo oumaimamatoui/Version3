@@ -232,7 +232,10 @@ const changeRole = (e) => {
 
 const logout = () => {
   authStore.logout();
-  router.push('/login');
+  window.location.href = '/login';
+  setTimeout(() => {
+    window.location.reload();
+  }, 100);
 };
 
 onMounted(fetchCounts);
