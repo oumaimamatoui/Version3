@@ -18,6 +18,12 @@ namespace NeoEvaluation.API.DTOs
 
         [JsonPropertyName("croissanceStats")]
         public List<MonthlyGrowthDto> CroissanceStats { get; set; } = new();
+
+        [JsonPropertyName("isGoogleConnected")]
+        public bool IsGoogleConnected { get; set; }
+
+        [JsonPropertyName("connectedEmail")]
+        public string? ConnectedEmail { get; set; }
     }
 
     public class MonthlyGrowthDto

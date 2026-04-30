@@ -142,8 +142,13 @@ const handleClassicLogin = async () => {
 };
 
 const handleAuthSuccess = (data) => {
-  const { token, role, nom, email, privileges } = data;
-  authStore.setUser({ email: email || loginForm.email, name: nom }, role, token, privileges || []);
+  const { token, role, nom, email, photo, themePreference, privileges } = data;
+  authStore.setUser(
+    { email: email || loginForm.email, name: nom, photoUrl: photo, themePreference: themePreference }, 
+    role, 
+    token, 
+    privileges || []
+  );
   requestSent.value = true;
   setTimeout(() => {
     if (role?.toUpperCase() === 'SUPERADMIN') router.push('/super-admin');

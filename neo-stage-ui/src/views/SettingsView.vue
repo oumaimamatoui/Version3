@@ -127,11 +127,19 @@
                       <div>
                         <h6 class="fw-800 m-0">Google Gmail API</h6>
                         <p class="text-muted small m-0">Envoyez vos emails via votre propre compte professionnel.</p>
+                        <span v-if="integrationStats.isGoogleConnected" class="badge bg-success mt-2">
+                          Connecté en tant que {{ integrationStats.connectedEmail }}
+                        </span>
                       </div>
                     </div>
-                    <button @click="connectGmail" class="btn-primary-gradient px-4 py-2">
-                        <i class="fa-solid fa-link me-2"></i> CONNECTER
-                    </button>
+                    <div>
+                        <button v-if="!integrationStats.isGoogleConnected" @click="connectGmail" class="btn-primary-gradient px-4 py-2">
+                            <i class="fa-solid fa-link me-2"></i> CONNECTER
+                        </button>
+                        <button v-else @click="disconnectGmail" class="btn btn-outline-danger px-4 py-2" style="border-radius: 14px; font-weight: 700; font-size: 12px;">
+                            <i class="fa-solid fa-link-slash me-2"></i> DÉCONNECTER
+                        </button>
+                    </div>
                   </div>
                 </div>
 
@@ -173,6 +181,7 @@ const loading = ref(true);
 const saving = ref(false);
 const role = ref('');
 const activeTab = ref('profile');
+const integrationStats = ref({ isGoogleConnected: false, connectedEmail: null });
 
 // État du sélecteur de fichier
 const photoInput = ref(null);
@@ -223,9 +232,28 @@ const fetchInitialData = async () => {
     const resUser = await api.get('/Settings/me');
     userForm.value = resUser.data;
 
+    // S'assurer que le store a la bonne photo dès le chargement des settings
+    if (resUser.data.photoUrl && authStore.user.photoUrl !== resUser.data.photoUrl) {
+      authStore.user.photoUrl = resUser.data.photoUrl;
+      localStorage.setItem('user', JSON.stringify(authStore.user));
+    }
+
     if (role.value.toLowerCase() === 'adminentreprise') {
       const resBrand = await api.get('/Settings/branding');
       brandForm.value = resBrand.data;
+      
+      integrationStats.value.isGoogleConnected = resBrand.data.isGoogleConnected;
+      integrationStats.value.connectedEmail = resBrand.data.connectedEmail;
+    }
+
+    if (role.value.toLowerCase() === 'superadmin') {
+        try {
+            const resStats = await api.get('/SuperAdmin/stats');
+            integrationStats.value.isGoogleConnected = resStats.data.isGoogleConnected;
+            integrationStats.value.connectedEmail = resStats.data.connectedEmail;
+        } catch (err) {
+            console.error("Erreur chargement des stats d'intégration", err);
+        }
     }
   } catch (error) {
     console.error("Erreur chargement :", error);
@@ -313,6 +341,20 @@ const connectGmail = async () => {
     console.error("Erreur Auth URL:", err);
     alert("Impossible de joindre le service d'authentification Google.");
   }
+};
+
+const disconnectGmail = async () => {
+    if(!confirm("Êtes-vous sûr de vouloir déconnecter ce compte Gmail ? Vous ne pourrez plus envoyer d'emails système tant qu'il ne sera pas reconnecté.")) return;
+    
+    try {
+        await api.post('/GoogleAuth/disconnect');
+        integrationStats.value.isGoogleConnected = false;
+        integrationStats.value.connectedEmail = null;
+        alert("Compte déconnecté avec succès.");
+    } catch (err) {
+        console.error("Erreur de déconnexion", err);
+        alert("Impossible de déconnecter le compte.");
+    }
 };
 
 onMounted(() => {

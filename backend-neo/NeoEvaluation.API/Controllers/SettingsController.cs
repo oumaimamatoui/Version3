@@ -31,7 +31,7 @@ namespace NeoEvaluation.API.Controllers
         public async Task<IActionResult> GetMe()
         {
             var userId = GetCurrentUserId();
-            var user = await _context.Utilisateurs.FirstOrDefaultAsync(u => u.Id == userId);
+            var user = await _context.Utilisateurs.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null) return NotFound();
 
             var entrepriseNom = user.EntrepriseId.HasValue 
@@ -106,7 +106,7 @@ namespace NeoEvaluation.API.Controllers
         {
             try {
                 var userId = GetCurrentUserId();
-                var user = await _context.Utilisateurs.FindAsync(userId);
+                var user = await _context.Utilisateurs.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
                 
                 if (user == null || user.EntrepriseId == null)
                     return Ok(new BrandingDto { CompanyName = "NeoEvaluation", Color = "#6366f1" });
@@ -115,7 +115,9 @@ namespace NeoEvaluation.API.Controllers
                 return Ok(new BrandingDto {
                     CompanyName = entreprise?.Nom ?? "NeoEvaluation",
                     Color = entreprise?.CouleurSignature ?? "#6366f1",
-                    LogoUrl = entreprise?.LogoUrl
+                    LogoUrl = entreprise?.LogoUrl,
+                    IsGoogleConnected = !string.IsNullOrEmpty(entreprise?.GmailRefreshToken),
+                    ConnectedEmail = entreprise?.GmailEmail
                 });
             } catch {
                 return Ok(new BrandingDto { CompanyName = "NeoEvaluation", Color = "#6366f1" });

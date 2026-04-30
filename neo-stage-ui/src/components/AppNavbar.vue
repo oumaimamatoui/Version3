@@ -228,6 +228,10 @@ const t = (key) => ({
 
 // ── Logout ──
 const logout = () => {
+  // Mémoriser le thème actuel pour la page publique (login)
+  const currentTheme = isDark.value ? 'dark' : 'light';
+  localStorage.setItem('theme_guest', currentTheme);
+
   authStore.logout();
   window.location.href = '/login';
   setTimeout(() => {

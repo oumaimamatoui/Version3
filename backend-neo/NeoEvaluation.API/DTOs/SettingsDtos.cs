@@ -23,6 +23,12 @@ namespace NeoEvaluation.API.Dtos
         public string CompanyName { get; set; } = string.Empty;
         public string Color { get; set; } = "#6366f1";
         public string? LogoUrl { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("isGoogleConnected")]
+        public bool IsGoogleConnected { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("connectedEmail")]
+        public string? ConnectedEmail { get; set; }
     }
 
     public class BrandingUpdateDto

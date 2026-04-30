@@ -61,6 +61,14 @@ namespace NeoEvaluation.API.Controllers
                         Count = match?.Count ?? 0
                     });
                 }
+                // Vérification de l'intégration Gmail Système
+                var systemOrg = await _context.Entreprises.IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(e => e.Nom == "SYSTEM_PLATFORM");
+                    
+                if (systemOrg != null) {
+                    stats.IsGoogleConnected = !string.IsNullOrEmpty(systemOrg.GmailRefreshToken);
+                    stats.ConnectedEmail = systemOrg.GmailEmail;
+                }
 
                 return Ok(stats);
             } catch (Exception ex) {

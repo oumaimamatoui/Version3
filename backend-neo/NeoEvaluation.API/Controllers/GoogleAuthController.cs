@@ -108,6 +108,50 @@ namespace NeoEvaluation.API.Controllers
                 return BadRequest(new { message = "Erreur OAuth : " + ex.Message });
             }
         }
+
+        [HttpPost("disconnect")]
+        public async Task<IActionResult> Disconnect()
+        {
+            try
+            {
+                var userEmail = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email || c.Type == "email")?.Value;
+                var user = await _context.Utilisateurs.Include(u => u.Entreprise).FirstOrDefaultAsync(u => u.Email == userEmail);
+
+                if (user == null)
+                    return BadRequest(new { message = "Utilisateur non trouvé." });
+
+                if (user.RoleNom == "SuperAdmin")
+                {
+                    var systemOrg = await _context.Entreprises.IgnoreQueryFilters().FirstOrDefaultAsync(e => e.Nom == "SYSTEM_PLATFORM");
+                    if (systemOrg != null)
+                    {
+                        systemOrg.GmailRefreshToken = null;
+                        systemOrg.GmailAccessToken = null;
+                        systemOrg.GmailTokenExpiresAt = null;
+                        systemOrg.GmailEmail = null;
+                    }
+                }
+                else if (user.Entreprise != null)
+                {
+                    var entreprise = user.Entreprise;
+                    entreprise.GmailRefreshToken = null;
+                    entreprise.GmailAccessToken = null;
+                    entreprise.GmailTokenExpiresAt = null;
+                    entreprise.GmailEmail = null;
+                }
+                else
+                {
+                    return BadRequest(new { message = "Impossible de déconnecter le compte Gmail." });
+                }
+
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Compte Gmail déconnecté avec succès." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Erreur de déconnexion : " + ex.Message });
+            }
+        }
     }
 
     public class GoogleCallbackDto
