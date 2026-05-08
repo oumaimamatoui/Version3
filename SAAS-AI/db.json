@@ -1,0 +1,332 @@
+{
+  "posts": [],
+  "comments": [],
+  "profile": {},
+  "Questions": [
+    {
+      "enonce": "Quelle est la bonne pratique principale pour Java en Java ?",
+      "choix": [
+        "Suivre les conventions officielles de Java",
+        "Ignorer la documentation",
+        "Copier depuis StackOverflow",
+        "Aucune règle n'existe"
+      ],
+      "bonneReponse": "Suivre les conventions officielles de Java",
+      "theme": "JAVA",
+      "type": 0,
+      "id": 1
+    },
+    {
+      "enonce": "Quel pattern architectural convient le mieux à Java ?",
+      "choix": [
+        "Architecture modulaire et testable",
+        "Monolithe non structuré",
+        "Scripts shell uniquement",
+        "Pas de pattern nécessaire"
+      ],
+      "bonneReponse": "Architecture modulaire et testable",
+      "theme": "JAVA",
+      "type": 0,
+      "id": 2
+    },
+    {
+      "enonce": "Comment gérer les erreurs dans un contexte Java / Java ?",
+      "choix": [
+        "Try/catch + logging structuré",
+        "Ignorer les erreurs",
+        "Afficher uniquement en console",
+        "Redémarrer le serveur"
+      ],
+      "bonneReponse": "Try/catch + logging structuré",
+      "theme": "JAVA",
+      "type": 0,
+      "id": 3
+    },
+    {
+      "enonce": "Quel est l'avantage principal du typage fort en Java ?",
+      "choix": [
+        "Détection des bugs à la compilation",
+        "Code plus lent",
+        "Moins de flexibilité",
+        "Aucun avantage"
+      ],
+      "bonneReponse": "Détection des bugs à la compilation",
+      "theme": "JAVA",
+      "type": 0,
+      "id": 4
+    },
+    {
+      "enonce": "Quelle est la bonne pratique principale pour Java en Java ?",
+      "choix": [
+        "Suivre les conventions officielles de Java",
+        "Ignorer la documentation",
+        "Copier depuis StackOverflow",
+        "Aucune règle n'existe"
+      ],
+      "bonneReponse": "Suivre les conventions officielles de Java",
+      "theme": "JAVA",
+      "type": 0,
+      "id": 5
+    },
+    {
+      "enonce": "Quel pattern architectural convient le mieux à Java ?",
+      "choix": [
+        "Architecture modulaire et testable",
+        "Monolithe non structuré",
+        "Scripts shell uniquement",
+        "Pas de pattern nécessaire"
+      ],
+      "bonneReponse": "Architecture modulaire et testable",
+      "theme": "JAVA",
+      "type": 0,
+      "id": 6
+    },
+    {
+      "enonce": "Comment gérer les erreurs dans un contexte Java / Java ?",
+      "choix": [
+        "Try/catch + logging structuré",
+        "Ignorer les erreurs",
+        "Afficher uniquement en console",
+        "Redémarrer le serveur"
+      ],
+      "bonneReponse": "Try/catch + logging structuré",
+      "theme": "JAVA",
+      "type": 0,
+      "id": 7
+    },
+    {
+      "enonce": "Quel est l'avantage principal du typage fort en Java ?",
+      "choix": [
+        "Détection des bugs à la compilation",
+        "Code plus lent",
+        "Moins de flexibilité",
+        "Aucun avantage"
+      ],
+      "bonneReponse": "Détection des bugs à la compilation",
+      "theme": "JAVA",
+      "type": 0,
+      "id": 8
+    },
+    {
+      "enonce": "Quelle approche garantit la maintenabilité d'un projet Java ?",
+      "choix": [
+        "Tests unitaires + documentation",
+        "Code commenté uniquement",
+        "Aucun test, déploiement direct",
+        "Refactoring mensuel"
+      ],
+      "bonneReponse": "Tests unitaires + documentation",
+      "theme": "JAVA",
+      "type": 0,
+      "id": 9
+    },
+    {
+      "enonce": "Quelle est la bonne pratique principale pour Java en Java ?",
+      "choix": [
+        "Suivre les conventions officielles de Java",
+        "Ignorer la documentation",
+        "Copier depuis StackOverflow",
+        "Aucune règle n'existe"
+      ],
+      "bonneReponse": "Suivre les conventions officielles de Java",
+      "theme": "JAVA",
+      "type": 0,
+      "id": 10
+    },
+    {
+      "enonce": "Quel pattern architectural convient le mieux à Java ?",
+      "choix": [
+        "Architecture modulaire et testable",
+        "Monolithe non structuré",
+        "Scripts shell uniquement",
+        "Pas de pattern nécessaire"
+      ],
+      "bonneReponse": "Architecture modulaire et testable",
+      "theme": "JAVA",
+      "type": 0,
+      "id": 11
+    },
+    {
+      "enonce": "Comment gérer les erreurs dans un contexte Java / Java ?",
+      "choix": [
+        "Try/catch + logging structuré",
+        "Ignorer les erreurs",
+        "Afficher uniquement en console",
+        "Redémarrer le serveur"
+      ],
+      "bonneReponse": "Try/catch + logging structuré",
+      "theme": "JAVA",
+      "type": 0,
+      "id": 12
+    },
+    {
+      "enonce": "Quel est l'avantage principal du typage fort en Java ?",
+      "choix": [
+        "Détection des bugs à la compilation",
+        "Code plus lent",
+        "Moins de flexibilité",
+        "Aucun avantage"
+      ],
+      "bonneReponse": "Détection des bugs à la compilation",
+      "theme": "JAVA",
+      "type": 0,
+      "id": 13
+    },
+    {
+      "enonce": "Quelle est la bonne pratique principale pour Java en Java ?",
+      "choix": [
+        "Suivre les conventions officielles de Java",
+        "Ignorer la documentation",
+        "Copier depuis StackOverflow",
+        "Aucune règle n'existe"
+      ],
+      "bonneReponse": "Suivre les conventions officielles de Java",
+      "theme": "JAVA",
+      "type": 0,
+      "id": 14
+    },
+    {
+      "enonce": "Quelle approche garantit la maintenabilité d'un projet Java ?",
+      "choix": [
+        "Tests unitaires + documentation",
+        "Code commenté uniquement",
+        "Aucun test, déploiement direct",
+        "Refactoring mensuel"
+      ],
+      "bonneReponse": "Tests unitaires + documentation",
+      "theme": "JAVA",
+      "type": 0,
+      "id": 15
+    },
+    {
+      "enonce": "Quel pattern architectural convient le mieux à Java ?",
+      "choix": [
+        "Architecture modulaire et testable",
+        "Monolithe non structuré",
+        "Scripts shell uniquement",
+        "Pas de pattern nécessaire"
+      ],
+      "bonneReponse": "Architecture modulaire et testable",
+      "theme": "JAVA",
+      "type": 0,
+      "id": 16
+    },
+    {
+      "enonce": "Quel pattern architectural convient le mieux à Java ?",
+      "choix": [
+        "Architecture modulaire et testable",
+        "Monolithe non structuré",
+        "Scripts shell uniquement",
+        "Pas de pattern nécessaire"
+      ],
+      "bonneReponse": "Architecture modulaire et testable",
+      "theme": "JAVA",
+      "type": 0,
+      "id": 17
+    },
+    {
+      "enonce": "Comment gérer les erreurs dans un contexte Java / Java ?",
+      "choix": [
+        "Try/catch + logging structuré",
+        "Ignorer les erreurs",
+        "Afficher uniquement en console",
+        "Redémarrer le serveur"
+      ],
+      "bonneReponse": "Try/catch + logging structuré",
+      "theme": "JAVA",
+      "type": 0,
+      "id": 18
+    },
+    {
+      "enonce": "Quel est l'avantage principal du typage fort en Java ?",
+      "choix": [
+        "Détection des bugs à la compilation",
+        "Code plus lent",
+        "Moins de flexibilité",
+        "Aucun avantage"
+      ],
+      "bonneReponse": "Détection des bugs à la compilation",
+      "theme": "JAVA",
+      "type": 0,
+      "id": 19
+    },
+    {
+      "enonce": "Quelle approche garantit la maintenabilité d'un projet Java ?",
+      "choix": [
+        "Tests unitaires + documentation",
+        "Code commenté uniquement",
+        "Aucun test, déploiement direct",
+        "Refactoring mensuel"
+      ],
+      "bonneReponse": "Tests unitaires + documentation",
+      "theme": "JAVA",
+      "type": 0,
+      "id": 20
+    },
+    {
+      "enonce": "Quelle est la bonne pratique principale pour Java en Java ?",
+      "choix": [
+        "Suivre les conventions officielles de Java",
+        "Ignorer la documentation",
+        "Copier depuis StackOverflow",
+        "Aucune règle n'existe"
+      ],
+      "bonneReponse": "Suivre les conventions officielles de Java",
+      "theme": "JAVA",
+      "type": 0,
+      "id": 21
+    },
+    {
+      "enonce": "Quel pattern architectural convient le mieux à Java ?",
+      "choix": [
+        "Architecture modulaire et testable",
+        "Monolithe non structuré",
+        "Scripts shell uniquement",
+        "Pas de pattern nécessaire"
+      ],
+      "bonneReponse": "Architecture modulaire et testable",
+      "theme": "JAVA",
+      "type": 0,
+      "id": 22
+    },
+    {
+      "enonce": "Comment gérer les erreurs dans un contexte Java / Java ?",
+      "choix": [
+        "Try/catch + logging structuré",
+        "Ignorer les erreurs",
+        "Afficher uniquement en console",
+        "Redémarrer le serveur"
+      ],
+      "bonneReponse": "Try/catch + logging structuré",
+      "theme": "JAVA",
+      "type": 0,
+      "id": 23
+    },
+    {
+      "enonce": "Quel est l'avantage principal du typage fort en Java ?",
+      "choix": [
+        "Détection des bugs à la compilation",
+        "Code plus lent",
+        "Moins de flexibilité",
+        "Aucun avantage"
+      ],
+      "bonneReponse": "Détection des bugs à la compilation",
+      "theme": "JAVA",
+      "type": 0,
+      "id": 24
+    },
+    {
+      "enonce": "Quelle approche garantit la maintenabilité d'un projet Java ?",
+      "choix": [
+        "Tests unitaires + documentation",
+        "Code commenté uniquement",
+        "Aucun test, déploiement direct",
+        "Refactoring mensuel"
+      ],
+      "bonneReponse": "Tests unitaires + documentation",
+      "theme": "JAVA",
+      "type": 0,
+      "id": 25
+    }
+  ]
+}

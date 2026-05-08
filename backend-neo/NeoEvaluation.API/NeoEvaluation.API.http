@@ -1,0 +1,6 @@
+@NeoEvaluation.API_HostAddress = http://localhost:5172
+
+GET {{NeoEvaluation.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

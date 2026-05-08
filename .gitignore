@@ -1,0 +1,12 @@
+# Dependencies and Build folders
+**/venv/
+**/bin/
+**/obj/
+**/node_modules/
+**/.vs/
+**/.vscode/
+**/.idea/
+**/__pycache__/
+*.pyc
+*.user
+*.suo
