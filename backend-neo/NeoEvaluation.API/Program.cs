@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using SendGrid.Extensions.DependencyInjection;
 using Stripe;
+using NeoEvaluation.API.Hubs; // Assurez-vous que ce namespace correspond à votre NotificationHub
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +27,9 @@ builder.Services.AddControllers()
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// SignalR pour les notifications en temps réel
+builder.Services.AddSignalR();
+
 //  MODIFICATION : Configuration de SendGrid
 builder.Services.AddSendGrid(options => {
     options.ApiKey = builder.Configuration["SendGridSettings:ApiKey"];
@@ -33,6 +37,7 @@ builder.Services.AddSendGrid(options => {
 
 //  MODIFICATION : Utilisation de GmailApiService (Senior Architecture)
 builder.Services.AddScoped<IEmailService, GmailApiService>();
+builder.Services.AddScoped<INotificationService, NotificationService>(); // Service utilisé par vos contrôleurs
 
 builder.Services.AddSingleton<IAuditLogService, AuditLogService>();
 builder.Services.AddHttpContextAccessor();
@@ -92,7 +97,10 @@ app.Use(async (context, next) =>
 app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
+app.MapHub<NotificationHub>("/hubs/notifications"); // Ligne ajoutée
+
 
 // --- 3. SEED DATA ---
 using (var scope = app.Services.CreateScope()) {
@@ -158,5 +166,6 @@ using (var scope = app.Services.CreateScope()) {
         context.SaveChanges();
     } catch (Exception ex) { Console.WriteLine($"--> [SEED ERROR] {ex.Message}"); }
 }
+
 
 app.Run();

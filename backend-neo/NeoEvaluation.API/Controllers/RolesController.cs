@@ -17,13 +17,15 @@ namespace NeoEvaluation.API.Controllers
         private readonly IEmailService _emailService;
         private readonly IConfiguration _config;
         private readonly ITenantService _tenantService;
+        private readonly INotificationService _notificationService;
 
-        public RolesController(AppDbContext context, IEmailService emailService, IConfiguration config, ITenantService tenantService)
+        public RolesController(AppDbContext context, IEmailService emailService, IConfiguration config, ITenantService tenantService, INotificationService notificationService)
         {
             _context = context;
             _emailService = emailService;
             _config = config;
             _tenantService = tenantService;
+            _notificationService = notificationService;
         }
 
         [HttpGet]
@@ -113,6 +115,15 @@ namespace NeoEvaluation.API.Controllers
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
+
+                // Dans CreateRole(), après CommitAsync() :
+                await _notificationService.NotifyTenantAsync(tenantId.Value, new NotificationPayload
+                {
+                    Type = "info",
+                    Title = "Nouveau rôle déployé",
+                    Message = $"Le rôle \"{role.Nom}\" a été créé avec succès.",
+                    Link = "/roles"
+                });
 
                 // ENVOI D'EMAIL : On attend la fin de l'envoi pour éviter le crash "Reader is closed"
                 if (!string.IsNullOrEmpty(role.Email) && activationToken != null)

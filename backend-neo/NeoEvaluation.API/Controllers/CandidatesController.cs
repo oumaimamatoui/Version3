@@ -17,12 +17,14 @@ namespace NeoEvaluation.API.Controllers
         private readonly AppDbContext _context;
         private readonly IEmailService _emailService;
         private readonly ITenantService _tenantService;
+        private readonly INotificationService _notificationService;
 
-        public CandidatesController(AppDbContext context, IEmailService emailService, ITenantService tenantService)
+        public CandidatesController(AppDbContext context, IEmailService emailService, ITenantService tenantService, INotificationService notificationService)
         {
             _context = context;
             _emailService = emailService;
             _tenantService = tenantService;
+            _notificationService = notificationService;
         }
 
         // URL: GET http://localhost:5172/api/Candidates/campagnes
@@ -164,6 +166,16 @@ namespace NeoEvaluation.API.Controllers
                     await _emailService.SendEmailAsync(email, $"Invitation : {campagne.Nom}", $"Vous avez été assigné à une nouvelle évaluation. Lien : {link}");
                 } catch { }
             }
+
+            // Notification en temps réel pour l'entreprise
+            await _notificationService.NotifyTenantAsync(entId.Value, new NotificationPayload
+            {
+                Type = "info",
+                Title = "Invitations envoyées",
+                Message = $"{dto.Emails.Count} candidat(s) invité(s) à la campagne.",
+                Link = "/candidates-list"
+            });
+
             return Ok(new { message = "Invitations envoyées avec succès." });
         }
     }

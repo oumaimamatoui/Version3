@@ -14,12 +14,14 @@ namespace NeoEvaluation.API.Controllers
         private readonly AppDbContext _context;
         private readonly IEmailService _emailService;
         private readonly IAuditLogService _auditLogService;
+        private readonly INotificationService _notificationService;
 
-        public SuperAdminController(AppDbContext context, IEmailService emailService, IAuditLogService auditLogService)
+        public SuperAdminController(AppDbContext context, IEmailService emailService, IAuditLogService auditLogService, INotificationService notificationService)
         {
             _context = context;
             _emailService = emailService;
             _auditLogService = auditLogService;
+            _notificationService = notificationService;
         }
 
         // --- DASHBOARD STATS (REAL DATA) ---
@@ -236,6 +238,15 @@ namespace NeoEvaluation.API.Controllers
 
             _context.TokensActivation.Add(token);
             await _context.SaveChangesAsync();
+
+            // Notification SuperAdmin
+            await _notificationService.NotifyRoleAsync("SuperAdmin", new NotificationPayload
+            {
+                Type = "success",
+                Title = "Entreprise approuvée",
+                Message = $"\"{reg.NomEntreprise}\" a été activée sur la plateforme.",
+                Link = "/super-admin"
+            });
 
             // Log action
             await _auditLogService.LogActionAsync("APPROVE_ORG", "SuperAdmin", $"Approbation de l'entreprise : {reg.NomEntreprise}");

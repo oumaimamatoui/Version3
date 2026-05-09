@@ -18,12 +18,15 @@ namespace NeoEvaluation.API.Controllers
     {
         private readonly AppDbContext _context;
         private readonly ITenantService _tenantService;
+        private readonly INotificationService _notificationService;
 
         public CampagnesController(AppDbContext context, ITenantService tenantService) 
         { 
             _context = context; 
             _tenantService = tenantService;
+            INotificationService notificationService;
         }
+        
 
         // GET: api/Campagnes
         [HttpGet]
@@ -120,6 +123,13 @@ namespace NeoEvaluation.API.Controllers
                 };
                 
                 _context.Campagnes.Add(nouvelle);
+                await _notificationService.NotifyTenantAsync(entId.Value, new NotificationPayload
+{
+    Type = "success",
+    Title = "Nouvelle campagne créée",
+    Message = $"La campagne \"{nouvelle.Nom}\" est maintenant active.",
+    Link = "/campaigns"
+});
 
                 // Liaison M2M Questionnaire
                 _context.CampagneQuestionnaires.Add(new CampagneQuestionnaire {
@@ -147,6 +157,7 @@ namespace NeoEvaluation.API.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+        
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCampagne(Guid id)

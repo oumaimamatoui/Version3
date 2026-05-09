@@ -143,39 +143,69 @@
 </template>
 
 <script setup>
-import { watch, onMounted, ref, computed, nextTick, provide } from 'vue';
+import { watch, onMounted, onUnmounted, ref, computed, nextTick, provide } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { useNotificationStore } from '@/stores/notification';
 
-const route    = useRoute();
-const authStore = useAuthStore();
+const route          = useRoute();
+const authStore      = useAuthStore();
+const notifStore     = useNotificationStore();
+
+// ══════════════════════════════════════════════════════════
+// SIGNALR — CONNEXION NOTIFICATIONS TEMPS RÉEL
+// Se connecte dès que l'utilisateur est authentifié,
+// se déconnecte au logout ou à la destruction du composant.
+// ══════════════════════════════════════════════════════════
+
+onMounted(async () => {
+  applyPageTheme();
+  applyLangToDocument();
+
+  // Connexion SignalR si déjà authentifié au montage
+  if (authStore.isAuthenticated) {
+    await notifStore.connect();
+  }
+});
+
+// Reconnexion automatique après login / déconnexion après logout
+watch(
+  () => authStore.isAuthenticated,
+  async (isAuth) => {
+    if (isAuth) {
+      await notifStore.connect();
+    } else {
+      await notifStore.disconnect();
+    }
+  }
+);
+
+// Nettoyage propre à la destruction du composant racine
+onUnmounted(async () => {
+  await notifStore.disconnect();
+});
 
 // ══════════════════════════════════════════════════════════
 // I18N — SYSTÈME DE TRADUCTIONS GLOBAL (3 LANGUES)
-// Provide `t` + `currentLang` à tous les composants enfants
 // ══════════════════════════════════════════════════════════
 
 const TRANSLATIONS = {
   fr: {
-    // Thème
     'theme.dark'  : 'Mode Sombre',
     'theme.light' : 'Mode Clair',
-    // Langue
     'lang.switch' : 'Changer de langue',
-    // Chatbot
-    'chatbot.online'    : 'En ligne · Répond en temps réel',
+    'chatbot.online'     : 'En ligne · Répond en temps réel',
     'chatbot.placeholder': 'Posez votre question...',
-    'chatbot.welcome'   : '👋 Bonjour ! Je suis **NeoBot**, votre assistant IA NeoStage.\nJe peux vous aider à créer des tests, analyser des CVs, générer des rapports et bien plus.',
-    'chatbot.error'     : '⚠️ Serveur indisponible. Veuillez réessayer.',
+    'chatbot.welcome'    : '👋 Bonjour ! Je suis **NeoBot**, votre assistant IA NeoStage.\nJe peux vous aider à créer des tests, analyser des CVs, générer des rapports et bien plus.',
+    'chatbot.error'      : '⚠️ Serveur indisponible. Veuillez réessayer.',
     'chatbot.suggestLabel': 'Questions fréquentes :',
-    'chatbot.listening' : 'Je vous écoute...',
-    'chatbot.voice'     : 'Commande vocale',
-    'chatbot.copy'      : 'Copier',
-    'chatbot.speak'     : 'Lire à voix haute',
-    'chatbot.clear'     : 'Effacer la conversation',
-    'chatbot.poweredBy' : 'Propulsé par Gemini IA',
-    'chatbot.copied'    : '✅ Copié !',
-    // Navigation
+    'chatbot.listening'  : 'Je vous écoute...',
+    'chatbot.voice'      : 'Commande vocale',
+    'chatbot.copy'       : 'Copier',
+    'chatbot.speak'      : 'Lire à voix haute',
+    'chatbot.clear'      : 'Effacer la conversation',
+    'chatbot.poweredBy'  : 'Propulsé par Gemini IA',
+    'chatbot.copied'     : '✅ Copié !',
     'nav.dashboard'  : 'Tableau de bord',
     'nav.tests'      : 'Tests',
     'nav.candidates' : 'Candidats',
@@ -183,7 +213,6 @@ const TRANSLATIONS = {
     'nav.settings'   : 'Paramètres',
     'nav.logout'     : 'Déconnexion',
     'nav.profile'    : 'Mon profil',
-    // Communs
     'common.save'    : 'Enregistrer',
     'common.cancel'  : 'Annuler',
     'common.delete'  : 'Supprimer',
@@ -211,7 +240,6 @@ const TRANSLATIONS = {
     'common.reset'   : 'Réinitialiser',
     'common.view'    : 'Voir',
     'common.download': 'Télécharger',
-    // Auth
     'auth.login'          : 'Connexion',
     'auth.register'       : "S'inscrire",
     'auth.email'          : 'Adresse e-mail',
@@ -222,12 +250,10 @@ const TRANSLATIONS = {
     'auth.hasAccount'     : 'Déjà un compte ?',
     'auth.logout'         : 'Se déconnecter',
     'auth.rememberMe'     : 'Se souvenir de moi',
-    // Dashboard
     'dashboard.welcome' : 'Bienvenue',
     'dashboard.stats'   : 'Statistiques',
     'dashboard.recent'  : 'Activité récente',
-    'dashboard.overview': 'Vue d\'ensemble',
-    // Tests
+    'dashboard.overview': "Vue d'ensemble",
     'tests.title'     : 'Gestion des tests',
     'tests.create'    : 'Créer un test',
     'tests.aiCreate'  : 'Créer avec IA',
@@ -237,42 +263,39 @@ const TRANSLATIONS = {
     'tests.draft'     : 'Brouillon',
     'tests.archived'  : 'Archivé',
     'tests.score'     : 'Score minimum',
-    // Candidats
-    'candidates.title'           : 'Candidats',
-    'candidates.invite'          : 'Inviter',
-    'candidates.score'           : 'Score',
-    'candidates.status.pending'  : 'En attente',
-    'candidates.status.completed': 'Terminé',
-    'candidates.status.inProgress':'En cours',
-    // Rapports
+    'candidates.title'            : 'Candidats',
+    'candidates.invite'           : 'Inviter',
+    'candidates.score'            : 'Score',
+    'candidates.status.pending'   : 'En attente',
+    'candidates.status.completed' : 'Terminé',
+    'candidates.status.inProgress': 'En cours',
     'reports.title'    : 'Rapports',
     'reports.generate' : 'Générer un rapport',
     'reports.export'   : 'Exporter PDF',
-    // Paramètres
-    'settings.title'   : 'Paramètres',
-    'settings.theme'   : 'Apparence',
-    'settings.language': 'Langue',
-    'settings.account' : 'Compte',
-    'settings.security': 'Sécurité',
-    'settings.notifications': 'Notifications',
+    'settings.title'         : 'Paramètres',
+    'settings.theme'         : 'Apparence',
+    'settings.language'      : 'Langue',
+    'settings.account'       : 'Compte',
+    'settings.security'      : 'Sécurité',
+    'settings.notifications' : 'Notifications',
   },
 
   en: {
     'theme.dark'  : 'Dark Mode',
     'theme.light' : 'Light Mode',
     'lang.switch' : 'Switch language',
-    'chatbot.online'    : 'Online · Real-time responses',
+    'chatbot.online'     : 'Online · Real-time responses',
     'chatbot.placeholder': 'Ask your question...',
-    'chatbot.welcome'   : "👋 Hello! I'm **NeoBot**, your NeoStage AI assistant.\nI can help you create tests, analyze CVs, generate reports and more.",
-    'chatbot.error'     : '⚠️ Server unavailable. Please try again.',
+    'chatbot.welcome'    : "👋 Hello! I'm **NeoBot**, your NeoStage AI assistant.\nI can help you create tests, analyze CVs, generate reports and more.",
+    'chatbot.error'      : '⚠️ Server unavailable. Please try again.',
     'chatbot.suggestLabel': 'Frequent questions:',
-    'chatbot.listening' : 'Listening...',
-    'chatbot.voice'     : 'Voice command',
-    'chatbot.copy'      : 'Copy',
-    'chatbot.speak'     : 'Read aloud',
-    'chatbot.clear'     : 'Clear conversation',
-    'chatbot.poweredBy' : 'Powered by Gemini AI',
-    'chatbot.copied'    : '✅ Copied!',
+    'chatbot.listening'  : 'Listening...',
+    'chatbot.voice'      : 'Voice command',
+    'chatbot.copy'       : 'Copy',
+    'chatbot.speak'      : 'Read aloud',
+    'chatbot.clear'      : 'Clear conversation',
+    'chatbot.poweredBy'  : 'Powered by Gemini AI',
+    'chatbot.copied'     : '✅ Copied!',
     'nav.dashboard'  : 'Dashboard',
     'nav.tests'      : 'Tests',
     'nav.candidates' : 'Candidates',
@@ -330,39 +353,39 @@ const TRANSLATIONS = {
     'tests.draft'     : 'Draft',
     'tests.archived'  : 'Archived',
     'tests.score'     : 'Min. score',
-    'candidates.title'           : 'Candidates',
-    'candidates.invite'          : 'Invite',
-    'candidates.score'           : 'Score',
-    'candidates.status.pending'  : 'Pending',
-    'candidates.status.completed': 'Completed',
-    'candidates.status.inProgress':'In progress',
+    'candidates.title'            : 'Candidates',
+    'candidates.invite'           : 'Invite',
+    'candidates.score'            : 'Score',
+    'candidates.status.pending'   : 'Pending',
+    'candidates.status.completed' : 'Completed',
+    'candidates.status.inProgress': 'In progress',
     'reports.title'    : 'Reports',
     'reports.generate' : 'Generate report',
     'reports.export'   : 'Export PDF',
-    'settings.title'   : 'Settings',
-    'settings.theme'   : 'Appearance',
-    'settings.language': 'Language',
-    'settings.account' : 'Account',
-    'settings.security': 'Security',
-    'settings.notifications': 'Notifications',
+    'settings.title'         : 'Settings',
+    'settings.theme'         : 'Appearance',
+    'settings.language'      : 'Language',
+    'settings.account'       : 'Account',
+    'settings.security'      : 'Security',
+    'settings.notifications' : 'Notifications',
   },
 
   ar: {
     'theme.dark'  : 'الوضع الداكن',
     'theme.light' : 'الوضع الفاتح',
     'lang.switch' : 'تغيير اللغة',
-    'chatbot.online'    : 'متصل · ردود فورية',
+    'chatbot.online'     : 'متصل · ردود فورية',
     'chatbot.placeholder': 'اطرح سؤالك...',
-    'chatbot.welcome'   : '👋 مرحباً! أنا **NeoBot**، مساعدك الذكي في NeoStage.\nيمكنني مساعدتك في إنشاء الاختبارات وتحليل السير الذاتية وإنشاء التقارير والمزيد.',
-    'chatbot.error'     : '⚠️ الخادم غير متاح. حاول مجدداً.',
+    'chatbot.welcome'    : '👋 مرحباً! أنا **NeoBot**، مساعدك الذكي في NeoStage.\nيمكنني مساعدتك في إنشاء الاختبارات وتحليل السير الذاتية وإنشاء التقارير والمزيد.',
+    'chatbot.error'      : '⚠️ الخادم غير متاح. حاول مجدداً.',
     'chatbot.suggestLabel': 'أسئلة شائعة:',
-    'chatbot.listening' : 'أستمع إليك...',
-    'chatbot.voice'     : 'أمر صوتي',
-    'chatbot.copy'      : 'نسخ',
-    'chatbot.speak'     : 'قراءة بصوت عالٍ',
-    'chatbot.clear'     : 'مسح المحادثة',
-    'chatbot.poweredBy' : 'مدعوم من Gemini AI',
-    'chatbot.copied'    : '✅ تم النسخ!',
+    'chatbot.listening'  : 'أستمع إليك...',
+    'chatbot.voice'      : 'أمر صوتي',
+    'chatbot.copy'       : 'نسخ',
+    'chatbot.speak'      : 'قراءة بصوت عالٍ',
+    'chatbot.clear'      : 'مسح المحادثة',
+    'chatbot.poweredBy'  : 'مدعوم من Gemini AI',
+    'chatbot.copied'     : '✅ تم النسخ!',
     'nav.dashboard'  : 'لوحة التحكم',
     'nav.tests'      : 'الاختبارات',
     'nav.candidates' : 'المرشحون',
@@ -420,50 +443,44 @@ const TRANSLATIONS = {
     'tests.draft'     : 'مسودة',
     'tests.archived'  : 'مؤرشف',
     'tests.score'     : 'الدرجة الدنيا',
-    'candidates.title'           : 'المرشحون',
-    'candidates.invite'          : 'دعوة',
-    'candidates.score'           : 'الدرجة',
-    'candidates.status.pending'  : 'في الانتظار',
-    'candidates.status.completed': 'مكتمل',
-    'candidates.status.inProgress':'جارٍ',
+    'candidates.title'            : 'المرشحون',
+    'candidates.invite'           : 'دعوة',
+    'candidates.score'            : 'الدرجة',
+    'candidates.status.pending'   : 'في الانتظار',
+    'candidates.status.completed' : 'مكتمل',
+    'candidates.status.inProgress': 'جارٍ',
     'reports.title'    : 'التقارير',
     'reports.generate' : 'إنشاء تقرير',
     'reports.export'   : 'تصدير PDF',
-    'settings.title'   : 'الإعدادات',
-    'settings.theme'   : 'المظهر',
-    'settings.language': 'اللغة',
-    'settings.account' : 'الحساب',
-    'settings.security': 'الأمان',
-    'settings.notifications': 'الإشعارات',
+    'settings.title'         : 'الإعدادات',
+    'settings.theme'         : 'المظهر',
+    'settings.language'      : 'اللغة',
+    'settings.account'       : 'الحساب',
+    'settings.security'      : 'الأمان',
+    'settings.notifications' : 'الإشعارات',
   }
 };
 
 // ── Drapeaux & voix ──
-const langFlags = { fr: '🇫🇷', en: '🇬🇧', ar: '🇸🇦' };
-const langVoice = { fr: 'fr-FR', en: 'en-US', ar: 'ar-SA' };
+const langFlags  = { fr: '🇫🇷', en: '🇬🇧', ar: '🇸🇦' };
+const langVoice  = { fr: 'fr-FR', en: 'en-US', ar: 'ar-SA' };
 const langLocale = { fr: 'fr-FR', en: 'en-US', ar: 'ar-SA' };
 
 // ── État réactif langue ──
 const currentLang = ref(localStorage.getItem('app_lang') || 'fr');
 const isRTL       = computed(() => currentLang.value === 'ar');
 
-/**
- * Fonction de traduction globale.
- * Utilisation dans n'importe quel composant enfant :
- *   const t = inject('t')
- */
 const t = (key) =>
   TRANSLATIONS[currentLang.value]?.[key]
   ?? TRANSLATIONS['fr']?.[key]
   ?? key;
 
 const cycleLang = () => {
-  const langs = ['fr', 'en', 'ar'];
+  const langs   = ['fr', 'en', 'ar'];
   currentLang.value = langs[(langs.indexOf(currentLang.value) + 1) % langs.length];
   localStorage.setItem('app_lang', currentLang.value);
   applyLangToDocument();
   loadStartSuggestions();
-  // Rafraîchir le message de bienvenue
   if (chatMessages.value.length === 1 && chatMessages.value[0].role === 'ai') {
     chatMessages.value[0].text = t('chatbot.welcome');
   }
@@ -475,8 +492,9 @@ const applyLangToDocument = () => {
 };
 
 // ══════════════════════════════════════════════════════════
-// THÈME DARK / LIGHT — SOURCE DE VÉRITÉ GLOBALE
+// THÈME DARK / LIGHT
 // ══════════════════════════════════════════════════════════
+
 const isDark = ref(localStorage.getItem('app_theme') === 'dark');
 
 const applyTheme = (dark) => {
@@ -500,19 +518,14 @@ const applyPageTheme = () => {
     isDark.value = false;
     applyTheme(false);
   } else {
-    const saved = localStorage.getItem('app_theme') === 'dark';
+    const saved  = localStorage.getItem('app_theme') === 'dark';
     isDark.value = saved;
     applyTheme(saved);
   }
 };
 
 // ══════════════════════════════════════════════════════════
-// PROVIDE GLOBAL — Accessibles dans TOUS les composants
-//   inject('isDark')      → Ref<boolean>
-//   inject('toggleTheme') → () => void
-//   inject('currentLang') → Ref<string>
-//   inject('t')           → (key: string) => string
-//   inject('isRTL')       → ComputedRef<boolean>
+// PROVIDE GLOBAL
 // ══════════════════════════════════════════════════════════
 provide('isDark',       isDark);
 provide('toggleTheme',  toggleTheme);
@@ -523,16 +536,17 @@ provide('isRTL',        isRTL);
 // ══════════════════════════════════════════════════════════
 // CHATBOT — ÉTAT & LOGIQUE
 // ══════════════════════════════════════════════════════════
-const isChatOpen    = ref(false);
-const chatInput     = ref('');
-const isChatLoading = ref(false);
-const isListening   = ref(false);
-const chatScroll    = ref(null);
-const chatInputRef  = ref(null);
-const chatMessages  = ref([]);
-const unreadCount   = ref(0);
+
+const isChatOpen     = ref(false);
+const chatInput      = ref('');
+const isChatLoading  = ref(false);
+const isListening    = ref(false);
+const chatScroll     = ref(null);
+const chatInputRef   = ref(null);
+const chatMessages   = ref([]);
+const unreadCount    = ref(0);
 const startSuggestions = ref([]);
-const sessionId     = ref(`session_${Date.now()}`);
+const sessionId      = ref(`session_${Date.now()}`);
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000';
 
@@ -594,7 +608,7 @@ const handleChat = async (isVocal = false) => {
   if (!chatInput.value.trim() || isChatLoading.value) return;
   const userText = chatInput.value.trim();
   chatMessages.value.push({ role: 'user', text: userText, time: now() });
-  chatInput.value   = '';
+  chatInput.value    = '';
   isChatLoading.value = true;
   await scrollToBottom();
   try {
@@ -627,8 +641,8 @@ const clearChat = async () => {
     fd.append('session_id', sessionId.value);
     await fetch(`${API_BASE}/ia/chat/reset`, { method: 'POST', body: fd });
   } catch {}
-  chatMessages.value  = [];
-  sessionId.value     = `session_${Date.now()}`;
+  chatMessages.value = [];
+  sessionId.value    = `session_${Date.now()}`;
   chatMessages.value.push({ role: 'ai', text: t('chatbot.welcome'), time: now(), suggestions: [] });
   await loadStartSuggestions();
 };
@@ -664,8 +678,9 @@ const toggleVoiceRecognition = () => {
 };
 
 // ══════════════════════════════════════════════════════════
-// WATCHERS & LIFECYCLE
+// WATCHERS THÈME & LANGUE
 // ══════════════════════════════════════════════════════════
+
 watch(() => route.path, applyPageTheme);
 
 watch(() => authStore.user?.themePreference, (val) => {
@@ -683,44 +698,33 @@ window.addEventListener('storage', (e) => {
     applyLangToDocument();
   }
 });
-
-onMounted(() => {
-  applyPageTheme();
-  applyLangToDocument();
-});
 </script>
 
 <style>
 /* ════════════════════════════════════════════════════════════
    VARIABLES CSS GLOBALES
-   Appliquées sur :root → couvrent 100% des pages & composants
    ════════════════════════════════════════════════════════════ */
 
 :root,
 :root[data-theme="light"],
 .theme-light {
-  /* ── Fonds ── */
   --bg-page:          #f1f5f9;
   --bg-card:          #ffffff;
   --bg-sidebar:       #ffffff;
   --bg-input:         #f8fafc;
   --bg-hover:         #f1f5f9;
   --bg-overlay:       rgba(15, 23, 42, 0.5);
-  /* ── Texte ── */
   --text-main:        #1e293b;
   --text-muted:       #64748b;
   --text-light:       #94a3b8;
   --text-inverse:     #ffffff;
-  /* ── Bordures ── */
   --border-color:     #e2e8f0;
   --border-focus:     rgba(245, 158, 11, 0.5);
-  /* ── Marque ── */
   --primary:          #f59e0b;
   --primary-dark:     #d97706;
   --primary-light:    rgba(245, 158, 11, 0.12);
   --secondary:        #0f172a;
   --accent:           #3b82f6;
-  /* ── Statuts ── */
   --success:          #10b981;
   --success-bg:       rgba(16, 185, 129, 0.1);
   --warning:          #f59e0b;
@@ -729,20 +733,17 @@ onMounted(() => {
   --danger-bg:        rgba(239, 68, 68, 0.1);
   --info:             #3b82f6;
   --info-bg:          rgba(59, 130, 246, 0.1);
-  /* ── Ombres ── */
   --shadow-xs:        0 1px 3px rgba(0,0,0,0.04);
   --shadow-sm:        0 2px 8px rgba(0,0,0,0.06);
   --shadow-md:        0 8px 30px rgba(0,0,0,0.10);
   --shadow-lg:        0 20px 60px rgba(0,0,0,0.15);
   --shadow-primary:   0 4px 14px rgba(245, 158, 11, 0.35);
-  /* ── Rayons ── */
   --radius-xs:        4px;
   --radius-sm:        8px;
   --radius-md:        12px;
   --radius-lg:        16px;
   --radius-xl:        24px;
   --radius-full:      9999px;
-  /* ── Transitions ── */
   --transition-fast:  all 0.15s ease;
   --transition:       all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow:  all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -793,14 +794,14 @@ onMounted(() => {
 html { transition: color-scheme 0.3s ease; }
 
 body {
-  background-color:     var(--bg-page) !important;
-  color:                var(--text-main) !important;
-  font-family:          'Segoe UI', system-ui, -apple-system, sans-serif;
-  font-size:            15px;
-  line-height:          1.6;
-  min-height:           100vh;
+  background-color:       var(--bg-page) !important;
+  color:                  var(--text-main) !important;
+  font-family:            'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size:              15px;
+  line-height:            1.6;
+  min-height:             100vh;
   -webkit-font-smoothing: antialiased;
-  transition:           background-color 0.35s ease, color 0.35s ease;
+  transition:             background-color 0.35s ease, color 0.35s ease;
 }
 
 #app-container, .app-root {
@@ -928,7 +929,6 @@ input:focus, select:focus, textarea:focus,
   background-color: var(--primary) !important;
   border-color:     var(--primary) !important;
 }
-
 .form-switch .form-check-input:checked { background-color: var(--primary) !important; }
 
 /* ════════════════════════════════════════════════════════════
@@ -940,8 +940,10 @@ input:focus, select:focus, textarea:focus,
   border-color:     var(--border-color) !important;
   background-color: var(--bg-card) !important;
   color:            var(--text-muted) !important;
-  font-weight: 600; font-size: 0.78rem;
-  text-transform: uppercase; letter-spacing: 0.05em;
+  font-weight:      600;
+  font-size:        0.78rem;
+  text-transform:   uppercase;
+  letter-spacing:   0.05em;
 }
 .table tbody tr { border-color: var(--border-color) !important; background-color: transparent !important; }
 .table tbody tr:hover { background-color: var(--bg-hover) !important; }
@@ -972,11 +974,11 @@ input:focus, select:focus, textarea:focus,
    ════════════════════════════════════════════════════════════ */
 
 .badge { font-weight: 600; }
-.badge-subtle-amber  { background: rgba(251,191,36,0.15) !important; color: #d97706 !important; }
-.badge-subtle-green  { background: var(--success-bg) !important;     color: var(--success) !important; }
-.badge-subtle-red    { background: var(--danger-bg) !important;       color: var(--danger) !important; }
-.badge-subtle-blue   { background: var(--info-bg) !important;         color: var(--info) !important; }
-.badge-subtle-gray   { background: var(--bg-hover) !important;        color: var(--text-muted) !important; }
+.badge-subtle-amber { background: rgba(251,191,36,0.15) !important; color: #d97706 !important; }
+.badge-subtle-green { background: var(--success-bg) !important;     color: var(--success) !important; }
+.badge-subtle-red   { background: var(--danger-bg) !important;       color: var(--danger) !important; }
+.badge-subtle-blue  { background: var(--info-bg) !important;         color: var(--info) !important; }
+.badge-subtle-gray  { background: var(--bg-hover) !important;        color: var(--text-muted) !important; }
 [data-theme="dark"] .badge-subtle-amber { background: rgba(251,191,36,0.2) !important; color: #fbbf24 !important; }
 
 /* ════════════════════════════════════════════════════════════
@@ -1001,11 +1003,11 @@ input:focus, select:focus, textarea:focus,
    ALERTS
    ════════════════════════════════════════════════════════════ */
 
-.alert          { border-color: var(--border-color) !important; }
-.alert-info     { background: var(--info-bg) !important;    color: var(--info) !important; }
-.alert-success  { background: var(--success-bg) !important; color: var(--success) !important; }
-.alert-warning  { background: var(--warning-bg) !important; color: var(--warning) !important; }
-.alert-danger   { background: var(--danger-bg) !important;  color: var(--danger) !important; }
+.alert         { border-color: var(--border-color) !important; }
+.alert-info    { background: var(--info-bg) !important;    color: var(--info) !important; }
+.alert-success { background: var(--success-bg) !important; color: var(--success) !important; }
+.alert-warning { background: var(--warning-bg) !important; color: var(--warning) !important; }
+.alert-danger  { background: var(--danger-bg) !important;  color: var(--danger) !important; }
 
 /* ════════════════════════════════════════════════════════════
    PROGRESS
@@ -1024,7 +1026,7 @@ input:focus, select:focus, textarea:focus,
 }
 .page-link:hover              { background-color: var(--bg-hover) !important; }
 .page-item.active .page-link  { background-color: var(--primary) !important; border-color: var(--primary) !important; color: #fff !important; }
-.page-item.disabled .page-link{ opacity: 0.45; }
+.page-item.disabled .page-link { opacity: 0.45; }
 
 /* ════════════════════════════════════════════════════════════
    UTILITAIRES GLOBAUX
@@ -1044,7 +1046,7 @@ hr, .divider           { border-color: var(--border-color) !important; opacity: 
 .shadow-theme-md       { box-shadow: var(--shadow-md) !important; }
 .shadow-theme-lg       { box-shadow: var(--shadow-lg) !important; }
 
-::selection { background: var(--primary-light); color: var(--text-main); }
+::selection  { background: var(--primary-light); color: var(--text-main); }
 :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
 /* ════════════════════════════════════════════════════════════
@@ -1151,12 +1153,12 @@ hr, .divider           { border-color: var(--border-color) !important; opacity: 
   display: flex; align-items: center; justify-content: center;
   font-size: 0.75rem; transition: var(--transition);
 }
-.btn-action:hover      { background: rgba(255,255,255,0.18); color: #fff; }
-.btn-lang              { font-size: 1rem; }
-.btn-close-chat:hover  { background: rgba(239,68,68,0.35) !important; }
+.btn-action:hover     { background: rgba(255,255,255,0.18); color: #fff; }
+.btn-lang             { font-size: 1rem; }
+.btn-close-chat:hover { background: rgba(239,68,68,0.35) !important; }
 
-.loading-bar       { height: 2px; background: var(--border-color); flex-shrink: 0; overflow: hidden; }
-.loading-bar-fill  {
+.loading-bar      { height: 2px; background: var(--border-color); flex-shrink: 0; overflow: hidden; }
+.loading-bar-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--primary), #f97316, var(--primary));
   background-size: 200% 100%;
@@ -1170,9 +1172,9 @@ hr, .divider           { border-color: var(--border-color) !important; opacity: 
   transition: background-color 0.3s ease;
 }
 
-.start-suggestions   { margin-bottom: 6px; }
-.suggestions-label   { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-.suggestion-chips    { display: flex; flex-wrap: wrap; gap: 6px; }
+.start-suggestions  { margin-bottom: 6px; }
+.suggestions-label  { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.suggestion-chips   { display: flex; flex-wrap: wrap; gap: 6px; }
 
 .chip {
   padding: 5px 11px; border-radius: 20px;
@@ -1181,8 +1183,8 @@ hr, .divider           { border-color: var(--border-color) !important; opacity: 
 }
 .chip:hover { background: var(--primary); color: #fff; transform: translateY(-1px); }
 
-.chat-msg       { display: flex; gap: 8px; animation: msgFadeIn 0.3s ease; }
-.chat-msg.user  { flex-direction: row-reverse; }
+.chat-msg      { display: flex; gap: 8px; animation: msgFadeIn 0.3s ease; }
+.chat-msg.user { flex-direction: row-reverse; }
 
 .msg-avatar {
   width: 30px; height: 30px; border-radius: 9px;
@@ -1191,7 +1193,7 @@ hr, .divider           { border-color: var(--border-color) !important; opacity: 
   color: var(--primary); font-size: 0.75rem; flex-shrink: 0; align-self: flex-end;
 }
 
-.msg-bubble { display: flex; flex-direction: column; gap: 4px; max-width: 80%; }
+.msg-bubble  { display: flex; flex-direction: column; gap: 4px; max-width: 80%; }
 
 .msg-content { padding: 9px 13px; border-radius: 14px; font-size: 0.85rem; line-height: 1.55; word-break: break-word; }
 .chat-msg.ai .msg-content {
@@ -1263,9 +1265,9 @@ hr, .divider           { border-color: var(--border-color) !important; opacity: 
   background: var(--bg-input) !important; color: var(--text-main) !important;
   font-size: 0.85rem; outline: none; transition: var(--transition);
 }
-.chat-input:focus       { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+.chat-input:focus        { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
 .chat-input::placeholder { color: var(--text-light) !important; }
-.chat-input:disabled    { opacity: 0.6; cursor: not-allowed; }
+.chat-input:disabled     { opacity: 0.6; cursor: not-allowed; }
 .char-count { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 0.65rem; color: var(--text-light); }
 
 .btn-mic {
@@ -1286,7 +1288,7 @@ hr, .divider           { border-color: var(--border-color) !important; opacity: 
   box-shadow: var(--shadow-primary);
 }
 .btn-send:hover:not(:disabled) { background: var(--primary-dark); transform: scale(1.05); }
-.btn-send:disabled              { opacity: 0.45; cursor: not-allowed; transform: none; }
+.btn-send:disabled             { opacity: 0.45; cursor: not-allowed; transform: none; }
 
 .footer-note {
   margin-top: 7px; text-align: center; font-size: 0.64rem; color: var(--text-light);
@@ -1297,8 +1299,8 @@ hr, .divider           { border-color: var(--border-color) !important; opacity: 
    TRANSITIONS CHATBOT
    ════════════════════════════════════════════════════════════ */
 
-.chat-slide-enter-active   { animation: chatSlideIn 0.32s cubic-bezier(0.34,1.56,0.64,1); }
-.chat-slide-leave-active   { animation: chatSlideOut 0.22s ease-in forwards; }
+.chat-slide-enter-active    { animation: chatSlideIn 0.32s cubic-bezier(0.34,1.56,0.64,1); }
+.chat-slide-leave-active    { animation: chatSlideOut 0.22s ease-in forwards; }
 .bubble-bounce-enter-active { animation: bubbleIn 0.4s cubic-bezier(0.34,1.56,0.64,1); }
 .bubble-bounce-leave-active { animation: bubbleOut 0.2s ease forwards; }
 

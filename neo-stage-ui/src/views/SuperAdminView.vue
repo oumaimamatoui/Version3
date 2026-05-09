@@ -31,13 +31,9 @@
       </transition>
 
       <main v-if="!isLoading" class="canvas-engine flex-grow-1 overflow-auto custom-scrollbar">
-
-        <!-- ═══════════════════════════════════════════════════════
-             DASHBOARD VIEW
-        ═══════════════════════════════════════════════════════ -->
         <div class="dashboard-view animate__animated animate__fadeIn p-4 p-lg-5">
 
-          <!-- HEADER -->
+          <!-- ═══ HEADER ═══ -->
           <header class="d-flex justify-content-between align-items-end mb-5 flex-wrap gap-3">
             <div>
               <div class="breadcrumb-pro mb-2">
@@ -63,7 +59,7 @@
             </div>
           </header>
 
-          <!-- KPI CARDS -->
+          <!-- ═══ KPI CARDS ═══ -->
           <div class="row g-4 mb-5">
             <div class="col-xl-3 col-md-6" v-for="stat in masterStats" :key="stat.label">
               <div class="stat-card-premium">
@@ -82,7 +78,7 @@
             </div>
           </div>
 
-          <!-- FILTER BAR -->
+          <!-- ═══ FILTER BAR ═══ -->
           <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
             <div class="tabs-container">
               <div class="d-flex gap-2 p-1 bg-white rounded-4 shadow-sm border">
@@ -111,7 +107,7 @@
             </div>
           </div>
 
-          <!-- MAIN GRID -->
+          <!-- ═══ MAIN GRID ═══ -->
           <div class="row g-4 mb-5">
 
             <!-- DEMANDES TABLE -->
@@ -232,7 +228,7 @@
                     <div class="icon-box-v2" style="background:#fff1f2;color:#f43f5e"><i class="fa-solid fa-chart-bar"></i></div>
                     <div><h6 class="fw-800 m-0" style="font-size:0.85rem">Utilisation par module</h6></div>
                   </div>
-                  <div v-for="(mod, idx) in moduleUsage" :key="mod.name" class="mb-3">
+                  <div v-for="mod in moduleUsage" :key="mod.name" class="mb-3">
                     <div class="d-flex justify-content-between align-items-center mb-1">
                       <span class="small fw-700">{{ mod.name }}</span>
                       <span class="small fw-800">{{ mod.pct }}%</span>
@@ -248,19 +244,227 @@
           </div>
 
           <!-- ═══════════════════════════════════════════════════════
-               REGISTRE DES ENTREPRISES — LIST VIEW STYLE
+               🌐 GESTION MULTILINGUE — SUPER ADMIN
           ═══════════════════════════════════════════════════════ -->
           <div class="enigma-card p-0 overflow-hidden mb-5">
 
             <!-- Header -->
             <div class="card-header-section d-flex justify-content-between align-items-center p-4">
               <div class="d-flex align-items-center gap-3">
+                <div class="icon-box-v2" style="background:#f0fdf4;color:#10b981">
+                  <i class="fa-solid fa-globe"></i>
+                </div>
+                <div>
+                  <h6 class="fw-800 m-0" style="font-size:0.85rem">{{ t('langManager.title') }}</h6>
+                  <p class="m-0 text-muted" style="font-size:0.7rem">{{ t('langManager.subtitle') }}</p>
+                </div>
+              </div>
+              <div class="d-flex gap-2 align-items-center">
+                <span class="lang-terminal-badge">LANG_MATRIX v2.0</span>
+                <button
+                  @click="saveLangConfiguration"
+                  :disabled="isSavingLang"
+                  class="btn-enigma-primary"
+                  style="padding:10px 22px;font-size:0.78rem">
+                  <div class="btn-content">
+                    <span v-if="isSavingLang" class="spinner-border spinner-border-sm me-2"></span>
+                    <i v-else class="fa-solid fa-floppy-disk me-2"></i>
+                    {{ isSavingLang ? t('langManager.saving') : t('langManager.save') }}
+                  </div>
+                  <div class="btn-glow"></div>
+                </button>
+              </div>
+            </div>
+
+            <div class="p-4">
+              <div class="row g-4">
+
+                <!-- LEFT: Language Cards -->
+                <div class="col-lg-7">
+                  <div class="lang-section-title mb-3">
+                    <i class="fa-solid fa-language me-2 text-emerald"></i>
+                    {{ t('langManager.availableLangs') }}
+                  </div>
+
+                  <div class="d-flex flex-column gap-3">
+                    <div
+                      v-for="locale in ALL_LOCALES"
+                      :key="locale.code"
+                      class="lang-card"
+                      :class="{
+                        'lang-card-enabled':  langConfig.available.includes(locale.code),
+                        'lang-card-disabled': !langConfig.available.includes(locale.code),
+                        'lang-card-default':  langConfig.default === locale.code
+                      }">
+
+                      <!-- Flag + Info -->
+                      <div class="lang-flag-box">{{ locale.flag }}</div>
+
+                      <div class="flex-grow-1">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                          <span class="fw-800" style="font-size:0.9rem">{{ locale.label }}</span>
+                          <span class="lang-native-tag">{{ locale.nativeName }}</span>
+                          <span class="lang-code-tag">{{ locale.code }}</span>
+                          <span class="lang-dir-tag" :class="locale.dir === 'rtl' ? 'dir-rtl' : 'dir-ltr'">
+                            {{ locale.dir === 'rtl' ? '← RTL' : 'LTR →' }}
+                          </span>
+                        </div>
+                        <div class="mt-1">
+                          <span
+                            class="lang-status-badge"
+                            :class="langConfig.available.includes(locale.code) ? 'badge-enabled' : 'badge-disabled'">
+                            <span class="badge-dot"></span>
+                            {{ langConfig.available.includes(locale.code) ? t('langManager.enabledBadge') : t('langManager.disabledBadge') }}
+                          </span>
+                          <span v-if="langConfig.default === locale.code" class="lang-default-badge ms-2">
+                            <i class="fa-solid fa-star me-1"></i>{{ t('langManager.isDefault') }}
+                          </span>
+                        </div>
+                      </div>
+
+                      <!-- Actions -->
+                      <div class="d-flex gap-2 flex-shrink-0">
+                        <!-- Set Default (only if enabled) -->
+                        <button
+                          v-if="langConfig.available.includes(locale.code) && langConfig.default !== locale.code"
+                          @click="setDefaultLang(locale.code)"
+                          class="btn-lang-action btn-set-default"
+                          :title="t('langManager.setDefault')">
+                          <i class="fa-regular fa-star"></i>
+                        </button>
+
+                        <!-- Toggle Enable/Disable -->
+                        <button
+                          @click="toggleLang(locale.code)"
+                          class="btn-lang-action"
+                          :class="langConfig.available.includes(locale.code) ? 'btn-disable-lang' : 'btn-enable-lang'"
+                          :title="langConfig.available.includes(locale.code) ? t('langManager.toggleDisable') : t('langManager.toggleEnable')">
+                          <i :class="langConfig.available.includes(locale.code) ? 'fa-solid fa-toggle-on' : 'fa-solid fa-toggle-off'"></i>
+                          <span class="btn-lang-label">
+                            {{ langConfig.available.includes(locale.code) ? t('langManager.toggleDisable') : t('langManager.toggleEnable') }}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- RIGHT: Default + Preview -->
+                <div class="col-lg-5">
+
+                  <!-- Default Language Selector -->
+                  <div class="lang-section-title mb-3">
+                    <i class="fa-solid fa-star me-2 text-amber"></i>
+                    {{ t('langManager.defaultLang') }}
+                  </div>
+                  <div class="lang-default-panel mb-4">
+                    <div v-for="locale in ALL_LOCALES" :key="'def-'+locale.code">
+                      <label
+                        class="lang-radio-row"
+                        :class="{
+                          'radio-active':    langConfig.default === locale.code,
+                          'radio-disabled':  !langConfig.available.includes(locale.code)
+                        }">
+                        <input
+                          type="radio"
+                          :value="locale.code"
+                          v-model="langConfig.default"
+                          :disabled="!langConfig.available.includes(locale.code)"
+                          class="lang-radio-input">
+                        <span class="lang-flag-sm">{{ locale.flag }}</span>
+                        <span class="fw-700" style="font-size:0.85rem">{{ locale.label }}</span>
+                        <span class="ms-auto lang-code-tag">{{ locale.code }}</span>
+                        <i v-if="langConfig.default === locale.code" class="fa-solid fa-check ms-2 text-amber"></i>
+                      </label>
+                    </div>
+                  </div>
+
+                  <!-- User Preview Simulator -->
+                  <div class="lang-section-title mb-3">
+                    <i class="fa-solid fa-eye me-2" style="color:#6366f1"></i>
+                    {{ t('langManager.previewTitle') }}
+                  </div>
+                  <div class="lang-preview-panel">
+                    <p class="small text-muted fw-600 mb-3">{{ t('langManager.previewDesc') }}</p>
+                    <div class="lang-preview-selector-wrap">
+                      <div class="lang-preview-label">
+                        <i class="fa-solid fa-user-circle me-2" style="color:#94a3b8"></i>
+                        Choisir votre langue
+                      </div>
+                      <div class="d-flex gap-2 flex-wrap mt-2">
+                        <button
+                          v-for="code in langConfig.available"
+                          :key="'prev-'+code"
+                          @click="previewLocale = code"
+                          class="btn-preview-lang"
+                          :class="{ 'btn-preview-active': previewLocale === code }">
+                          {{ ALL_LOCALES.find(l => l.code === code)?.flag }}
+                          {{ ALL_LOCALES.find(l => l.code === code)?.label }}
+                        </button>
+                      </div>
+                    </div>
+                    <!-- Mini preview of translated strings -->
+                    <div class="lang-preview-output mt-3" :dir="ALL_LOCALES.find(l=>l.code===previewLocale)?.dir || 'ltr'">
+                      <div class="preview-row">
+                        <span class="preview-key">dashboard</span>
+                        <span class="preview-val">{{ getPreviewMsg(previewLocale, 'sidebar.dashboard') }}</span>
+                      </div>
+                      <div class="preview-row">
+                        <span class="preview-key">save</span>
+                        <span class="preview-val">{{ getPreviewMsg(previewLocale, 'settings.actions.save') }}</span>
+                      </div>
+                      <div class="preview-row">
+                        <span class="preview-key">search</span>
+                        <span class="preview-val">{{ getPreviewMsg(previewLocale, 'search') }}</span>
+                      </div>
+                      <div class="preview-row">
+                        <span class="preview-key">logout</span>
+                        <span class="preview-val">{{ getPreviewMsg(previewLocale, 'profile.logout') }}</span>
+                      </div>
+                      <div class="preview-row">
+                        <span class="preview-key">candidates</span>
+                        <span class="preview-val">{{ getPreviewMsg(previewLocale, 'sidebar.links.candidates') }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer summary -->
+            <div class="d-flex align-items-center justify-content-between p-3 border-top" style="background:#f8fafc">
+              <div class="d-flex gap-4">
+                <div class="recycle-stat-pro">
+                  <span class="rv">{{ langConfig.available.length }}</span>
+                  <span class="rl">Activées</span>
+                </div>
+                <div class="recycle-stat-pro">
+                  <span class="rv">{{ ALL_LOCALES.length - langConfig.available.length }}</span>
+                  <span class="rl">Désactivées</span>
+                </div>
+                <div class="recycle-stat-pro">
+                  <span class="rv text-amber">{{ langConfig.default }}</span>
+                  <span class="rl">Défaut</span>
+                </div>
+              </div>
+              <span class="small text-muted fw-700">
+                <i class="fa-solid fa-globe text-emerald me-2"></i>
+                LANG_ENGINE · {{ ALL_LOCALES.length }} locales supportées
+              </span>
+            </div>
+          </div>
+
+          <!-- ═══════════════════════════════════════════════════════
+               REGISTRE DES ENTREPRISES
+          ═══════════════════════════════════════════════════════ -->
+          <div class="enigma-card p-0 overflow-hidden mb-5">
+            <div class="card-header-section d-flex justify-content-between align-items-center p-4">
+              <div class="d-flex align-items-center gap-3">
                 <div class="icon-box-v2 amber"><i class="fa-solid fa-building"></i></div>
                 <div>
                   <h6 class="fw-800 m-0" style="font-size:0.85rem">Registre des Entreprises</h6>
-                  <p class="m-0 text-muted" style="font-size:0.7rem">
-                    Vue recyclée · {{ filteredOrgs.length }} entrées · Scroll infini
-                  </p>
+                  <p class="m-0 text-muted" style="font-size:0.7rem">Vue recyclée · {{ filteredOrgs.length }} entrées · Scroll infini</p>
                 </div>
               </div>
               <div class="d-flex gap-2 align-items-center">
@@ -272,7 +476,6 @@
               </div>
             </div>
 
-            <!-- Column headers -->
             <div class="list-header-row d-flex align-items-center px-4 py-2">
               <span style="width:36px" class="list-col-label">#</span>
               <span style="width:48px"></span>
@@ -283,15 +486,12 @@
               <span style="width:100px" class="list-col-label text-end pe-2">ACTIONS</span>
             </div>
 
-            <!-- Loader -->
             <div v-if="orgsLoading" class="text-center py-5">
               <div class="spinner-pro-premium"></div>
             </div>
 
-            <!-- Recycle viewport -->
             <div v-else class="recycle-viewport-pro" ref="recycleViewport" @scroll="onRecycleScroll">
               <div :style="{ height: paddingTop + 'px' }"></div>
-
               <div v-for="(org, idx) in visibleOrgs" :key="org.id"
                 class="list-row-item d-flex align-items-center px-4"
                 :style="{ height: ROW_HEIGHT + 'px', animationDelay: (idx % 10) * 0.03 + 's' }">
@@ -299,70 +499,54 @@
                 <div style="width:36px;flex-shrink:0">
                   <span class="rank-label">#{{ org._rank }}</span>
                 </div>
-
                 <div style="width:48px;flex-shrink:0">
                   <div class="avatar-v8" :style="{ background: org._color + '22', color: org._color }">
                     {{ org.nom?.[0] || '?' }}
                   </div>
                 </div>
-
                 <div class="flex-grow-1" style="min-width:0">
                   <div class="fw-800 text-truncate" style="font-size:0.85rem">{{ org.nom }}</div>
                   <div class="text-muted text-truncate" style="font-size:0.7rem">{{ org.email || org.emailAdmin || '—' }}</div>
                 </div>
-
                 <div class="d-none d-lg-flex" style="width:130px;flex-shrink:0;gap:6px;flex-wrap:wrap">
                   <span class="t-pill cat-pill">{{ org.ville || org.city || 'N/A' }}</span>
                   <span class="t-pill type-pill">{{ org.industrie || org.industry || 'Tech' }}</span>
                 </div>
-
                 <div style="width:100px;flex-shrink:0;text-align:center">
                   <span class="status-badge" :class="org.estActif ? 'status-1' : 'status-2'">
                     <span class="status-dot"></span>
                     {{ org.estActif ? 'Actif' : 'Inactif' }}
                   </span>
                 </div>
-
                 <div style="width:90px;flex-shrink:0;text-align:center">
                   <div class="score-ring-pro" :style="{ '--pct': org._score, '--col': org._color }">
                     <span class="score-ring-val">{{ org._score }}%</span>
                   </div>
                 </div>
-
                 <div style="width:100px;flex-shrink:0" class="d-flex justify-content-end gap-1 pe-2">
-                  <button class="btn-icon-sm" title="Voir" @click="viewOrgDetails(org)">
-                    <i class="fa-solid fa-eye"></i>
-                  </button>
-                  <button class="btn-icon-sm" title="Éditer" @click="editOrg(org)">
-                    <i class="fa-solid fa-pen-to-square"></i>
-                  </button>
-                  <button class="btn-icon-sm danger" title="Supprimer" @click="deleteOrg(org.id)">
-                    <i class="fa-solid fa-trash-can"></i>
-                  </button>
+                  <button class="btn-icon-sm" title="Voir"     @click="viewOrgDetails(org)"><i class="fa-solid fa-eye"></i></button>
+                  <button class="btn-icon-sm" title="Éditer"   @click="editOrg(org)"><i class="fa-solid fa-pen-to-square"></i></button>
+                  <button class="btn-icon-sm danger" title="Supprimer" @click="deleteOrg(org.id)"><i class="fa-solid fa-trash-can"></i></button>
                 </div>
               </div>
-
               <div :style="{ height: paddingBottom + 'px' }"></div>
 
               <div v-if="isLoadingMore" class="text-center py-4">
                 <div class="spinner-pro-premium" style="width:32px;height:32px;border-width:3px;margin:0 auto 8px"></div>
                 <span class="small text-muted fw-700">Chargement...</span>
               </div>
-
               <div v-if="!isLoadingMore && filteredOrgs.length > 0 && scrolledToEnd" class="text-center py-3">
                 <span class="small fw-700 text-muted">
                   <i class="fa-solid fa-check-circle text-success me-2"></i>
                   {{ filteredOrgs.length }} entreprises · Fin de liste
                 </span>
               </div>
-
               <div v-if="!orgsLoading && filteredOrgs.length === 0" class="empty-state-pro py-5 text-center mx-4 my-3">
                 <i class="fa-solid fa-inbox fa-2x text-muted mb-3 d-block"></i>
                 <h6 class="fw-800 text-muted">Aucune entreprise trouvée</h6>
               </div>
             </div>
 
-            <!-- Footer -->
             <div class="d-flex align-items-center justify-content-between p-3 border-top" style="background:#f8fafc">
               <div class="d-flex gap-4">
                 <div class="recycle-stat-pro"><span class="rv">{{ filteredOrgs.length }}</span><span class="rl">Total</span></div>
@@ -410,9 +594,7 @@
       </main>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════
-         MODALE : CRÉER ORGANISATION
-    ═══════════════════════════════════════════════════════ -->
+    <!-- ═══ MODALE : CRÉER ORGANISATION ═══ -->
     <transition name="modal-quantum">
       <div v-if="showOrgModal" class="quantum-vault-overlay" @click.self="showOrgModal = false">
         <div class="quick-add-modal animate__animated animate__zoomIn animate__faster" style="max-width:840px;width:95%">
@@ -429,7 +611,6 @@
           </div>
 
           <form @submit.prevent="handleCreateOrg">
-            <!-- SECTION ORG -->
             <div class="modal-section-label mb-4">
               <i class="fa-solid fa-briefcase text-amber me-2"></i>
               Informations sur l'organisation
@@ -502,7 +683,6 @@
               </div>
             </div>
 
-            <!-- SECTION ADMIN -->
             <div class="modal-section-label mb-4">
               <i class="fa-solid fa-circle-user me-2" style="color:#6366f1"></i>
               Informations sur l'administrateur
@@ -570,20 +750,32 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import AppSidebar from '@/components/AppSidebar.vue';
 import AppNavbar  from '@/components/AppNavbar.vue';
 import { superAdminApi } from '@/services/api';
 import axios from 'axios';
 
-// ─── DARK MODE ─────────────────────────────────────────────────
+// ─── Import i18n helpers & data ────────────────────────────────────
+import {
+  ALL_LOCALES,
+  getLangConfig,
+  saveLangConfig,
+  LANG_CONFIG_KEY,
+} from '@/i18n';   // adjust path if needed
+
+// ─── i18n ──────────────────────────────────────────────────────────
+const { t, locale, messages } = useI18n();
+
+// ─── DARK MODE ─────────────────────────────────────────────────────
 const isDark = ref(false);
 
-// ─── DATE ──────────────────────────────────────────────────────
+// ─── DATE ──────────────────────────────────────────────────────────
 const today = new Date().toLocaleDateString('fr-FR', {
   weekday: 'long', day: '2-digit', month: 'long', year: 'numeric'
 });
 
-// ─── ÉTAT ──────────────────────────────────────────────────────
+// ─── ÉTAT ──────────────────────────────────────────────────────────
 const isLoading    = ref(true);
 const isRefreshing = ref(false);
 const orgsLoading  = ref(false);
@@ -595,7 +787,77 @@ const periodFilter = ref('30');
 const orgSearch    = ref('');
 const mousePos     = reactive({ x: 0, y: 0 });
 
-// ─── IA PERFORMANCE ────────────────────────────────────────────
+// ─── LANG MANAGER STATE ────────────────────────────────────────────
+const langConfig     = reactive(getLangConfig());   // { available: [...], default: '...' }
+const isSavingLang   = ref(false);
+const previewLocale  = ref(langConfig.default || 'FR');
+
+/** Toggle a language on/off (cannot disable the last one) */
+const toggleLang = (code) => {
+  const idx = langConfig.available.indexOf(code);
+  if (idx === -1) {
+    // enable
+    langConfig.available.push(code);
+    addTerminalLog('green', `Langue <span class="t-hi">${code}</span> activée`);
+  } else {
+    // disable
+    if (langConfig.available.length <= 1) {
+      showPulseToast(t('langManager.atLeastOne'), 'error', 'fa-solid fa-triangle-exclamation');
+      return;
+    }
+    langConfig.available.splice(idx, 1);
+    // if disabled lang was default, reset default
+    if (langConfig.default === code) langConfig.default = langConfig.available[0];
+    // if disabled lang was preview, reset preview
+    if (previewLocale.value === code) previewLocale.value = langConfig.available[0];
+    addTerminalLog('amber', `Langue <span class="t-hi">${code}</span> désactivée`);
+  }
+};
+
+/** Set the platform default language */
+const setDefaultLang = (code) => {
+  if (!langConfig.available.includes(code)) return;
+  langConfig.default = code;
+  addTerminalLog('blue', `Langue par défaut → <span class="t-hi">${code}</span>`);
+};
+
+/**
+ * Save the config:
+ *  1. localStorage (always)
+ *  2. API call (if your backend supports it)
+ */
+const saveLangConfiguration = async () => {
+  isSavingLang.value = true;
+  try {
+    // 1. Persist locally
+    saveLangConfig({ available: [...langConfig.available], default: langConfig.default });
+
+    // 2. Optional: sync to backend
+    // await superAdminApi.saveLangConfig({ available: langConfig.available, default: langConfig.default });
+
+    showPulseToast(t('langManager.saveSuccess'), 'success', 'fa-solid fa-globe');
+    addTerminalLog('green', `Config multilingue sauvegardée — <span class="t-hi">${langConfig.available.join(', ')}</span> · défaut: <span class="t-hi">${langConfig.default}</span> <span class="t-ok">[ OK ]</span>`);
+  } catch {
+    showPulseToast(t('langManager.saveError'), 'error', 'fa-solid fa-triangle-exclamation');
+  } finally {
+    isSavingLang.value = false;
+  }
+};
+
+/**
+ * Get a translated string for the preview panel without changing the app locale.
+ * Reads directly from the messages object.
+ */
+const getPreviewMsg = (localeCode, path) => {
+  try {
+    const parts = path.split('.');
+    let node = messages.value[localeCode];
+    for (const p of parts) node = node?.[p];
+    return node || '—';
+  } catch { return '—'; }
+};
+
+// ─── IA PERFORMANCE ────────────────────────────────────────────────
 const iaPerformance = reactive({
   charge: 72, tokens: '1.2M', responseTime: '340ms', requestsPerSecond: 18
 });
@@ -607,7 +869,7 @@ const moduleUsage = ref([
   { name: 'Anti-Cheat Engine', pct: 92, color: '#06b6d4' },
 ]);
 
-// ─── STATS ─────────────────────────────────────────────────────
+// ─── STATS ─────────────────────────────────────────────────────────
 const masterStats = ref([
   { label: 'Entreprises',  val: '—', icon: 'fa-solid fa-building',            bg: '#eef2ff', color: '#4f46e5', trend: '+12%', trendUp: true  },
   { label: 'Sessions IA',  val: '—', icon: 'fa-solid fa-wand-magic-sparkles', bg: '#fff7ed', color: '#f97316', trend: '+24%', trendUp: true  },
@@ -615,7 +877,7 @@ const masterStats = ref([
   { label: 'En attente',   val: '—', icon: 'fa-solid fa-shield-virus',        bg: '#fef2f2', color: '#ef4444', trend: '0%',   trendUp: false },
 ]);
 
-// ─── DEMANDES ──────────────────────────────────────────────────
+// ─── DEMANDES ──────────────────────────────────────────────────────
 const pendingRequests = ref([]);
 const filteredPendingRequests = computed(() => {
   const q = searchQuery.value.toLowerCase().trim();
@@ -628,7 +890,7 @@ const filteredPendingRequests = computed(() => {
   );
 });
 
-// ─── ORGANISATIONS ─────────────────────────────────────────────
+// ─── ORGANISATIONS ─────────────────────────────────────────────────
 const orgs = ref([]);
 const ORG_COLORS = ['#f59e0b','#4f46e5','#10b981','#f43f5e','#06b6d4','#a855f7','#ec4899'];
 
@@ -651,7 +913,7 @@ const filteredOrgs = computed(() => {
   }));
 });
 
-// ─── VIRTUAL SCROLL ────────────────────────────────────────────
+// ─── VIRTUAL SCROLL ────────────────────────────────────────────────
 const ROW_HEIGHT      = 68;
 const BUFFER          = 5;
 const recycleViewport = ref(null);
@@ -661,11 +923,11 @@ const isLoadingMore   = ref(false);
 const scrolledToEnd   = ref(false);
 let   _loadedPages    = 1;
 
-const startIdx_    = computed(() => Math.max(0, Math.floor(scrollTop_.value / ROW_HEIGHT) - BUFFER));
-const endIdx_      = computed(() => Math.min(filteredOrgs.value.length, Math.ceil((scrollTop_.value + viewportHeight_.value) / ROW_HEIGHT) + BUFFER));
-const visibleOrgs  = computed(() => filteredOrgs.value.slice(startIdx_.value, endIdx_.value));
-const paddingTop   = computed(() => startIdx_.value * ROW_HEIGHT);
-const paddingBottom= computed(() => Math.max(0, (filteredOrgs.value.length - endIdx_.value) * ROW_HEIGHT));
+const startIdx_     = computed(() => Math.max(0, Math.floor(scrollTop_.value / ROW_HEIGHT) - BUFFER));
+const endIdx_       = computed(() => Math.min(filteredOrgs.value.length, Math.ceil((scrollTop_.value + viewportHeight_.value) / ROW_HEIGHT) + BUFFER));
+const visibleOrgs   = computed(() => filteredOrgs.value.slice(startIdx_.value, endIdx_.value));
+const paddingTop    = computed(() => startIdx_.value * ROW_HEIGHT);
+const paddingBottom = computed(() => Math.max(0, (filteredOrgs.value.length - endIdx_.value) * ROW_HEIGHT));
 
 const onRecycleScroll = (e) => {
   scrollTop_.value = e.target.scrollTop;
@@ -687,12 +949,12 @@ const loadMoreOrgs = async () => {
   finally  { isLoadingMore.value = false; }
 };
 
-// ─── TERMINAL ──────────────────────────────────────────────────
+// ─── TERMINAL ──────────────────────────────────────────────────────
 const terminalLogs = ref([
   { time: '00:00:01', type: 'green', text: 'Master Control Panel initialisé <span class="t-ok">[ OK ]</span>' },
   { time: '00:00:03', type: 'blue',  text: 'Connexion API SuperAdmin <span class="t-hi">établie</span>' },
-  { time: '00:00:05', type: 'amber', text: 'Chargement des organisations depuis l\'API...' },
-  { time: '00:00:07', type: 'green', text: 'RecycleView Virtual Scroll <span class="t-ok">[ READY ]</span>' },
+  { time: '00:00:05', type: 'amber', text: "Chargement des organisations depuis l'API..." },
+  { time: '00:00:07', type: 'green', text: 'Lang Matrix chargée — <span class="t-hi">FR / EN / AR</span> <span class="t-ok">[ OK ]</span>' },
   { time: '00:00:09', type: 'green', text: 'Dashboard opérationnel <span class="t-ok">[ DEPLOYED ]</span>' },
 ]);
 const addTerminalLog = (type, text) => {
@@ -701,7 +963,7 @@ const addTerminalLog = (type, text) => {
   if (terminalLogs.value.length > 20) terminalLogs.value.shift();
 };
 
-// ─── FORM ──────────────────────────────────────────────────────
+// ─── FORM ──────────────────────────────────────────────────────────
 const newOrg = reactive({
   name:'', domain:'', industry:'', website:'',
   city:'', country:'', zipCode:'', address:'',
@@ -709,7 +971,7 @@ const newOrg = reactive({
   adminEmail:'', adminPhone:''
 });
 
-// ─── TOAST ─────────────────────────────────────────────────────
+// ─── TOAST ─────────────────────────────────────────────────────────
 const globalToast = reactive({ active:false, message:'', type:'', icon:'' });
 let _toastTimer = null;
 const showPulseToast = (msg, type='success', icon='fa-solid fa-check') => {
@@ -718,7 +980,7 @@ const showPulseToast = (msg, type='success', icon='fa-solid fa-check') => {
   _toastTimer = setTimeout(() => { globalToast.active = false; }, 4000);
 };
 
-// ─── FETCH ─────────────────────────────────────────────────────
+// ─── FETCH ─────────────────────────────────────────────────────────
 const fetchData = async () => {
   isRefreshing.value  = true;
   orgsLoading.value   = true;
@@ -747,7 +1009,7 @@ const fetchData = async () => {
       addTerminalLog('green', `<span class="t-hi">${orgs.value.length}</span> organisations chargées <span class="t-ok">[ OK ]</span>`);
     } catch {
       orgs.value = [];
-      addTerminalLog('amber', 'Impossible de charger les organisations depuis l\'API');
+      addTerminalLog('amber', "Impossible de charger les organisations depuis l'API");
     }
 
     try {
@@ -757,7 +1019,7 @@ const fetchData = async () => {
     } catch {}
 
     addTerminalLog('green', `Refresh complet — <span class="t-ok">${pendingRequests.value.length} dossiers</span> en attente`);
-  } catch(err) {
+  } catch {
     addTerminalLog('amber', 'Erreur lors du chargement des données');
   } finally {
     isRefreshing.value = false;
@@ -766,7 +1028,7 @@ const fetchData = async () => {
   }
 };
 
-// ─── ACTIONS ───────────────────────────────────────────────────
+// ─── ACTIONS ───────────────────────────────────────────────────────
 const handleApprove = async (id) => {
   try {
     await superAdminApi.approveRequest(id);
@@ -796,7 +1058,7 @@ const handleCreateOrg = async () => {
     showPulseToast(`Organisation "${newOrg.name}" créée.`, 'success', 'fa-solid fa-building');
     showOrgModal.value = false;
     Object.keys(newOrg).forEach(k => newOrg[k] = '');
-    addTerminalLog('green', `Nouvelle organisation créée <span class="t-ok">[ OK ]</span>`);
+    addTerminalLog('green', 'Nouvelle organisation créée <span class="t-ok">[ OK ]</span>');
     fetchData();
   } catch {
     showPulseToast('Erreur lors de la création.', 'error', 'fa-solid fa-triangle-exclamation');
@@ -806,9 +1068,7 @@ const viewOrgDetails = (org) => {
   showPulseToast(`Détails : ${org.nom}`, 'success', 'fa-solid fa-eye');
   addTerminalLog('blue', `Vue détails : <span class="t-hi">${org.nom}</span>`);
 };
-const editOrg = (org) => {
-  showPulseToast(`Édition : ${org.nom}`, 'warn', 'fa-solid fa-pen-to-square');
-};
+const editOrg  = (org) => showPulseToast(`Édition : ${org.nom}`, 'warn', 'fa-solid fa-pen-to-square');
 const deleteOrg = async (id) => {
   if (!confirm('Supprimer cette organisation ?')) return;
   try {
@@ -822,7 +1082,7 @@ const deleteOrg = async (id) => {
   }
 };
 
-// ─── HELPERS ───────────────────────────────────────────────────
+// ─── HELPERS ───────────────────────────────────────────────────────
 const formatDate     = (d) => d ? new Date(d).toLocaleDateString('fr-FR', { day:'numeric', month:'short' }) : '—';
 const orbStyle       = (f) => ({ transform:`translate(${mousePos.x*f*10}px,${mousePos.y*f*10}px)` });
 const handleParallax = (e) => { mousePos.x=(e.clientX-window.innerWidth/2)/20; mousePos.y=(e.clientY-window.innerHeight/2)/20; };
@@ -854,12 +1114,7 @@ onUnmounted(() => document.removeEventListener('keydown', handleKeyboard));
 .canvas-engine { height:calc(100vh - 64px); }
 
 /* ─── THEME TOGGLE ─────────────────────────────────────────── */
-.theme-toggle-btn {
-  position:fixed; top:80px; right:20px; z-index:200; width:42px; height:42px; border-radius:14px;
-  background:white; border:1.5px solid #eef2f6; color:#64748b;
-  cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; transition:.2s;
-  box-shadow:0 4px 16px rgba(0,0,0,.06);
-}
+.theme-toggle-btn { position:fixed; top:80px; right:20px; z-index:200; width:42px; height:42px; border-radius:14px; background:white; border:1.5px solid #eef2f6; color:#64748b; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; transition:.2s; box-shadow:0 4px 16px rgba(0,0,0,.06); }
 .theme-toggle-btn:hover { color:#f59e0b; border-color:#f59e0b; }
 
 /* ─── LOADER ───────────────────────────────────────────────── */
@@ -873,17 +1128,15 @@ onUnmounted(() => document.removeEventListener('keydown', handleKeyboard));
 .premium-title { font-weight:800; font-size:2.2rem; letter-spacing:-1px; }
 .gradient-text { background:linear-gradient(135deg,#f59e0b 0%,#fbbf24 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
 .breadcrumb-pro { font-size:.72rem; font-weight:700; color:#94a3b8; }
-.breadcrumb-pro .root { cursor:pointer; } .breadcrumb-pro .root:hover { color:#f59e0b; }
+.breadcrumb-pro .root:hover { color:#f59e0b; cursor:pointer; }
 .breadcrumb-pro .separator { font-size:.55rem; opacity:.5; }
 .breadcrumb-pro .current { color:#0f172a; font-weight:800; }
 .page-sub { font-size:.75rem; color:#94a3b8; font-weight:600; margin-top:6px; }
-
 .system-status-pro { display:flex; align-items:center; background:white; border:1.5px solid #eef2f6; border-radius:100px; padding:7px 16px; gap:8px; }
 .status-dot-pro { width:7px; height:7px; background:#10b981; border-radius:50%; display:inline-block; }
 .pulse { animation:statusPulse 2s infinite; }
 @keyframes statusPulse { 0%{box-shadow:0 0 0 0 rgba(16,185,129,.6)}70%{box-shadow:0 0 0 8px rgba(16,185,129,0)}100%{box-shadow:0 0 0 0 rgba(16,185,129,0)} }
 .status-text-pro { font-size:.65rem; font-weight:800; color:#64748b; letter-spacing:.8px; text-transform:uppercase; }
-
 .btn-refresh-pro { width:44px; height:44px; background:white; border:1.5px solid #e2e8f0; border-radius:14px; color:#64748b; cursor:pointer; transition:.3s; display:flex; align-items:center; justify-content:center; }
 .btn-refresh-pro:hover:not(:disabled) { background:#f8fafc; border-color:#f59e0b; color:#f59e0b; transform:rotate(180deg) scale(1.1); }
 .shadow-premium { box-shadow:0 20px 60px rgba(0,0,0,.12)!important; }
@@ -908,7 +1161,7 @@ onUnmounted(() => document.removeEventListener('keydown', handleKeyboard));
 .btn-clear-search { border:none; background:transparent; color:#94a3b8; padding:0; cursor:pointer; }
 .sort-select-pro { border:1.5px solid #eef2f6; border-radius:14px; padding:10px 14px; font-weight:700; font-size:.8rem; background:white; outline:none; cursor:pointer; font-family:inherit; }
 
-/* ─── CARD ENIGMA ──────────────────────────────────────────── */
+/* ─── CARD ─────────────────────────────────────────────────── */
 .enigma-card { background:white; border-radius:32px; border:1px solid #eef2f6; box-shadow:0 2px 8px rgba(0,0,0,.03); }
 .card-header-section { border-bottom:1px solid #eef2f6; }
 .icon-box-v2 { width:48px; height:48px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
@@ -943,7 +1196,130 @@ onUnmounted(() => document.removeEventListener('keydown', handleKeyboard));
 .progress-slim { height:5px; background:#f1f5f9; border-radius:10px; overflow:hidden; }
 .progress-fill { height:100%; border-radius:10px; transition:width 1.2s cubic-bezier(.165,.84,.44,1); }
 
-/* ─── REGISTRE ENTREPRISES ─────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════
+   🌐 LANG MANAGER STYLES
+════════════════════════════════════════════════════════════ */
+.lang-terminal-badge {
+  font-size:.6rem; font-weight:800; color:#10b981; letter-spacing:1.5px; text-transform:uppercase;
+  background:#f0fdf4; border:1px solid #bbf7d0; padding:4px 12px; border-radius:8px;
+  font-family:'JetBrains Mono',monospace;
+}
+.lang-section-title {
+  font-size:.75rem; font-weight:900; color:#0f172a; text-transform:uppercase; letter-spacing:.8px;
+  display:flex; align-items:center;
+}
+.text-emerald { color:#10b981; }
+.text-amber   { color:#f59e0b; }
+
+/* Language Cards */
+.lang-card {
+  display:flex; align-items:center; gap:16px;
+  border:2px solid #eef2f6; border-radius:20px; padding:16px 20px;
+  transition:all .2s ease; background:white; cursor:default;
+}
+.lang-card-enabled  { border-color:#bbf7d0; background:linear-gradient(135deg,#f0fdf4,white); }
+.lang-card-disabled { border-color:#eef2f6; background:#f8fafc; opacity:.7; }
+.lang-card-default  { border-color:#fde68a; background:linear-gradient(135deg,#fffbeb,white); box-shadow:0 4px 16px rgba(245,158,11,.1); }
+.lang-card:hover    { transform:translateX(4px); }
+
+.lang-flag-box {
+  width:48px; height:48px; border-radius:14px; background:#f8fafc; display:flex; align-items:center;
+  justify-content:center; font-size:1.6rem; flex-shrink:0; border:1.5px solid #eef2f6;
+}
+.lang-native-tag {
+  background:#f0f9ff; color:#0369a1; font-size:.65rem; font-weight:800;
+  padding:2px 8px; border-radius:6px;
+}
+.lang-code-tag {
+  background:#1e293b; color:#e2e8f0; font-size:.62rem; font-weight:800;
+  padding:2px 7px; border-radius:6px; font-family:'JetBrains Mono',monospace;
+}
+.lang-dir-tag {
+  font-size:.6rem; font-weight:800; padding:2px 8px; border-radius:6px;
+}
+.dir-ltr { background:#eff6ff; color:#2563eb; }
+.dir-rtl { background:#fdf4ff; color:#9333ea; }
+
+/* Status badge */
+.lang-status-badge {
+  display:inline-flex; align-items:center; gap:5px;
+  font-size:.62rem; font-weight:800; padding:3px 10px; border-radius:8px;
+}
+.badge-enabled  { background:#ecfdf5; color:#10b981; }
+.badge-disabled { background:#f1f5f9; color:#94a3b8; }
+.badge-dot { width:5px; height:5px; border-radius:50%; background:currentColor; }
+
+/* Default badge */
+.lang-default-badge {
+  display:inline-flex; align-items:center;
+  font-size:.62rem; font-weight:800; padding:3px 10px; border-radius:8px;
+  background:linear-gradient(135deg,#fffbeb,#fef3c7); color:#d97706;
+  border:1px solid #fde68a;
+}
+
+/* Action buttons */
+.btn-lang-action {
+  display:inline-flex; align-items:center; gap:6px;
+  border:1.5px solid #eef2f6; border-radius:12px; padding:8px 14px;
+  font-size:.75rem; font-weight:800; cursor:pointer; transition:.2s;
+  background:white; font-family:inherit;
+}
+.btn-lang-action:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,.08); }
+.btn-lang-label { font-size:.7rem; }
+
+.btn-set-default { color:#d97706; border-color:#fde68a; background:#fffbeb; }
+.btn-set-default:hover { background:#fef3c7; }
+
+.btn-enable-lang  { color:#10b981; border-color:#bbf7d0; background:#f0fdf4; }
+.btn-enable-lang:hover  { background:#dcfce7; }
+
+.btn-disable-lang { color:#ef4444; border-color:#fecaca; background:#fef2f2; }
+.btn-disable-lang:hover { background:#fee2e2; }
+
+/* Default Radio Panel */
+.lang-default-panel {
+  border:1.5px solid #eef2f6; border-radius:20px; overflow:hidden; background:white;
+}
+.lang-radio-row {
+  display:flex; align-items:center; gap:12px; padding:14px 20px;
+  border-bottom:1px solid #eef2f6; cursor:pointer; transition:.15s;
+}
+.lang-radio-row:last-child { border-bottom:none; }
+.lang-radio-row:hover:not(.radio-disabled) { background:#f8fafc; }
+.lang-radio-row.radio-active { background:linear-gradient(135deg,#fffbeb,white); }
+.lang-radio-row.radio-disabled { opacity:.45; cursor:not-allowed; }
+.lang-radio-input { accent-color:#f59e0b; width:16px; height:16px; flex-shrink:0; }
+.lang-flag-sm { font-size:1.2rem; }
+
+/* Preview Panel */
+.lang-preview-panel {
+  border:1.5px solid #eef2f6; border-radius:20px; padding:20px; background:white;
+}
+.lang-preview-selector-wrap { background:#f8fafc; border-radius:14px; padding:14px; }
+.lang-preview-label { font-size:.7rem; font-weight:800; color:#64748b; }
+
+.btn-preview-lang {
+  padding:7px 16px; border-radius:12px; border:1.5px solid #eef2f6;
+  background:white; font-weight:800; font-size:.8rem; cursor:pointer; transition:.2s; font-family:inherit;
+}
+.btn-preview-lang:hover { border-color:#10b981; color:#10b981; }
+.btn-preview-active { background:#f0fdf4; border-color:#10b981; color:#10b981; }
+
+/* Preview Output — mini terminal */
+.lang-preview-output {
+  background:#0f172a; border-radius:14px; padding:16px; font-family:'JetBrains Mono',monospace;
+}
+.preview-row { display:flex; align-items:center; gap:12px; margin-bottom:6px; }
+.preview-row:last-child { margin-bottom:0; }
+.preview-key {
+  font-size:.6rem; font-weight:800; color:rgba(255,255,255,.3);
+  min-width:80px; text-transform:uppercase; letter-spacing:.5px;
+}
+.preview-val {
+  font-size:.72rem; font-weight:700; color:rgba(255,255,255,.85);
+}
+
+/* ─── REGISTRE / RECYCLE ────────────────────────────────────── */
 .recycle-badge-pro { font-size:.6rem; font-weight:800; color:#94a3b8; letter-spacing:1.5px; text-transform:uppercase; background:#f8fafc; border:1px solid #eef2f6; padding:4px 10px; border-radius:8px; }
 .list-header-row { background:#f8fafc; border-bottom:1px solid #eef2f6; }
 .list-col-label { font-size:.6rem; font-weight:900; color:#94a3b8; text-transform:uppercase; letter-spacing:1px; }
@@ -966,7 +1342,7 @@ onUnmounted(() => document.removeEventListener('keydown', handleKeyboard));
 .recycle-stat-pro .rv { font-size:14px; font-weight:900; color:#0f172a; line-height:1; }
 .recycle-stat-pro .rl { font-size:.55rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.8px; margin-top:2px; }
 
-/* ─── PILLS ─────────────────────────────────────────────────── */
+/* PILLS */
 .t-pill { font-size:.6rem; font-weight:800; padding:2px 8px; border-radius:6px; }
 .cat-pill  { background:#f0f9ff; color:#0284c7; }
 .type-pill { background:#f0fdf4; color:#16a34a; }
@@ -1002,7 +1378,7 @@ onUnmounted(() => document.removeEventListener('keydown', handleKeyboard));
 .quick-add-modal { background:white; border-radius:32px; padding:40px; box-shadow:0 40px 100px rgba(0,0,0,.2); max-height:90vh; overflow-y:auto; }
 .quick-add-modal::-webkit-scrollbar { width:6px; }
 .quick-add-modal::-webkit-scrollbar-thumb { background:#eef2f6; border-radius:10px; }
-.modal-section-label { font-size:.8rem; font-weight:800; color:#0f172a; border-bottom:1px solid #eef2f6; padding-bottom:12px; display:flex; align-items:center; margin-bottom:0; }
+.modal-section-label { font-size:.8rem; font-weight:800; color:#0f172a; border-bottom:1px solid #eef2f6; padding-bottom:12px; display:flex; align-items:center; }
 .modal-alert-info { background:#f0f9ff; color:#0369a1; border:1px solid #bae6fd; border-radius:12px; padding:12px 16px; font-size:.8rem; font-weight:600; display:flex; align-items:center; }
 .enigma-input-wrap label { font-size:.6rem; font-weight:900; color:#94a3b8; letter-spacing:1px; margin-bottom:8px; display:block; }
 .required-star { color:#f43f5e; }
@@ -1080,6 +1456,25 @@ textarea.enigma-field { resize:vertical; }
 [data-theme="dark"] .slot-badge-amber { background:rgba(245,158,11,.1); border-color:rgba(245,158,11,.2); }
 
 [data-theme="dark"] .donut-center-text { fill:#f0f6fc; }
+
+/* Dark: Lang cards */
+[data-theme="dark"] .lang-card { background:#1c2331; border-color:rgba(255,255,255,.08); }
+[data-theme="dark"] .lang-card-enabled  { background:linear-gradient(135deg,rgba(16,185,129,.08),#1c2331); border-color:rgba(16,185,129,.25); }
+[data-theme="dark"] .lang-card-default  { background:linear-gradient(135deg,rgba(245,158,11,.08),#1c2331); border-color:rgba(245,158,11,.3); }
+[data-theme="dark"] .lang-flag-box { background:rgba(255,255,255,.05); border-color:rgba(255,255,255,.08); }
+[data-theme="dark"] .lang-default-panel { background:#1c2331; border-color:rgba(255,255,255,.07); }
+[data-theme="dark"] .lang-radio-row { border-bottom-color:rgba(255,255,255,.07); }
+[data-theme="dark"] .lang-radio-row:hover:not(.radio-disabled) { background:rgba(255,255,255,.04); }
+[data-theme="dark"] .lang-radio-row.radio-active { background:rgba(245,158,11,.07); }
+[data-theme="dark"] .lang-preview-panel { background:#1c2331; border-color:rgba(255,255,255,.07); }
+[data-theme="dark"] .lang-preview-selector-wrap { background:rgba(255,255,255,.04); }
+[data-theme="dark"] .lang-section-title { color:#f0f6fc; }
+[data-theme="dark"] .btn-lang-action { background:#1c2331; border-color:rgba(255,255,255,.08); color:#8b949e; }
+[data-theme="dark"] .btn-enable-lang  { color:#10b981; border-color:rgba(16,185,129,.3); background:rgba(16,185,129,.08); }
+[data-theme="dark"] .btn-disable-lang { color:#ef4444; border-color:rgba(239,68,68,.3); background:rgba(239,68,68,.08); }
+[data-theme="dark"] .btn-set-default  { color:#d97706; border-color:rgba(245,158,11,.3); background:rgba(245,158,11,.08); }
+[data-theme="dark"] .btn-preview-lang { background:#1c2331; border-color:rgba(255,255,255,.08); color:#8b949e; }
+[data-theme="dark"] .btn-preview-active { background:rgba(16,185,129,.1); border-color:rgba(16,185,129,.4); color:#10b981; }
 
 [data-theme="dark"] .list-header-row { background:rgba(255,255,255,.02); border-bottom-color:rgba(255,255,255,.06); }
 [data-theme="dark"] .list-row-item { border-bottom-color:rgba(255,255,255,.05); }

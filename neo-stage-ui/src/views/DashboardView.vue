@@ -1124,7 +1124,7 @@ const kpiCards = computed(() => {
   const k = dotnetStats.kpis;
 
   if (r === 'Candidat') return [
-    { label: 'TESTS PASSÉS',  value: k.totalTests ?? '—',   icon: 'fa-solid fa-file-check',    color: '#3b82f6', bg: 'rgba(59,130,246,0.12)',  trend: '↑',   sparkPoints: '0,22 12,18 24,20 36,10 48,14 60,8 72,12 80,6' },
+{ label: 'TESTS PASSÉS',  value: k.totalTests ?? '—', icon: 'fa-solid fa-clipboard-check', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', trend: '↑', sparkPoints: '0,22 12,18 24,20 36,10 48,14 60,8 72,12 80,6' },
     { label: 'SCORE MOYEN',   value: k.moyenne != null ? k.moyenne+'%' : '—', icon: 'fa-solid fa-star', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  trend: '↑',   sparkPoints: '0,24 12,20 24,16 36,18 48,12 60,10 72,8 80,4' },
     { label: 'CAMPAGNES',     value: k.totalCampagnes ?? '—', icon: 'fa-solid fa-bullhorn',     color: '#ef4444', bg: 'rgba(239,68,68,0.12)',   trend: '→',   sparkPoints: '0,20 12,16 24,22 36,14 48,16 60,12 72,14 80,8' },
     { label: 'TALENTS',       value: k.totalTalents ?? '—',   icon: 'fa-solid fa-users',        color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)',  trend: '↑',   sparkPoints: '0,26 12,22 24,24 36,16 48,18 60,10 72,12 80,6' },
