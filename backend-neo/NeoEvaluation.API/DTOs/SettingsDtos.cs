@@ -29,6 +29,11 @@ namespace NeoEvaluation.API.Dtos
 
         [System.Text.Json.Serialization.JsonPropertyName("connectedEmail")]
         public string? ConnectedEmail { get; set; }
+
+        public string Plan { get; set; } = "Starter";
+        public int UsageCount { get; set; }
+        public int MaxUsageLimit { get; set; }
+        public bool IsUsageSuspended { get; set; }
     }
 
     public class BrandingUpdateDto

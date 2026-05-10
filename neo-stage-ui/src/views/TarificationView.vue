@@ -36,88 +36,93 @@
       <div class="text-center mb-5 animate__animated animate__fadeIn">
         <span class="badge-premium-ia mb-3">Tarification SaaS & IA</span>
         <h1 class="display-4 fw-800 text-navy">Investissez dans votre <span class="text-amber">Capital Humain</span></h1>
-        <p class="text-muted mx-auto" style="max-width: 600px;">
-          Libérez la puissance de l'IA pour automatiser vos recrutements et détecter les meilleurs talents instantanément.
+        <p class="text-muted mx-auto" style="max-width: 650px; font-size: 1.1rem; line-height: 1.6;">
+          Avec <strong>EvaluaTech</strong>, accédez à l’ensemble de la plateforme gratuitement, y compris les fonctionnalités IA avancées. 
+          La version gratuite fonctionne avec des <strong>limites temporaires intelligentes</strong>.
+          Passez à <strong>EvaluaTech Go</strong> pour une utilisation continue et sans interruption.
         </p>
       </div>
 
       <div class="row g-4 justify-content-center align-items-stretch">
         
-     
+        <!-- PLAN STARTER (FREE) -->
         <div class="col-lg-4 col-md-6">
-          <div class="pricing-card glass-card h-100">
+          <div class="pricing-card glass-card h-100 animate__animated animate__fadeInLeft">
             <div class="card-header-tech">
-              <h5 class="fw-bold">Starter</h5>
+              <div class="plan-badge starter-badge">Starter</div>
+              <h5 class="fw-bold mt-3">Gratuit</h5>
               <div class="price-box">
-                <span class="currency">DT</span>
                 <span class="amount">0</span>
+                <span class="currency">DT</span>
                 <span class="period">/mois</span>
               </div>
-              <p class="desc">Pour les petites entreprises</p>
+              <p class="desc">Accès complet à la plateforme</p>
             </div>
             <div class="card-body-tech flex-grow-1">
               <ul class="feature-list">
-                <li><i class="fa-solid fa-circle-check"></i> 10 Candidats / mois</li>
-                <li><i class="fa-solid fa-circle-check"></i> Banque de tests standard</li>
-                <li><i class="fa-solid fa-circle-check"></i> Rapports basiques</li>
-                <li class="disabled"><i class="fa-solid fa-circle-xmark"></i> Assistant IA Pro</li>
-                <li class="disabled"><i class="fa-solid fa-circle-xmark"></i> Proctoring Anti-triche</li>
+                <li><i class="fa-solid fa-sparkles text-amber"></i> Fonctionnalités IA incluses</li>
+                <li><i class="fa-solid fa-check-double text-success"></i> Banque de tests complète</li>
+                <li><i class="fa-solid fa-check-double text-success"></i> Rapports de performance</li>
+                <li class="premium-highlight"><i class="fa-solid fa-hourglass-half text-amber"></i> Limites temporaires intelligentes</li>
+                <li class="premium-highlight"><i class="fa-solid fa-arrows-rotate text-amber"></i> Réactivation automatique</li>
               </ul>
             </div>
-            <router-link to="/register" class="btn-outline-amber-premium w-100">Démarrer gratuitement</router-link>
+            <router-link to="/register" class="btn-outline-starter w-100">Commencer gratuitement</router-link>
           </div>
         </div>
 
-
+        <!-- PLAN BUSINESS IA (PAID) -->
         <div class="col-lg-4 col-md-6">
-          <div class="pricing-card glass-card pro-featured h-100">
-            <div class="popular-ribbon">Recommandé IA</div>
+          <div class="pricing-card glass-card pro-featured h-100 animate__animated animate__fadeInUp">
+            <div class="popular-ribbon"><i class="fa-solid fa-bolt me-1"></i> Utilisation Continue</div>
             <div class="card-header-tech">
-              <h5 class="fw-bold text-amber">Business IA</h5>
+              <div class="plan-badge business-badge">EvaluaTech Go</div>
+              <h5 class="fw-bold text-amber mt-3">Elite Premium</h5>
               <div class="price-box text-amber">
+                <span class="amount">99</span>
                 <span class="currency">DT</span>
-                <span class="amount">149</span>
                 <span class="period">/mois</span>
               </div>
-              <p class="desc">La puissance totale de l'IA RH</p>
+              <p class="desc">Utilisation sans interruption</p>
             </div>
             <div class="card-body-tech flex-grow-1">
               <ul class="feature-list">
-                <li><i class="fa-solid fa-bolt text-amber"></i> <strong>Candidats illimités</strong></li>
-                <li><i class="fa-solid fa-bolt text-amber"></i> Générateur de tests par IA</li>
-                <li><i class="fa-solid fa-bolt text-amber"></i> Proctoring (Anti-triche)</li>
-                <li><i class="fa-solid fa-bolt text-amber"></i> Analyses prédictives IA</li>
-                <li><i class="fa-solid fa-bolt text-amber"></i> Exports PDF/Excel illimités</li>
+                <li><i class="fa-solid fa-circle-check text-amber"></i> <strong>Tout le plan Starter</strong></li>
+                <li><i class="fa-solid fa-infinity text-amber"></i> Générations illimitées</li>
+                <li><i class="fa-solid fa-shield-heart text-amber"></i> Proctoring anti-triche Pro</li>
+                <li><i class="fa-solid fa-chart-line text-amber"></i> Analyses RH prédictives</li>
+                <li><i class="fa-solid fa-star text-amber"></i> <strong>Zéro interruption pendant 30j</strong></li>
               </ul>
             </div>
             <button 
-              @click="handleSubscription('Business IA', 149)" 
+              @click="handleSubscription('EvaluaTech Go', 99)" 
               class="btn-amber-premium w-100 shadow-amber border-0"
             >
-              Essai gratuit (14j)
+              Passer à EvaluaTech Go
             </button>
           </div>
         </div>
 
-    
+        <!-- PLAN ENTERPRISE (CUSTOM) -->
         <div class="col-lg-4 col-md-6">
-          <div class="pricing-card glass-card h-100">
+          <div class="pricing-card glass-card h-100 animate__animated animate__fadeInRight">
             <div class="card-header-tech">
-              <h5 class="fw-bold">Enterprise</h5>
+              <div class="plan-badge enterprise-badge">Enterprise</div>
+              <h5 class="fw-bold mt-3">Sur mesure</h5>
               <div class="price-box mt-2">
-                <span class="amount-text">Sur mesure</span>
+                <span class="amount-text">Custom</span>
               </div>
-              <p class="desc">Grandes organisations</p>
+              <p class="desc">Pour grandes organisations</p>
             </div>
             <div class="card-body-tech flex-grow-1">
               <ul class="feature-list">
-                <li><i class="fa-solid fa-server"></i> Multi-entreprises</li>
-                <li><i class="fa-solid fa-code"></i> API d'intégration personnalisée</li>
-                <li><i class="fa-solid fa-headset"></i> Support dédié 24/7</li>
-                <li><i class="fa-solid fa-cloud-shield"></i> On-premise ou Cloud privé</li>
+                <li><i class="fa-solid fa-server text-navy"></i> Multi-entreprises</li>
+                <li><i class="fa-solid fa-code text-navy"></i> API personnalisée</li>
+                <li><i class="fa-solid fa-headset text-navy"></i> Support dédié</li>
+                <li><i class="fa-solid fa-shield-halved text-navy"></i> Infrastructure privée</li>
               </ul>
             </div>
-            <button class="btn-navy-premium w-100">Contacter l'expert</button>
+            <button class="btn-navy-premium w-100">Contacter l’expert</button>
           </div>
         </div>
 
@@ -127,6 +132,7 @@
 </template>
 
 <script setup>
+import { ref, reactive } from 'vue';
 import { loadStripe } from '@stripe/stripe-js';
 import api from '@/services/api';
 import { useAuthStore } from '@/stores/auth';
@@ -135,16 +141,44 @@ import Swal from 'sweetalert2';
 
 const authStore = useAuthStore();
 const router = useRouter();
+const isRedirecting = ref(false);
 
 const handleSubscription = async (planName, price) => {
-  // On stocke les infos du plan pour les récupérer après l'inscription
-  localStorage.setItem('pending_plan', JSON.stringify({ name: planName, price: price }));
-  
-  // Redirection vers l'inscription avec le nom du plan en paramètre
-  router.push({ 
-    path: '/register', 
-    query: { plan: planName } 
-  });
+  if (authStore.isAuthenticated) {
+    // ── CAS 1 : DÉJÀ CONNECTÉ (UPGRADE) ──
+    try {
+      isRedirecting.value = true;
+      Swal.fire({
+        title: 'Préparation du paiement...',
+        html: 'Nous vous redirigeons vers Stripe en toute sécurité.',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+      });
+
+      const response = await api.post('/Payments/create-checkout-session', {
+        planName: planName,
+        price: price
+      });
+
+      if (response.data && response.data.url) {
+        window.location.href = response.data.url;
+      } else {
+        throw new Error('URL de redirection Stripe introuvable');
+      }
+    } catch (err) {
+      console.error('Erreur Stripe :', err);
+      Swal.fire('Erreur', 'Impossible d\'initier le paiement. Veuillez réessayer.', 'error');
+    } finally {
+      isRedirecting.value = false;
+    }
+  } else {
+    // ── CAS 2 : NOUVEL UTILISATEUR ──
+    localStorage.setItem('pending_plan', JSON.stringify({ name: planName, price: price }));
+    router.push({ 
+      path: '/register', 
+      query: { plan: planName } 
+    });
+  }
 };
 </script>
 
@@ -246,24 +280,39 @@ const handleSubscription = async (planName, price) => {
 
 
 .btn-amber-premium {
-  padding: 16px; background: #eab308; color: #fff; border: none;
+  padding: 16px; background: #eab308; color: #0f172a; border: none;
   border-radius: 18px; font-weight: 800; text-decoration: none; transition: 0.3s;
   text-align: center; font-size: 15px;
 }
-.btn-amber-premium:hover { background: #0f172a; transform: scale(1.02); }
+.btn-amber-premium:hover { background: #0f172a; color: #fff; transform: scale(1.02); }
 
-.btn-outline-amber-premium {
-  padding: 16px; background: white; color: #eab308; border: 2px solid #eab308;
+.btn-outline-starter {
+  padding: 16px; background: transparent; color: #64748b; border: 2px solid #e2e8f0;
   border-radius: 18px; font-weight: 800; text-decoration: none; transition: 0.3s;
   text-align: center;
 }
-.btn-outline-amber-premium:hover { background: #fffbeb; }
+.btn-outline-starter:hover { border-color: #0f172a; color: #0f172a; background: #f8fafc; }
+
+.plan-badge {
+  display: inline-block; padding: 4px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+}
+.starter-badge { background: #f1f5f9; color: #64748b; }
+.business-badge { background: #fffbeb; color: #b45309; }
+.enterprise-badge { background: #e0f2fe; color: #0369a1; }
+
+.premium-highlight {
+  background: rgba(251, 191, 36, 0.05);
+  padding: 8px 12px;
+  border-radius: 12px;
+  margin-left: -12px;
+  margin-right: -12px;
+}
 
 .btn-navy-premium {
   padding: 16px; background: #0f172a; color: #fff; border: none;
   border-radius: 18px; font-weight: 800; transition: 0.3s;
 }
-.btn-navy-premium:hover { background: #eab308; }
+.btn-navy-premium:hover { background: #eab308; color: #0f172a; transform: scale(1.02); }
 
 .shadow-amber { box-shadow: 0 15px 30px -5px rgba(234, 179, 8, 0.4); }
 

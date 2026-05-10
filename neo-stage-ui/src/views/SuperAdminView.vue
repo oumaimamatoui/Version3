@@ -129,6 +129,7 @@
                       <tr>
                         <th class="ps-4">Entreprise</th>
                         <th>Contact</th>
+                        <th>Plan</th>
                         <th>Date</th>
                         <th class="text-end pe-4">Actions</th>
                       </tr>
@@ -149,6 +150,11 @@
                           <div class="fw-700" style="font-size:0.85rem">{{ req.nomResponsable }}</div>
                           <div style="font-size:0.7rem;color:#6366f1;font-weight:700">{{ req.emailResponsable }}</div>
                         </td>
+                        <td>
+                          <span class="plan-badge-v2" :class="req.plan === 'EvaluaTech Go' ? 'gold' : 'blue'">
+                            {{ req.plan || 'Starter' }}
+                          </span>
+                        </td>
                         <td><span class="date-chip-pro">{{ formatDate(req.creeLe) }}</span></td>
                         <td class="text-end pe-4">
                           <div class="d-flex justify-content-end gap-2">
@@ -162,7 +168,7 @@
                         </td>
                       </tr>
                       <tr v-if="filteredPendingRequests.length === 0">
-                        <td colspan="4">
+                        <td colspan="5">
                           <div class="empty-state-pro py-5 text-center">
                             <i class="fa-solid fa-inbox fa-2x text-muted mb-3 d-block"></i>
                             <h6 class="fw-800 text-muted">Aucun dossier en attente</h6>
@@ -480,6 +486,7 @@
               <span style="width:36px" class="list-col-label">#</span>
               <span style="width:48px"></span>
               <span class="flex-grow-1 list-col-label">ENTREPRISE / EMAIL</span>
+              <span style="width:130px" class="list-col-label d-none d-lg-block">PLAN</span>
               <span style="width:130px" class="list-col-label d-none d-lg-block">VILLE / INDUSTRIE</span>
               <span style="width:100px" class="list-col-label text-center">STATUT</span>
               <span style="width:90px"  class="list-col-label text-center">SCORE</span>
@@ -507,6 +514,11 @@
                 <div class="flex-grow-1" style="min-width:0">
                   <div class="fw-800 text-truncate" style="font-size:0.85rem">{{ org.nom }}</div>
                   <div class="text-muted text-truncate" style="font-size:0.7rem">{{ org.email || org.emailAdmin || '—' }}</div>
+                </div>
+                <div class="d-none d-lg-flex" style="width:130px;flex-shrink:0;">
+                  <span class="plan-badge-v2" :class="org.plan === 'EvaluaTech Go' ? 'gold' : 'blue'">
+                    {{ org.plan || 'Starter' }}
+                  </span>
                 </div>
                 <div class="d-none d-lg-flex" style="width:130px;flex-shrink:0;gap:6px;flex-wrap:wrap">
                   <span class="t-pill cat-pill">{{ org.ville || org.city || 'N/A' }}</span>
@@ -1100,6 +1112,33 @@ onUnmounted(() => document.removeEventListener('keydown', handleKeyboard));
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+/* PLAN BADGES */
+.plan-badge-v2 {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+}
+.plan-badge-v2.blue {
+  background: #eef2ff;
+  color: #4f46e5;
+  border: 1px solid rgba(79, 70, 229, 0.2);
+}
+.plan-badge-v2.gold {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  box-shadow: 0 0 10px rgba(234, 179, 8, 0.1);
+}
+
+[data-theme="dark"] .plan-badge-v2.blue { background: rgba(79, 70, 229, 0.1); color: #818cf8; }
+[data-theme="dark"] .plan-badge-v2.gold { background: rgba(234, 179, 8, 0.1); color: #fbbf24; }
+
 
 /* ─── ROOT ─────────────────────────────────────────────────── */
 .enigma-master-root { min-height:100vh; background:#f8fafc; font-family:'Plus Jakarta Sans',sans-serif; color:#0f172a; }

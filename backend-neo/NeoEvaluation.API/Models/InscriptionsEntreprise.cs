@@ -17,6 +17,7 @@ public class InscriptionsEntreprise
     public string? MatriculeFiscale { get; set; }
 
     public int Statut { get; set; } = 0;
+    public string Plan { get; set; } = "Starter";
     public DateTime CreeLe { get; set; } = DateTime.UtcNow;
 }
 }

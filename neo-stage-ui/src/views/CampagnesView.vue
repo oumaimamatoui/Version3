@@ -1002,8 +1002,10 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import api from '@/services/api';
 import draggable from 'vuedraggable';
+import Swal from 'sweetalert2';
 
 /* ─── TYPES ─────────────────────────────────────────────────────── */
 const typeDefinitions = [
@@ -1026,6 +1028,7 @@ const themesData = [
 ];
 
 /* ─── ÉTAT GLOBAL ─────────────────────────────────────────────── */
+const router          = useRouter();
 const isStudioMode    = ref(false);
 const loading         = ref(true);
 const currentStep     = ref(1);
@@ -1242,7 +1245,61 @@ const donutSegments = computed(() => {
 });
 
 /* ─── STUDIO CORE ─────────────────────────────────────────────── */
-const enterStudioMode = (campaign = null) => {
+const enterStudioMode = async (campaign = null) => {
+  if (!campaign) {
+    // 0. VÉRIFICATION DES LIMITES (FREEMIUM - 3 Campagnes)
+    try {
+      await api.get('/Usage/can-create-campaign');
+    } catch (limitErr) {
+      if (limitErr.response && limitErr.response.status === 403) {
+        const secondsLeft = limitErr.response.data.retryAfterSeconds || 0;
+        const h = Math.floor(secondsLeft / 3600);
+        const m = Math.floor((secondsLeft % 3600) / 60);
+        const s = secondsLeft % 60;
+        const timeStr = h > 0 ? `${h}h ${m}m ${s}s` : `${m}m ${s}s`;
+
+        Swal.fire({
+          title: '<span style="color:#0f172a">Limite de déploiement atteinte</span>',
+          html: `
+            <div class="p-3 text-center">
+              <i class="fa-solid fa-rocket-launch fa-3x text-amber mb-3 animate__animated animate__pulse animate__infinite"></i>
+              <p style="font-weight: 600; color: #64748b; font-size: 15px;">
+                Le plan Starter est limité à <b>3 architectures</b>. 
+              </p>
+              <div class="my-3 p-3 rounded-4" style="background: #fff1f2; border: 1px solid #fecdd3;">
+                <p class="mb-0 fw-800" style="font-size: 14px; color: #e11d48;">
+                  <i class="fa-solid fa-clock-rotate-left me-2"></i>
+                  Réessayez dans : <span class="badge bg-danger">${timeStr}</span>
+                </p>
+              </div>
+              <div class="my-4 p-3 rounded-4" style="background: #fffbeb; border: 1px solid #fef3c7;">
+                <p class="mb-0" style="font-size: 13px; color: #b45309;">
+                   Passez à <b>EvaluaTech Go</b> pour supprimer ce délai et créer des architectures illimitées.
+                </p>
+              </div>
+            </div>
+          `,
+          showCancelButton: true,
+          confirmButtonText: 'Passer à EvaluaTech Go',
+          cancelButtonText: 'Plus tard',
+          confirmButtonColor: '#eab308',
+          cancelButtonColor: '#f1f5f9',
+          customClass: {
+            popup: 'rounded-5 border-0 shadow-lg',
+            confirmButton: 'rounded-4 fw-bold px-4 py-2 text-dark',
+            cancelButton: 'rounded-4 fw-bold px-4 py-2 text-muted'
+          }
+        }).then((result) => {
+          if (result.isConfirmed) {
+            router.push('/pricing');
+          }
+        });
+        return;
+      }
+      console.error("Usage Check Error:", limitErr);
+    }
+  }
+
   if (campaign) {
     Object.assign(studio.campagne, campaign);
     studio.questionnaire.id        = campaign.questionnaireId;

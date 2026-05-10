@@ -140,6 +140,28 @@
               <span class="sb-lien-texte">{{ t('sidebar.links.overview') }}</span>
             </router-link>
           </div>
+          <!-- Dans le bloc v-if="roleUtilisateur !== 'SuperAdmin' && roleUtilisateur !== 'Candidat'" -->
+
+<!-- Évaluations (Visible pour Évaluateur, RH, Admin) -->
+<template v-if="authStore.hasPermission('view_tests') || authStore.hasPermission('edit_bank')">
+  <div class="sb-groupe">
+    <div class="sb-groupe-label">
+      <span class="point-label" style="background:#F59E0B"></span>Évaluations
+    </div>
+    <router-link to="/campaigns" class="sb-lien">
+      <span class="sb-lien-icone ic-amber"><i class="fa-solid fa-clipboard-list"></i></span>
+      <span class="sb-lien-texte">{{ t('sidebar.links.campaigns') }}</span>
+    </router-link>
+    <router-link v-if="authStore.hasPermission('edit_bank')" to="/questions" class="sb-lien">
+      <span class="sb-lien-icone ic-gold"><i class="fa-solid fa-vault"></i></span>
+      <span class="sb-lien-texte">{{ t('sidebar.links.bank') }}</span>
+    </router-link>
+    <router-link v-if="authStore.hasPermission('edit_bank')" to="/ai-generator" class="sb-lien">
+      <span class="sb-lien-icone ic-violet"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+      <span class="sb-lien-texte">{{ t('sidebar.links.ai') }}</span>
+    </router-link>
+  </div>
+</template>
 
           <!-- Recrutement -->
           <template v-if="authStore.hasPermission('view_can') || authStore.hasPermission('inv_can')">
@@ -473,7 +495,9 @@ const chargerNombres = async () => {
 const basculerSidebar = () => { sidebarActive.value = !sidebarActive.value; };
 const deconnexion     = () => { authStore.logout(); router.push('/login'); };
 
-onMounted(chargerNombres);
+onMounted(() => {
+  chargerNombres();
+});
 </script>
 
 <style scoped>
@@ -1000,4 +1024,5 @@ onMounted(chargerNombres);
 .sb-groupe:nth-child(6) .sb-lien { animation: sb-entree 0.45s var(--ease-out) 0.28s both; }
 @keyframes sb-entree { from{opacity:0;transform:translateX(-12px)} to{opacity:1;transform:translateX(0)} }
 @keyframes sb-haut   { from{opacity:0;transform:translateY(8px)}   to{opacity:1;transform:translateY(0)} }
+
 </style>

@@ -22,6 +22,7 @@ export const superAdminApi = {
   approveRequest: (id) => api.post(`/SuperAdmin/approve/${id}`),
   rejectRequest: (id) => api.post(`/SuperAdmin/reject/${id}`),
   createOrg: (data) => api.post('/SuperAdmin/create-org', data),
+  getOrganizations: () => api.get('/SuperAdmin/organizations'),
   
   // NOUVEAUX : Gestion des Utilisateurs Plateforme
   getPlatformUsers: () => api.get('/SuperAdmin/users'),

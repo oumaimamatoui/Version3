@@ -102,12 +102,16 @@ namespace NeoEvaluation.API.Controllers
 
             // --- CAS CLASSIQUE : ENTREPRISE ---
             // 1. Création de l'Entreprise (Clean)
+            var selectedPlan = reg.Plan ?? "Starter";
             var entreprise = new Entreprise {
                 Id = Guid.NewGuid(),
                 Nom = reg.NomEntreprise,
                 MatriculeFiscale = reg.MatriculeFiscale,
-                AbonnementFin = DateTime.UtcNow.AddYears(1), // 1 an d'essai gratuit
-                Plan = "Gratuit"
+                Plan = selectedPlan,
+                UsageCount = 0,
+                MaxUsageLimit = (selectedPlan.Contains("Business IA") || selectedPlan.Contains("EvaluaTech Go")) ? 999999 : 5,
+                AbonnementFin = (selectedPlan.Contains("Business IA") || selectedPlan.Contains("EvaluaTech Go")) ? DateTime.UtcNow.AddDays(14) : null,
+                LastUsageReset = DateTime.UtcNow
             };
             _context.Entreprises.Add(entreprise);
 

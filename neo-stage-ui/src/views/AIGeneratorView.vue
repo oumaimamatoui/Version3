@@ -133,10 +133,13 @@
 
 <script setup>
 import { ref, reactive } from 'vue';
+import { useRouter } from 'vue-router';
 import axios from 'axios';
-import api from '@/services/api'; // Votre service axios pointant vers le Port 3000
+import Swal from 'sweetalert2';
+import api from '@/services/api';
 
 // --- STATE ---
+const router = useRouter();
 const isGenerating = ref(false);
 const isSaving = ref(false);
 const fileRef = ref(null);
@@ -173,6 +176,48 @@ const startGeneration = async () => {
   generatedQuestions.value = [];
 
   try {
+    // 0. VÉRIFICATION DES LIMITES (FREEMIUM)
+    try {
+      await api.post('/usage/validate-action');
+      window.dispatchEvent(new Event('refresh-usage'));
+    } catch (limitErr) {
+      if (limitErr.response && limitErr.response.status === 403) {
+        Swal.fire({
+          title: '<span style="color:#0f172a">Utilisation temporairement suspendue</span>',
+          html: `
+            <div class="p-3 text-center">
+              <i class="fa-solid fa-hourglass-half fa-3x text-amber mb-3 animate__animated animate__pulse animate__infinite"></i>
+              <p style="font-weight: 600; color: #64748b; font-size: 15px;">
+                Votre accès gratuit a atteint ses limites temporaires intelligentes. 
+                Il sera réactivé automatiquement sous peu.
+              </p>
+              <div class="my-4 p-3 rounded-4" style="background: #fffbeb; border: 1px solid #fef3c7;">
+                <p class="mb-0" style="font-size: 13px; color: #b45309;">
+                  <strong>Astuce :</strong> Passez à <b>EvaluaTech Go</b> pour continuer immédiatement et sans aucune interruption.
+                </p>
+              </div>
+            </div>
+          `,
+          showCancelButton: true,
+          confirmButtonText: 'Passer à EvaluaTech Go',
+          cancelButtonText: 'Attendre la réactivation',
+          confirmButtonColor: '#eab308',
+          cancelButtonColor: '#f1f5f9',
+          customClass: {
+            popup: 'rounded-5 border-0 shadow-lg',
+            confirmButton: 'rounded-4 fw-bold px-4 py-2 text-dark',
+            cancelButton: 'rounded-4 fw-bold px-4 py-2 text-muted'
+          }
+        }).then((result) => {
+          if (result.isConfirmed) {
+            router.push('/pricing');
+          }
+        });
+        return;
+      }
+      throw limitErr;
+    }
+
     const fd = new FormData();
     if (files.value.length > 0) {
       fd.append('file', files.value[0].raw);

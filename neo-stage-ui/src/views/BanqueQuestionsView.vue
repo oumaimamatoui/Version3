@@ -778,6 +778,10 @@
 import { ref, reactive, computed, onMounted } from 'vue';
 import api from '@/services/api';
 import axios from 'axios';
+import Swal from 'sweetalert2';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 
 const AI_BASE = 'http://127.0.0.1:8000';
 
@@ -937,6 +941,75 @@ const previewAI = async () => {
 
 const handleAIGeneration = async () => {
   if (!aiForm.theme || !aiForm.sousTheme) { showToast('Choisissez une catégorie et sous-thème', 'error'); return; }
+
+  // 🛡️ VÉRIFICATION QUOTA (Limite de 2/jour)
+  try {
+    await api.post('/Usage/validate-action');
+  } catch (err) {
+    if (err.response && err.response.status === 403) {
+      showAIModal.value = false;
+      const secondsLeft = err.response.data.retryAfterSeconds || 0;
+      const h = Math.floor(secondsLeft / 3600);
+      const m = Math.floor((secondsLeft % 3600) / 60);
+      const s = secondsLeft % 60;
+      const timeStr = h > 0 ? `${h}h ${m}m ${s}s` : `${m}m ${s}s`;
+
+      Swal.fire({
+        title: '<h2 style="font-size: 2.2rem; font-weight: 500; color: #1e293b; margin-top: 1.5rem;">Limite de génération atteinte</h2>',
+        html: `
+          <div style="padding: 1rem 2rem;">
+            <p style="color: #64748b; font-size: 1.1rem; margin-bottom: 2rem;">Le plan Starter est limité à <b>5 générations</b>.</p>
+            
+            <div style="background-color: #fff1f2; border: 1px solid #fecaca; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; display: flex; align-items: center; justify-content: center; gap: 15px;">
+              <i class="fa-solid fa-rotate-left" style="color: #ef4444; font-size: 1.5rem;"></i>
+              <span style="color: #be123c; font-size: 1.2rem; font-weight: 500;">Réessayez dans :</span>
+              <span style="background-color: #ef4444; color: white; padding: 4px 12px; border-radius: 6px; font-weight: bold; font-size: 1.1rem;">${timeStr}</span>
+            </div>
+
+            <div style="background-color: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
+              <p style="color: #92400e; font-size: 1.05rem; margin: 0; line-height: 1.6;">
+                Passez à <b style="color: #92400e;">EvaluaTech Go</b> pour supprimer ce délai et créer des questions illimitées.
+              </p>
+            </div>
+          </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Passer à EvaluaTech Go',
+        cancelButtonText: 'Plus tard',
+        confirmButtonColor: '#eab308',
+        cancelButtonColor: '#f1f5f9',
+        background: '#fff',
+        width: '600px',
+        customClass: {
+          popup: 'rounded-4 border-0 shadow-lg',
+          confirmButton: 'btn-premium-confirm',
+          cancelButton: 'btn-premium-cancel'
+        },
+        didOpen: () => {
+          const confirmBtn = Swal.getConfirmButton();
+          const cancelBtn = Swal.getCancelButton();
+          if (confirmBtn) {
+            confirmBtn.style.color = '#000';
+            confirmBtn.style.fontWeight = 'bold';
+            confirmBtn.style.padding = '12px 30px';
+            confirmBtn.style.borderRadius = '8px';
+            confirmBtn.style.fontSize = '1.1rem';
+          }
+          if (cancelBtn) {
+            cancelBtn.style.color = '#475569';
+            cancelBtn.style.fontWeight = '500';
+            cancelBtn.style.padding = '12px 30px';
+            cancelBtn.style.borderRadius = '8px';
+            cancelBtn.style.fontSize = '1.1rem';
+            cancelBtn.style.backgroundColor = '#f1f5f9';
+            cancelBtn.style.border = 'none';
+          }
+        }
+      }).then(res => { if (res.isConfirmed) router.push('/pricing'); });
+      return;
+    }
+  }
+
   isAILoading.value = true;
   const t = simulateProgress();
   const token = localStorage.getItem('token');

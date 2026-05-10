@@ -69,8 +69,8 @@ namespace NeoEvaluation.API.Controllers
                 }
             };
 
-            // Ajout de la période d'essai de 14 jours pour le plan Business IA
-            if (request.PlanName.Contains("Business IA", StringComparison.OrdinalIgnoreCase))
+            // Ajout de la période d'essai de 14 jours pour le plan Business IA ou EvaluaTech Go
+            if (request.PlanName.Contains("Business IA", StringComparison.OrdinalIgnoreCase) || request.PlanName.Contains("EvaluaTech Go", StringComparison.OrdinalIgnoreCase))
             {
                 options.SubscriptionData = new SessionSubscriptionDataOptions
                 {
@@ -78,7 +78,15 @@ namespace NeoEvaluation.API.Controllers
                 };
             }
 
-            var service = new SessionService();
+            var secretKey = _configuration["Stripe:SecretKey"];
+            if (string.IsNullOrEmpty(secretKey))
+            {
+                _logger.LogError("Stripe SecretKey is missing in configuration.");
+                return StatusCode(500, "Configuration error: Stripe SecretKey is missing.");
+            }
+
+            var stripeClient = new StripeClient(secretKey);
+            var service = new SessionService(stripeClient);
             Session session = await service.CreateAsync(options);
 
             return Ok(new CheckoutSessionResponse
@@ -131,11 +139,38 @@ namespace NeoEvaluation.API.Controllers
                 {
                     enterprise.Plan = planName;
                     // Mise à jour de la date d'expiration (simplifié)
-                    enterprise.AbonnementFin = DateTime.UtcNow.AddDays(30 + (planName.Contains("Business IA") ? 14 : 0));
+                    var hasTrial = planName.Contains("Business IA") || planName.Contains("EvaluaTech Go");
+                    enterprise.AbonnementFin = DateTime.UtcNow.AddDays(30 + (hasTrial ? 14 : 0));
                     
+                    // Reset des limites lors du passage au payant
+                    enterprise.UsageCount = 0;
+                    enterprise.IsUsageSuspended = false;
                     await _context.SaveChangesAsync();
                     _logger.LogInformation($"Abonnement activé pour l'entreprise {enterpriseId} : {planName}");
                 }
+            }
+        }
+
+        [HttpGet("confirm-session")]
+        public async Task<IActionResult> ConfirmSession(string session_id)
+        {
+            var secretKey = _configuration["Stripe:SecretKey"];
+            var stripeClient = new StripeClient(secretKey);
+            var service = new SessionService(stripeClient);
+            
+            try 
+            {
+                var session = await service.GetAsync(session_id);
+                if (session.PaymentStatus == "paid")
+                {
+                    await HandleSubscriptionSuccess(session);
+                    return Ok(new { message = "Plan mis à jour avec succès" });
+                }
+                return BadRequest("Le paiement n'a pas été confirmé.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
             }
         }
     }

@@ -221,6 +221,15 @@ namespace NeoEvaluation.API.Controllers
             return Ok(list);
         }
 
+        [HttpGet("organizations")]
+        public async Task<ActionResult> GetOrganizations()
+        {
+            var list = await _context.Entreprises
+                .OrderByDescending(e => e.CreeLe)
+                .ToListAsync();
+            return Ok(list);
+        }
+
         [HttpPost("approve/{id}")]
         public async Task<IActionResult> Approve(Guid id)
         {

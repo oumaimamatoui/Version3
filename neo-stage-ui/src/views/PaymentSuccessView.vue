@@ -21,12 +21,21 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
+import api from '@/services/api';
 
 const route = useRoute();
 const planName = ref('Business IA');
 
-onMounted(() => {
-  // Optionnel: On pourrait appeler le backend ici pour forcer un refresh du profil utilisateur
+onMounted(async () => {
+  const sessionId = route.query.session_id;
+  if (sessionId) {
+    try {
+      await api.get(`/Payments/confirm-session?session_id=${sessionId}`);
+      console.log('Plan mis à jour !');
+    } catch (err) {
+      console.error('Erreur de confirmation:', err);
+    }
+  }
 });
 </script>
 

@@ -100,7 +100,6 @@ namespace NeoEvaluation.API.Controllers
             return Ok(new { message = "Mot de passe mis à jour avec succès." });
         }
 
-        // FIX ERREUR 500 : Approche manuelle pour récupérer l'entreprise
         [HttpGet("branding")]
         public async Task<IActionResult> GetBranding()
         {
@@ -117,11 +116,44 @@ namespace NeoEvaluation.API.Controllers
                     Color = entreprise?.CouleurSignature ?? "#6366f1",
                     LogoUrl = entreprise?.LogoUrl,
                     IsGoogleConnected = !string.IsNullOrEmpty(entreprise?.GmailRefreshToken),
-                    ConnectedEmail = entreprise?.GmailEmail
+                    ConnectedEmail = entreprise?.GmailEmail,
+                    Plan = entreprise?.Plan ?? "Starter",
+                    UsageCount = entreprise?.UsageCount ?? 0,
+                    MaxUsageLimit = entreprise?.MaxUsageLimit ?? 5,
+                    IsUsageSuspended = entreprise?.IsUsageSuspended ?? false
                 });
             } catch {
                 return Ok(new BrandingDto { CompanyName = "NeoEvaluation", Color = "#6366f1" });
             }
+        }
+
+        [HttpGet("usage-status")]
+        public async Task<IActionResult> GetUsageStatus()
+        {
+            var userId = GetCurrentUserId();
+            var user = await _context.Utilisateurs.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
+            
+            if (user == null || user.EntrepriseId == null) return BadRequest();
+
+            var entreprise = await _context.Entreprises.FindAsync(user.EntrepriseId);
+            if (entreprise == null) return NotFound();
+
+            // Auto-reset check
+            if (entreprise.LastUsageReset.Date < DateTime.UtcNow.Date)
+            {
+                entreprise.UsageCount = 0;
+                entreprise.LastUsageReset = DateTime.UtcNow;
+                entreprise.IsUsageSuspended = false;
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok(new {
+                plan = entreprise.Plan,
+                usageCount = entreprise.UsageCount,
+                maxUsageLimit = entreprise.MaxUsageLimit,
+                isUsageSuspended = entreprise.IsUsageSuspended,
+                remaining = Math.Max(0, entreprise.MaxUsageLimit - entreprise.UsageCount)
+            });
         }
 
         [HttpPost("update-branding")]

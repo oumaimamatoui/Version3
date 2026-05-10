@@ -18,6 +18,9 @@ EvaluaTech AI Engine v9.0 — CODE COMPLET CORRIGÉ A→Z
 """
 
 import os, io, json, logging, time, asyncio, hashlib, random, re
+from dotenv import load_dotenv
+load_dotenv()
+
 from contextlib import asynccontextmanager
 from collections import deque, OrderedDict
 from concurrent.futures import ThreadPoolExecutor

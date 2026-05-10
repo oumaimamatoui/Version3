@@ -2,19 +2,72 @@
   <nav class="barre-top" role="banner">
     <div class="barre-top-interieur">
 
-      <!-- ── GAUCHE : RECHERCHE ── -->
-      <div class="zone-recherche">
-        <div class="recherche-wrap">
-          <Search :size="14" class="recherche-ico" />
-          <input
-            ref="champRecherche"
-            type="text"
-            :placeholder="t('search')"
-            class="champ-recherche"
-            @focus="rechercheFocalisee = true"
-            @blur="rechercheFocalisee = false"
-          />
-          <kbd class="recherche-raccourci">⌘K</kbd>
+      <!-- ── GAUCHE : RECHERCHE & PLAN ── -->
+      <div class="zone-gauche">
+        <div class="zone-recherche">
+          <div class="recherche-wrap">
+            <Search :size="14" class="recherche-ico" />
+            <input
+              ref="champRecherche"
+              type="text"
+              :placeholder="t('search')"
+              class="champ-recherche"
+              @focus="rechercheFocalisee = true"
+              @blur="rechercheFocalisee = false"
+            />
+            <kbd class="recherche-raccourci">⌘K</kbd>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════
+             PLAN PICKER (CHATGPT STYLE)
+        ══════════════════════════════════════════════ -->
+        <div v-if="authStore.role === 'AdminEntreprise'" class="menu-deroulant plan-picker-wrap" ref="menuDeroulantPlan">
+          <button class="btn-plan-picker" @click="basculerMenu('plan')">
+            <span class="plan-nom-actif">
+              EvaluaTech <span :class="isStarter ? 'text-starter' : 'text-go'">{{ isStarter ? 'Starter' : 'Go' }}</span>
+            </span>
+            <ChevronDown :size="14" class="chevron" :class="{ pivote: menuOuvert === 'plan' }" />
+          </button>
+
+          <Transition name="menu-fondu">
+            <div v-if="menuOuvert === 'plan'" class="panneau-deroulant panneau-plan">
+              <!-- Option Go (Premium) -->
+              <div class="plan-option" :class="{ 'plan-option--active': !isStarter }">
+                <div class="plan-opt-header">
+                  <div class="plan-opt-title">
+                    <Sparkles :size="14" class="ico-premium" />
+                    EvaluaTech Go
+                  </div>
+                  <Check v-if="!isStarter" :size="14" class="ico-check" />
+                  <button v-else @click="router.push('/pricing')" class="btn-upgrade-mini">Passer au Pro</button>
+                </div>
+                <div class="plan-opt-desc">Utilisation continue, IA illimitée et rapports avancés.</div>
+              </div>
+
+              <div class="separateur-plan"></div>
+
+              <!-- Option Starter (Gratuit) -->
+              <div class="plan-option" :class="{ 'plan-option--active': isStarter }">
+                <div class="plan-opt-header">
+                  <div class="plan-opt-title">
+                    <Zap :size="14" class="ico-free" />
+                    Starter
+                  </div>
+                  <Check v-if="isStarter" :size="14" class="ico-check" />
+                </div>
+                <div class="plan-opt-desc">Idéal pour découvrir les bases (limite de 5 actions/jour).</div>
+                
+                <!-- Indicateur Usage (Starter Only) -->
+                <div v-if="isStarter && usageData" class="plan-usage-mini">
+                  <div class="usage-bar-bg">
+                    <div class="usage-bar-fill" :style="{ width: (usageData.current / usageData.max * 100) + '%' }"></div>
+                  </div>
+                  <div class="usage-text">{{ usageData.current }} / {{ usageData.max }} générations</div>
+                </div>
+              </div>
+            </div>
+          </Transition>
         </div>
       </div>
 
@@ -199,6 +252,7 @@ import api from '@/services/api';
 import {
   Search, Sun, Moon, Globe, Bell, BellOff, ChevronDown,
   Check, UserCircle, Settings, LogOut, Shield,
+  Sparkles, Zap
 } from 'lucide-vue-next';
 
 // ── Importation des helpers i18n (ajustez le chemin selon votre projet) ──
@@ -225,6 +279,28 @@ const champRecherche     = ref(null);
 const rechercheFocalisee = ref(false);
 const menuOuvert         = ref(null);
 const estSombre          = ref(false);
+const isStarter          = computed(() => authStore.user?.plan === 'Starter' || !authStore.user?.plan);
+const usageData          = ref(null);
+
+const fetchUsage = async () => {
+  if (authStore.role === 'AdminEntreprise') {
+    try {
+      const res = await api.get('/Usage/status');
+      usageData.value = res.data;
+    } catch (err) {
+      console.error('Navbar Usage Error:', err);
+    }
+  }
+};
+
+onMounted(() => {
+  fetchUsage();
+  window.addEventListener('refresh-usage', fetchUsage);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('refresh-usage', fetchUsage);
+});
 
 // ════════════════════════════════════════════════════════════
 //  LANGUE — Système Super Admin
@@ -438,10 +514,8 @@ onUnmounted(() => {
   gap: 16px;
 }
 
-/* ════════════════════════════════
-   RECHERCHE
-════════════════════════════════ */
-.zone-recherche { flex: 1; max-width: 420px; }
+.zone-gauche { display: flex; align-items: center; gap: 20px; flex: 1; }
+.zone-recherche { width: 320px; }
 .recherche-wrap { position: relative; display: flex; align-items: center; }
 .recherche-ico  { position: absolute; left: 13px; color: #9ca3af; pointer-events: none; flex-shrink: 0; }
 
@@ -954,4 +1028,113 @@ onUnmounted(() => {
 .echange-icone-leave-active { transition: all 0.2s ease; }
 .echange-icone-enter-from,
 .echange-icone-leave-to     { opacity: 0; transform: scale(0.6) rotate(30deg); }
+/* ════════════════════════════════
+   PLAN PICKER (CHATGPT STYLE)
+════════════════════════════════ */
+.btn-plan-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-plan-picker:hover {
+  background: #f6f8fa;
+  border-color: #e2e8f0;
+}
+[data-theme="dark"] .btn-plan-picker:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.plan-nom-actif {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+[data-theme="dark"] .plan-nom-actif { color: #f0f6fc; }
+.text-starter { color: #94a3b8; }
+.text-go { color: #d97706; }
+
+.panneau-plan {
+  width: 320px;
+  padding: 8px;
+}
+.plan-option {
+  padding: 12px;
+  border-radius: 10px;
+  transition: background 0.2s;
+}
+.plan-option--active { background: rgba(246, 248, 250, 0.5); }
+[data-theme="dark"] .plan-option--active { background: rgba(255, 255, 255, 0.03); }
+
+.plan-opt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.plan-opt-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0d1117;
+}
+[data-theme="dark"] .plan-opt-title { color: #f0f6fc; }
+.plan-opt-desc {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.ico-premium { color: #d97706; }
+.ico-free { color: #94a3b8; }
+.ico-check { color: #10b981; }
+
+.btn-upgrade-mini {
+  padding: 4px 10px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #0f172a;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-upgrade-mini:hover {
+  background: #f9fafb;
+  border-color: #0f172a;
+}
+[data-theme="dark"] .btn-upgrade-mini {
+  background: #1c2331;
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #f0f6fc;
+}
+
+.separateur-plan {
+  height: 1px;
+  background: #edf0f4;
+  margin: 8px 0;
+}
+[data-theme="dark"] .separateur-plan { background: rgba(255, 255, 255, 0.06); }
+
+.plan-usage-mini {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed #e2e8f0;
+}
+[data-theme="dark"] .plan-usage-mini { border-color: rgba(255, 255, 255, 0.1); }
+
+.usage-bar-bg { height: 4px; background: #f1f5f9; border-radius: 4px; overflow: hidden; margin-bottom: 4px; }
+[data-theme="dark"] .usage-bar-bg { background: rgba(255, 255, 255, 0.1); }
+.usage-bar-fill { height: 100%; background: #eab308; border-radius: 4px; transition: width 0.3s; }
+.usage-text { font-size: 10px; color: #64748b; font-weight: 700; }
+
 </style>

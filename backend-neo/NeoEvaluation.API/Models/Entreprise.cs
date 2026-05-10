@@ -14,10 +14,16 @@ namespace NeoEvaluation.API.Models
         public string Nom { get; set; } = string.Empty;
 
         public string? Secteur { get; set; }
-        public string Plan { get; set; } = "Gratuit";
+        public string Plan { get; set; } = "Starter"; // Changé de "Gratuit" à "Starter"
         public DateTime? AbonnementFin { get; set; }
         public string Langue { get; set; } = "fr";
         public DateTime CreeLe { get; set; } = DateTime.UtcNow;
+
+        // --- CHAMPS POUR LE MODÈLE FREEMIUM (LIMITES INTELLIGENTES) ---
+        public int UsageCount { get; set; } = 0;
+        public int MaxUsageLimit { get; set; } = 5; // Limite par défaut pour Starter
+        public DateTime LastUsageReset { get; set; } = DateTime.UtcNow;
+        public bool IsUsageSuspended { get; set; } = false;
 
         // Champs existants conservés (pas dans le diagramme mais utiles)
         public string? MatriculeFiscale { get; set; }
