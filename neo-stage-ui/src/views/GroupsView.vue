@@ -1,7 +1,6 @@
 <template>
   <div class="enigma-master-root d-flex overflow-hidden" @mousemove="handleParallax">
 
-    <!-- BACKGROUND -->
     <div class="cyber-engine-bg">
       <div class="bg-vignette"></div>
       <div class="glow-orb orb-amber" :style="orbStyle(0.04)"></div>
@@ -21,16 +20,18 @@
           <header class="d-flex justify-content-between align-items-end mb-5 flex-wrap gap-3">
             <div>
               <div class="breadcrumb-pro mb-2">
-                <span class="root">Administration</span>
+                <span class="root">{{ t('groupeInvite.breadcrumb') }}</span>
                 <i class="fa-solid fa-chevron-right mx-2 separator"></i>
-                <span class="current">Terminal d'Invitations</span>
+                <span class="current">{{ t('groupeInvite.titleHighlight') }}</span>
               </div>
-              <h2 class="premium-title">Gestion des <span class="gradient-text">Invitations</span></h2>
-              <p class="page-subtitle">Déployez vos campagnes d'évaluation et suivez l'engagement des talents.</p>
+              <h2 class="premium-title">
+                {{ t('groupeInvite.title') }}
+                <span class="gradient-text">{{ t('groupeInvite.titleHighlight') }}</span>
+              </h2>
+              <p class="page-subtitle">{{ t('groupeInvite.subtitle') }}</p>
             </div>
             <div class="d-flex gap-3 align-items-center flex-wrap">
-              <!-- DARK / LIGHT TOGGLE -->
-              <button class="btn-theme-toggle" @click="toggleTheme" :title="isDark ? 'Mode clair' : 'Mode sombre'">
+              <button class="btn-theme-toggle" @click="toggleTheme" :title="isDark ? t('theme.light') : t('theme.dark')">
                 <i :class="isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
               </button>
               <div class="stats-card-mini">
@@ -39,7 +40,7 @@
                 </div>
                 <div class="text-start">
                   <div class="stat-val">{{ emailList.length }}</div>
-                  <div class="stat-label">Candidats en attente</div>
+                  <div class="stat-label">{{ t('groupeInvite.pendingCandidates') }}</div>
                 </div>
               </div>
             </div>
@@ -52,7 +53,7 @@
                 <i class="fa-solid" :class="statusType === 'success' ? 'fa-check' : 'fa-exclamation-triangle'"></i>
               </div>
               <div class="t-body">
-                <strong>{{ statusType === 'success' ? 'SUCCÈS' : 'ATTENTION' }}</strong>
+                <strong>{{ statusType === 'success' ? t('groupeInvite.toastSuccess') : t('groupeInvite.toastWarning') }}</strong>
                 <p class="m-0 small">{{ statusMsg }}</p>
               </div>
             </div>
@@ -67,22 +68,22 @@
                 <div class="pane-header-v2 mb-5">
                   <div class="icon-box-v2 amber"><i class="fa-solid fa-layer-group"></i></div>
                   <div>
-                    <h4 class="fw-900 m-0">Assignation à une Campagne</h4>
-                    <p class="text-muted m-0 small">Sélectionnez le flux d'évaluation pour ce groupe.</p>
+                    <h4 class="fw-900 m-0">{{ t('groupeInvite.campaignSection') }}</h4>
+                    <p class="text-muted m-0 small">{{ t('groupeInvite.campaignSubtitle') }}</p>
                   </div>
-                  <span class="section-tag-mini ms-auto">Requis</span>
+                  <span class="section-tag-mini ms-auto">{{ t('required') }}</span>
                 </div>
                 <div class="enigma-input-wrap">
-                  <label>CAMPAGNE ACTIVE</label>
+                  <label>{{ t('groupeInvite.campaignLabel') }}</label>
                   <div class="theme-select-wrapper d-flex gap-3">
                     <div class="position-relative flex-grow-1">
                       <i class="fa-solid fa-layer-group theme-select-icon"></i>
                       <select v-model="selectedCampagneId" class="enigma-field theme-select">
-                        <option value="">Sélectionner une campagne active...</option>
+                        <option value="">{{ t('groupeInvite.campaignPlaceholder') }}</option>
                         <option v-for="c in campagnes" :key="c.id" :value="c.id">{{ c.nom }}</option>
                       </select>
                     </div>
-                    <button class="btn-enigma-primary" @click="router.push('/campaigns')" title="Créer une campagne" style="padding:0 20px;border-radius:16px;">
+                    <button class="btn-enigma-primary" @click="router.push('/campaigns')" :title="t('groupeInvite.createCampaign')" style="padding:0 20px;border-radius:16px;">
                       <div class="btn-content"><i class="fa-solid fa-plus"></i></div>
                       <div class="btn-glow"></div>
                     </button>
@@ -95,39 +96,39 @@
                 <div class="pane-header-v2 mb-5">
                   <div class="icon-box-v2 amber"><i class="fa-solid fa-user-plus"></i></div>
                   <div>
-                    <h4 class="fw-900 m-0">Méthode d'importation</h4>
-                    <p class="text-muted m-0 small">Choisissez votre mode d'injection de candidats.</p>
+                    <h4 class="fw-900 m-0">{{ t('groupeInvite.importSection') }}</h4>
+                    <p class="text-muted m-0 small">{{ t('groupeInvite.importSubtitle') }}</p>
                   </div>
                 </div>
 
                 <!-- TABS -->
                 <div class="premium-tabs mb-4">
                   <button @click="activeTab = 'unique'" :class="{ active: activeTab === 'unique' }">
-                    <i class="fa-solid fa-user-plus me-2"></i>Unique
+                    <i class="fa-solid fa-user-plus me-2"></i>{{ t('groupeInvite.tabUnique') }}
                   </button>
                   <button @click="activeTab = 'multiple'" :class="{ active: activeTab === 'multiple' }">
-                    <i class="fa-solid fa-list-check me-2"></i>Bulk Import
+                    <i class="fa-solid fa-list-check me-2"></i>{{ t('groupeInvite.tabBulk') }}
                   </button>
                   <button @click="activeTab = 'csv'" :class="{ active: activeTab === 'csv' }">
-                    <i class="fa-solid fa-file-csv me-2"></i>Fichier CSV
+                    <i class="fa-solid fa-file-csv me-2"></i>{{ t('groupeInvite.tabCsv') }}
                   </button>
                 </div>
 
                 <!-- UNIQUE -->
                 <div v-if="activeTab === 'unique'" class="fade-in-quick">
                   <div class="enigma-input-wrap">
-                    <label>ADRESSE EMAIL</label>
+                    <label>{{ t('groupeInvite.emailLabel') }}</label>
                     <div class="d-flex gap-3">
                       <input
                         type="email"
                         v-model="currentEmail"
                         @keyup.enter="addEmail"
-                        placeholder="nom@entreprise.com"
+                        :placeholder="t('groupeInvite.emailPlaceholder')"
                         class="enigma-field"
                         style="flex:1"
                       >
                       <button @click="addEmail" class="btn-enigma-primary" style="padding:0 28px;border-radius:16px;">
-                        <div class="btn-content">Ajouter</div>
+                        <div class="btn-content">{{ t('groupeInvite.addBtn') }}</div>
                         <div class="btn-glow"></div>
                       </button>
                     </div>
@@ -137,17 +138,17 @@
                 <!-- BULK -->
                 <div v-if="activeTab === 'multiple'" class="fade-in-quick">
                   <div class="enigma-input-wrap">
-                    <label>EMAILS EN MASSE</label>
+                    <label>{{ t('groupeInvite.bulkLabel') }}</label>
                     <textarea
                       v-model="bulkEmails"
                       class="enigma-field"
                       rows="4"
-                      placeholder="Collez ici vos emails (séparés par virgule, espace ou ligne)..."
+                      :placeholder="t('groupeInvite.bulkPlaceholder')"
                     ></textarea>
                   </div>
                   <button @click="processBulkEmails" class="btn-enigma-primary mt-3 w-100" style="border-radius:16px;padding:14px;">
                     <div class="btn-content justify-content-center">
-                      <i class="fa-solid fa-bolt me-2"></i>Analyser &amp; Injecter
+                      <i class="fa-solid fa-bolt me-2"></i>{{ t('groupeInvite.bulkProcess') }}
                     </div>
                     <div class="btn-glow"></div>
                   </button>
@@ -159,20 +160,20 @@
                     <div class="upload-icon-wrap">
                       <i class="fa-solid fa-cloud-arrow-up"></i>
                     </div>
-                    <h5 class="fw-800 mt-3 mb-1">Glissez votre fichier CSV ici</h5>
-                    <p class="text-muted small m-0">Format accepté : .csv contenant une colonne d'emails</p>
+                    <h5 class="fw-800 mt-3 mb-1">{{ t('groupeInvite.csvTitle') }}</h5>
+                    <p class="text-muted small m-0">{{ t('groupeInvite.csvSubtitle') }}</p>
                     <input type="file" class="d-none" ref="fileInput" accept=".csv" @change="handleFileUpload">
                   </div>
                 </div>
 
-                <!-- PRÉVISUALISATION LISTE -->
+                <!-- LISTE EMAILS -->
                 <div v-if="emailList.length > 0" class="mt-5 fade-in">
                   <div class="d-flex justify-content-between align-items-center mb-3">
                     <h6 class="fw-900 m-0">
                       <i class="fa-solid fa-clipboard-list text-amber me-2"></i>
-                      File d'attente ({{ emailList.length }})
+                      {{ t('groupeInvite.queueTitle') }} ({{ emailList.length }})
                     </h6>
-                    <button @click="emailList = []; currentPage = 1" class="btn-clear-all">Effacer tout</button>
+                    <button @click="emailList = []; currentPage = 1" class="btn-clear-all">{{ t('reset') }}</button>
                   </div>
                   <div class="pills-grid">
                     <span v-for="(mail, idx) in paginatedEmails" :key="idx" class="premium-pill">
@@ -181,53 +182,21 @@
                     </span>
                   </div>
 
-                  <!-- PAGINATION -->
                   <div v-if="totalPages > 1" class="pagination-bar mt-4">
-                    <button
-                      class="page-btn"
-                      @click="currentPage = 1"
-                      :disabled="currentPage === 1"
-                      title="Première page"
-                    ><i class="fa-solid fa-angles-left"></i></button>
-                    <button
-                      class="page-btn"
-                      @click="currentPage--"
-                      :disabled="currentPage === 1"
-                      title="Page précédente"
-                    ><i class="fa-solid fa-angle-left"></i></button>
-
+                    <button class="page-btn" @click="currentPage = 1" :disabled="currentPage === 1"><i class="fa-solid fa-angles-left"></i></button>
+                    <button class="page-btn" @click="currentPage--" :disabled="currentPage === 1"><i class="fa-solid fa-angle-left"></i></button>
                     <template v-for="page in visiblePages" :key="page">
                       <span v-if="page === '...'" class="page-ellipsis">…</span>
-                      <button
-                        v-else
-                        class="page-btn"
-                        :class="{ active: currentPage === page }"
-                        @click="currentPage = page"
-                      >{{ page }}</button>
+                      <button v-else class="page-btn" :class="{ active: currentPage === page }" @click="currentPage = page">{{ page }}</button>
                     </template>
-
-                    <button
-                      class="page-btn"
-                      @click="currentPage++"
-                      :disabled="currentPage === totalPages"
-                      title="Page suivante"
-                    ><i class="fa-solid fa-angle-right"></i></button>
-                    <button
-                      class="page-btn"
-                      @click="currentPage = totalPages"
-                      :disabled="currentPage === totalPages"
-                      title="Dernière page"
-                    ><i class="fa-solid fa-angles-right"></i></button>
-
-                    <span class="page-info">
-                      Page {{ currentPage }} / {{ totalPages }}
-                      <span class="text-muted ms-2">({{ emailList.length }} emails)</span>
-                    </span>
+                    <button class="page-btn" @click="currentPage++" :disabled="currentPage === totalPages"><i class="fa-solid fa-angle-right"></i></button>
+                    <button class="page-btn" @click="currentPage = totalPages" :disabled="currentPage === totalPages"><i class="fa-solid fa-angles-right"></i></button>
+                    <span class="page-info">Page {{ currentPage }} / {{ totalPages }} <span class="text-muted ms-2">({{ emailList.length }} emails)</span></span>
                   </div>
                 </div>
               </section>
 
-              <!-- BOUTON D'ACTION -->
+              <!-- BOUTON DEPLOY -->
               <div class="action-footer mt-2 text-end">
                 <button
                   @click="deployInvitations"
@@ -238,10 +207,10 @@
                   <div class="btn-content">
                     <span v-if="isLoading" class="d-flex align-items-center gap-2">
                       <div class="spinner-border spinner-border-sm" role="status"></div>
-                      ENVOI EN COURS...
+                      {{ t('groupeInvite.deploying') }}
                     </span>
                     <span v-else class="d-flex align-items-center gap-2">
-                      EXPÉDIER LES INVITATIONS <i class="fa-solid fa-paper-plane ms-2"></i>
+                      {{ t('groupeInvite.deployBtn') }} <i class="fa-solid fa-paper-plane ms-2"></i>
                     </span>
                   </div>
                   <div class="btn-glow"></div>
@@ -249,76 +218,76 @@
               </div>
             </div>
 
-            <!-- ═══ SIDEBAR INFO ═══ -->
+            <!-- ═══ SIDEBAR HUD ═══ -->
             <div class="col-lg-4">
               <aside :class="['sticky-info', { 'is-scrolled': isScrolled }]">
                 <div class="analytics-hub-glass">
                   <div class="hub-header-v2 mb-4">
-                    <span class="hub-label">PROTOCOLE</span>
-                    <h4 class="hub-title-v2">Déploiement Sécurisé</h4>
+                    <span class="hub-label">{{ t('groupeInvite.protocol') }}</span>
+                    <h4 class="hub-title-v2">{{ t('groupeInvite.securedDeploy') }}</h4>
                     <div class="hub-status-box cl-success mt-2">
-                      <span class="pulse-dot"></span> SYSTÈME ACTIF
+                      <span class="pulse-dot"></span> {{ t('groupeInvite.systemActive') }}
                     </div>
                   </div>
 
                   <div class="kpi-bento-grid mb-4">
                     <div class="bento-item">
                       <span class="v">{{ emailList.length }}</span>
-                      <span class="l">EMAILS</span>
+                      <span class="l">{{ t('groupeInvite.emailsKpi') }}</span>
                     </div>
                     <div class="bento-item highlight">
                       <span class="v">{{ selectedCampagneId ? '1' : '0' }}</span>
-                      <span class="l">CAMPAGNE</span>
+                      <span class="l">{{ t('groupeInvite.campaignKpi') }}</span>
                     </div>
                     <div class="bento-item">
                       <span class="v">{{ campagnes.length }}</span>
-                      <span class="l">DISPONIBLES</span>
+                      <span class="l">{{ t('groupeInvite.availableKpi') }}</span>
                     </div>
                     <div class="bento-item">
                       <span class="v">{{ isLoading ? '...' : '✓' }}</span>
-                      <span class="l">STATUT</span>
+                      <span class="l">{{ t('groupeInvite.statusKpi') }}</span>
                     </div>
                   </div>
 
                   <div class="readiness-checklist">
-                    <div class="checklist-label mb-2">CHECKLIST DE DÉPLOIEMENT</div>
+                    <div class="checklist-label mb-2">{{ t('groupeInvite.checklistTitle') }}</div>
                     <div class="check-item" :class="{ passed: !!selectedCampagneId }">
                       <i :class="selectedCampagneId ? 'fa-solid fa-check-circle text-success' : 'fa-regular fa-circle text-muted'"></i>
-                      <span>Campagne sélectionnée</span>
+                      <span>{{ t('groupeInvite.checkCampaign') }}</span>
                     </div>
                     <div class="check-item" :class="{ passed: emailList.length > 0 }">
                       <i :class="emailList.length > 0 ? 'fa-solid fa-check-circle text-success' : 'fa-regular fa-circle text-muted'"></i>
-                      <span>Au moins 1 email ajouté</span>
+                      <span>{{ t('groupeInvite.checkEmail') }}</span>
                     </div>
                     <div class="check-item" :class="{ passed: emailList.length >= 5 }">
                       <i :class="emailList.length >= 5 ? 'fa-solid fa-check-circle text-success' : 'fa-regular fa-circle text-muted'"></i>
-                      <span>5+ candidats ciblés</span>
+                      <span>{{ t('groupeInvite.checkMinFive') }}</span>
                     </div>
                     <div class="check-item passed">
                       <i class="fa-solid fa-check-circle text-success"></i>
-                      <span>Liens uniques cryptés</span>
+                      <span>{{ t('groupeInvite.checkEncrypted') }}</span>
                     </div>
                   </div>
                 </div>
 
                 <!-- GUIDE -->
                 <div class="enigma-card p-4 mt-4">
-                  <div class="hub-label mb-3">PROTOCOLE SÉCURISÉ</div>
+                  <div class="hub-label mb-3">{{ t('groupeInvite.secureProtocol') }}</div>
                   <div class="guide-item">
                     <div class="guide-dot"></div>
-                    <p class="small m-0">Chaque candidat reçoit un <strong>lien unique</strong> crypté.</p>
+                    <p class="small m-0" v-html="t('groupeInvite.guideUnique')"></p>
                   </div>
                   <div class="guide-item mt-3">
                     <div class="guide-dot"></div>
-                    <p class="small m-0">Le <strong>proctoring IA</strong> sera activé par défaut.</p>
+                    <p class="small m-0" v-html="t('groupeInvite.guideProctor')"></p>
                   </div>
                   <div class="guide-item mt-3">
                     <div class="guide-dot"></div>
-                    <p class="small m-0">Les résultats seront agrégés dans votre <strong>tableau de bord</strong>.</p>
+                    <p class="small m-0" v-html="t('groupeInvite.guideDashboard')"></p>
                   </div>
                   <div class="alert-premium mt-4">
                     <i class="fa-solid fa-circle-info text-amber"></i>
-                    <span class="small ms-2">Vérifiez les dates de validité de votre campagne avant envoi.</span>
+                    <span class="small ms-2">{{ t('groupeInvite.alertValidity') }}</span>
                   </div>
                 </div>
 
@@ -326,57 +295,56 @@
                 <div class="tip-card mt-4">
                   <div class="tip-icon"><i class="fa-regular fa-lightbulb"></i></div>
                   <div class="tip-content">
-                    <h6 class="fw-800 mb-1" style="font-size:0.85rem;color:#854d0e;">Astuce Pro</h6>
-                    <p class="m-0 small" style="color:#a16207;">L'import CSV est recommandé pour les listes de plus de 50 candidats.</p>
+                    <h6 class="fw-800 mb-1" style="font-size:0.85rem;color:#854d0e;">{{ t('groupeInvite.tipTitle') }}</h6>
+                    <p class="m-0 small" style="color:#a16207;">{{ t('groupeInvite.tipContent') }}</p>
                   </div>
                 </div>
               </aside>
             </div>
           </div>
 
-          <!-- ═══ HISTORIQUE / TABLEAU INVITATIONS ═══ -->
+          <!-- ═══ HISTORIQUE ═══ -->
           <section class="enigma-card p-5 mt-5">
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
               <div class="pane-header-v2">
                 <div class="icon-box-v2 amber"><i class="fa-solid fa-history"></i></div>
                 <div>
-                  <h4 class="fw-900 m-0">Historique des Invitations</h4>
-                  <p class="text-muted m-0 small">{{ filteredHistory.length }} invitation(s) trouvée(s)</p>
+                  <h4 class="fw-900 m-0">{{ t('groupeInvite.historyTitle') }}</h4>
+                  <p class="text-muted m-0 small">{{ filteredHistory.length }} {{ t('groupeInvite.historyFound') }}</p>
                 </div>
               </div>
               <div class="d-flex gap-2 flex-wrap">
                 <div class="search-inline-box">
                   <i class="fa-solid fa-magnifying-glass"></i>
-                  <input type="text" v-model="historySearch" placeholder="Rechercher un email..." class="search-inline-input">
+                  <input type="text" v-model="historySearch" :placeholder="t('groupeInvite.historySearchPlaceholder')" class="search-inline-input">
                   <button v-if="historySearch" @click="historySearch = ''" class="btn-clear-search"><i class="fa-solid fa-xmark"></i></button>
                 </div>
-                <select v-model="historyStatusFilter" class="enigma-field" style="width:auto;padding:10px 16px;padding-left:16px;">
-                  <option value="">Tous les statuts</option>
-                  <option value="pending">En attente</option>
-                  <option value="sent">Envoyé</option>
-                  <option value="opened">Ouvert</option>
-                  <option value="completed">Complété</option>
+                <select v-model="historyStatusFilter" class="enigma-field" style="width:auto;padding:10px 16px;">
+                  <option value="">{{ t('groupeInvite.historyFilterAll') }}</option>
+                  <option value="pending">{{ t('groupeInvite.statusPending') }}</option>
+                  <option value="sent">{{ t('groupeInvite.statusSent') }}</option>
+                  <option value="opened">{{ t('groupeInvite.statusOpened') }}</option>
+                  <option value="completed">{{ t('groupeInvite.statusCompleted') }}</option>
                 </select>
               </div>
             </div>
 
-            <!-- TABLE -->
             <div class="table-responsive">
               <table class="history-table w-100">
                 <thead>
                   <tr>
-                    <th>EMAIL</th>
-                    <th>CAMPAGNE</th>
-                    <th>DATE D'ENVOI</th>
-                    <th>STATUT</th>
-                    <th class="text-center">ACTIONS</th>
+                    <th>{{ t('groupeInvite.colEmail') }}</th>
+                    <th>{{ t('groupeInvite.colCampaign') }}</th>
+                    <th>{{ t('groupeInvite.colDate') }}</th>
+                    <th>{{ t('groupeInvite.colStatus') }}</th>
+                    <th class="text-center">{{ t('groupeInvite.colActions') }}</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-if="paginatedHistory.length === 0">
                     <td colspan="5" class="text-center py-5 text-muted">
                       <i class="fa-solid fa-inbox fa-2x mb-3 d-block"></i>
-                      Aucun historique disponible.
+                      {{ t('groupeInvite.historyEmpty') }}
                     </td>
                   </tr>
                   <tr v-for="(inv, i) in paginatedHistory" :key="i">
@@ -395,10 +363,10 @@
                       </span>
                     </td>
                     <td class="text-center">
-                      <button class="btn-icon-sm me-1" title="Renvoyer" @click="resendInvitation(inv)">
+                      <button class="btn-icon-sm me-1" :title="t('groupeInvite.historyResend')" @click="resendInvitation(inv)">
                         <i class="fa-solid fa-rotate-right"></i>
                       </button>
-                      <button class="btn-icon-sm danger" title="Supprimer" @click="deleteInvitation(i)">
+                      <button class="btn-icon-sm danger" :title="t('groupeInvite.historyDelete')" @click="deleteInvitation(i)">
                         <i class="fa-solid fa-trash-can"></i>
                       </button>
                     </td>
@@ -407,33 +375,16 @@
               </table>
             </div>
 
-            <!-- PAGINATION HISTORIQUE -->
             <div v-if="totalHistoryPages > 1" class="pagination-bar mt-4">
-              <button class="page-btn" @click="historyPage = 1" :disabled="historyPage === 1">
-                <i class="fa-solid fa-angles-left"></i>
-              </button>
-              <button class="page-btn" @click="historyPage--" :disabled="historyPage === 1">
-                <i class="fa-solid fa-angle-left"></i>
-              </button>
+              <button class="page-btn" @click="historyPage = 1" :disabled="historyPage === 1"><i class="fa-solid fa-angles-left"></i></button>
+              <button class="page-btn" @click="historyPage--" :disabled="historyPage === 1"><i class="fa-solid fa-angle-left"></i></button>
               <template v-for="page in visibleHistoryPages" :key="'h' + page">
                 <span v-if="page === '...'" class="page-ellipsis">…</span>
-                <button
-                  v-else
-                  class="page-btn"
-                  :class="{ active: historyPage === page }"
-                  @click="historyPage = page"
-                >{{ page }}</button>
+                <button v-else class="page-btn" :class="{ active: historyPage === page }" @click="historyPage = page">{{ page }}</button>
               </template>
-              <button class="page-btn" @click="historyPage++" :disabled="historyPage === totalHistoryPages">
-                <i class="fa-solid fa-angle-right"></i>
-              </button>
-              <button class="page-btn" @click="historyPage = totalHistoryPages" :disabled="historyPage === totalHistoryPages">
-                <i class="fa-solid fa-angles-right"></i>
-              </button>
-              <span class="page-info">
-                Page {{ historyPage }} / {{ totalHistoryPages }}
-                <span class="text-muted ms-2">({{ filteredHistory.length }} entrées)</span>
-              </span>
+              <button class="page-btn" @click="historyPage++" :disabled="historyPage === totalHistoryPages"><i class="fa-solid fa-angle-right"></i></button>
+              <button class="page-btn" @click="historyPage = totalHistoryPages" :disabled="historyPage === totalHistoryPages"><i class="fa-solid fa-angles-right"></i></button>
+              <span class="page-info">Page {{ historyPage }} / {{ totalHistoryPages }} <span class="text-muted ms-2">({{ filteredHistory.length }} {{ t('actions') }})</span></span>
             </div>
           </section>
 
@@ -444,16 +395,18 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import api from '@/services/api';
 import { useRouter } from 'vue-router';
 import AppSidebar from '@/components/AppSidebar.vue';
 import AppNavbar from '@/components/AppNavbar.vue';
 
+const { t } = useI18n();
 const router = useRouter();
 const API_URL = '/Invitations';
 
-/* ─── STATE ───────────────────────────────────────────── */
+/* ─── STATE ─────────────────────────────────────── */
 const activeTab          = ref('unique');
 const campagnes          = ref([]);
 const selectedCampagneId = ref('');
@@ -468,28 +421,23 @@ const isScrolled         = ref(false);
 const isDark             = ref(false);
 const mousePos           = { x: 0, y: 0 };
 
-/* ─── PAGINATION EMAILS ───────────────────────────────── */
-const currentPage    = ref(1);
-const itemsPerPage   = ref(20);
+/* ─── PAGINATION EMAILS ─────────────────────────── */
+const currentPage  = ref(1);
+const itemsPerPage = ref(20);
 
 const totalPages = computed(() => Math.ceil(emailList.value.length / itemsPerPage.value));
-
 const paginatedEmails = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value;
   return emailList.value.slice(start, start + itemsPerPage.value);
 });
-
 const visiblePages = computed(() => buildPageRange(currentPage.value, totalPages.value));
 
-/* ─── HISTORIQUE ──────────────────────────────────────── */
+/* ─── HISTORIQUE ────────────────────────────────── */
 const historySearch       = ref('');
 const historyStatusFilter = ref('');
 const historyPage         = ref(1);
 const histPerPage         = 8;
-
-const invitationHistory = ref([
-
-]);
+const invitationHistory   = ref([]);
 
 const filteredHistory = computed(() => {
   let list = [...invitationHistory.value];
@@ -499,31 +447,24 @@ const filteredHistory = computed(() => {
     list = list.filter(i => i.statut === historyStatusFilter.value);
   return list;
 });
-
-const totalHistoryPages = computed(() => Math.ceil(filteredHistory.value.length / histPerPage));
-
-const paginatedHistory = computed(() => {
+const totalHistoryPages  = computed(() => Math.ceil(filteredHistory.value.length / histPerPage));
+const paginatedHistory   = computed(() => {
   const start = (historyPage.value - 1) * histPerPage;
   return filteredHistory.value.slice(start, start + histPerPage);
 });
-
 const visibleHistoryPages = computed(() => buildPageRange(historyPage.value, totalHistoryPages.value));
 
-/* ─── PAGINATION HELPER ───────────────────────────────── */
+/* ─── HELPERS ───────────────────────────────────── */
 function buildPageRange(current, total) {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
   const pages = [];
-  if (current <= 4) {
-    pages.push(1, 2, 3, 4, 5, '...', total);
-  } else if (current >= total - 3) {
-    pages.push(1, '...', total - 4, total - 3, total - 2, total - 1, total);
-  } else {
-    pages.push(1, '...', current - 1, current, current + 1, '...', total);
-  }
+  if (current <= 4)           pages.push(1, 2, 3, 4, 5, '...', total);
+  else if (current >= total - 3) pages.push(1, '...', total - 4, total - 3, total - 2, total - 1, total);
+  else                        pages.push(1, '...', current - 1, current, current + 1, '...', total);
   return pages;
 }
 
-/* ─── EMAIL ACTIONS ───────────────────────────────────── */
+/* ─── EMAIL ACTIONS ─────────────────────────────── */
 const addEmail = () => {
   const mail = currentEmail.value.trim().toLowerCase();
   if (mail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) {
@@ -532,9 +473,8 @@ const addEmail = () => {
       currentPage.value = totalPages.value;
     }
     currentEmail.value = '';
-    statusMsg.value = '';
   } else {
-    showStatus("Format d'email invalide.", 'error');
+    showStatus(t('groupeInvite.invalidEmail'), 'error');
   }
 };
 
@@ -548,7 +488,7 @@ const processBulkEmails = () => {
     }
   });
   bulkEmails.value = '';
-  if (added > 0) showStatus(`${added} email(s) ajouté(s).`, 'success');
+  if (added > 0) showStatus(t('groupeInvite.bulkAdded', { n: added }), 'success');
 };
 
 const handleFileUpload = (event) => {
@@ -560,12 +500,9 @@ const handleFileUpload = (event) => {
     if (found) {
       let added = 0;
       found.forEach(m => {
-        if (!emailList.value.includes(m.toLowerCase())) {
-          emailList.value.push(m.toLowerCase());
-          added++;
-        }
+        if (!emailList.value.includes(m.toLowerCase())) { emailList.value.push(m.toLowerCase()); added++; }
       });
-      showStatus(`CSV : ${added} email(s) importé(s).`, 'success');
+      showStatus(t('groupeInvite.csvImported', { n: added }), 'success');
     }
   };
   reader.readAsText(file);
@@ -573,13 +510,11 @@ const handleFileUpload = (event) => {
 
 const removeEmail = (index) => {
   emailList.value.splice(index, 1);
-  if (currentPage.value > totalPages.value && totalPages.value > 0) {
-    currentPage.value = totalPages.value;
-  }
+  if (currentPage.value > totalPages.value && totalPages.value > 0) currentPage.value = totalPages.value;
 };
 
-const resendInvitation = (inv) => showStatus(`Invitation renvoyée à ${inv.email}`, 'success');
-const deleteInvitation  = (i) => { invitationHistory.value.splice(i, 1); };
+const resendInvitation = (inv) => showStatus(t('groupeInvite.historyResendMsg', { email: inv.email }), 'success');
+const deleteInvitation  = (i)   => { invitationHistory.value.splice(i, 1); };
 
 const showStatus = (msg, type) => {
   statusMsg.value  = msg;
@@ -588,13 +523,13 @@ const showStatus = (msg, type) => {
 };
 
 const getStatusLabel = (s) => ({
-  pending:   'En attente',
-  sent:      'Envoyé',
-  opened:    'Ouvert',
-  completed: 'Complété',
+  pending:   t('groupeInvite.statusPending'),
+  sent:      t('groupeInvite.statusSent'),
+  opened:    t('groupeInvite.statusOpened'),
+  completed: t('groupeInvite.statusCompleted'),
 }[s] ?? s);
 
-/* ─── DEPLOY ──────────────────────────────────────────── */
+/* ─── DEPLOY ────────────────────────────────────── */
 const deployInvitations = async () => {
   isLoading.value = true;
   try {
@@ -607,33 +542,33 @@ const deployInvitations = async () => {
       invitationHistory.value.unshift({
         email,
         campagne: campagneName,
-        date: new Date().toLocaleDateString('fr-FR'),
+        date: new Date().toLocaleDateString(),
         statut: 'sent',
       });
     });
-    showStatus(`${emailList.value.length} invitation(s) expédiée(s) !`, 'success');
+    showStatus(t('groupeInvite.deploySuccess', { n: emailList.value.length }), 'success');
     emailList.value = [];
     selectedCampagneId.value = '';
     currentPage.value = 1;
-  } catch (error) {
-    showStatus("Une erreur est survenue lors de l'envoi.", 'error');
+  } catch {
+    showStatus(t('groupeInvite.deployError'), 'error');
   } finally {
     isLoading.value = false;
   }
 };
 
-/* ─── THEME ───────────────────────────────────────────── */
+/* ─── THEME ─────────────────────────────────────── */
 const toggleTheme = () => {
   isDark.value = !isDark.value;
   document.documentElement.setAttribute('data-theme', isDark.value ? 'dark' : 'light');
 };
 
-/* ─── BACKGROUND PARALLAX ─────────────────────────────── */
+/* ─── PARALLAX ──────────────────────────────────── */
 const orbStyle       = (f) => ({ transform: `translate(${mousePos.x * f * 10}px, ${mousePos.y * f * 10}px)` });
 const handleParallax = (e) => { mousePos.x = (e.clientX - window.innerWidth / 2) / 20; mousePos.y = (e.clientY - window.innerHeight / 2) / 20; };
 const handleScroll   = (e) => { isScrolled.value = e.target.scrollTop > 50; };
 
-/* ─── LIFECYCLE ────────────────────────────────────────── */
+/* ─── LIFECYCLE ─────────────────────────────────── */
 onMounted(async () => {
   try {
     const res = await api.get(`${API_URL}/campagnes`);
@@ -647,6 +582,7 @@ onMounted(async () => {
   }
 });
 </script>
+
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');

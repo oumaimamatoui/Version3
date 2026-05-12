@@ -36,21 +36,23 @@
               </div>
               <div>
                 <div class="breadcrumb-pro mb-1">
-                  <span class="root">NEOSTAGE</span>
+                  <span class="root">{{ $t('dashboard.terminalBar.brand') }}</span>
                   <i class="fa-solid fa-chevron-right mx-2 separator"></i>
                   <span class="current">{{ roleLabel }}</span>
                 </div>
-                <h2 class="premium-title m-0">Tableau de <span class="gradient-text">Bord</span></h2>
+                <h2 class="premium-title m-0">
+                  {{ $t('dashboard.title') }}
+                </h2>
               </div>
             </div>
             <div class="terminal-right d-flex align-items-center gap-3 flex-wrap">
-              <button class="theme-toggle-btn" @click="toggleTheme" :title="isDark ? 'Mode Clair' : 'Mode Sombre'">
+              <button class="theme-toggle-btn" @click="toggleTheme" :title="isDark ? $t('dashboard.terminalBar.themeLight') : $t('dashboard.terminalBar.themeDark')">
                 <i class="fa" :class="isDark ? 'fa-sun' : 'fa-moon'"></i>
-                <span>{{ isDark ? 'Clair' : 'Sombre' }}</span>
+                <span>{{ isDark ? $t('dashboard.terminalBar.themeLight') : $t('dashboard.terminalBar.themeDark') }}</span>
               </button>
               <div class="metric-pill">
                 <span class="live-dot"></span>
-                <span>Live</span>
+                <span>{{ $t('dashboard.terminalBar.live') }}</span>
               </div>
               <div class="metric-pill">
                 <i class="fa-solid fa-clock" style="color:#6366f1"></i>
@@ -75,8 +77,8 @@
                   {{ roleLabel }}
                 </div>
                 <h1 class="hero-title">
-                  Bonjour,<br>
-                  <span class="gold-text">{{ authStore.user?.name || 'Utilisateur' }}</span>
+                  {{ $t('dashboard.hero.welcome') }}<br>
+                  <span class="gold-text">{{ authStore.user?.name || $t('optional') }}</span>
                 </h1>
                 <div class="ia-insight">
                   <div class="ia-orb" :style="{'background': `linear-gradient(135deg, ${roleAccent}, ${roleAccentLight})`}">
@@ -86,9 +88,9 @@
                   <div class="ia-text">
                     <div class="ia-header">
                       <span class="ia-label">{{ roleInsightLabel }}</span>
-                      <span class="ia-status-badge">● SYNC</span>
+                      <span class="ia-status-badge">● {{ $t('dashboard.hero.syncBadge') }}</span>
                     </div>
-                    <p v-if="loading" class="shimmer-text">Chargement des données...</p>
+                    <p v-if="loading" class="shimmer-text">{{ $t('dashboard.hero.loading') }}</p>
                     <p v-else class="ia-msg">{{ iaInsight }}</p>
                   </div>
                 </div>
@@ -136,7 +138,7 @@
           </div>
 
           <!-- ══════════════════════════════════════════════════════
-               RECOMMANDATIONS IA — DYNAMIQUES VIA PYTHON IA
+               RECOMMANDATIONS IA
           ══════════════════════════════════════════════════════ -->
           <div class="reco-section mb-5">
             <div class="reco-header d-flex align-items-center justify-content-between mb-4">
@@ -145,13 +147,13 @@
                   <i class="fa-solid fa-wand-magic-sparkles"></i>
                 </div>
                 <div>
-                  <h5 class="reco-title m-0">Recommandations IA Personnalisées</h5>
-                  <span class="reco-sub">Générées par Gemini · mises à jour en temps réel</span>
+                  <h5 class="reco-title m-0">{{ $t('dashboard.ai.recoTitle') }}</h5>
+                  <span class="reco-sub">{{ $t('dashboard.ai.recoSub') }}</span>
                 </div>
               </div>
               <button class="btn-refresh-reco" @click="loadRecommendations(true)" :disabled="recoLoading">
                 <i class="fa-solid" :class="recoLoading ? 'fa-spinner fa-spin' : 'fa-rotate-right'"></i>
-                {{ recoLoading ? 'Génération...' : 'Actualiser' }}
+                {{ recoLoading ? $t('dashboard.ai.refreshing') : $t('dashboard.ai.refresh') }}
               </button>
             </div>
 
@@ -190,33 +192,29 @@
 
             <div v-else class="reco-empty">
               <i class="fa-solid fa-robot fa-2x mb-3 d-block" style="color:#f59e0b"></i>
-              <p>Cliquez sur <strong>Actualiser</strong> pour générer vos recommandations IA personnalisées.</p>
+              <p v-html="$t('dashboard.ai.empty')"></p>
             </div>
           </div>
 
           <!-- ══════════════════════════════════════════════════════
-               DASHBOARD CANDIDAT — DONNÉES .NET
+               DASHBOARD CANDIDAT
           ══════════════════════════════════════════════════════ -->
           <template v-if="role === 'Candidat'">
             <div class="two-col-grid mb-5">
-              <!-- MES TESTS EN COURS — via /api/Candidatures/mes-tests -->
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
                   <h5 class="panel-title m-0">
                     <i class="fa-solid fa-list-check text-blue me-2"></i>
-                    Mes Tests en Cours
+                    {{ $t('dashboard.candidat.testsInProgress') }}
                   </h5>
                   <button class="btn-see-all" @click="router.push('/my-tests')">
-                    Voir tout <i class="fa-solid fa-arrow-right ms-1"></i>
+                    {{ $t('dashboard.buttons.seeAll') }} <i class="fa-solid fa-arrow-right ms-1"></i>
                   </button>
                 </div>
                 <div v-if="loading" class="reco-skeletons">
                   <div v-for="k in 3" :key="k" class="reco-skel">
                     <div class="skel-icon"></div>
-                    <div class="skel-lines">
-                      <div class="skel-l skel-title"></div>
-                      <div class="skel-l skel-desc"></div>
-                    </div>
+                    <div class="skel-lines"><div class="skel-l skel-title"></div><div class="skel-l skel-desc"></div></div>
                   </div>
                 </div>
                 <div v-else class="test-list">
@@ -232,7 +230,7 @@
                       </div>
                       <div>
                         <span class="test-name">{{ test.campagneNom }}</span>
-                        <span class="test-meta">Postuler le {{ formatDate(test.datePostule) }}</span>
+                        <span class="test-meta">{{ $t('dashboard.candidat.passedOn', { date: formatDate(test.datePostule) }) }}</span>
                       </div>
                     </div>
                     <div class="test-right">
@@ -244,19 +242,18 @@
                   </div>
                   <div v-if="!candidatTests.length" class="empty-state">
                     <i class="fa-solid fa-check-circle text-success fa-2x mb-2 d-block"></i>
-                    <p>Aucun test en attente</p>
+                    <p>{{ $t('dashboard.candidat.noTests') }}</p>
                   </div>
                 </div>
               </div>
 
-              <!-- MA PROGRESSION — via historique évaluations -->
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
                   <h5 class="panel-title m-0">
                     <i class="fa-solid fa-chart-line text-green me-2"></i>
-                    Ma Progression
+                    {{ $t('dashboard.candidat.progression') }}
                   </h5>
-                  <button class="btn-see-all" @click="router.push('/history')">Historique <i class="fa-solid fa-arrow-right ms-1"></i></button>
+                  <button class="btn-see-all" @click="router.push('/history')">{{ $t('dashboard.buttons.history') }} <i class="fa-solid fa-arrow-right ms-1"></i></button>
                 </div>
                 <div class="progress-list">
                   <div v-for="(item, i) in candidatProgression" :key="i" class="progress-row">
@@ -269,12 +266,12 @@
                     </div>
                   </div>
                   <div v-if="!candidatProgression.length" class="empty-state">
-                    <p>Passez un test pour voir votre progression</p>
+                    <p>{{ $t('dashboard.candidat.passTest') }}</p>
                   </div>
                 </div>
                 <div class="next-test-cta mt-4" @click="router.push('/my-tests')">
                   <i class="fa-solid fa-play-circle"></i>
-                  <span>Commencer un nouveau test</span>
+                  <span>{{ $t('dashboard.candidat.startNew') }}</span>
                   <i class="fa-solid fa-arrow-right ms-auto"></i>
                 </div>
               </div>
@@ -287,12 +284,12 @@
                   <div class="d-flex align-items-center gap-3">
                     <div class="kpi-icon" style="background:#fef3c7;color:#fbbf24;"><i class="fa-solid fa-file-pdf"></i></div>
                     <div>
-                      <h6 class="panel-title m-0">Analyse CV IA</h6>
-                      <span class="neural-badge">Neural Matching · Gemini</span>
+                      <h6 class="panel-title m-0">{{ $t('dashboard.cv.title') }}</h6>
+                      <span class="neural-badge">{{ $t('dashboard.cv.badge') }}</span>
                     </div>
                   </div>
                 </div>
-                <p class="cv-desc">Uploadez votre CV pour obtenir une analyse IA complète avec scoring, points forts/faibles et conseils.</p>
+                <p class="cv-desc">{{ $t('dashboard.cv.desc') }}</p>
                 <transition name="fade-up">
                   <div v-if="cvResult" class="cv-result mb-3">
                     <div class="score-ring">
@@ -306,19 +303,19 @@
                     </div>
                     <div class="cv-result-info">
                       <p class="cv-verdict" :style="{color: cvScoreColor}">
-                        {{ cvResult.score >= 75 ? '✅ Profil compatible' : '⚠️ Compatibilité partielle' }}
+                        {{ cvResult.score >= 75 ? $t('dashboard.cv.compatible') : $t('dashboard.cv.partial') }}
                       </p>
                       <div class="strength-pills d-flex flex-wrap gap-1 mb-2">
                         <span v-for="(pt, i) in (cvResult.points_forts||[]).slice(0,3)" :key="i" class="strength-pill">{{ pt }}</span>
                       </div>
                       <div v-if="cvResult.conseils" class="cv-conseils mb-2">
-                        <div class="conseils-title"><i class="fa-solid fa-lightbulb me-1" style="color:#f59e0b"></i>Conseils</div>
+                        <div class="conseils-title"><i class="fa-solid fa-lightbulb me-1" style="color:#f59e0b"></i>{{ $t('dashboard.cv.tips') }}</div>
                         <ul class="conseils-list">
                           <li v-for="(c, i) in (cvResult.conseils||[]).slice(0,3)" :key="i">{{ c }}</li>
                         </ul>
                       </div>
                       <button @click="cvResult=null;selectedFile=null" class="btn-reset">
-                        <i class="fa-solid fa-rotate me-1"></i>Nouveau scan
+                        <i class="fa-solid fa-rotate me-1"></i>{{ $t('dashboard.cv.newScan') }}
                       </button>
                     </div>
                   </div>
@@ -328,16 +325,16 @@
                   @drop.prevent="handleDrop" @click="$refs.cvInputCandidat.click()">
                   <input ref="cvInputCandidat" type="file" @change="handleCvUpload" accept=".pdf,.docx" style="display:none">
                   <i class="fa-solid fa-cloud-arrow-up upload-icon d-block mb-2"></i>
-                  <p class="upload-text">{{ selectedFile ? selectedFile.name : 'Glissez votre CV ici' }}</p>
-                  <span class="upload-hint">PDF · DOCX</span>
+                  <p class="upload-text">{{ selectedFile ? selectedFile.name : $t('dashboard.cv.upload') }}</p>
+                  <span class="upload-hint">{{ $t('dashboard.cv.hint') }}</span>
                 </div>
                 <div v-if="!cvResult" class="job-input-wrap mt-3">
-                  <input v-model="jobDescription" class="job-input" placeholder="Description du poste visé (optionnel)..." />
+                  <input v-model="jobDescription" class="job-input" :placeholder="$t('dashboard.cv.job')" />
                 </div>
                 <button v-if="!cvResult" @click="runCvAnalysis" :disabled="!selectedFile || isAnalyzing" class="btn-enigma-primary w-100 mt-3">
                   <div class="btn-content">
-                    <span v-if="isAnalyzing"><i class="fa-solid fa-spinner fa-spin me-2"></i>Analyse en cours...</span>
-                    <span v-else><i class="fa-solid fa-magnifying-glass me-2"></i>Analyser le CV</span>
+                    <span v-if="isAnalyzing"><i class="fa-solid fa-spinner fa-spin me-2"></i>{{ $t('dashboard.cv.analyzing') }}</span>
+                    <span v-else><i class="fa-solid fa-magnifying-glass me-2"></i>{{ $t('dashboard.cv.analyze') }}</span>
                   </div>
                   <div class="btn-glow"></div>
                 </button>
@@ -349,23 +346,23 @@
                   <div class="d-flex align-items-center gap-3">
                     <div class="kpi-icon" style="background:#ede9fe;color:#8b5cf6;"><i class="fa-solid fa-envelope-open-text"></i></div>
                     <div>
-                      <h6 class="panel-title m-0">Lettre de Motivation IA</h6>
-                      <span class="neural-badge" style="background:rgba(139,92,246,0.15);color:#7c3aed;">Generative AI · Gemini</span>
+                      <h6 class="panel-title m-0">{{ $t('dashboard.lettre.title') }}</h6>
+                      <span class="neural-badge" style="background:rgba(139,92,246,0.15);color:#7c3aed;">{{ $t('dashboard.lettre.badge') }}</span>
                     </div>
                   </div>
                 </div>
-                <p class="cv-desc">Générez une lettre de motivation professionnelle et personnalisée en quelques secondes.</p>
+                <p class="cv-desc">{{ $t('dashboard.lettre.desc') }}</p>
                 <transition name="fade-up">
                   <div v-if="lettreResult" class="lettre-result">
                     <div class="lettre-header-row d-flex justify-content-between align-items-center mb-3">
-                      <span class="lettre-label"><i class="fa-solid fa-check-circle me-2" style="color:#10b981"></i>Lettre générée</span>
+                      <span class="lettre-label"><i class="fa-solid fa-check-circle me-2" style="color:#10b981"></i>{{ $t('dashboard.lettre.generated') }}</span>
                       <div class="d-flex gap-2">
                         <button class="btn-copy-lettre" @click="copyLettre">
                           <i class="fa-solid" :class="letterCopied ? 'fa-check' : 'fa-copy'"></i>
-                          {{ letterCopied ? 'Copié !' : 'Copier' }}
+                          {{ letterCopied ? $t('dashboard.lettre.copied') : $t('dashboard.lettre.copy') }}
                         </button>
                         <button class="btn-reset" @click="lettreResult=null">
-                          <i class="fa-solid fa-rotate me-1"></i>Nouvelle
+                          <i class="fa-solid fa-rotate me-1"></i>{{ $t('dashboard.lettre.newLetter') }}
                         </button>
                       </div>
                     </div>
@@ -374,48 +371,48 @@
                 </transition>
                 <div v-if="!lettreResult" class="lettre-form">
                   <div class="lettre-field mb-3">
-                    <label class="lettre-label-field">Nom complet</label>
+                    <label class="lettre-label-field">{{ $t('dashboard.lettre.name') }}</label>
                     <input v-model="lettreData.nom" class="job-input" :placeholder="authStore.user?.name || 'Ahmed Ben Ali'" />
                   </div>
                   <div class="lettre-field mb-3">
-                    <label class="lettre-label-field">Poste visé</label>
-                    <input v-model="lettreData.poste" class="job-input" placeholder="Ex: Développeur Full-Stack React" />
+                    <label class="lettre-label-field">{{ $t('dashboard.lettre.position') }}</label>
+                    <input v-model="lettreData.poste" class="job-input" :placeholder="$t('dashboard.lettre.position')" />
                   </div>
                   <div class="lettre-field mb-3">
-                    <label class="lettre-label-field">Entreprise</label>
-                    <input v-model="lettreData.entreprise" class="job-input" placeholder="Ex: TechCorp Tunisia" />
+                    <label class="lettre-label-field">{{ $t('dashboard.lettre.company') }}</label>
+                    <input v-model="lettreData.entreprise" class="job-input" :placeholder="$t('dashboard.lettre.company')" />
                   </div>
                   <div class="lettre-field mb-3">
-                    <label class="lettre-label-field">Compétences clés</label>
-                    <input v-model="lettreData.competences" class="job-input" placeholder="Ex: React, Node.js, 3 ans d'expérience" />
+                    <label class="lettre-label-field">{{ $t('dashboard.lettre.skills') }}</label>
+                    <input v-model="lettreData.competences" class="job-input" :placeholder="$t('dashboard.lettre.skills')" />
                   </div>
                   <div class="lettre-field mb-3">
-                    <label class="lettre-label-field">Langue</label>
+                    <label class="lettre-label-field">{{ $t('dashboard.lettre.language') }}</label>
                     <select v-model="lettreData.langue" class="job-input">
-                      <option value="fr">🇫🇷 Français</option>
-                      <option value="en">🇬🇧 English</option>
-                      <option value="ar">🇸🇦 العربية</option>
+                      <option value="fr">{{ $t('dashboard.lettre.langFr') }}</option>
+                      <option value="en">{{ $t('dashboard.lettre.langEn') }}</option>
+                      <option value="ar">{{ $t('dashboard.lettre.langAr') }}</option>
                     </select>
                   </div>
                   <button @click="generateLettre"
                     :disabled="!lettreData.poste || !lettreData.entreprise || isGeneratingLettre"
                     class="btn-lettre-primary w-100">
-                    <span v-if="isGeneratingLettre"><i class="fa-solid fa-spinner fa-spin me-2"></i>Génération...</span>
-                    <span v-else><i class="fa-solid fa-wand-magic-sparkles me-2"></i>Générer la Lettre</span>
+                    <span v-if="isGeneratingLettre"><i class="fa-solid fa-spinner fa-spin me-2"></i>{{ $t('dashboard.lettre.generating') }}</span>
+                    <span v-else><i class="fa-solid fa-wand-magic-sparkles me-2"></i>{{ $t('dashboard.lettre.generate') }}</span>
                   </button>
                 </div>
               </div>
             </div>
 
-            <!-- GRAPHIQUE + DERNIERS RÉSULTATS via /api/Examen/historique -->
+            <!-- GRAPHIQUE + DERNIERS RÉSULTATS -->
             <div class="two-col-grid pb-5" style="--col1: 2fr; --col2: 1fr;">
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
-                  <h5 class="panel-title m-0">Évolution de mes scores</h5>
+                  <h5 class="panel-title m-0">{{ $t('dashboard.sections.scoreEvolution') }}</h5>
                   <div class="period-switcher">
                     <button v-for="p in ['week','month','quarter']" :key="p"
                       @click="switchPeriod(p)" :class="['period-btn', {active: activePeriod === p}]">
-                      {{ {week:'Semaine',month:'Mois',quarter:'Trimestre'}[p] }}
+                      {{ $t(`dashboard.periods.${p}`) }}
                     </button>
                   </div>
                 </div>
@@ -423,7 +420,7 @@
               </div>
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
-                  <h5 class="panel-title m-0">Derniers Résultats</h5>
+                  <h5 class="panel-title m-0">{{ $t('dashboard.sections.lastResults') }}</h5>
                   <span class="activity-count-badge">{{ historiqueCandidat.length }}</span>
                 </div>
                 <div class="results-list">
@@ -438,7 +435,7 @@
                     <i class="fa-solid fa-chevron-right result-arrow"></i>
                   </div>
                   <div v-if="!historiqueCandidat.length" class="empty-state">
-                    <span class="small text-muted">Aucun résultat disponible</span>
+                    <span class="small text-muted">{{ $t('dashboard.candidat.noResults') }}</span>
                   </div>
                 </div>
               </div>
@@ -446,19 +443,18 @@
           </template>
 
           <!-- ══════════════════════════════════════════════════════
-               DASHBOARD ÉVALUATEUR / RH / RECRUTEUR — DONNÉES .NET
+               DASHBOARD ÉVALUATEUR / RH / RECRUTEUR
           ══════════════════════════════════════════════════════ -->
           <template v-else-if="['Evaluateur','RH','Recruteur'].includes(role)">
             <div class="two-col-grid mb-5">
-              <!-- FILE D'ÉVALUATION — via /api/Examen/all -->
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
                   <h5 class="panel-title m-0">
                     <i class="fa-solid fa-users-gear text-amber me-2"></i>
-                    File d'Évaluation
+                    {{ $t('dashboard.sections.evalQueue') }}
                   </h5>
                   <button class="btn-see-all" @click="router.push('/evaluations')">
-                    Voir tout <i class="fa-solid fa-arrow-right ms-1"></i>
+                    {{ $t('dashboard.buttons.seeAll') }} <i class="fa-solid fa-arrow-right ms-1"></i>
                   </button>
                 </div>
                 <div v-if="loading" class="reco-skeletons">
@@ -476,27 +472,26 @@
                     </div>
                     <div class="eval-right">
                       <span class="eval-badge" :style="{background: getStatusBg(ev.statut), color: getStatusColor(ev.statut)}">
-                        {{ ev.statut === 'EN_COURS' ? 'En cours' : ev.statut === 'TERMINE' ? 'Terminé' : 'En attente' }}
+                        {{ $t(`dashboard.eval.${ev.statut === 'EN_COURS' ? 'inProgress' : ev.statut === 'TERMINE' ? 'done' : 'waiting'}`) }}
                       </span>
-                      <button class="eval-btn" @click="router.push('/analyse-comportementale')" style="color:#f59e0b">Évaluer</button>
+                      <button class="eval-btn" @click="router.push('/analyse-comportementale')" style="color:#f59e0b">{{ $t('dashboard.eval.evalBtn') }}</button>
                     </div>
                   </div>
                   <div v-if="!evalQueue.length" class="empty-state">
                     <i class="fa-solid fa-check-circle text-success fa-2x mb-2 d-block"></i>
-                    <p>File vide !</p>
+                    <p>{{ $t('dashboard.empty.queue') }}</p>
                   </div>
                 </div>
               </div>
 
-              <!-- SESSIONS PLANIFIÉES — via /api/Campagnes -->
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
                   <h5 class="panel-title m-0">
                     <i class="fa-solid fa-calendar-check text-indigo me-2"></i>
-                    Sessions Planifiées
+                    {{ $t('dashboard.sections.plannedSessions') }}
                   </h5>
                   <button class="btn-see-all" @click="router.push('/campaigns')">
-                    Planifier <i class="fa-solid fa-plus ms-1"></i>
+                    {{ $t('dashboard.buttons.schedule') }} <i class="fa-solid fa-plus ms-1"></i>
                   </button>
                 </div>
                 <div class="session-list">
@@ -507,14 +502,14 @@
                     </div>
                     <div class="session-body">
                       <span class="sess-title">{{ sess.nom }}</span>
-                      <span class="sess-info">{{ sess.dureeMinutes }} min · {{ sess.nbCandidats || 0 }} candidats</span>
+                      <span class="sess-info">{{ sess.dureeMinutes }} {{ $t('dashboard.sessions.minutes') }} · {{ sess.nbCandidats || 0 }} {{ $t('dashboard.sessions.candidates') }}</span>
                     </div>
                     <span class="sess-status" :style="{color: sess.statut === 1 ? '#10b981' : '#f59e0b'}">
-                      {{ sess.statut === 1 ? 'Active' : 'Planifiée' }}
+                      {{ sess.statut === 1 ? $t('dashboard.sessions.active') : $t('dashboard.sessions.planned') }}
                     </span>
                   </div>
                   <div v-if="!campagnes.length" class="empty-state">
-                    <p>Aucune campagne planifiée</p>
+                    <p>{{ $t('dashboard.empty.campaigns') }}</p>
                   </div>
                 </div>
               </div>
@@ -527,12 +522,12 @@
                   <div class="d-flex align-items-center gap-3">
                     <div class="kpi-icon" style="background:#fef3c7;color:#fbbf24;"><i class="fa-solid fa-file-pdf"></i></div>
                     <div>
-                      <h6 class="panel-title m-0">Scan CV Neural</h6>
-                      <span class="neural-badge">Neural Matching · Gemini</span>
+                      <h6 class="panel-title m-0">{{ $t('dashboard.cv.title') }}</h6>
+                      <span class="neural-badge">{{ $t('dashboard.cv.badge') }}</span>
                     </div>
                   </div>
                 </div>
-                <p class="cv-desc">Analysez un CV candidat et obtenez un score de compatibilité détaillé.</p>
+                <p class="cv-desc">{{ $t('dashboard.cv.descEval') }}</p>
                 <transition name="fade-up">
                   <div v-if="cvResult" class="cv-result mb-3">
                     <div class="score-ring">
@@ -545,7 +540,7 @@
                       </svg>
                     </div>
                     <div class="cv-result-info">
-                      <p class="cv-verdict" :style="{color: cvScoreColor}">{{ cvResult.score >= 75 ? '✅ Profil compatible' : '⚠️ Compatibilité partielle' }}</p>
+                      <p class="cv-verdict" :style="{color: cvScoreColor}">{{ cvResult.score >= 75 ? $t('dashboard.cv.compatible') : $t('dashboard.cv.partial') }}</p>
                       <div class="strength-pills d-flex flex-wrap gap-1 mb-2">
                         <span v-for="(pt, i) in (cvResult.points_forts||[]).slice(0,3)" :key="i" class="strength-pill">{{ pt }}</span>
                       </div>
@@ -553,7 +548,7 @@
                         <i class="fa-solid fa-robot me-1"></i>{{ cvResult.decision }}
                       </div>
                       <button @click="cvResult=null;selectedFile=null" class="btn-reset mt-2">
-                        <i class="fa-solid fa-rotate me-1"></i>Nouveau scan
+                        <i class="fa-solid fa-rotate me-1"></i>{{ $t('dashboard.cv.newScan') }}
                       </button>
                     </div>
                   </div>
@@ -563,25 +558,25 @@
                   @drop.prevent="handleDrop" @click="$refs.cvInput.click()">
                   <input ref="cvInput" type="file" @change="handleCvUpload" accept=".pdf,.docx" style="display:none">
                   <i class="fa-solid fa-cloud-arrow-up upload-icon d-block mb-2"></i>
-                  <p class="upload-text">{{ selectedFile ? selectedFile.name : 'Glissez le CV ici' }}</p>
-                  <span class="upload-hint">PDF · DOCX</span>
+                  <p class="upload-text">{{ selectedFile ? selectedFile.name : $t('dashboard.cv.uploadEval') }}</p>
+                  <span class="upload-hint">{{ $t('dashboard.cv.hint') }}</span>
                 </div>
                 <div v-if="!cvResult" class="job-input-wrap mt-3">
-                  <input v-model="jobDescription" class="job-input" placeholder="Fiche de poste / critères de sélection..." />
+                  <input v-model="jobDescription" class="job-input" :placeholder="$t('dashboard.cv.jobEval')" />
                 </div>
                 <button v-if="!cvResult" @click="runCvAnalysis" :disabled="!selectedFile || isAnalyzing" class="btn-enigma-primary w-100 mt-3">
                   <div class="btn-content">
-                    <span v-if="isAnalyzing"><i class="fa-solid fa-spinner fa-spin me-2"></i>Analyse...</span>
-                    <span v-else><i class="fa-solid fa-magnifying-glass me-2"></i>Analyser le CV</span>
+                    <span v-if="isAnalyzing"><i class="fa-solid fa-spinner fa-spin me-2"></i>{{ $t('dashboard.cv.analyzingShort') }}</span>
+                    <span v-else><i class="fa-solid fa-magnifying-glass me-2"></i>{{ $t('dashboard.cv.analyze') }}</span>
                   </div>
                   <div class="btn-glow"></div>
                 </button>
               </div>
 
-              <!-- TOP COMPÉTENCES — calculées depuis évaluations .NET -->
+              <!-- TOP COMPÉTENCES -->
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
-                  <h5 class="panel-title m-0">Top Compétences</h5>
+                  <h5 class="panel-title m-0">{{ $t('dashboard.sections.topSkills') }}</h5>
                 </div>
                 <div class="skill-radar-list">
                   <div v-for="sk in topSkills" :key="sk.label" class="skill-bar-row">
@@ -596,7 +591,7 @@
                 </div>
                 <div class="analyse-cta mt-4" @click="router.push('/analyse-comportementale')">
                   <i class="fa-solid fa-brain"></i>
-                  <span>Analyse comportementale IA</span>
+                  <span>{{ $t('dashboard.buttons.analyze') }}</span>
                   <i class="fa-solid fa-arrow-right ms-auto"></i>
                 </div>
               </div>
@@ -606,11 +601,11 @@
             <div class="two-col-grid pb-5" style="--col1: 2fr; --col2: 1fr;">
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
-                  <h5 class="panel-title m-0">Matrice de Performance</h5>
+                  <h5 class="panel-title m-0">{{ $t('dashboard.sections.performance') }}</h5>
                   <div class="period-switcher">
                     <button v-for="p in ['week','month','quarter']" :key="p"
                       @click="switchPeriod(p)" :class="['period-btn', {active: activePeriod === p}]">
-                      {{ {week:'Semaine',month:'Mois',quarter:'Trimestre'}[p] }}
+                      {{ $t(`dashboard.periods.${p}`) }}
                     </button>
                   </div>
                 </div>
@@ -618,7 +613,7 @@
               </div>
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
-                  <h5 class="panel-title m-0">Journal d'Activité</h5>
+                  <h5 class="panel-title m-0">{{ $t('dashboard.sections.activityLog') }}</h5>
                   <span class="activity-count-badge">{{ recentActivities.length }}</span>
                 </div>
                 <div class="activity-list">
@@ -636,15 +631,14 @@
           </template>
 
           <!-- ══════════════════════════════════════════════════════
-               DASHBOARD ADMIN ENTREPRISE — DONNÉES .NET
+               DASHBOARD ADMIN ENTREPRISE
           ══════════════════════════════════════════════════════ -->
           <template v-else-if="role === 'AdminEntreprise'">
             <div class="two-col-grid mb-5">
-              <!-- JOURNAL D'ACTIVITÉ — Analytics .NET -->
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
                   <h5 class="panel-title m-0">
-                    <i class="fa-solid fa-bolt-lightning text-amber me-2"></i>Journal d'Activité
+                    <i class="fa-solid fa-bolt-lightning text-amber me-2"></i>{{ $t('dashboard.admin.activityLog') }}
                   </h5>
                   <span class="activity-count-badge">{{ recentActivities.length }}</span>
                 </div>
@@ -659,14 +653,13 @@
                   </div>
                 </div>
               </div>
-              <!-- MON ÉQUIPE — via /api/Staff -->
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
                   <h5 class="panel-title m-0">
-                    <i class="fa-solid fa-people-group text-indigo me-2"></i>Mon Équipe
+                    <i class="fa-solid fa-people-group text-indigo me-2"></i>{{ $t('dashboard.admin.team') }}
                   </h5>
                   <button class="btn-see-all" @click="router.push('/staff-members')">
-                    Gérer <i class="fa-solid fa-arrow-right ms-1"></i>
+                    {{ $t('dashboard.buttons.manage') }} <i class="fa-solid fa-arrow-right ms-1"></i>
                   </button>
                 </div>
                 <div class="team-grid">
@@ -677,16 +670,16 @@
                     <span class="team-name">{{ member.prenom }} {{ member.nomFamille || member.nom }}</span>
                     <span class="team-role">{{ member.roleNom }}</span>
                     <span class="team-badge" :style="{background: member.estActif ? '#ecfdf5' : '#fef2f2', color: member.estActif ? '#059669' : '#dc2626'}">
-                      {{ member.estActif ? 'Actif' : 'Inactif' }}
+                      {{ member.estActif ? $t('dashboard.team.active') : $t('dashboard.team.inactive') }}
                     </span>
                   </div>
                   <div v-if="!staffMembers.length" class="empty-state">
-                    <p>Aucun membre d'équipe</p>
+                    <p>{{ $t('dashboard.empty.team') }}</p>
                   </div>
                 </div>
                 <div class="invite-cta mt-3" @click="router.push('/invite')">
                   <i class="fa-solid fa-user-plus"></i>
-                  <span>Inviter un nouveau membre</span>
+                  <span>{{ $t('dashboard.buttons.newMember') }}</span>
                   <i class="fa-solid fa-arrow-right ms-auto"></i>
                 </div>
               </div>
@@ -699,12 +692,12 @@
                   <div class="d-flex align-items-center gap-3">
                     <div class="kpi-icon" style="background:#fef3c7;color:#fbbf24;"><i class="fa-solid fa-file-pdf"></i></div>
                     <div>
-                      <h6 class="panel-title m-0">Scan CV Neural</h6>
-                      <span class="neural-badge">Neural Matching · Gemini</span>
+                      <h6 class="panel-title m-0">{{ $t('dashboard.cv.title') }}</h6>
+                      <span class="neural-badge">{{ $t('dashboard.cv.badge') }}</span>
                     </div>
                   </div>
                 </div>
-                <p class="cv-desc">Analysez instantanément un CV et obtenez score + décision de recrutement.</p>
+                <p class="cv-desc">{{ $t('dashboard.cv.descAdmin') }}</p>
                 <transition name="fade-up">
                   <div v-if="cvResult" class="cv-result mb-3">
                     <div class="score-ring">
@@ -717,7 +710,7 @@
                       </svg>
                     </div>
                     <div class="cv-result-info">
-                      <p class="cv-verdict" :style="{color: cvScoreColor}">{{ cvResult.score >= 75 ? '✅ Profil compatible' : '⚠️ Compatibilité partielle' }}</p>
+                      <p class="cv-verdict" :style="{color: cvScoreColor}">{{ cvResult.score >= 75 ? $t('dashboard.cv.compatible') : $t('dashboard.cv.partial') }}</p>
                       <div class="strength-pills d-flex flex-wrap gap-1 mb-2">
                         <span v-for="(pt, i) in (cvResult.points_forts||[]).slice(0,3)" :key="i" class="strength-pill">{{ pt }}</span>
                       </div>
@@ -725,7 +718,7 @@
                         <i class="fa-solid fa-robot me-1"></i>{{ cvResult.decision }}
                       </div>
                       <button @click="cvResult=null;selectedFile=null" class="btn-reset mt-2">
-                        <i class="fa-solid fa-rotate me-1"></i>Nouveau scan
+                        <i class="fa-solid fa-rotate me-1"></i>{{ $t('dashboard.cv.newScan') }}
                       </button>
                     </div>
                   </div>
@@ -735,26 +728,26 @@
                   @drop.prevent="handleDrop" @click="$refs.cvInputAdmin.click()">
                   <input ref="cvInputAdmin" type="file" @change="handleCvUpload" accept=".pdf,.docx" style="display:none">
                   <i class="fa-solid fa-cloud-arrow-up upload-icon d-block mb-2"></i>
-                  <p class="upload-text">{{ selectedFile ? selectedFile.name : 'Glissez le CV ici' }}</p>
-                  <span class="upload-hint">PDF · DOCX</span>
+                  <p class="upload-text">{{ selectedFile ? selectedFile.name : $t('dashboard.cv.upload') }}</p>
+                  <span class="upload-hint">{{ $t('dashboard.cv.hint') }}</span>
                 </div>
                 <div v-if="!cvResult" class="job-input-wrap mt-3">
-                  <input v-model="jobDescription" class="job-input" placeholder="Description du poste / critères de sélection..." />
+                  <input v-model="jobDescription" class="job-input" :placeholder="$t('dashboard.cv.job')" />
                 </div>
                 <button v-if="!cvResult" @click="runCvAnalysis" :disabled="!selectedFile || isAnalyzing" class="btn-enigma-primary w-100 mt-3">
                   <div class="btn-content">
-                    <span v-if="isAnalyzing"><i class="fa-solid fa-spinner fa-spin me-2"></i>Analyse...</span>
-                    <span v-else><i class="fa-solid fa-magnifying-glass me-2"></i>Analyser le CV</span>
+                    <span v-if="isAnalyzing"><i class="fa-solid fa-spinner fa-spin me-2"></i>{{ $t('dashboard.cv.analyzingShort') }}</span>
+                    <span v-else><i class="fa-solid fa-magnifying-glass me-2"></i>{{ $t('dashboard.cv.analyze') }}</span>
                   </div>
                   <div class="btn-glow"></div>
                 </button>
               </div>
 
-              <!-- CANDIDATS RÉCENTS — via /api/Dashboard/global-stats -->
+              <!-- CANDIDATS RÉCENTS -->
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
-                  <h5 class="panel-title m-0">Candidats Récents</h5>
-                  <button class="btn-see-all" @click="router.push('/candidates-list')">Voir tout</button>
+                  <h5 class="panel-title m-0">{{ $t('dashboard.admin.recentCandidates') }}</h5>
+                  <button class="btn-see-all" @click="router.push('/candidates-list')">{{ $t('dashboard.buttons.seeAll') }}</button>
                 </div>
                 <div class="candidates-list">
                   <div v-for="cand in recentCandidates" :key="cand.id" class="cand-row" @click="router.push('/details-candidat/' + cand.candidateId)">
@@ -766,7 +759,7 @@
                     <div class="cand-score" :style="{color: getScoreColor(cand.score)}">{{ cand.score }}%</div>
                   </div>
                   <div v-if="!recentCandidates.length" class="empty-state">
-                    <p>Aucun candidat récent</p>
+                    <p>{{ $t('dashboard.empty.candidates') }}</p>
                   </div>
                 </div>
               </div>
@@ -776,11 +769,11 @@
             <div class="two-col-grid pb-5" style="--col1: 2fr; --col2: 1fr;">
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
-                  <h5 class="panel-title m-0">Matrice de Performance</h5>
+                  <h5 class="panel-title m-0">{{ $t('dashboard.sections.performance') }}</h5>
                   <div class="period-switcher">
                     <button v-for="p in ['week','month','quarter']" :key="p"
                       @click="switchPeriod(p)" :class="['period-btn', {active: activePeriod === p}]">
-                      {{ {week:'Semaine',month:'Mois',quarter:'Trimestre'}[p] }}
+                      {{ $t(`dashboard.periods.${p}`) }}
                     </button>
                   </div>
                 </div>
@@ -788,7 +781,7 @@
               </div>
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
-                  <h5 class="panel-title m-0">Top Compétences</h5>
+                  <h5 class="panel-title m-0">{{ $t('dashboard.sections.topSkills') }}</h5>
                 </div>
                 <div class="skill-radar-list">
                   <div v-for="sk in topSkills" :key="sk.label" class="skill-bar-row">
@@ -806,32 +799,30 @@
           </template>
 
           <!-- ══════════════════════════════════════════════════════
-               DASHBOARD SUPER ADMIN — DONNÉES .NET
+               DASHBOARD SUPER ADMIN
           ══════════════════════════════════════════════════════ -->
           <template v-else-if="role === 'SuperAdmin'">
             <div class="three-col-grid mb-5">
-              <!-- SANTÉ PLATEFORME — données IA Python -->
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
-                  <h5 class="panel-title m-0"><i class="fa-solid fa-server text-indigo me-2"></i>Santé Plateforme</h5>
-                  <span class="live-badge"><span class="live-dot"></span>LIVE</span>
+                  <h5 class="panel-title m-0"><i class="fa-solid fa-server text-indigo me-2"></i>{{ $t('dashboard.superAdmin.health') }}</h5>
+                  <span class="live-badge"><span class="live-dot"></span>{{ $t('dashboard.superAdmin.liveBadge') }}</span>
                 </div>
                 <div class="health-list">
                   <div v-for="svc in iaServices" :key="svc.name" class="health-row">
                     <span class="health-dot" :style="{background: svc.up ? '#10b981' : '#ef4444'}"></span>
-                    <span class="health-name flex-grow-1">{{ svc.name }}</span>
+                    <span class="health-name flex-grow-1">{{ $t('dashboard.health.' + svc.key) }}</span>
                     <span class="health-latency">{{ svc.latency }}</span>
-                    <span class="health-status" :style="{color: svc.up ? '#10b981' : '#ef4444'}">{{ svc.up ? 'UP' : 'DOWN' }}</span>
+                    <span class="health-status" :style="{color: svc.up ? '#10b981' : '#ef4444'}">{{ svc.up ? $t('dashboard.superAdmin.up') : $t('dashboard.superAdmin.down') }}</span>
                   </div>
                 </div>
               </div>
 
-              <!-- ORGANISATIONS — via /api/SuperAdmin/stats -->
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
-                  <h5 class="panel-title m-0"><i class="fa-solid fa-building text-amber me-2"></i>Organisations</h5>
+                  <h5 class="panel-title m-0"><i class="fa-solid fa-building text-amber me-2"></i>{{ $t('dashboard.superAdmin.companies') }}</h5>
                   <button class="btn-see-all" @click="router.push('/super-admin')">
-                    Gérer <i class="fa-solid fa-arrow-right ms-1"></i>
+                    {{ $t('dashboard.superAdmin.manage') }} <i class="fa-solid fa-arrow-right ms-1"></i>
                   </button>
                 </div>
                 <div class="company-list">
@@ -841,20 +832,19 @@
                     </div>
                     <div class="company-body flex-grow-1">
                       <span class="company-name">{{ co.mois }}</span>
-                      <span class="company-plan">Nouvelles inscriptions</span>
+                      <span class="company-plan">{{ $t('dashboard.superAdmin.newSignups') }}</span>
                     </div>
                     <span class="company-users">+{{ co.count }}</span>
                   </div>
                   <div v-if="!superAdminStats.croissanceStats?.length" class="empty-state">
-                    <p>{{ superAdminStats.totalEntreprises || 0 }} entreprises actives</p>
+                    <p>{{ $t('dashboard.empty.companies', { count: superAdminStats.totalEntreprises || 0 }) }}</p>
                   </div>
                 </div>
               </div>
 
-              <!-- ACTIVITÉ GLOBALE — via Analytics .NET -->
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
-                  <h5 class="panel-title m-0"><i class="fa-solid fa-wave-square text-green me-2"></i>Activité Globale</h5>
+                  <h5 class="panel-title m-0"><i class="fa-solid fa-wave-square text-green me-2"></i>{{ $t('dashboard.sections.globalActivity') }}</h5>
                   <span class="activity-count-badge">{{ recentActivities.length }}</span>
                 </div>
                 <div class="activity-list">
@@ -877,12 +867,12 @@
                   <div class="d-flex align-items-center gap-3">
                     <div class="kpi-icon" style="background:#fef3c7;color:#fbbf24;"><i class="fa-solid fa-file-pdf"></i></div>
                     <div>
-                      <h6 class="panel-title m-0">Scan CV Plateforme</h6>
-                      <span class="neural-badge">Neural Matching · Gemini</span>
+                      <h6 class="panel-title m-0">{{ $t('dashboard.cv.platformTitle') }}</h6>
+                      <span class="neural-badge">{{ $t('dashboard.cv.platformBadge') }}</span>
                     </div>
                   </div>
                 </div>
-                <p class="cv-desc">Testez l'analyse CV de la plateforme — vérification de qualité SuperAdmin.</p>
+                <p class="cv-desc">{{ $t('dashboard.cv.descSA') }}</p>
                 <transition name="fade-up">
                   <div v-if="cvResult" class="cv-result mb-3">
                     <div class="score-ring">
@@ -895,12 +885,12 @@
                       </svg>
                     </div>
                     <div class="cv-result-info">
-                      <p class="cv-verdict" :style="{color: cvScoreColor}">{{ cvResult.score >= 75 ? '✅ Profil compatible' : '⚠️ Compatibilité partielle' }}</p>
+                      <p class="cv-verdict" :style="{color: cvScoreColor}">{{ cvResult.score >= 75 ? $t('dashboard.cv.compatible') : $t('dashboard.cv.partial') }}</p>
                       <div class="strength-pills d-flex flex-wrap gap-1 mb-2">
                         <span v-for="(pt, i) in (cvResult.points_forts||[]).slice(0,3)" :key="i" class="strength-pill">{{ pt }}</span>
                       </div>
                       <button @click="cvResult=null;selectedFile=null" class="btn-reset mt-2">
-                        <i class="fa-solid fa-rotate me-1"></i>Nouveau scan
+                        <i class="fa-solid fa-rotate me-1"></i>{{ $t('dashboard.cv.newScan') }}
                       </button>
                     </div>
                   </div>
@@ -910,26 +900,26 @@
                   @drop.prevent="handleDrop" @click="$refs.cvInputSA.click()">
                   <input ref="cvInputSA" type="file" @change="handleCvUpload" accept=".pdf,.docx" style="display:none">
                   <i class="fa-solid fa-cloud-arrow-up upload-icon d-block mb-2"></i>
-                  <p class="upload-text">{{ selectedFile ? selectedFile.name : 'Glissez un CV de test ici' }}</p>
-                  <span class="upload-hint">PDF · DOCX</span>
+                  <p class="upload-text">{{ selectedFile ? selectedFile.name : $t('dashboard.cv.uploadSA') }}</p>
+                  <span class="upload-hint">{{ $t('dashboard.cv.hint') }}</span>
                 </div>
                 <div v-if="!cvResult" class="job-input-wrap mt-3">
-                  <input v-model="jobDescription" class="job-input" placeholder="Poste / critères à évaluer..." />
+                  <input v-model="jobDescription" class="job-input" :placeholder="$t('dashboard.cv.jobSA')" />
                 </div>
                 <button v-if="!cvResult" @click="runCvAnalysis" :disabled="!selectedFile || isAnalyzing" class="btn-enigma-primary w-100 mt-3">
                   <div class="btn-content">
-                    <span v-if="isAnalyzing"><i class="fa-solid fa-spinner fa-spin me-2"></i>Analyse...</span>
-                    <span v-else><i class="fa-solid fa-magnifying-glass me-2"></i>Analyser le CV</span>
+                    <span v-if="isAnalyzing"><i class="fa-solid fa-spinner fa-spin me-2"></i>{{ $t('dashboard.cv.analyzingShort') }}</span>
+                    <span v-else><i class="fa-solid fa-magnifying-glass me-2"></i>{{ $t('dashboard.cv.analyze') }}</span>
                   </div>
                   <div class="btn-glow"></div>
                 </button>
               </div>
 
-              <!-- UTILISATEURS PLATEFORME — /api/SuperAdmin/users -->
+              <!-- UTILISATEURS PLATEFORME -->
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
-                  <h5 class="panel-title m-0">Utilisateurs Plateforme</h5>
-                  <button class="btn-see-all" @click="router.push('/gestion-abonnements')">Gérer</button>
+                  <h5 class="panel-title m-0">{{ $t('dashboard.superAdmin.users') }}</h5>
+                  <button class="btn-see-all" @click="router.push('/gestion-abonnements')">{{ $t('dashboard.superAdmin.manage') }}</button>
                 </div>
                 <div class="candidates-list">
                   <div v-for="usr in platformUsers.slice(0,6)" :key="usr.id" class="cand-row">
@@ -939,16 +929,16 @@
                       <span class="cand-test">{{ usr.org }} · {{ usr.role }}</span>
                     </div>
                     <span class="team-badge" :style="{background: usr.isActive ? '#ecfdf5' : '#fef2f2', color: usr.isActive ? '#059669' : '#dc2626', padding:'3px 8px', borderRadius:'100px', fontSize:'9px', fontWeight:'700'}">
-                      {{ usr.isActive ? 'Actif' : 'Inactif' }}
+                      {{ usr.isActive ? $t('dashboard.team.active') : $t('dashboard.team.inactive') }}
                     </span>
                   </div>
                   <div v-if="!platformUsers.length" class="empty-state">
-                    <p>{{ superAdminStats.totalUtilisateurs || 0 }} utilisateurs</p>
+                    <p>{{ $t('dashboard.empty.users', { count: superAdminStats.totalUtilisateurs || 0 }) }}</p>
                   </div>
                 </div>
                 <div class="analytics-cta mt-3" @click="router.push('/super-admin-analytics')">
                   <i class="fa-solid fa-chart-mixed"></i>
-                  <span>Analytics détaillées</span>
+                  <span>{{ $t('dashboard.superAdmin.analyticsDetail') }}</span>
                   <i class="fa-solid fa-arrow-right ms-auto"></i>
                 </div>
               </div>
@@ -958,11 +948,11 @@
             <div class="two-col-grid pb-5" style="--col1: 2fr; --col2: 1fr;">
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
-                  <h5 class="panel-title m-0">Analytics Plateforme</h5>
+                  <h5 class="panel-title m-0">{{ $t('dashboard.sections.analytics') }}</h5>
                   <div class="period-switcher">
                     <button v-for="p in ['week','month','quarter']" :key="p"
                       @click="switchPeriod(p)" :class="['period-btn', {active: activePeriod === p}]">
-                      {{ {week:'Semaine',month:'Mois',quarter:'Trimestre'}[p] }}
+                      {{ $t(`dashboard.periods.${p}`) }}
                     </button>
                   </div>
                 </div>
@@ -970,7 +960,7 @@
               </div>
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
-                  <h5 class="panel-title m-0">Demandes en Attente</h5>
+                  <h5 class="panel-title m-0">{{ $t('dashboard.superAdmin.pendingDeletion') }}</h5>
                   <span class="activity-count-badge">{{ superAdminStats.demandesEnAttente || 0 }}</span>
                 </div>
                 <div class="activity-list">
@@ -991,12 +981,12 @@
           <template v-else>
             <div class="two-col-grid pb-5">
               <div class="panel">
-                <div class="panel-header mb-4"><h5 class="panel-title m-0">Matrice de Performance</h5></div>
+                <div class="panel-header mb-4"><h5 class="panel-title m-0">{{ $t('dashboard.sections.performance') }}</h5></div>
                 <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
               </div>
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
-                  <h5 class="panel-title m-0">Journal d'Activité</h5>
+                  <h5 class="panel-title m-0">{{ $t('dashboard.sections.activityLog') }}</h5>
                   <span class="activity-count-badge">{{ recentActivities.length }}</span>
                 </div>
                 <div class="activity-list">
@@ -1022,7 +1012,7 @@
       <div v-if="globalToast.active" class="enigma-toast" :class="globalToast.type">
         <div class="t-ico"><i :class="globalToast.icon"></i></div>
         <div class="t-body">
-          <strong>SYSTEM MESSAGE</strong>
+          <strong>{{ $t('dashboard.toast.systemMessage') }}</strong>
           <p class="m-0 small">{{ globalToast.message }}</p>
         </div>
       </div>
@@ -1038,6 +1028,9 @@ import Chart from 'chart.js/auto';
 import AppSidebar from '../components/AppSidebar.vue';
 import AppNavbar from '../components/AppNavbar.vue';
 import axios from 'axios';
+import { useI18n } from 'vue-i18n';
+
+const { t, locale } = useI18n();
 
 // ── CONFIG API ──
 const API_NET = import.meta.env.VITE_API_URL || 'http://localhost:5172/api';
@@ -1054,7 +1047,7 @@ const activePeriod  = ref('week');
 const currentTime   = ref('');
 const mousePos      = reactive({ x: 0, y: 0 });
 const globalToast   = reactive({ active: false, message: '', type: '', icon: '' });
-const iaInsight     = ref('Chargement des données en temps réel...');
+const iaInsight     = ref(t('dashboard.hero.loading'));
 
 // ── CV / LETTRE STATE ──
 const isAnalyzing        = ref(false);
@@ -1089,16 +1082,16 @@ const recentActivities = ref([]);
 // ── ROLE ──
 const role = computed(() => authStore.role || 'AdminEntreprise');
 
-const roleConfig = {
-  Candidat:        { label: 'CANDIDAT',       icon: 'fa-solid fa-user-graduate',   accent: '#3b82f6', accentLight: '#60a5fa', insightIcon: 'fa-solid fa-trophy',               insightLabel: 'MON PARCOURS',        botIcon: 'fa-user-graduate',  tagBg: 'rgba(59,130,246,0.1)',  tagBorder: 'rgba(59,130,246,0.25)',  tagColor: '#1d4ed8' },
-  Evaluateur:      { label: 'ÉVALUATEUR',      icon: 'fa-solid fa-clipboard-check', accent: '#f59e0b', accentLight: '#fbbf24', insightIcon: 'fa-solid fa-magnifying-glass-chart', insightLabel: "FILE D'ÉVALUATION", botIcon: 'fa-clipboard-check', tagBg: 'rgba(245,158,11,0.1)', tagBorder: 'rgba(245,158,11,0.25)', tagColor: '#92400e' },
-  RH:              { label: 'RH',              icon: 'fa-solid fa-people-arrows',   accent: '#8b5cf6', accentLight: '#a78bfa', insightIcon: 'fa-solid fa-chart-pie',             insightLabel: 'TABLEAU RH',          botIcon: 'fa-people-arrows',  tagBg: 'rgba(139,92,246,0.1)', tagBorder: 'rgba(139,92,246,0.25)', tagColor: '#6d28d9' },
-  Recruteur:       { label: 'RECRUTEUR',        icon: 'fa-solid fa-handshake',       accent: '#10b981', accentLight: '#34d399', insightIcon: 'fa-solid fa-user-plus',             insightLabel: 'PIPELINE',            botIcon: 'fa-handshake',      tagBg: 'rgba(16,185,129,0.1)', tagBorder: 'rgba(16,185,129,0.25)', tagColor: '#065f46' },
-  AdminEntreprise: { label: 'ADMIN ENTREPRISE', icon: 'fa-solid fa-building-user',   accent: '#f59e0b', accentLight: '#fbbf24', insightIcon: 'fa-solid fa-brain',                insightLabel: 'ANALYSE IA',          botIcon: 'fa-robot',          tagBg: 'rgba(245,158,11,0.1)', tagBorder: 'rgba(245,158,11,0.25)', tagColor: '#92400e' },
-  SuperAdmin:      { label: 'SUPER ADMIN',      icon: 'fa-solid fa-shield-halved',   accent: '#6366f1', accentLight: '#818cf8', insightIcon: 'fa-solid fa-server',               insightLabel: 'MONITORING',          botIcon: 'fa-shield-halved',  tagBg: 'rgba(99,102,241,0.1)', tagBorder: 'rgba(99,102,241,0.25)', tagColor: '#4338ca' },
-};
+const roleConfig = computed(() => ({
+  Candidat:        { label: t('dashboard.roleLabels.Candidat'),       icon: 'fa-solid fa-user-graduate',   accent: '#3b82f6', accentLight: '#60a5fa', insightIcon: 'fa-solid fa-trophy',               insightLabel: t('dashboard.roleInsights.Candidat'),        botIcon: 'fa-user-graduate',  tagBg: 'rgba(59,130,246,0.1)',  tagBorder: 'rgba(59,130,246,0.25)',  tagColor: '#3b82f6' },
+  Evaluateur:      { label: t('dashboard.roleLabels.Evaluateur'),      icon: 'fa-solid fa-clipboard-check', accent: '#f59e0b', accentLight: '#fbbf24', insightIcon: 'fa-solid fa-magnifying-glass-chart', insightLabel: t('dashboard.roleInsights.Evaluateur'), botIcon: 'fa-clipboard-check', tagBg: 'rgba(245,158,11,0.1)', tagBorder: 'rgba(245,158,11,0.25)', tagColor: '#f59e0b' },
+  RH:              { label: t('dashboard.roleLabels.RH'),              icon: 'fa-solid fa-people-arrows',   accent: '#8b5cf6', accentLight: '#a78bfa', insightIcon: 'fa-solid fa-chart-pie',             insightLabel: t('dashboard.roleInsights.RH'),          botIcon: 'fa-people-arrows',  tagBg: 'rgba(139,92,246,0.1)', tagBorder: 'rgba(139,92,246,0.25)', tagColor: '#8b5cf6' },
+  Recruteur:       { label: t('dashboard.roleLabels.Recruteur'),        icon: 'fa-solid fa-handshake',       accent: '#10b981', accentLight: '#34d399', insightIcon: 'fa-solid fa-user-plus',             insightLabel: t('dashboard.roleInsights.Recruteur'),            botIcon: 'fa-handshake',      tagBg: 'rgba(16,185,129,0.1)', tagBorder: 'rgba(16,185,129,0.25)', tagColor: '#10b981' },
+  AdminEntreprise: { label: t('dashboard.roleLabels.AdminEntreprise'), icon: 'fa-solid fa-building-user',   accent: '#f59e0b', accentLight: '#fbbf24', insightIcon: 'fa-solid fa-brain',                insightLabel: t('dashboard.roleInsights.AdminEntreprise'),          botIcon: 'fa-robot',          tagBg: 'rgba(245,158,11,0.1)', tagBorder: 'rgba(245,158,11,0.25)', tagColor: '#f59e0b' },
+  SuperAdmin:      { label: t('dashboard.roleLabels.SuperAdmin'),      icon: 'fa-solid fa-shield-halved',   accent: '#6366f1', accentLight: '#818cf8', insightIcon: 'fa-solid fa-server',               insightLabel: t('dashboard.roleInsights.SuperAdmin'),          botIcon: 'fa-shield-halved',  tagBg: 'rgba(99,102,241,0.1)', tagBorder: 'rgba(99,102,241,0.25)', tagColor: '#6366f1' },
+}));
 
-const cfg             = computed(() => roleConfig[role.value] || roleConfig.AdminEntreprise);
+const cfg             = computed(() => roleConfig.value[role.value] || roleConfig.value.AdminEntreprise);
 const roleLabel       = computed(() => cfg.value.label);
 const roleIcon        = computed(() => cfg.value.icon);
 const roleAccent      = computed(() => cfg.value.accent);
@@ -1109,7 +1102,7 @@ const roleBotIcon     = computed(() => cfg.value.botIcon);
 const roleTagBg       = computed(() => cfg.value.tagBg);
 const roleTagBorder   = computed(() => cfg.value.tagBorder);
 const roleTagColor    = computed(() => cfg.value.tagColor);
-const userName        = computed(() => authStore.user?.name?.split(' ')[0] || 'Utilisateur');
+const userName        = computed(() => authStore.user?.name?.split(' ')[0] || t('optional'));
 const userInitial     = computed(() => (authStore.user?.name || 'U')[0].toUpperCase());
 
 const cvScoreColor = computed(() => {
@@ -1118,48 +1111,44 @@ const cvScoreColor = computed(() => {
   return s >= 80 ? '#10b981' : s >= 60 ? '#f59e0b' : '#ef4444';
 });
 
-// ── KPI CARDS — DYNAMIQUES DEPUIS .NET ──
+// ── KPI CARDS ──
 const kpiCards = computed(() => {
   const r = role.value;
   const k = dotnetStats.kpis;
 
   if (r === 'Candidat') return [
-{ label: 'TESTS PASSÉS',  value: k.totalTests ?? '—', icon: 'fa-solid fa-clipboard-check', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', trend: '↑', sparkPoints: '0,22 12,18 24,20 36,10 48,14 60,8 72,12 80,6' },
-    { label: 'SCORE MOYEN',   value: k.moyenne != null ? k.moyenne+'%' : '—', icon: 'fa-solid fa-star', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  trend: '↑',   sparkPoints: '0,24 12,20 24,16 36,18 48,12 60,10 72,8 80,4' },
-    { label: 'CAMPAGNES',     value: k.totalCampagnes ?? '—', icon: 'fa-solid fa-bullhorn',     color: '#ef4444', bg: 'rgba(239,68,68,0.12)',   trend: '→',   sparkPoints: '0,20 12,16 24,22 36,14 48,16 60,12 72,14 80,8' },
-    { label: 'TALENTS',       value: k.totalTalents ?? '—',   icon: 'fa-solid fa-users',        color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)',  trend: '↑',   sparkPoints: '0,26 12,22 24,24 36,16 48,18 60,10 72,12 80,6' },
+    { label: t('dashboard.kpis.totalTests'),  value: k.totalTests ?? '—', icon: 'fa-solid fa-clipboard-check', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', trend: '↑', sparkPoints: '0,22 80,6' },
+    { label: t('dashboard.kpis.avgScore'),   value: k.moyenne != null ? k.moyenne+'%' : '—', icon: 'fa-solid fa-star', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  trend: '↑',   sparkPoints: '0,24 80,4' },
+    { label: t('dashboard.kpis.campaigns'),     value: k.totalCampagnes ?? '—', icon: 'fa-solid fa-bullhorn',     color: '#ef4444', bg: 'rgba(239,68,68,0.12)',   trend: '→',   sparkPoints: '0,20 80,8' },
+    { label: t('dashboard.kpis.talents'),       value: k.totalTalents ?? '—',   icon: 'fa-solid fa-users',        color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)',  trend: '↑',   sparkPoints: '0,26 80,6' },
   ];
   if (['Evaluateur','RH','Recruteur'].includes(r)) return [
-    { label: 'ÉVALUATIONS',   value: k.totalTests ?? '—',     icon: 'fa-solid fa-clipboard-check', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  trend: '↑',   sparkPoints: '0,22 12,18 24,20 36,10 48,14 60,8 72,12 80,6' },
-    { label: 'SCORE MOYEN',   value: k.moyenne != null ? k.moyenne+'%' : '—', icon: 'fa-solid fa-chart-bar', color: '#10b981', bg: 'rgba(16,185,129,0.12)',  trend: '↑',  sparkPoints: '0,24 12,20 24,16 36,18 48,12 60,10 72,8 80,4' },
-    { label: 'CAMPAGNES',     value: k.totalCampagnes ?? '—', icon: 'fa-solid fa-calendar-days', color: '#6366f1', bg: 'rgba(99,102,241,0.12)',  trend: '↑',   sparkPoints: '0,20 12,16 24,22 36,14 48,16 60,12 72,14 80,8' },
-    { label: 'TALENTS ACTIFS',value: k.totalTalents ?? '—',   icon: 'fa-solid fa-user-group',   color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)',  trend: '↑',   sparkPoints: '0,26 12,22 24,24 36,16 48,18 60,10 72,12 80,6' },
+    { label: t('dashboard.kpis.evaluationsIA'),   value: k.totalTests ?? '—',     icon: 'fa-solid fa-clipboard-check', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  trend: '↑',   sparkPoints: '0,22 80,6' },
+    { label: t('dashboard.kpis.scoreGlobal'),   value: k.moyenne != null ? k.moyenne+'%' : '—', icon: 'fa-solid fa-chart-bar', color: '#10b981', bg: 'rgba(16,185,129,0.12)',  trend: '↑',  sparkPoints: '0,24 80,4' },
+    { label: t('dashboard.kpis.campagnesActives'),     value: k.totalCampagnes ?? '—', icon: 'fa-solid fa-calendar-days', color: '#6366f1', bg: 'rgba(99,102,241,0.12)',  trend: '↑',   sparkPoints: '0,20 80,8' },
+    { label: t('dashboard.kpis.talentsActifs'),value: k.totalTalents ?? '—',   icon: 'fa-solid fa-user-group',   color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)',  trend: '↑',   sparkPoints: '0,26 80,6' },
   ];
   if (r === 'AdminEntreprise') return [
-    { label: 'TALENTS ACTIFS',value: k.totalTalents ?? '—',   icon: 'fa-solid fa-user-group',    color: '#fbbf24', bg: 'rgba(251,191,36,0.12)',  trend: '↑',   sparkPoints: '0,22 12,18 24,20 36,10 48,14 60,8 72,12 80,6' },
-    { label: 'SCORE MOYEN',   value: k.moyenne != null ? k.moyenne+'%' : '—', icon: 'fa-solid fa-circle-check', color: '#10b981', bg: 'rgba(16,185,129,0.12)',  trend: '↑', sparkPoints: '0,24 12,20 24,16 36,18 48,12 60,10 72,8 80,4' },
-    { label: 'CAMPAGNES',     value: k.totalCampagnes ?? '—', icon: 'fa-solid fa-bolt-lightning', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)',  trend: '↑',   sparkPoints: '0,20 12,16 24,22 36,14 48,16 60,12 72,14 80,8' },
-    { label: 'ÉVALUATIONS IA',value: k.iaProcessed ?? '—',    icon: 'fa-solid fa-brain',          color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)',  trend: '↑',   sparkPoints: '0,26 12,22 24,24 36,16 48,18 60,10 72,12 80,6' },
+    { label: t('dashboard.kpis.talentsActifs'),value: k.totalTalents ?? '—',   icon: 'fa-solid fa-user-group',    color: '#fbbf24', bg: 'rgba(251,191,36,0.12)',  trend: '↑',   sparkPoints: '0,22 80,6' },
+    { label: t('dashboard.kpis.scoreGlobal'),   value: k.moyenne != null ? k.moyenne+'%' : '—', icon: 'fa-solid fa-circle-check', color: '#10b981', bg: 'rgba(16,185,129,0.12)',  trend: '↑', sparkPoints: '0,24 80,4' },
+    { label: t('dashboard.kpis.campagnesActives'),     value: k.totalCampagnes ?? '—', icon: 'fa-solid fa-bolt-lightning', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)',  trend: '↑',   sparkPoints: '0,20 80,8' },
+    { label: t('dashboard.kpis.evaluationsIA'),value: k.iaProcessed ?? '—',    icon: 'fa-solid fa-brain',          color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)',  trend: '↑',   sparkPoints: '0,26 80,6' },
   ];
   if (r === 'SuperAdmin') return [
-    { label: 'ENTREPRISES',   value: superAdminStats.totalEntreprises ?? '—', icon: 'fa-solid fa-building', color: '#6366f1', bg: 'rgba(99,102,241,0.12)',  trend: '↑', sparkPoints: '0,22 12,18 24,20 36,10 48,14 60,8 72,12 80,6' },
-    { label: 'UTILISATEURS',  value: superAdminStats.totalUtilisateurs ?? '—', icon: 'fa-solid fa-users', color: '#10b981', bg: 'rgba(16,185,129,0.12)',  trend: '↑',  sparkPoints: '0,24 12,20 24,16 36,18 48,12 60,10 72,8 80,4' },
-    { label: 'ÉVALUATIONS',   value: superAdminStats.totalTests ?? '—',        icon: 'fa-solid fa-wave-square', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  trend: '↑', sparkPoints: '0,20 12,16 24,22 36,14 48,16 60,12 72,14 80,8' },
-    { label: 'EN ATTENTE',    value: superAdminStats.demandesEnAttente ?? '—', icon: 'fa-solid fa-clock', color: '#ef4444', bg: 'rgba(239,68,68,0.12)',  trend: '!',  sparkPoints: '0,26 12,22 24,24 36,16 48,18 60,10 72,12 80,6' },
+    { label: t('dashboard.kpis.companies'),   value: superAdminStats.totalEntreprises ?? '—', icon: 'fa-solid fa-building', color: '#6366f1', bg: 'rgba(99,102,241,0.12)',  trend: '↑', sparkPoints: '0,22 80,6' },
+    { label: t('dashboard.kpis.users'),  value: superAdminStats.totalUtilisateurs ?? '—', icon: 'fa-solid fa-users', color: '#10b981', bg: 'rgba(16,185,129,0.12)',  trend: '↑',  sparkPoints: '0,24 80,4' },
+    { label: t('dashboard.kpis.evaluations'),   value: superAdminStats.totalTests ?? '—',        icon: 'fa-solid fa-wave-square', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  trend: '↑', sparkPoints: '0,20 80,8' },
+    { label: t('dashboard.kpis.pending'),    value: superAdminStats.demandesEnAttente ?? '—', icon: 'fa-solid fa-clock', color: '#ef4444', bg: 'rgba(239,68,68,0.12)',  trend: '!',  sparkPoints: '0,26 80,6' },
   ];
   return [];
 });
 
-const miniStats = computed(() => {
-  const k = dotnetStats.kpis;
-  return [
-    { label: 'Tests',   value: k.totalTests ?? '—',   color: '#3b82f6' },
-    { label: 'Score',   value: k.moyenne != null ? k.moyenne+'%' : '—', color: '#f59e0b' },
-    { label: 'Talents', value: k.totalTalents ?? '—', color: '#10b981' },
-  ];
-});
+const miniStats = computed(() => [
+  { label: t('dashboard.miniStats.tests'),   value: dotnetStats.kpis.totalTests ?? '—',   color: '#3b82f6' },
+  { label: t('dashboard.miniStats.score'),   value: dotnetStats.kpis.moyenne != null ? dotnetStats.kpis.moyenne+'%' : '—', color: '#f59e0b' },
+  { label: t('dashboard.miniStats.talents'), value: dotnetStats.kpis.totalTalents ?? '—', color: '#10b981' },
+]);
 
-// ── TOP SKILLS — calculées depuis candidats .NET ──
 const topSkills = computed(() => {
   const leaders = dotnetStats.leaders || [];
   if (!leaders.length) return [
@@ -1182,7 +1171,7 @@ const candidatProgression = computed(() => historiqueCandidat.value.map(h => ({
 })));
 
 // ════════════════════════════════════════════════════════════
-// ██  CHARGEMENT DONNÉES .NET ██
+// ██  CHARGEMENT DONNÉES ██
 // ════════════════════════════════════════════════════════════
 
 const getAuthHeaders = () => {
@@ -1194,88 +1183,26 @@ const loadDotnetDashboard = async () => {
   try {
     const res = await axios.get(`${API_NET}/Dashboard/global-stats`, { headers: getAuthHeaders() });
     Object.assign(dotnetStats, res.data);
-    // Construire insight dynamique depuis données réelles
     const k = res.data.kpis || {};
-    iaInsight.value = `${k.totalTalents || 0} talents actifs · Score moyen : ${k.moyenne || 0}% · ${k.totalCampagnes || 0} campagnes · ${k.totalTests || 0} évaluations traitées.`;
-  } catch (e) {
-    console.warn('Dashboard stats:', e.message);
-  }
+    iaInsight.value = `${k.totalTalents || 0} ${t('dashboard.kpis.talentsActifs')} · ${t('dashboard.kpis.scoreGlobal')} : ${k.moyenne || 0}% · ${k.totalCampagnes || 0} ${t('dashboard.kpis.campagnesActives')}`;
+  } catch (e) { console.warn(e.message); }
 };
 
 const loadAnalytics = async () => {
   try {
     const res = await axios.get(`${API_NET}/Analytics/overview`, { headers: getAuthHeaders() });
-    const data = res.data;
-    if (data.recentActivities) {
-      recentActivities.value = data.recentActivities.map((a, i) => ({
+    if (res.data.recentActivities) {
+      recentActivities.value = res.data.recentActivities.map((a, i) => ({
         id: i,
         user: a.user,
         action: `${a.action} — ${a.campagne || ''}`,
         color: a.color || '#6366f1',
-        time: a.time || 'Récent',
+        time: a.time || t('dashboard.activity.recent'),
       }));
     }
-    if (data.kpis) {
-      iaInsight.value = data.insight || iaInsight.value;
-    }
-  } catch (e) {
-    console.warn('Analytics:', e.message);
-  }
+    if (res.data.insight) iaInsight.value = res.data.insight;
+  } catch (e) { console.warn(e.message); }
 };
-
-const loadCandidatData = async () => {
-  try {
-    const [testsRes, histRes] = await Promise.allSettled([
-      axios.get(`${API_NET}/Candidatures/mes-tests`, { headers: getAuthHeaders() }),
-      axios.get(`${API_NET}/Examen/historique`, { headers: getAuthHeaders() }),
-    ]);
-    if (testsRes.status === 'fulfilled') candidatTests.value = testsRes.value.data || [];
-    if (histRes.status === 'fulfilled')  historiqueCandidat.value = histRes.value.data || [];
-  } catch (e) {
-    console.warn('Candidat data:', e.message);
-  }
-};
-
-const loadEvalData = async () => {
-  try {
-    const [evalRes, campRes] = await Promise.allSettled([
-      axios.get(`${API_NET}/Examen/all`, { headers: getAuthHeaders() }),
-      axios.get(`${API_NET}/Campagnes`, { headers: getAuthHeaders() }),
-    ]);
-    if (evalRes.status === 'fulfilled') evalQueue.value = evalRes.value.data || [];
-    if (campRes.status === 'fulfilled') campagnes.value = campRes.value.data || [];
-  } catch (e) {
-    console.warn('Eval data:', e.message);
-  }
-};
-
-const loadAdminData = async () => {
-  try {
-    const staffRes = await axios.get(`${API_NET}/Staff`, { headers: getAuthHeaders() });
-    staffMembers.value = staffRes.data || [];
-  } catch (e) {
-    console.warn('Staff:', e.message);
-  }
-};
-
-const loadSuperAdminData = async () => {
-  try {
-    const [statsRes, usersRes] = await Promise.allSettled([
-      axios.get(`${API_NET}/SuperAdmin/stats`, { headers: getAuthHeaders() }),
-      axios.get(`${API_NET}/SuperAdmin/users`, { headers: getAuthHeaders() }),
-    ]);
-    if (statsRes.status === 'fulfilled') Object.assign(superAdminStats, statsRes.value.data);
-    if (usersRes.status === 'fulfilled') platformUsers.value = usersRes.value.data || [];
-    // Update insight
-    iaInsight.value = `Plateforme IA opérationnelle · ${superAdminStats.totalEntreprises} organisations · ${superAdminStats.totalUtilisateurs} utilisateurs · ${superAdminStats.demandesEnAttente} demandes en attente.`;
-  } catch (e) {
-    console.warn('SuperAdmin data:', e.message);
-  }
-};
-
-// ════════════════════════════════════════════════════════════
-// ██  RECOMMANDATIONS IA — PYTHON ENDPOINT ██
-// ════════════════════════════════════════════════════════════
 
 const loadRecommendations = async (forceRefresh = false) => {
   recoLoading.value = true;
@@ -1283,9 +1210,8 @@ const loadRecommendations = async (forceRefresh = false) => {
   try {
     const fd = new FormData();
     fd.append('role', role.value);
-    fd.append('lang', 'fr');
+    fd.append('lang', locale.value.toLowerCase());
     fd.append('force_refresh', forceRefresh ? 'true' : 'false');
-    // Passer le contexte depuis les données .NET réelles
     const ctx = {
       total_tests: dotnetStats.kpis?.totalTests || 0,
       score_moyen: dotnetStats.kpis?.moyenne || 0,
@@ -1293,32 +1219,10 @@ const loadRecommendations = async (forceRefresh = false) => {
       campagnes: dotnetStats.kpis?.totalCampagnes || 0,
     };
     fd.append('context', JSON.stringify(ctx));
-
     const res = await axios.post(`${API_IA}/ia/recommendations`, fd);
     recommendations.value = res.data.recommendations || [];
-  } catch (e) {
-    console.warn('Recommendations IA:', e.message);
-    // Fallback IA via GET
-    try {
-      const res = await axios.get(`${API_IA}/ia/recommendations`, {
-        params: { role: role.value, lang: 'fr', force_refresh: forceRefresh }
-      });
-      recommendations.value = res.data.recommendations || [];
-    } catch { /* fallback silencieux */ }
-  } finally {
-    recoLoading.value = false;
-  }
-};
-
-// ════════════════════════════════════════════════════════════
-// ██  CV ANALYSIS — IA PYTHON ██
-// ════════════════════════════════════════════════════════════
-
-const handleCvUpload = (e) => { selectedFile.value = e.target.files[0]; };
-const handleDrop = (e) => {
-  isDragging.value = false;
-  const file = e.dataTransfer.files[0];
-  if (file && (file.name.endsWith('.pdf') || file.name.endsWith('.docx'))) selectedFile.value = file;
+  } catch (e) { console.warn(e.message); }
+  finally { recoLoading.value = false; }
 };
 
 const runCvAnalysis = async () => {
@@ -1331,18 +1235,10 @@ const runCvAnalysis = async () => {
     fd.append('job_description', jobDescription.value || 'Poste générique');
     const res = await axios.post(`${API_IA}/ia/match-cv`, fd);
     cvResult.value = res.data;
-    showToast(`Analyse terminée — Score : ${res.data.score}%`, 'success', 'fa-solid fa-check');
-  } catch (e) {
-    showToast('Erreur lors de l\'analyse CV', 'error', 'fa-solid fa-x');
-    console.error('CV analysis:', e);
-  } finally {
-    isAnalyzing.value = false;
-  }
+    showToast(t('dashboard.toast.cvSuccess', { score: res.data.score }), 'success', 'fa-solid fa-check');
+  } catch (e) { showToast(t('dashboard.toast.cvError'), 'error', 'fa-solid fa-x'); }
+  finally { isAnalyzing.value = false; }
 };
-
-// ════════════════════════════════════════════════════════════
-// ██  LETTRE DE MOTIVATION — IA PYTHON ██
-// ════════════════════════════════════════════════════════════
 
 const generateLettre = async () => {
   if (!lettreData.poste || !lettreData.entreprise) return;
@@ -1353,15 +1249,12 @@ const generateLettre = async () => {
     fd.append('poste', lettreData.poste);
     fd.append('entreprise', lettreData.entreprise);
     fd.append('competences', lettreData.competences);
-    fd.append('langue', lettreData.langue);
+    fd.append('langue', locale.value.toLowerCase());
     const res = await axios.post(`${API_IA}/ia/lettre-motivation`, fd);
     lettreResult.value = res.data.lettre;
-    showToast('Lettre générée avec succès !', 'success', 'fa-solid fa-envelope');
-  } catch (e) {
-    showToast('Erreur génération lettre', 'error', 'fa-solid fa-x');
-  } finally {
-    isGeneratingLettre.value = false;
-  }
+    showToast(t('dashboard.toast.lettreSuccess'), 'success', 'fa-solid fa-envelope');
+  } catch (e) { showToast(t('dashboard.toast.lettreError'), 'error', 'fa-solid fa-x'); }
+  finally { isGeneratingLettre.value = false; }
 };
 
 const copyLettre = async () => {
@@ -1370,57 +1263,59 @@ const copyLettre = async () => {
     await navigator.clipboard.writeText(lettreResult.value);
     letterCopied.value = true;
     setTimeout(() => { letterCopied.value = false; }, 2500);
-    showToast('Lettre copiée !', 'success', 'fa-solid fa-check');
-  } catch { showToast('Erreur copie', 'error', 'fa-solid fa-x'); }
+    showToast(t('dashboard.toast.letterCopied'), 'success', 'fa-solid fa-check');
+  } catch { showToast(t('dashboard.toast.copyError'), 'error', 'fa-solid fa-x'); }
 };
-
-// ════════════════════════════════════════════════════════════
-// ██  IA SERVICES HEALTH — PYTHON ██
-// ════════════════════════════════════════════════════════════
 
 const loadIaServices = async () => {
   try {
     const res = await axios.get(`${API_IA}/ia/health`);
     iaServices.value = [
-      { name: 'API Gateway .NET',   latency: '~',   up: true },
-      { name: 'IA Engine (Gemini)', latency: `${res.data.avg_latency_ms || 0}ms`, up: res.data.circuit_state === 'CLOSED' },
-      { name: 'Auth Service',       latency: '~',   up: true },
-      { name: 'Cache LRU',          latency: '~',   up: true },
-      { name: 'Mailer Service',     latency: '~',   up: true },
+      { key: 'gateway', name: 'API Gateway .NET',   latency: '~',   up: true },
+      { key: 'iaEngine', name: 'IA Engine (Gemini)', latency: `${res.data.avg_latency_ms || 0}ms`, up: res.data.circuit_state === 'CLOSED' },
+      { key: 'auth', name: 'Auth Service',       latency: '~',   up: true },
     ];
-  } catch {
-    iaServices.value = [
-      { name: 'API Gateway .NET',   latency: '?',  up: false },
-      { name: 'IA Engine (Gemini)', latency: '?',  up: false },
-    ];
-  }
+  } catch { iaServices.value = [{ key: 'gateway', name: 'API Gateway .NET', up: false }]; }
 };
 
-// ════════════════════════════════════════════════════════════
-// ██  HELPERS UI ██
-// ════════════════════════════════════════════════════════════
+// ── ROLE DATA LOADING ──
+const loadAllData = async () => {
+  loading.value = true;
+  try {
+    await Promise.allSettled([loadDotnetDashboard(), loadAnalytics()]);
+    const r = role.value;
+    if (r === 'Candidat') {
+      const [tr, hr] = await Promise.allSettled([axios.get(`${API_NET}/Candidatures/mes-tests`, { headers: getAuthHeaders() }), axios.get(`${API_NET}/Examen/historique`, { headers: getAuthHeaders() })]);
+      if (tr.status === 'fulfilled') candidatTests.value = tr.value.data || [];
+      if (hr.status === 'fulfilled') historiqueCandidat.value = hr.value.data || [];
+    } else if (['Evaluateur','RH','Recruteur','AdminEntreprise'].includes(r)) {
+      const [er, cr, sr] = await Promise.allSettled([axios.get(`${API_NET}/Examen/all`, { headers: getAuthHeaders() }), axios.get(`${API_NET}/Campagnes`, { headers: getAuthHeaders() }), axios.get(`${API_NET}/Staff`, { headers: getAuthHeaders() })]);
+      if (er.status === 'fulfilled') evalQueue.value = er.value.data || [];
+      if (cr.status === 'fulfilled') campagnes.value = cr.value.data || [];
+      if (sr.status === 'fulfilled') staffMembers.value = sr.value.data || [];
+    } else if (r === 'SuperAdmin') {
+      const [str, ur] = await Promise.allSettled([axios.get(`${API_NET}/SuperAdmin/stats`, { headers: getAuthHeaders() }), axios.get(`${API_NET}/SuperAdmin/users`, { headers: getAuthHeaders() })]);
+      if (str.status === 'fulfilled') Object.assign(superAdminStats, str.value.data);
+      if (ur.status === 'fulfilled') platformUsers.value = ur.value.data || [];
+      await loadIaServices();
+    }
+  } finally { loading.value = false; }
+};
 
+// ── UI HELPERS ──
 const getInitials = (name = '') => (name || '?').split(' ').filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase();
 const getScoreColor = (s) => (s >= 75 ? '#10b981' : s >= 50 ? '#f59e0b' : '#ef4444');
 const getAvatarColor = (role) => ({'RH':'#6366f1','Evaluateur':'#f59e0b','Recruteur':'#10b981','AdminEntreprise':'#fbbf24','SuperAdmin':'#8b5cf6'}[role] || '#64748b');
 const getTestColor = (statut) => ({ 'EN_COURS': '#3b82f6', 'TERMINE': '#10b981', 'POSTULE': '#f59e0b', 'NON_COMMENCE': '#94a3b8' }[statut] || '#94a3b8');
 const getStatusBg = (s) => ({ 'EN_COURS': '#eff6ff', 'TERMINE': '#ecfdf5', 'NON_COMMENCE': '#fef9ec' }[s] || '#f8fafc');
 const getStatusColor = (s) => ({ 'EN_COURS': '#3b82f6', 'TERMINE': '#10b981', 'NON_COMMENCE': '#f59e0b' }[s] || '#94a3b8');
-const formatStatut = (s) => ({ 'EN_COURS': 'En cours', 'TERMINE': 'Terminé', 'POSTULE': 'En attente', 'NON_COMMENCE': 'À démarrer' }[s] || s);
-const formatDate = (d) => {
-  if (!d) return '—';
-  try { return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }); } catch { return '—'; }
-};
-
-// ── CLOCK & PARALLAX ──
-const updateClock = () => {
-  currentTime.value = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-};
+const formatStatut = (s) => t(`dashboard.testStatus.${s}`);
+const formatDate = (d) => d ? new Date(d).toLocaleDateString(locale.value === 'AR' ? 'ar-TN' : 'fr-FR', { day: '2-digit', month: 'short' }) : '—';
+const handleCvUpload = (e) => { selectedFile.value = e.target.files[0]; };
+const handleDrop = (e) => { isDragging.value = false; const f = e.dataTransfer.files[0]; if (f && (f.name.endsWith('.pdf') || f.name.endsWith('.docx'))) selectedFile.value = f; };
+const updateClock = () => { currentTime.value = new Date().toLocaleTimeString(locale.value === 'AR' ? 'ar-TN' : 'fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); };
 const orbStyle = (f) => ({ transform: `translate(${mousePos.x * f * 10}px, ${mousePos.y * f * 10}px)` });
-const handleParallax = (e) => {
-  mousePos.x = (e.clientX - window.innerWidth / 2) / 20;
-  mousePos.y = (e.clientY - window.innerHeight / 2) / 20;
-};
+const handleParallax = (e) => { mousePos.x = (e.clientX - window.innerWidth / 2) / 20; mousePos.y = (e.clientY - window.innerHeight / 2) / 20; };
 
 // ── CHART ──
 let chartInstance = null;
@@ -1428,60 +1323,41 @@ const initChart = async (period = 'week') => {
   await nextTick();
   const canvas = document.getElementById('mainChart');
   if (!canvas) return;
-  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+  if (chartInstance) chartInstance.destroy();
 
-  const dark      = isDark.value;
-  const gridColor = dark ? 'rgba(255,255,255,0.06)' : '#f1f5f9';
-  const tickColor = dark ? '#94a3b8' : '#64748b';
-  const accent    = roleAccent.value;
+  const accent = roleAccent.value;
+  const dark = isDark.value;
+  let labels = [], values = [];
 
-  let labels = [];
-  let values = [];
-
-  // Utiliser les données .NET si disponibles (chart par campagne)
   if (dotnetStats.chart?.length) {
     labels = dotnetStats.chart.map(c => c.name || c.nom || '');
     values = dotnetStats.chart.map(c => c.score || c.moyenne || 0);
   } else {
-    // Générer labels temporels
     const days = period === 'week' ? 7 : period === 'month' ? 30 : 90;
-    const today = new Date();
     for (let i = days - 1; i >= 0; i--) {
-      const d = new Date(today); d.setDate(d.getDate() - i);
-      labels.push(days > 7 ? `${d.getDate()}/${d.getMonth()+1}` : ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][d.getDay()]);
+      const d = new Date(); d.setDate(d.getDate() - i);
+      labels.push(days > 7 ? `${d.getDate()}/${d.getMonth()+1}` : d.toLocaleDateString(locale.value, {weekday:'short'}));
       values.push(Math.floor(Math.random() * 40) + 50);
     }
   }
 
   chartInstance = new Chart(canvas, {
     type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        data: values, borderColor: accent, backgroundColor: accent + '18',
-        tension: 0.4, fill: true,
-        pointBackgroundColor: accent, pointBorderColor: dark ? '#0d1117' : '#fff',
-        pointBorderWidth: 2, pointRadius: 4,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { color: gridColor }, ticks: { color: tickColor, font: { size: 11 } } },
-        y: { grid: { color: gridColor }, ticks: { color: tickColor, font: { size: 11 } } },
-      }
-    }
+    data: { labels, datasets: [{ data: values, borderColor: accent, backgroundColor: accent + '18', tension: 0.4, fill: true, pointBackgroundColor: accent, pointBorderColor: dark ? '#0d1117' : '#fff', pointBorderWidth: 2, pointRadius: 4 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: dark ? 'rgba(255,255,255,0.06)' : '#f1f5f9' }, ticks: { color: dark ? '#94a3b8' : '#64748b' } }, y: { grid: { color: dark ? 'rgba(255,255,255,0.06)' : '#f1f5f9' }, ticks: { color: dark ? '#94a3b8' : '#64748b' } } } }
   });
 };
 
-const switchPeriod = async (period) => {
-  activePeriod.value = period;
-  await initChart(period);
-};
+const switchPeriod = async (p) => { activePeriod.value = p; await initChart(p); };
 
+// ── WATCHERS ──
 watch(isDark, async () => { await nextTick(); await initChart(activePeriod.value); });
 watch(role,   async () => { await nextTick(); await initChart(activePeriod.value); await loadAllData(); });
+watch(locale, (newLang) => {
+  // تفعيل الـ RTL للعربية
+  document.documentElement.dir = newLang === 'AR' ? 'rtl' : 'ltr';
+  initChart(activePeriod.value);
+}, { immediate: true });
 
 // ── TOAST ──
 let _toastTimer = null;
@@ -1491,45 +1367,14 @@ const showToast = (msg, type = 'success', icon = 'fa-solid fa-check') => {
   _toastTimer = setTimeout(() => { globalToast.active = false; }, 4000);
 };
 
-// ════════════════════════════════════════════════════════════
-// ██  CHARGEMENT PRINCIPAL ██
-// ════════════════════════════════════════════════════════════
-
-const loadAllData = async () => {
-  loading.value = true;
-  try {
-    // Toujours charger le dashboard global .NET
-    await Promise.allSettled([
-      loadDotnetDashboard(),
-      loadAnalytics(),
-    ]);
-
-    // Charger les données spécifiques au rôle
-    const r = role.value;
-    if (r === 'Candidat') {
-      await loadCandidatData();
-    } else if (['Evaluateur','RH','Recruteur'].includes(r)) {
-      await loadEvalData();
-    } else if (r === 'AdminEntreprise') {
-      await Promise.allSettled([loadAdminData(), loadEvalData()]);
-    } else if (r === 'SuperAdmin') {
-      await Promise.allSettled([loadSuperAdminData(), loadIaServices()]);
-    }
-  } finally {
-    loading.value = false;
-  }
-};
-
 // ── LIFECYCLE ──
 let _clockInterval = null;
 onMounted(async () => {
   updateClock();
   _clockInterval = setInterval(updateClock, 1000);
-  await nextTick();
   await loadAllData();
   await initChart();
   await loadRecommendations();
-  // Polling temps réel toutes les 60s
   setInterval(loadAllData, 60000);
 });
 
@@ -1538,7 +1383,6 @@ onUnmounted(() => {
   if (chartInstance) chartInstance.destroy();
 });
 </script>
-
 
 <style scoped>
 /* ═══════════════════════════════════════════

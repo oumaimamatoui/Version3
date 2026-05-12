@@ -47,6 +47,7 @@ namespace NeoEvaluation.API.Data
 
         public DbSet<Categorie> Categories { get; set; } = null!;
         public DbSet<SousCategorie> SousCategories { get; set; } = null!;
+        public DbSet<UsageLog> UsageLogs { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

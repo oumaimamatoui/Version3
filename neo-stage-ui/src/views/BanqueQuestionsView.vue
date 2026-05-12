@@ -21,25 +21,25 @@
           <header class="d-flex justify-content-between align-items-end mb-5 flex-wrap gap-3 bq-header">
             <div>
               <div class="breadcrumb-pro mb-2">
-                <span class="root">Administration</span>
+                <span class="root">{{ $t('rolesView.breadcrumb.admin') }}</span>
                 <i class="fa-solid fa-chevron-right mx-2 separator"></i>
-                <span class="current">Banque des Questions</span>
+                <span class="current">{{ $t('sidebar.links.bank') }}</span>
               </div>
               <h2 class="premium-title">
-                Banque des <span class="gradient-text">Questions</span>
+                {{ $t('sidebar.links.bank').split(' ')[0] }} <span class="gradient-text">{{ $t('sidebar.links.bank').split(' ').slice(1).join(' ') }}</span>
               </h2>
               <p class="brand-subtitle-v2 d-flex align-items-center gap-2 mt-2">
                 <span class="live-dot-wrap">
                   <span class="live-dot"></span>
                   <span class="live-ring"></span>
                 </span>
-                Référentiel IA · Génération bilingue FR/EN · <strong>{{ questions.length }}</strong> actifs
+                {{ $t('dashboard.kpis.talentsActifs') }} IA · {{ $t('sidebar.links.ai') }} FR/EN · <strong>{{ questions.length }}</strong> actifs
               </p>
             </div>
 
             <div class="d-flex align-items-center gap-2 flex-wrap">
               <!-- DARK MODE TOGGLE -->
-              <button class="btn-refresh-pro" @click="isDark = !isDark" :title="isDark ? 'Mode clair' : 'Mode sombre'">
+              <button class="btn-refresh-pro" @click="isDark = !isDark" :title="isDark ? $t('theme.light') : $t('theme.dark')">
                 <i :class="isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
               </button>
 
@@ -51,7 +51,7 @@
                   @focus="searchFocused = true"
                   @blur="searchFocused = false"
                   type="text"
-                  placeholder="Rechercher..."
+                  :placeholder="$t('search')"
                   class="search-inline-input"
                 >
                 <button v-if="searchQuery" @click="searchQuery = ''" class="btn-clear-search">
@@ -60,19 +60,19 @@
               </div>
 
               <button class="btn-outline-pro" @click="showCatManager = true">
-                <i class="fa-solid fa-sitemap me-2"></i>Catégories
+                <i class="fa-solid fa-sitemap me-2"></i>{{ $t('campaigns.studio.step1.theme').split(' ')[0] }}s
               </button>
 
               <button class="btn-ai-glow" @click="showAIModal = true">
                 <span class="btn-shine-layer"></span>
                 <i class="fa-solid fa-wand-magic-sparkles me-2"></i>
-                Générer par IA
+                {{ $t('sidebar.links.ai') }}
                 <span class="lang-badge-pill ms-2">FR/EN</span>
               </button>
 
               <button class="btn-enigma-primary shadow-premium" @click="openModal()">
                 <div class="btn-content">
-                  <i class="fa-solid fa-plus me-2"></i>Nouvelle question
+                  <i class="fa-solid fa-plus me-2"></i>{{ $t('create') }}
                 </div>
                 <div class="btn-glow"></div>
               </button>
@@ -109,7 +109,7 @@
                     :class="{ active: activeFilter === -1 }"
                     @click="activeFilter = -1"
                   >
-                    <i class="fa-solid fa-border-all me-1"></i>Tous
+                    <i class="fa-solid fa-border-all me-1"></i>{{ $t('all') }}
                     <span class="tab-count">{{ questions.length }}</span>
                   </button>
                   <button
@@ -133,7 +133,7 @@
               <div class="sort-select-wrap">
                 <i class="fa-solid fa-layer-group sort-ico"></i>
                 <select v-model="selectedCat" class="sort-select-pro">
-                  <option value="All">Toutes catégories</option>
+                  <option value="All">{{ $t('campaigns.studio.bank.allThemes') }}</option>
                   <option v-for="cat in categoriesList" :key="cat.id" :value="cat.nom">{{ cat.nom }}</option>
                 </select>
                 <i class="fa-solid fa-chevron-down sort-arrow"></i>
@@ -142,7 +142,7 @@
               <!-- LANG FILTER -->
               <div class="lang-cluster">
                 <button :class="['lang-tab', { active: filterLang === 'all' }]" @click="filterLang = 'all'">
-                  <i class="fa-solid fa-globe"></i> Tous
+                  <i class="fa-solid fa-globe"></i> {{ $t('all') }}
                   <span class="ltab-count">{{ questions.length }}</span>
                 </button>
                 <button :class="['lang-tab', { active: filterLang === 'fr' }]" @click="filterLang = 'fr'">
@@ -155,10 +155,10 @@
 
               <!-- VIEW TOGGLE -->
               <div class="view-toggle-cluster">
-                <button :class="['btn-view-toggle', { active: viewMode === 'grid' }]" @click="viewMode = 'grid'" title="Grille">
+                <button :class="['btn-view-toggle', { active: viewMode === 'grid' }]" @click="viewMode = 'grid'" :title="$t('view')">
                   <i class="fa-solid fa-table-cells-large"></i>
                 </button>
-                <button :class="['btn-view-toggle', { active: viewMode === 'list' }]" @click="viewMode = 'list'" title="Liste">
+                <button :class="['btn-view-toggle', { active: viewMode === 'list' }]" @click="viewMode = 'list'" :title="$t('filter')">
                   <i class="fa-solid fa-list-ul"></i>
                 </button>
               </div>
@@ -168,7 +168,7 @@
           <!-- ══════════════════════ LOADING STATE ══════════════════════ -->
           <div v-if="loading" class="empty-state-pro py-5 text-center">
             <div class="spinner-pro-premium"></div>
-            <p class="state-label mt-3"><i class="fa-solid fa-satellite-dish fa-spin me-2"></i>Chargement...</p>
+            <p class="state-label mt-3"><i class="fa-solid fa-satellite-dish fa-spin me-2"></i>{{ $t('loading') }}</p>
           </div>
 
           <!-- ══════════════════════ EMPTY STATE ══════════════════════ -->
@@ -179,11 +179,11 @@
               <div class="empty-ring r3"></div>
               <div class="empty-core"><i class="fa-solid fa-database"></i></div>
             </div>
-            <h5 class="fw-800 mb-2">Aucune question trouvée</h5>
-            <p class="text-muted small">Modifiez vos filtres ou créez de nouvelles questions</p>
+            <h5 class="fw-800 mb-2">{{ $t('noData') }}</h5>
+            <p class="text-muted small">{{ $t('campaigns.studio.bank.empty') }}</p>
             <button class="btn-enigma-primary mt-3" @click="resetFilters">
               <div class="btn-content">
-                <i class="fa-solid fa-rotate-left me-2"></i>Réinitialiser
+                <i class="fa-solid fa-rotate-left me-2"></i>{{ $t('reset') }}
               </div>
               <div class="btn-glow"></div>
             </button>
@@ -218,10 +218,10 @@
                   <span>{{ q.theme || 'Non classé' }}</span>
                 </div>
                 <div class="d-flex gap-2 align-items-center">
-                  <button class="btn-icon-sm" @click="openModal(q)" title="Modifier">
+                  <button class="btn-icon-sm" @click="openModal(q)" :title="$t('edit')">
                     <i class="fa-solid fa-pen-to-square"></i>
                   </button>
-                  <button class="btn-icon-sm danger" @click="handleDelete(q.id)" title="Supprimer">
+                  <button class="btn-icon-sm danger" @click="handleDelete(q.id)" :title="$t('delete')">
                     <i class="fa-solid fa-trash-can"></i>
                   </button>
                 </div>
@@ -243,7 +243,7 @@
               <div v-if="q.choix && q.choix.length > 0" class="card-options-preview">
                 <div class="opts-preview-header">
                   <i class="fa-solid fa-list-check text-amber me-1"></i>
-                  <span>{{ q.choix.length }} options</span>
+                  <span>{{ q.choix.length }} {{ $t('campaigns.studio.bank.options').replace(':', '') }}</span>
                 </div>
                 <div class="opts-preview-list">
                   <div v-for="(opt, oi) in q.choix.slice(0, 3)" :key="oi" class="opt-preview-item">
@@ -278,12 +278,12 @@
           <!-- ══════════════════════ LIST VIEW ══════════════════════ -->
           <div v-else class="list-view-pro">
             <div class="list-header-row d-flex align-items-center px-4 py-2 mb-2">
-              <span style="width:110px" class="list-col-label">TYPE</span>
+              <span style="width:110px" class="list-col-label">{{ $t('campaigns.studio.step2.bank').replace('BANQUE','TYPE') }}</span>
               <span style="width:80px"  class="list-col-label">LANG</span>
               <span class="flex-grow-1 list-col-label">QUESTION</span>
-              <span style="width:150px" class="list-col-label">CATÉGORIE</span>
-              <span style="width:80px"  class="list-col-label text-center">NIVEAU</span>
-              <span style="width:80px"  class="list-col-label text-center">ACTIONS</span>
+              <span style="width:150px" class="list-col-label">{{ $t('campaigns.studio.step1.theme') }}</span>
+              <span style="width:80px"  class="list-col-label text-center">{{ $t('campaigns.studio.step1.tiers.high').toUpperCase() }}</span>
+              <span style="width:80px"  class="list-col-label text-center">{{ $t('actions') }}</span>
             </div>
             <transition-group name="row-anim" tag="div">
               <div v-for="(q, i) in filteredQuestions" :key="q.id" class="list-row-item d-flex align-items-center px-4 py-3 mb-2" :style="{ '--row-delay': i * 0.02 + 's' }">
@@ -332,7 +332,6 @@
     <transition name="modal-quantum">
       <div v-if="showAIModal" class="quantum-vault-overlay" @click.self="showAIModal = false">
         <div class="quantum-vault-window modal-md">
-          <!-- Corner decorators -->
           <div class="modal-corner tl"></div><div class="modal-corner tr"></div>
           <div class="modal-corner bl"></div><div class="modal-corner br"></div>
 
@@ -343,7 +342,7 @@
                 <i class="fa-solid fa-wand-magic-sparkles"></i>
               </div>
               <div>
-                <h5 class="fw-900 m-0">Génération <em class="text-amber">Bilingue</em> par IA</h5>
+                <h5 class="fw-900 m-0">{{ $t('sidebar.links.ai') }} <em class="text-amber">Bilingue</em></h5>
                 <p class="small text-muted m-0"><i class="fa-solid fa-microchip me-1"></i>Moteur Gemini · Questions FR &amp; EN</p>
               </div>
             </div>
@@ -355,7 +354,7 @@
           <div class="modal-body-scroll fancy-scroll p-4">
             <!-- LANGUE -->
             <div class="enigma-input-wrap mb-4">
-              <label>LANGUE DE GÉNÉRATION</label>
+              <label>{{ $t('lang.switch').toUpperCase() }}</label>
               <div class="lang-cards-grid">
                 <label v-for="l in langOptions" :key="l.val"
                   :class="['lang-card', { 'lang-card-active': aiForm.langue === l.val }]"
@@ -372,7 +371,7 @@
 
             <!-- TYPE -->
             <div class="enigma-input-wrap mb-4">
-              <label>FORMAT DE LA QUESTION</label>
+              <label>{{ $t('campaigns.studio.quickAdd.type').toUpperCase() }}</label>
               <div class="type-tiles-grid">
                 <div
                   v-for="t in typeDefinitions"
@@ -394,11 +393,11 @@
             <div class="row g-3 mb-4">
               <div class="col-md-6">
                 <div class="enigma-input-wrap">
-                  <label>CATÉGORIE</label>
+                  <label>{{ $t('campaigns.studio.step1.theme') }}</label>
                   <div class="theme-select-wrapper">
                     <i class="fa-solid fa-folder theme-select-icon"></i>
                     <select v-model="aiForm.theme" class="enigma-field theme-select" @change="aiForm.sousTheme = ''">
-                      <option value="">— Choisir —</option>
+                      <option value="">— {{ $t('confirm') }} —</option>
                       <option v-for="cat in categoriesList" :key="cat.id" :value="cat.nom">{{ cat.nom }}</option>
                     </select>
                   </div>
@@ -406,11 +405,11 @@
               </div>
               <div class="col-md-6">
                 <div class="enigma-input-wrap">
-                  <label>SOUS-THÈME</label>
+                  <label>{{ $t('campaigns.studio.step1.subTheme') }}</label>
                   <div class="theme-select-wrapper" :class="{ 'disabled-wrapper': !aiForm.theme }">
                     <i class="fa-solid fa-tags theme-select-icon"></i>
                     <select v-model="aiForm.sousTheme" class="enigma-field theme-select" :disabled="!aiForm.theme">
-                      <option value="">— Sélectionner —</option>
+                      <option value="">— {{ $t('optional') }} —</option>
                       <option v-for="sub in aiDynamicSubCategories" :key="sub.id" :value="sub.nom">{{ sub.nom }}</option>
                     </select>
                   </div>
@@ -422,7 +421,7 @@
             <div class="row g-3 mb-4">
               <div class="col-md-6">
                 <div class="enigma-input-wrap">
-                  <label>NOMBRE DE QUESTIONS</label>
+                  <label>{{ $t('campaigns.studio.bank.stats.total').toUpperCase() }}</label>
                   <div class="number-stepper">
                     <button class="step-btn" @click="aiForm.n = Math.max(1, aiForm.n - 1)"><i class="fa-solid fa-minus"></i></button>
                     <input v-model.number="aiForm.n" type="number" min="1" max="20" class="step-input">
@@ -432,7 +431,7 @@
               </div>
               <div class="col-md-6">
                 <div class="enigma-input-wrap">
-                  <label>DIFFICULTÉ</label>
+                  <label>{{ $t('campaigns.studio.quickAdd.difficulty').toUpperCase() }}</label>
                   <div class="d-flex gap-2">
                     <button
                       v-for="d in difficultyLevels"
@@ -462,7 +461,7 @@
               <div v-if="aiPreview.length > 0 && !isAILoading" class="ai-preview-box">
                 <div class="preview-header">
                   <i class="fa-solid fa-eye me-2 text-amber"></i>
-                  <span>{{ aiPreview.length }} QUESTIONS GÉNÉRÉES</span>
+                  <span>{{ aiPreview.length }} {{ $t('campaigns.studio.bank.found').replace('{count}', '').trim().toUpperCase() }}</span>
                   <span class="ms-2 row-lang-chip lc-fr">🇫🇷 {{ aiPreview.filter(q => resolvePreviewLang(q) === 'fr').length }}</span>
                   <span class="ms-1 row-lang-chip lc-en">🇬🇧 {{ aiPreview.filter(q => resolvePreviewLang(q) === 'en').length }}</span>
                   <button class="btn-clear-search ms-auto" @click="aiPreview = []"><i class="fa-solid fa-xmark"></i></button>
@@ -488,15 +487,15 @@
           </div>
 
           <div class="modal-footer-actions">
-            <button class="btn-qv-cancel" @click="showAIModal = false"><i class="fa-solid fa-xmark me-2"></i>Annuler</button>
+            <button class="btn-qv-cancel" @click="showAIModal = false"><i class="fa-solid fa-xmark me-2"></i>{{ $t('cancel') }}</button>
             <button class="btn-outline-pro" :disabled="isAILoading || !aiForm.theme || !aiForm.sousTheme" @click="previewAI">
-              <i class="fa-solid fa-eye me-2"></i>Aperçu
+              <i class="fa-solid fa-eye me-2"></i>{{ $t('view') }}
             </button>
             <button class="btn-enigma-primary" :disabled="isAILoading || !aiForm.theme || !aiForm.sousTheme" @click="handleAIGeneration">
               <div class="btn-content">
                 <i v-if="isAILoading" class="fa-solid fa-circle-notch fa-spin me-2"></i>
                 <i v-else class="fa-solid fa-wand-magic-sparkles me-2"></i>
-                {{ isAILoading ? 'Génération...' : 'Lancer le moteur IA' }}
+                {{ isAILoading ? $t('loading') : $t('sidebar.links.ai') }}
               </div>
               <div class="btn-glow"></div>
             </button>
@@ -520,7 +519,7 @@
                 <i class="fa-solid fa-sitemap"></i>
               </div>
               <div>
-                <h5 class="fw-900 m-0">Gérer les <em class="text-amber">Catégories</em></h5>
+                <h5 class="fw-900 m-0">{{ $t('create') }} <em class="text-amber">{{ $t('campaigns.studio.step1.theme') }}</em></h5>
                 <p class="small text-muted m-0">Thèmes &amp; sous-thèmes du référentiel</p>
               </div>
             </div>
@@ -536,7 +535,7 @@
                 <input v-model="newCatName" @keyup.enter="addCategory" placeholder="Nom de la nouvelle catégorie..." class="search-inline-input">
               </div>
               <button class="btn-enigma-primary" @click="addCategory">
-                <div class="btn-content"><i class="fa-solid fa-plus me-2"></i>Créer</div>
+                <div class="btn-content"><i class="fa-solid fa-plus me-2"></i>{{ $t('create') }}</div>
                 <div class="btn-glow"></div>
               </button>
             </div>
@@ -591,7 +590,7 @@
               </div>
               <div>
                 <h5 class="fw-900 m-0">
-                  {{ isEdit ? 'Modifier' : 'Créer' }} une <em class="text-amber">Question</em>
+                  {{ isEdit ? $t('edit') : $t('create') }} <em class="text-amber">Question</em>
                 </h5>
                 <p class="small text-muted m-0">{{ isEdit ? 'Mise à jour du référentiel' : 'Nouvelle entrée dans la banque' }}</p>
               </div>
@@ -604,7 +603,7 @@
           <div class="modal-body-scroll fancy-scroll p-4">
             <!-- TYPE -->
             <div class="enigma-input-wrap mb-4">
-              <label>FORMAT DE LA QUESTION</label>
+              <label>{{ $t('campaigns.studio.quickAdd.type').toUpperCase() }}</label>
               <div class="type-tiles-grid">
                 <div
                   v-for="t in typeDefinitions"
@@ -624,26 +623,26 @@
 
             <!-- LANGUE -->
             <div class="enigma-input-wrap mb-4">
-              <label>LANGUE</label>
+              <label>{{ $t('lang.switch').toUpperCase() }}</label>
               <div class="d-flex gap-2">
                 <button :class="['lang-toggle-btn flex-grow-1', { active: form.langue === 'fr' }]" @click="form.langue = 'fr'">
-                  🇫🇷 Français
+                  🇫🇷 {{ $t('lang.fr') }}
                 </button>
                 <button :class="['lang-toggle-btn flex-grow-1', { active: form.langue === 'en' }]" @click="form.langue = 'en'">
-                  🇬🇧 English
+                  🇬🇧 {{ $t('lang.en') }}
                 </button>
               </div>
             </div>
 
             <!-- ÉNONCÉ -->
             <div class="enigma-input-wrap mb-4">
-              <label>ÉNONCÉ *</label>
+              <label>{{ $t('campaigns.studio.quickAdd.enonce') }}</label>
               <div style="position:relative">
                 <textarea
                   v-model="form.enonce"
                   class="enigma-field"
                   rows="3"
-                  :placeholder="form.langue === 'en' ? 'Enter the question...' : 'Saisir la problématique...'"
+                  :placeholder="form.langue === 'en' ? $t('campaigns.studio.quickAdd.enocePlaceholder') : 'Saisir la problématique...'"
                 ></textarea>
                 <span class="char-counter">{{ form.enonce.length }}</span>
               </div>
@@ -653,11 +652,11 @@
             <div class="row g-3 mb-4">
               <div class="col-md-6">
                 <div class="enigma-input-wrap">
-                  <label>CATÉGORIE</label>
+                  <label>{{ $t('campaigns.studio.step1.theme') }}</label>
                   <div class="theme-select-wrapper">
                     <i class="fa-solid fa-folder theme-select-icon"></i>
                     <select v-model="form.theme" class="enigma-field theme-select">
-                      <option value="">Sélectionner...</option>
+                      <option value="">{{ $t('optional') }}...</option>
                       <option v-for="cat in categoriesList" :key="cat.id" :value="cat.nom">{{ cat.nom }}</option>
                     </select>
                   </div>
@@ -665,11 +664,11 @@
               </div>
               <div class="col-md-6">
                 <div class="enigma-input-wrap">
-                  <label>SOUS-THÈME</label>
+                  <label>{{ $t('campaigns.studio.step1.subTheme') }}</label>
                   <div class="theme-select-wrapper" :class="{ 'disabled-wrapper': !form.theme }">
                     <i class="fa-solid fa-tags theme-select-icon"></i>
                     <select v-model="form.sousTheme" class="enigma-field theme-select" :disabled="!form.theme">
-                      <option value="">Aucun</option>
+                      <option value="">{{ $t('optional') }}</option>
                       <option v-for="sub in dynamicSubCategories" :key="sub.id" :value="sub.nom">{{ sub.nom }}</option>
                     </select>
                   </div>
@@ -680,16 +679,16 @@
             <!-- NIVEAU -->
             <div class="enigma-input-wrap mb-4">
               <label class="d-flex justify-content-between">
-                <span>NIVEAU DE COMPLEXITÉ</span>
+                <span>{{ $t('campaigns.studio.quickAdd.difficulty').toUpperCase() }}</span>
                 <span :style="{ color: getLevelColor(form.points) }"><i class="fa-solid fa-signal me-1"></i>{{ form.points }} / 5</span>
               </label>
               <div class="admissibility-dashboard">
                 <input type="range" min="1" max="5" step="1" v-model.number="form.points" class="enigma-range"
                   :style="{ '--rng-c': getLevelColor(form.points), '--rng-pct': ((form.points-1)/4*100) + '%' }">
                 <div class="d-flex justify-content-between mt-2">
-                  <span class="score-tier tier-low">Débutant</span>
-                  <span class="score-tier tier-mid">Standard</span>
-                  <span class="score-tier tier-high">Expert</span>
+                  <span class="score-tier tier-low">{{ $t('campaigns.studio.step1.tiers.low') }}</span>
+                  <span class="score-tier tier-mid">{{ $t('campaigns.studio.step1.tiers.mid') }}</span>
+                  <span class="score-tier tier-high">{{ $t('campaigns.studio.step1.tiers.high') }}</span>
                 </div>
               </div>
             </div>
@@ -699,10 +698,10 @@
               <div class="d-flex justify-content-between align-items-center mb-3 pb-2" style="border-bottom:1px solid var(--bdr)">
                 <label class="m-0">
                   <i :class="getTypeInfo(form.type).icon + ' me-2'" :style="{ color: getTypeInfo(form.type).color }"></i>
-                  {{ form.langue === 'en' ? 'ANSWER OPTIONS' : 'OPTIONS DE RÉPONSE' }}
+                  {{ form.langue === 'en' ? $t('rolesView.permissions.candidates').toUpperCase() : 'OPTIONS DE RÉPONSE' }}
                 </label>
                 <button v-if="form.type !== 2" @click="addResponse" class="btn-bank-action-v2">
-                  <i class="fa-solid fa-plus me-1"></i>Ajouter
+                  <i class="fa-solid fa-plus me-1"></i>{{ $t('create') }}
                 </button>
               </div>
               <div class="d-flex flex-column gap-2">
@@ -727,7 +726,7 @@
             <div class="enigma-input-wrap mb-4" v-if="[4,5,6].includes(form.type)">
               <label>
                 <i :class="(form.type === 5 ? 'fa-solid fa-terminal' : 'fa-solid fa-pen-to-square') + ' me-2'" :style="{ color: getTypeInfo(form.type).color }"></i>
-                {{ form.type === 5 ? 'CODE DE RÉFÉRENCE' : (form.langue === 'en' ? 'EXPECTED ANSWER' : 'RÉPONSE ATTENDUE') }}
+                {{ form.type === 5 ? $t('campaigns.studio.quickAdd.explanation').toUpperCase() : (form.langue === 'en' ? 'EXPECTED ANSWER' : 'RÉPONSE ATTENDUE') }}
               </label>
               <div class="code-box">
                 <div class="code-titlebar">
@@ -744,13 +743,13 @@
 
           <div class="modal-footer-actions">
             <button class="btn-qv-cancel" @click="showModal = false">
-              <i class="fa-solid fa-xmark me-2"></i>Fermer
+              <i class="fa-solid fa-xmark me-2"></i>{{ $t('close') }}
             </button>
             <button class="btn-enigma-primary" :disabled="isSaving" @click="save">
               <div class="btn-content">
                 <i v-if="isSaving" class="fa-solid fa-circle-notch fa-spin me-2"></i>
                 <i v-else class="fa-solid fa-floppy-disk me-2"></i>
-                {{ isSaving ? 'Enregistrement...' : 'Sauvegarder' }}
+                {{ isSaving ? $t('loading') : $t('save') }}
               </div>
               <div class="btn-glow"></div>
             </button>
@@ -764,7 +763,7 @@
       <div v-if="toast.active" :class="['enigma-toast', `t-${toast.type}`]">
         <div class="t-ico"><i :class="toast.icon"></i></div>
         <div class="t-body">
-          <strong>{{ toast.type === 'success' ? 'SUCCÈS' : toast.type === 'error' ? 'ERREUR' : 'INFO' }}</strong>
+          <strong>{{ toast.type === 'success' ? $t('success').toUpperCase() : toast.type === 'error' ? $t('error').toUpperCase() : 'INFO' }}</strong>
           <p class="m-0 small">{{ toast.message }}</p>
         </div>
         <button class="btn-clear-search ms-2" @click="toast.active = false"><i class="fa-solid fa-xmark"></i></button>
@@ -776,8 +775,14 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import api from '@/services/api';
 import axios from 'axios';
+import Swal from 'sweetalert2';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+const { t } = useI18n();
 
 const AI_BASE = 'http://127.0.0.1:8000';
 
@@ -838,9 +843,9 @@ const form   = reactive({
 const resolveQuestionLang = (q) => {
   if (q.langue === 'en' || q.langue === 'fr') return q.langue;
   if (q.lang === 'en' || q.lang === 'fr') return q.lang;
-  const t  = (q.enonce || '').toLowerCase();
-  const en = ['what','which','how','when','where','why','is ','are ','the ','this ','that '].filter(k => t.includes(k)).length;
-  const fr = ['quel','comment','pourquoi','les ','des ','est ','sont '].filter(k => t.includes(k)).length;
+  const tx = (q.enonce || '').toLowerCase();
+  const en = ['what','which','how','when','where','why','is ','are ','the ','this ','that '].filter(k => tx.includes(k)).length;
+  const fr = ['quel','comment','pourquoi','les ','des ','est ','sont '].filter(k => tx.includes(k)).length;
   return en > fr ? 'en' : 'fr';
 };
 const resolvePreviewLang = (pq) => {
@@ -875,11 +880,11 @@ const countByLang = (lang) => questions.value.filter(q => resolveQuestionLang(q)
 const countByType = (val)  => questions.value.filter(q => q.type === val).length;
 
 const kpiStats = computed(() => [
-  { label: 'Total Questions', value: questions.value.length,                                     icon: 'fa-solid fa-database',      color: '#f59e0b', bg: '#fffbeb', trend: 8 },
-  { label: 'Catégories',      value: categoriesList.value.length,                                icon: 'fa-solid fa-sitemap',        color: '#6366f1', bg: '#eef2ff' },
-  { label: 'Niveau Expert',   value: questions.value.filter(x => x.points >= 4).length,          icon: 'fa-solid fa-bolt-lightning', color: '#ef4444', bg: '#fff1f2' },
-  { label: 'En Français',     value: countByLang('fr'),                                          icon: 'fa-solid fa-flag',           color: '#10b981', bg: '#ecfdf5' },
-  { label: 'En Anglais',      value: countByLang('en'),                                          icon: 'fa-solid fa-earth-americas', color: '#8b5cf6', bg: '#f5f3ff' },
+  { label: t('dashboard.kpis.totalTests'),    value: questions.value.length,                           icon: 'fa-solid fa-database',      color: '#f59e0b', bg: '#fffbeb', trend: 8 },
+  { label: t('dashboard.kpis.campaigns'),     value: categoriesList.value.length,                      icon: 'fa-solid fa-sitemap',        color: '#6366f1', bg: '#eef2ff' },
+  { label: t('campaigns.studio.step1.tiers.high'), value: questions.value.filter(x => x.points >= 4).length, icon: 'fa-solid fa-bolt-lightning', color: '#ef4444', bg: '#fff1f2' },
+  { label: t('lang.fr'),                      value: countByLang('fr'),                                icon: 'fa-solid fa-flag',           color: '#10b981', bg: '#ecfdf5' },
+  { label: t('lang.en'),                      value: countByLang('en'),                                icon: 'fa-solid fa-earth-americas', color: '#8b5cf6', bg: '#f5f3ff' },
 ]);
 
 /* ═══ API ═══ */
@@ -889,7 +894,7 @@ const fetchData = async () => {
     const [resQ, resC] = await Promise.all([api.get('/Questions'), api.get('/Categories')]);
     questions.value     = resQ.data;
     categoriesList.value = resC.data;
-  } catch { showToast('Erreur de connexion', 'error'); }
+  } catch { showToast(t('error'), 'error'); }
   finally { loading.value = false; }
 };
 
@@ -898,11 +903,11 @@ const simulateProgress = () => {
   aiProgress.value = 0;
   const steps = [[15,'Connexion Gemini...'],[35,'Analyse thématique...'],[55,'Génération...'],[75,'Structuration...'],[92,'Sauvegarde...'],[100,'Terminé !']];
   let i = 0;
-  const t = setInterval(() => {
+  const timer = setInterval(() => {
     if (i < steps.length) { aiProgress.value = steps[i][0]; aiStatusText.value = steps[i][1]; i++; }
-    else clearInterval(t);
+    else clearInterval(timer);
   }, 400);
-  return t;
+  return timer;
 };
 
 const callAIAPI = async (lang) => {
@@ -922,23 +927,81 @@ const callAIAPI = async (lang) => {
 };
 
 const previewAI = async () => {
-  if (!aiForm.theme || !aiForm.sousTheme) { showToast('Choisissez une catégorie et sous-thème', 'error'); return; }
+  if (!aiForm.theme || !aiForm.sousTheme) { showToast(t('required'), 'error'); return; }
   isAILoading.value = true; aiPreview.value = [];
-  const t = simulateProgress();
+  const timer = simulateProgress();
   try {
     let res = aiForm.langue === 'both'
       ? [...await callAIAPI('fr'), ...await callAIAPI('en')]
       : await callAIAPI(aiForm.langue);
     aiPreview.value = res;
     showToast(`${res.length} questions générées en aperçu`, 'success');
-  } catch { showToast('Erreur prévisualisation', 'error'); }
-  finally { clearInterval(t); isAILoading.value = false; aiProgress.value = 0; }
+  } catch { showToast(t('error'), 'error'); }
+  finally { clearInterval(timer); isAILoading.value = false; aiProgress.value = 0; }
 };
 
 const handleAIGeneration = async () => {
-  if (!aiForm.theme || !aiForm.sousTheme) { showToast('Choisissez une catégorie et sous-thème', 'error'); return; }
+  if (!aiForm.theme || !aiForm.sousTheme) { showToast(t('required'), 'error'); return; }
+
+  // 🛡️ VÉRIFICATION QUOTA (Limite de 2/jour)
+  try {
+    await api.post('/Usage/validate-action');
+  } catch (err) {
+    if (err.response && err.response.status === 403) {
+      showAIModal.value = false;
+      const secondsLeft = err.response.data.retryAfterSeconds || 0;
+      const h = Math.floor(secondsLeft / 3600);
+      const m = Math.floor((secondsLeft % 3600) / 60);
+      const s = secondsLeft % 60;
+      const timeStr = h > 0 ? `${h}h ${m}m ${s}s` : `${m}m ${s}s`;
+
+      Swal.fire({
+        title: '<h2 style="font-size: 2.2rem; font-weight: 500; color: #1e293b; margin-top: 1.5rem;">Limite de génération atteinte</h2>',
+        html: `
+          <div style="padding: 1rem 2rem;">
+            <p style="color: #64748b; font-size: 1.1rem; margin-bottom: 2rem;">Le plan Starter est limité à <b>5 générations</b>.</p>
+            <div style="background-color: #fff1f2; border: 1px solid #fecaca; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; display: flex; align-items: center; justify-content: center; gap: 15px;">
+              <i class="fa-solid fa-rotate-left" style="color: #ef4444; font-size: 1.5rem;"></i>
+              <span style="color: #be123c; font-size: 1.2rem; font-weight: 500;">Réessayez dans :</span>
+              <span style="background-color: #ef4444; color: white; padding: 4px 12px; border-radius: 6px; font-weight: bold; font-size: 1.1rem;">${timeStr}</span>
+            </div>
+            <div style="background-color: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
+              <p style="color: #92400e; font-size: 1.05rem; margin: 0; line-height: 1.6;">
+                Passez à <b style="color: #92400e;">EvaluaTech Go</b> pour supprimer ce délai et créer des questions illimitées.
+              </p>
+            </div>
+          </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Passer à EvaluaTech Go',
+        cancelButtonText: t('cancel'),
+        confirmButtonColor: '#eab308',
+        cancelButtonColor: '#f1f5f9',
+        background: '#fff',
+        width: '600px',
+        customClass: { popup: 'rounded-4 border-0 shadow-lg' },
+        didOpen: () => {
+          const confirmBtn = Swal.getConfirmButton();
+          const cancelBtn = Swal.getCancelButton();
+          if (confirmBtn) {
+            confirmBtn.style.color = '#000'; confirmBtn.style.fontWeight = 'bold';
+            confirmBtn.style.padding = '12px 30px'; confirmBtn.style.borderRadius = '8px';
+            confirmBtn.style.fontSize = '1.1rem';
+          }
+          if (cancelBtn) {
+            cancelBtn.style.color = '#475569'; cancelBtn.style.fontWeight = '500';
+            cancelBtn.style.padding = '12px 30px'; cancelBtn.style.borderRadius = '8px';
+            cancelBtn.style.fontSize = '1.1rem'; cancelBtn.style.backgroundColor = '#f1f5f9';
+            cancelBtn.style.border = 'none';
+          }
+        }
+      }).then(res => { if (res.isConfirmed) router.push('/pricing'); });
+      return;
+    }
+  }
+
   isAILoading.value = true;
-  const t = simulateProgress();
+  const timer = simulateProgress();
   const token = localStorage.getItem('token');
   try {
     let all = aiForm.langue === 'both'
@@ -956,8 +1019,8 @@ const handleAIGeneration = async () => {
     const fr = all.filter(q => q.langue === 'fr').length;
     const en = all.filter(q => q.langue === 'en').length;
     showToast(`${all.length} questions sauvegardées (${fr} 🇫🇷 / ${en} 🇬🇧)`, 'success');
-  } catch { showToast('Erreur moteur IA', 'error'); }
-  finally { clearInterval(t); isAILoading.value = false; aiProgress.value = 0; }
+  } catch { showToast(t('error'), 'error'); }
+  finally { clearInterval(timer); isAILoading.value = false; aiProgress.value = 0; }
 };
 
 /* ═══ CATÉGORIES ═══ */
@@ -966,8 +1029,8 @@ const addCategory = async () => {
   try {
     const res = await api.post('/Categories', { nom: newCatName.value });
     categoriesList.value.push(res.data); newCatName.value = '';
-    showToast('Catégorie créée', 'success');
-  } catch { showToast('Erreur création', 'error'); }
+    showToast(t('success'), 'success');
+  } catch { showToast(t('error'), 'error'); }
 };
 const handleSubAdd = async (catId) => {
   const val = subCatInputs[catId];
@@ -977,21 +1040,21 @@ const handleSubAdd = async (catId) => {
     const cat = categoriesList.value.find(c => c.id === catId);
     cat?.sousCategories?.push(res.data);
     subCatInputs[catId] = '';
-    showToast('Sous-thème ajouté', 'success');
-  } catch { showToast('Erreur ajout', 'error'); }
+    showToast(t('success'), 'success');
+  } catch { showToast(t('error'), 'error'); }
 };
 const removeCategory = async (id) => {
-  if (!confirm('Supprimer cette catégorie ?')) return;
+  if (!confirm(t('confirm') + ' ?')) return;
   try {
     await api.delete(`/Categories/${id}`);
     categoriesList.value = categoriesList.value.filter(c => c.id !== id);
-    showToast('Catégorie supprimée', 'info');
-  } catch { showToast('Erreur suppression', 'error'); }
+    showToast(t('delete'), 'info');
+  } catch { showToast(t('error'), 'error'); }
 };
 const removeSubCategory = async (subId) => {
-  if (!confirm('Supprimer ce sous-thème ?')) return;
-  try { await api.delete(`/Categories/sub/${subId}`); await fetchData(); showToast('Supprimé', 'info'); }
-  catch { showToast('Erreur', 'error'); }
+  if (!confirm(t('confirm') + ' ?')) return;
+  try { await api.delete(`/Categories/sub/${subId}`); await fetchData(); showToast(t('delete'), 'info'); }
+  catch { showToast(t('error'), 'error'); }
 };
 
 /* ═══ FORM ═══ */
@@ -1028,30 +1091,30 @@ const save = async () => {
     const payload = {
       enonce: form.enonce, type: form.type, points: form.points || 1,
       theme: form.theme, sousTheme: form.sousTheme, langue: form.langue,
-      choix: form.reponses.map(r => r.texte).filter(t => t?.trim()),
+      choix: form.reponses.map(r => r.texte).filter(tx => tx?.trim()),
       bonneReponse: finalBR
     };
     if (isEdit.value) await api.put(`/Questions/${form.id}`, payload);
     else              await api.post('/Questions', payload);
     showModal.value = false;
     await fetchData();
-    showToast('Question enregistrée', 'success');
-  } catch { showToast('Erreur sauvegarde', 'error'); }
+    showToast(t('success'), 'success');
+  } catch { showToast(t('error'), 'error'); }
   finally { isSaving.value = false; }
 };
 
 const handleDelete = async (id) => {
-  if (!confirm('Supprimer cette question ?')) return;
-  try { await api.delete(`/Questions/${id}`); await fetchData(); showToast('Question supprimée', 'info'); }
-  catch { showToast('Erreur réseau', 'error'); }
+  if (!confirm(t('confirm') + ' ?')) return;
+  try { await api.delete(`/Questions/${id}`); await fetchData(); showToast(t('delete'), 'info'); }
+  catch { showToast(t('error'), 'error'); }
 };
 
 /* ═══ UTILS ═══ */
 const getTypeInfo    = (val) => typeDefinitions.find(t => t.val === val) || typeDefinitions[0];
-const getLevelColor  = (p)  => p >= 4 ? '#ef4444' : p >= 3 ? '#f59e0b' : p >= 2 ? '#10b981' : '#3b82f6';
-const getPlaceholder = (t, lang) => {
-  if (t === 5) return lang === 'en' ? '// Enter reference code...' : '// Code de référence...';
-  if (t === 4) return lang === 'en' ? 'Expected answer...' : 'Réponse attendue...';
+const getLevelColor  = (p)   => p >= 4 ? '#ef4444' : p >= 3 ? '#f59e0b' : p >= 2 ? '#10b981' : '#3b82f6';
+const getPlaceholder = (tp, lang) => {
+  if (tp === 5) return lang === 'en' ? '// Enter reference code...' : '// Code de référence...';
+  if (tp === 4) return lang === 'en' ? 'Expected answer...' : 'Réponse attendue...';
   return lang === 'en' ? 'Answer...' : 'Réponse...';
 };
 const resetFilters = () => { searchQuery.value = ''; activeFilter.value = -1; selectedCat.value = 'All'; filterLang.value = 'all'; };
@@ -1073,6 +1136,7 @@ const handleParallax = (e) => {
 
 onMounted(() => fetchData());
 </script>
+
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,700&display=swap');
@@ -1112,7 +1176,7 @@ onMounted(() => fetchData());
 *, *::before, *::after { box-sizing: border-box; }
 
 /* ══════════════════════════════════════════
-   DARK MODE — toutes les variables overridées
+   DARK MODE
 ══════════════════════════════════════════ */
 .bq-root.dark-mode {
   --bg:          #0d1117;
@@ -1138,9 +1202,14 @@ onMounted(() => fetchData());
   background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
   background-size: 40px 40px;
   opacity: 0.18;
+  transition: opacity 0.3s;
 }
 .dark-mode .quantum-grid { opacity: 0.07; }
-.glow-orb { position: absolute; width: 600px; height: 600px; filter: blur(120px); opacity: 0.12; border-radius: 50%; transition: transform 0.3s ease-out; }
+.glow-orb {
+  position: absolute; width: 600px; height: 600px;
+  filter: blur(120px); opacity: 0.12; border-radius: 50%;
+  transition: transform 0.3s ease-out;
+}
 .orb-amber { background: #f59e0b; top: -200px; right: -100px; }
 .orb-slate { background: #6366f1; bottom: -200px; left: -100px; }
 .dark-mode .glow-orb { opacity: 0.08; }
@@ -1148,17 +1217,33 @@ onMounted(() => fetchData());
 .main-orchestrator { z-index: 5; }
 .canvas-engine { height: calc(100vh - 64px); }
 
-/* ── HEADER ── */
+/* ══════════════════════════════════════════
+   HEADER AMÉLIORÉ
+══════════════════════════════════════════ */
 .bq-header { animation: slideDown 0.6s var(--ease-out) backwards; }
 @keyframes slideDown { from { opacity: 0; transform: translateY(-24px); } to { opacity: 1; transform: none; } }
 
-.breadcrumb-pro { font-size: 0.72rem; font-weight: 700; color: var(--text3); }
-.breadcrumb-pro .root { cursor: pointer; }
+.breadcrumb-pro {
+  font-size: 0.72rem; font-weight: 700; color: var(--text3);
+  display: flex; align-items: center;
+  padding: 6px 12px; background: var(--surface);
+  border: 1px solid var(--bdr); border-radius: 50px;
+  width: fit-content; gap: 4px;
+}
+.breadcrumb-pro .root { cursor: pointer; transition: color 0.2s; }
 .breadcrumb-pro .root:hover { color: var(--amber); }
 .breadcrumb-pro .separator { font-size: 0.55rem; opacity: 0.5; }
-.breadcrumb-pro .current { color: var(--text); font-weight: 800; }
-.premium-title { font-weight: 900; font-size: 2.2rem; letter-spacing: -1.5px; color: var(--text); margin: 0; line-height: 1.05; }
-.gradient-text { background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-style: italic; }
+.breadcrumb-pro .current { color: var(--amber); font-weight: 800; }
+
+.premium-title {
+  font-weight: 900; font-size: 2.4rem; letter-spacing: -1.5px;
+  color: var(--text); margin: 0; line-height: 1.05;
+}
+.gradient-text {
+  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 50%, #f97316 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  font-style: italic;
+}
 .brand-subtitle-v2 { font-size: 0.8rem; font-weight: 600; color: var(--text3); margin-top: 8px; }
 
 /* LIVE DOT */
@@ -1167,15 +1252,17 @@ onMounted(() => fetchData());
 .live-ring { position: absolute; inset: 0; border: 2px solid rgba(245,158,11,0.4); border-radius: 50%; animation: livePulse 2.2s ease-out infinite; }
 @keyframes livePulse { 0% { transform: scale(0.5); opacity: 0.8; } 100% { transform: scale(1.6); opacity: 0; } }
 
-/* ── BUTTONS ── */
+/* ══════════════════════════════════════════
+   BUTTONS AMÉLIORÉS
+══════════════════════════════════════════ */
 .btn-refresh-pro {
   width: 44px; height: 44px; background: var(--surface);
   border: 1.5px solid var(--bdr); border-radius: 14px;
   color: var(--text2); font-size: 14px; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s; box-shadow: var(--shadow-sm);
+  transition: all 0.25s var(--ease-spring); box-shadow: var(--shadow-sm);
 }
-.btn-refresh-pro:hover { background: var(--amber); color: #0f172a; border-color: var(--amber); transform: translateY(-2px); }
+.btn-refresh-pro:hover { background: var(--amber); color: #0f172a; border-color: var(--amber); transform: translateY(-2px) rotate(15deg); }
 
 .search-inline-box {
   display: flex; align-items: center; gap: 10px;
@@ -1184,7 +1271,7 @@ onMounted(() => fetchData());
   box-shadow: var(--shadow-sm); transition: all 0.25s;
   color: var(--text3);
 }
-.search-inline-box.focused { border-color: var(--amber); box-shadow: 0 0 0 4px rgba(245,158,11,0.1); }
+.search-inline-box.focused { border-color: var(--amber); box-shadow: 0 0 0 4px rgba(245,158,11,0.1); color: var(--amber); }
 .search-inline-input { border: none; background: none; outline: none; width: 170px; font-size: 13px; font-weight: 700; color: var(--text); font-family: inherit; }
 .search-inline-input::placeholder { color: var(--text3); }
 .btn-clear-search { border: none; background: none; color: var(--text3); cursor: pointer; padding: 0; font-size: 12px; transition: color 0.2s; }
@@ -1210,9 +1297,10 @@ onMounted(() => fetchData());
   color: #fff; cursor: pointer; font-family: inherit;
   box-shadow: 0 4px 20px rgba(15,23,42,0.2); transition: all 0.3s;
 }
-.btn-ai-glow:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(245,158,11,0.3); color: #0f172a; }
+.btn-ai-glow:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(245,158,11,0.35); }
 .btn-shine-layer { position: absolute; inset: 0; background: linear-gradient(135deg, var(--amber), #fbbf24); opacity: 0; transition: opacity 0.3s; z-index: 1; }
 .btn-ai-glow:hover .btn-shine-layer { opacity: 1; }
+.btn-ai-glow:hover { color: #0f172a; }
 .btn-ai-glow > *:not(.btn-shine-layer) { position: relative; z-index: 2; }
 .lang-badge-pill { background: rgba(255,255,255,0.18); font-size: 9px; font-weight: 900; padding: 2px 8px; border-radius: 20px; letter-spacing: 0.5px; }
 
@@ -1231,24 +1319,40 @@ onMounted(() => fetchData());
 .btn-enigma-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 .shadow-premium { box-shadow: 0 20px 60px rgba(0,0,0,0.12) !important; }
 
-/* ── STAT CARDS ── */
+/* ══════════════════════════════════════════
+   STAT CARDS AMÉLIORÉES
+══════════════════════════════════════════ */
 .stat-card-premium {
   background: var(--surface); border-radius: 24px; padding: 22px;
   display: flex; align-items: center; gap: 14px;
-  border: 1.5px solid var(--bdr); transition: all 0.3s;
+  border: 1.5px solid var(--bdr); transition: all 0.3s var(--ease-out);
   box-shadow: var(--shadow-sm);
   animation: slideUp 0.5s var(--ease-out) backwards;
+  position: relative; overflow: hidden;
 }
-.stat-card-premium:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--amber-bdr); }
+.stat-card-premium::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, transparent 60%, rgba(245,158,11,0.04));
+  opacity: 0; transition: opacity 0.3s;
+}
+.stat-card-premium:hover::before { opacity: 1; }
+.stat-card-premium:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); border-color: var(--amber-bdr); }
 @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
-.stat-icon-wrapper { width: 52px; height: 52px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; transition: transform 0.3s var(--ease-spring); }
-.stat-card-premium:hover .stat-icon-wrapper { transform: scale(1.1) rotate(-5deg); }
-.stat-value { font-size: 1.8rem; font-weight: 800; color: var(--text); display: block; line-height: 1; letter-spacing: -1px; }
+.stat-icon-wrapper {
+  width: 52px; height: 52px; border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; flex-shrink: 0;
+  transition: transform 0.3s var(--ease-spring);
+}
+.stat-card-premium:hover .stat-icon-wrapper { transform: scale(1.12) rotate(-6deg); }
+.stat-value { font-size: 1.9rem; font-weight: 900; color: var(--text); display: block; line-height: 1; letter-spacing: -1.5px; }
 .stat-label { font-size: 0.62rem; font-weight: 700; color: var(--text3); margin-top: 4px; display: block; text-transform: uppercase; letter-spacing: 0.8px; }
 .stat-trend { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 0.6rem; font-weight: 800; padding: 6px 10px; border-radius: 10px; white-space: nowrap; }
 .trend-up { color: #10b981; background: #ecfdf5; }
 
-/* ── TOOLBAR ── */
+/* ══════════════════════════════════════════
+   TOOLBAR
+══════════════════════════════════════════ */
 .tabs-pill-wrap {
   background: var(--surface) !important;
   border-color: var(--bdr) !important;
@@ -1270,7 +1374,7 @@ onMounted(() => fetchData());
   background: var(--surface); border: 1.5px solid var(--bdr);
   border-radius: 12px; padding: 9px 12px; transition: all 0.2s;
 }
-.sort-select-wrap:focus-within { border-color: var(--amber); }
+.sort-select-wrap:focus-within { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(245,158,11,0.1); }
 .sort-ico { color: var(--text3); font-size: 11px; }
 .sort-arrow { font-size: 9px; color: var(--text3); }
 .sort-select-pro { border: none; background: none; outline: none; font-size: 11px; font-weight: 700; color: var(--text); font-family: inherit; cursor: pointer; }
@@ -1286,7 +1390,9 @@ onMounted(() => fetchData());
 .btn-view-toggle.active { background: #0f172a; color: var(--amber); box-shadow: 0 4px 12px rgba(15,23,42,0.2); }
 .dark-mode .btn-view-toggle.active { background: var(--amber); color: #0f172a; }
 
-/* ── STATES ── */
+/* ══════════════════════════════════════════
+   STATES
+══════════════════════════════════════════ */
 .state-label { font-size: 11px; font-weight: 800; color: var(--text3); letter-spacing: 2px; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .spinner-pro-premium { width: 50px; height: 50px; border: 4px solid var(--bdr); border-top: 4px solid var(--amber); border-radius: 50%; animation: spin 1s linear infinite; margin: 40px auto 0; }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -1298,7 +1404,9 @@ onMounted(() => fetchData());
 @keyframes haloSpin { to { transform: rotate(360deg); } }
 .empty-core { font-size: 30px; color: var(--amber); position: relative; z-index: 1; }
 
-/* ── QUESTION GRID ── */
+/* ══════════════════════════════════════════
+   QUESTION GRID AMÉLIORÉE
+══════════════════════════════════════════ */
 .questions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
 
 .q-card.campaign-card-modern {
@@ -1306,20 +1414,27 @@ onMounted(() => fetchData());
   border-radius: 28px; overflow: hidden;
   display: flex; flex-direction: column;
   box-shadow: var(--shadow-sm); position: relative;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   animation: cardAppear 0.5s var(--ease-out) backwards;
   animation-delay: var(--card-delay, 0s);
   padding: 0;
 }
+.q-card.campaign-card-modern::after {
+  content: '';
+  position: absolute; inset: 0; border-radius: 28px;
+  background: linear-gradient(135deg, rgba(245,158,11,0.04), transparent 60%);
+  opacity: 0; transition: opacity 0.3s; pointer-events: none;
+}
+.q-card.campaign-card-modern:hover::after { opacity: 1; }
 .q-card.campaign-card-modern:hover {
-  transform: translateY(-10px);
+  transform: translateY(-10px) scale(1.01);
   border-color: var(--amber-bdr);
-  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.08), 0 8px 30px rgba(245,158,11,0.12);
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.08), 0 8px 30px rgba(245,158,11,0.15);
 }
 @keyframes cardAppear { from { opacity: 0; transform: translateY(20px) scale(0.97); } to { opacity: 1; transform: none; } }
 
 .card-type-stripe { height: 3px; width: 100%; transition: height 0.3s; flex-shrink: 0; }
-.q-card:hover .card-type-stripe { height: 4px; }
+.q-card:hover .card-type-stripe { height: 5px; }
 
 .card-lang-banner {
   display: flex; align-items: center; gap: 8px;
@@ -1338,18 +1453,20 @@ onMounted(() => fetchData());
   background: var(--surface2); border: 1px solid var(--bdr);
   border-radius: 50px; padding: 5px 12px;
   font-size: 10px; font-weight: 700; color: var(--text2);
-  max-width: 160px; overflow: hidden;
+  max-width: 160px; overflow: hidden; transition: all 0.2s;
 }
+.card-cat-pill:hover { border-color: var(--amber-bdr); background: var(--amber-light); color: var(--amber-dark); }
 .card-cat-pill span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .btn-icon-sm {
   width: 32px; height: 32px; border-radius: 10px;
   border: 1.5px solid var(--bdr); background: var(--surface2);
   display: flex; align-items: center; justify-content: center;
-  font-size: 11px; cursor: pointer; color: var(--text3); transition: all 0.2s;
+  font-size: 11px; cursor: pointer; color: var(--text3);
+  transition: all 0.2s var(--ease-spring);
 }
-.btn-icon-sm:hover { background: #3b82f6; color: #fff; border-color: #3b82f6; transform: scale(1.08); }
-.btn-icon-sm.danger:hover { background: #ef4444; color: #fff; border-color: #ef4444; }
+.btn-icon-sm:hover { background: #3b82f6; color: #fff; border-color: #3b82f6; transform: scale(1.1) rotate(-5deg); }
+.btn-icon-sm.danger:hover { background: #ef4444; color: #fff; border-color: #ef4444; transform: scale(1.1); }
 
 .type-badge-row {
   display: inline-flex; align-items: center; gap: 8px;
@@ -1357,9 +1474,9 @@ onMounted(() => fetchData());
   border: 1.5px solid var(--badge-c, var(--amber));
   border-left-width: 3px; border-radius: 10px;
   background: color-mix(in srgb, var(--badge-c, var(--amber)) 6%, var(--surface));
-  width: fit-content; transition: transform 0.2s;
+  width: fit-content; transition: transform 0.25s var(--ease-spring);
 }
-.q-card:hover .type-badge-row { transform: translateX(4px); }
+.q-card:hover .type-badge-row { transform: translateX(6px); }
 .type-badge-icon-box { width: 26px; height: 26px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
 .type-badge-label { font-size: 11px; font-weight: 800; }
 .type-badge-live { width: 5px; height: 5px; border-radius: 50%; margin-left: auto; animation: dotBlink 2s ease-in-out infinite; }
@@ -1383,7 +1500,11 @@ onMounted(() => fetchData());
   font-size: 11px; font-weight: 600; color: var(--text2); transition: all 0.2s;
 }
 .opt-preview-item:hover { border-color: var(--amber-bdr); background: var(--amber-light); }
-.opt-letter { width: 18px; height: 18px; border-radius: 5px; background: var(--bdr); color: var(--text3); font-size: 9px; font-weight: 900; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.opt-letter {
+  width: 18px; height: 18px; border-radius: 5px; background: var(--bdr);
+  color: var(--text3); font-size: 9px; font-weight: 900;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
 .opt-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .opt-more { font-size: 10px; color: var(--text3); font-style: italic; padding: 3px 8px; }
 
@@ -1395,17 +1516,25 @@ onMounted(() => fetchData());
 .level-val { font-size: 12px; font-weight: 800; }
 .slot-badge { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 800; display: flex; align-items: center; }
 
-/* ── LIST VIEW ── */
+/* ══════════════════════════════════════════
+   LIST VIEW AMÉLIORÉE
+══════════════════════════════════════════ */
 .list-view-pro { display: flex; flex-direction: column; }
-.list-header-row { background: var(--surface2); border-radius: 14px; }
+.list-header-row {
+  background: var(--surface2); border-radius: 14px;
+  border: 1px solid var(--bdr);
+}
 .list-col-label { font-size: 0.6rem; font-weight: 900; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; }
 .list-row-item {
   background: var(--surface); border-radius: 16px;
-  border: 1.5px solid var(--bdr); transition: all 0.2s;
+  border: 1.5px solid var(--bdr); transition: all 0.25s var(--ease-out);
   animation: rowAppear 0.4s var(--ease-out) backwards;
   animation-delay: var(--row-delay, 0s);
 }
-.list-row-item:hover { border-color: var(--amber-bdr); transform: translateX(4px); box-shadow: 0 8px 24px rgba(245,158,11,0.1); }
+.list-row-item:hover {
+  border-color: var(--amber-bdr); transform: translateX(6px);
+  box-shadow: 0 8px 24px rgba(245,158,11,0.08), -4px 0 0 var(--amber);
+}
 @keyframes rowAppear { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: none; } }
 
 .row-type-badge { display: inline-flex; align-items: center; padding: 5px 10px; border-radius: 10px; border: 1px solid; font-size: 11px; font-weight: 700; flex-shrink: 0; }
@@ -1423,33 +1552,34 @@ onMounted(() => fetchData());
 }
 
 /* ══════════════════════════════════════════
-   MODALS
+   MODALS AMÉLIORÉES
 ══════════════════════════════════════════ */
 .quantum-vault-overlay {
   position: fixed; inset: 0; z-index: 1000;
-  background: rgba(15,23,42,0.65);
-  backdrop-filter: blur(16px) saturate(1.4);
+  background: rgba(15,23,42,0.7);
+  backdrop-filter: blur(20px) saturate(1.6);
   display: flex; align-items: center; justify-content: center; padding: 20px;
 }
 .quantum-vault-window {
   background: var(--surface); border: 1.5px solid var(--bdr);
   border-radius: 32px; width: 100%; max-width: 860px;
-  box-shadow: 0 40px 80px rgba(0,0,0,0.15); overflow: hidden; position: relative;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.2); overflow: hidden; position: relative;
   display: flex; flex-direction: column; max-height: 90vh;
 }
 .modal-md { max-width: 760px; }
 
 /* Corner decorators */
-.modal-corner { position: absolute; width: 14px; height: 14px; pointer-events: none; z-index: 2; }
-.tl { top: 8px; left: 8px;   border-top: 2px solid var(--amber); border-left: 2px solid var(--amber); border-radius: 4px 0 0 0; }
-.tr { top: 8px; right: 8px;  border-top: 2px solid var(--amber); border-right: 2px solid var(--amber); border-radius: 0 4px 0 0; }
-.bl { bottom: 8px; left: 8px;  border-bottom: 2px solid var(--amber); border-left: 2px solid var(--amber); border-radius: 0 0 0 4px; }
-.br { bottom: 8px; right: 8px; border-bottom: 2px solid var(--amber); border-right: 2px solid var(--amber); border-radius: 0 0 4px 0; }
+.modal-corner { position: absolute; width: 16px; height: 16px; pointer-events: none; z-index: 2; }
+.tl { top: 10px; left: 10px;  border-top: 2.5px solid var(--amber); border-left: 2.5px solid var(--amber); border-radius: 5px 0 0 0; }
+.tr { top: 10px; right: 10px; border-top: 2.5px solid var(--amber); border-right: 2.5px solid var(--amber); border-radius: 0 5px 0 0; }
+.bl { bottom: 10px; left: 10px;  border-bottom: 2.5px solid var(--amber); border-left: 2.5px solid var(--amber); border-radius: 0 0 0 5px; }
+.br { bottom: 10px; right: 10px; border-bottom: 2.5px solid var(--amber); border-right: 2.5px solid var(--amber); border-radius: 0 0 5px 0; }
 
 .qv-header {
   display: flex; align-items: center; gap: 16px;
   padding: 22px 28px; border-bottom: 1.5px solid var(--bdr);
   flex-shrink: 0;
+  background: linear-gradient(135deg, var(--surface), var(--surface2));
 }
 .icon-box-v2 {
   width: 52px; height: 52px; border-radius: 16px; flex-shrink: 0;
@@ -1463,20 +1593,22 @@ onMounted(() => fetchData());
   width: 38px; height: 38px; border-radius: 10px;
   background: var(--surface2); border: 1.5px solid var(--bdr);
   color: var(--text3); font-size: 16px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.25s var(--ease-spring); flex-shrink: 0;
 }
-.btn-modal-close:hover { background: #fef2f2; color: #ef4444; border-color: #fca5a5; transform: rotate(90deg); }
+.btn-modal-close:hover { background: #fef2f2; color: #ef4444; border-color: #fca5a5; transform: rotate(90deg) scale(1.1); }
 
 .modal-body-scroll { overflow-y: auto; flex: 1; }
 .modal-footer-actions {
-  padding: 16px 28px; background: var(--surface2);
+  padding: 16px 28px;
+  background: linear-gradient(to top, var(--surface2), var(--surface));
   border-top: 1.5px solid var(--bdr);
   display: flex; justify-content: flex-end; gap: 10px;
   flex-shrink: 0;
 }
 
 /* ══════════════════════════════════════════
-   FORM ELEMENTS
+   FORM ELEMENTS AMÉLIORÉS
 ══════════════════════════════════════════ */
 .enigma-input-wrap label {
   display: flex; align-items: center; justify-content: space-between;
@@ -1488,9 +1620,12 @@ onMounted(() => fetchData());
   width: 100%; padding: 12px 16px;
   background: var(--surface2); border: 1.5px solid var(--bdr);
   border-radius: 14px; font-weight: 600; outline: none;
-  font-family: inherit; transition: all 0.2s; font-size: 13px; color: var(--text);
+  font-family: inherit; transition: all 0.25s; font-size: 13px; color: var(--text);
 }
-.enigma-field:focus { border-color: var(--amber); background: var(--surface); box-shadow: 0 0 0 4px rgba(245,158,11,0.1); }
+.enigma-field:focus {
+  border-color: var(--amber); background: var(--surface);
+  box-shadow: 0 0 0 4px rgba(245,158,11,0.1);
+}
 .enigma-field:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .char-counter { position: absolute; bottom: 10px; right: 12px; font-size: 10px; color: var(--text3); font-weight: 600; pointer-events: none; }
@@ -1500,10 +1635,10 @@ onMounted(() => fetchData());
 .lang-card {
   background: var(--surface2); border: 2px solid var(--bdr);
   border-radius: 16px; padding: 16px 12px; text-align: center;
-  cursor: pointer; transition: all 0.25s; position: relative;
+  cursor: pointer; transition: all 0.25s var(--ease-spring); position: relative;
 }
-.lang-card:hover { border-color: var(--amber-bdr); background: var(--surface); }
-.lang-card-active { border-color: var(--amber); background: var(--amber-light); box-shadow: 0 4px 16px rgba(245,158,11,0.15); }
+.lang-card:hover { border-color: var(--amber-bdr); background: var(--surface); transform: translateY(-2px); }
+.lang-card-active { border-color: var(--amber); background: var(--amber-light); box-shadow: 0 4px 16px rgba(245,158,11,0.2); transform: translateY(-2px); }
 .lc-flag { font-size: 26px; margin-bottom: 6px; display: block; }
 .lc-name { font-size: 13px; font-weight: 800; color: var(--text); margin-bottom: 3px; display: block; }
 .lc-desc { font-size: 10px; color: var(--text3); }
@@ -1512,7 +1647,7 @@ onMounted(() => fetchData());
   width: 18px; height: 18px; border-radius: 50%;
   background: var(--amber); color: #0f172a; font-size: 9px;
   display: flex; align-items: center; justify-content: center;
-  opacity: 0; transform: scale(0); transition: all 0.2s var(--ease-spring);
+  opacity: 0; transform: scale(0); transition: all 0.25s var(--ease-spring);
 }
 .lang-card-active .lc-check { opacity: 1; transform: scale(1); }
 
@@ -1521,12 +1656,12 @@ onMounted(() => fetchData());
 .type-tile {
   background: var(--surface2); border: 1.5px solid var(--bdr);
   border-radius: 14px; padding: 14px 8px; text-align: center;
-  cursor: pointer; transition: all 0.25s;
+  cursor: pointer; transition: all 0.25s var(--ease-spring);
   display: flex; flex-direction: column; align-items: center; gap: 8px;
   position: relative; overflow: hidden;
 }
-.type-tile:hover { border-color: var(--amber-bdr); background: var(--amber-light); }
-.type-tile-active { border-color: var(--tile-c, var(--amber)); background: var(--surface); box-shadow: 0 4px 16px rgba(245,158,11,0.1); }
+.type-tile:hover { border-color: var(--amber-bdr); background: var(--amber-light); transform: translateY(-2px); }
+.type-tile-active { border-color: var(--tile-c, var(--amber)); background: var(--surface); box-shadow: 0 4px 16px rgba(245,158,11,0.12); transform: translateY(-2px); }
 .tile-icon-wrap {
   width: 38px; height: 38px; border-radius: 11px;
   display: flex; align-items: center; justify-content: center; font-size: 17px;
@@ -1534,14 +1669,14 @@ onMounted(() => fetchData());
   transition: all 0.3s var(--ease-spring);
 }
 .type-tile:hover .tile-icon-wrap,
-.type-tile-active .tile-icon-wrap { transform: scale(1.1); }
+.type-tile-active .tile-icon-wrap { transform: scale(1.12) rotate(-5deg); }
 .tile-label { font-size: 10px; font-weight: 700; color: var(--text2); }
 .tile-check {
   position: absolute; top: 6px; right: 6px;
   width: 16px; height: 16px; border-radius: 50%;
   background: var(--amber); color: #0f172a; font-size: 8px;
   display: flex; align-items: center; justify-content: center;
-  opacity: 0; transform: scale(0); transition: all 0.2s var(--ease-spring);
+  opacity: 0; transform: scale(0); transition: all 0.25s var(--ease-spring);
 }
 .type-tile-active .tile-check { opacity: 1; transform: scale(1); }
 
@@ -1557,15 +1692,15 @@ onMounted(() => fetchData());
   padding: 10px; border-radius: 12px;
   background: var(--surface2); border: 1.5px solid var(--bdr);
   font-size: 13px; font-weight: 700; cursor: pointer; color: var(--text2);
-  transition: all 0.2s; font-family: inherit;
+  transition: all 0.2s var(--ease-spring); font-family: inherit;
 }
-.lang-toggle-btn.active { background: var(--amber); color: #0f172a; border-color: var(--amber); font-weight: 800; }
+.lang-toggle-btn.active { background: var(--amber); color: #0f172a; border-color: var(--amber); font-weight: 800; transform: translateY(-1px); }
 
-/* RANGE SLIDER */
-.admissibility-dashboard { background: var(--surface2); border-radius: 18px; padding: 20px; }
+/* RANGE SLIDER AMÉLIORÉ */
+.admissibility-dashboard { background: var(--surface2); border-radius: 18px; padding: 20px; border: 1px solid var(--bdr); }
 .enigma-range {
-  width: 100%; height: 5px; appearance: none; cursor: pointer; outline: none;
-  border-radius: 5px;
+  width: 100%; height: 6px; appearance: none; cursor: pointer; outline: none;
+  border-radius: 6px;
   background: linear-gradient(
     to right,
     var(--rng-c, var(--amber)) 0%,
@@ -1575,15 +1710,15 @@ onMounted(() => fetchData());
   transition: background 0.3s;
 }
 .enigma-range::-webkit-slider-thumb {
-  appearance: none; width: 20px; height: 20px; border-radius: 50%;
+  appearance: none; width: 22px; height: 22px; border-radius: 50%;
   background: var(--surface); border: 3px solid var(--rng-c, var(--amber));
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15); cursor: pointer; transition: transform 0.2s;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15); cursor: pointer; transition: transform 0.2s var(--ease-spring);
 }
-.enigma-range::-webkit-slider-thumb:hover { transform: scale(1.2); }
+.enigma-range::-webkit-slider-thumb:hover { transform: scale(1.25); }
 .score-tier { font-size: 0.6rem; font-weight: 800; opacity: 0.5; }
 .tier-low { color: #10b981; } .tier-mid { color: var(--amber); } .tier-high { color: #ef4444; }
 
-/* STEPPER / NUMBER */
+/* STEPPER */
 .number-stepper {
   display: flex; align-items: center;
   background: var(--surface2); border: 1.5px solid var(--bdr);
@@ -1607,6 +1742,7 @@ onMounted(() => fetchData());
   color: var(--text2); font-family: inherit;
   display: flex; align-items: center; justify-content: center; gap: 5px; transition: all 0.2s;
 }
+.diff-btn:hover { transform: translateY(-1px); }
 
 /* OPTIONS LIST */
 .asset-card-v8 {
@@ -1620,7 +1756,6 @@ onMounted(() => fetchData());
 .opt-input { flex: 1; border: none; background: none; outline: none; font-size: 13px; font-weight: 600; color: var(--text); font-family: inherit; }
 .btn-remove-v8 { width: 26px; height: 26px; border-radius: 7px; border: none; background: none; color: var(--bdr2); cursor: pointer; font-size: 11px; transition: color 0.2s; }
 .btn-remove-v8:hover { color: #ef4444; }
-.drag-node-handle { cursor: default; }
 
 .btn-bank-action-v2 {
   background: #0f172a; color: white; border: none;
@@ -1628,7 +1763,7 @@ onMounted(() => fetchData());
   font-size: 12px; cursor: pointer; font-family: inherit; transition: all 0.2s;
   display: flex; align-items: center;
 }
-.btn-bank-action-v2:hover { background: var(--amber); color: #0f172a; }
+.btn-bank-action-v2:hover { background: var(--amber); color: #0f172a; transform: translateY(-1px); }
 
 .opts-hint {
   display: flex; align-items: center; gap: 8px;
@@ -1637,21 +1772,24 @@ onMounted(() => fetchData());
   border-radius: 10px; padding: 8px 12px; margin-top: 8px;
 }
 
-/* CODE BOX */
-.code-box { border-radius: 16px; overflow: hidden; border: 1.5px solid var(--bdr); }
+/* CODE BOX AMÉLIORÉE */
+.code-box { border-radius: 16px; overflow: hidden; border: 1.5px solid var(--bdr); box-shadow: var(--shadow-sm); }
 .code-titlebar { background: #0f172a; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; }
 .code-dots { display: flex; gap: 5px; }
-.cd-red   { width: 10px; height: 10px; border-radius: 50%; background: #ef4444; }
+.cd-red   { width: 10px; height: 10px; border-radius: 50%; background: #ef4444; cursor: pointer; transition: opacity 0.2s; }
 .cd-amber { width: 10px; height: 10px; border-radius: 50%; background: var(--amber); }
 .cd-green { width: 10px; height: 10px; border-radius: 50%; background: #22c55e; }
+.cd-red:hover { opacity: 0.8; }
 .code-fname { font-size: 10px; color: #4a6090; font-family: monospace; display: flex; align-items: center; gap: 7px; }
-.code-area { width: 100%; background: #0d1829; border: none; padding: 16px 18px; color: #7dd3fc; font-family: monospace; font-size: 12.5px; resize: vertical; outline: none; line-height: 1.7; }
+.code-area { width: 100%; background: #0d1829; border: none; padding: 16px 18px; color: #7dd3fc; font-family: 'Fira Code', 'Cascadia Code', monospace; font-size: 12.5px; resize: vertical; outline: none; line-height: 1.7; }
 .code-area::placeholder { color: #2d4a6e; }
 
-/* ── CATÉGORIES MODAL ── */
+/* ══════════════════════════════════════════
+   CATÉGORIES MODAL
+══════════════════════════════════════════ */
 .cats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .cat-block { background: var(--surface2); border: 1.5px solid var(--bdr); border-radius: 16px; padding: 16px; transition: all 0.25s; }
-.cat-block:hover { border-color: var(--amber-bdr); }
+.cat-block:hover { border-color: var(--amber-bdr); transform: translateY(-2px); box-shadow: var(--shadow-sm); }
 .cat-block-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .sub-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
 .sub-chip { display: flex; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--bdr); border-radius: 50px; padding: 4px 10px; font-size: 11px; font-weight: 600; color: var(--text2); }
@@ -1665,23 +1803,29 @@ onMounted(() => fetchData());
   transition: border-color 0.2s; font-family: inherit;
 }
 .sub-input:focus { border-color: var(--amber); }
-.sub-add-btn { width: 32px; height: 32px; border-radius: 9px; background: var(--amber); color: #0f172a; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; transition: all 0.2s; }
-.sub-add-btn:hover { transform: scale(1.1); }
+.sub-add-btn { width: 32px; height: 32px; border-radius: 9px; background: var(--amber); color: #0f172a; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; transition: all 0.2s var(--ease-spring); }
+.sub-add-btn:hover { transform: scale(1.12) rotate(10deg); }
 
-/* ── AI PROGRESS ── */
+/* ══════════════════════════════════════════
+   AI PROGRESS
+══════════════════════════════════════════ */
 .ai-progress-box {
   background: var(--amber-light); border: 1.5px solid var(--amber-bdr);
   border-radius: 16px; padding: 18px; text-align: center;
 }
-.ai-prog-track { height: 4px; background: rgba(245,158,11,0.25); border-radius: 4px; overflow: hidden; }
-.ai-prog-fill { height: 100%; background: linear-gradient(90deg, var(--amber), #fbbf24); border-radius: 4px; transition: width 0.4s var(--ease-out); min-width: 8px; }
+.ai-prog-track { height: 5px; background: rgba(245,158,11,0.2); border-radius: 5px; overflow: hidden; }
+.ai-prog-fill { height: 100%; background: linear-gradient(90deg, var(--amber), #fbbf24, #f97316); border-radius: 5px; transition: width 0.4s var(--ease-out); min-width: 8px; background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 .ai-prog-text { font-size: 11px; font-weight: 800; color: var(--amber-dark); display: flex; align-items: center; justify-content: center; gap: 8px; }
 
-/* ── AI PREVIEW ── */
+/* ══════════════════════════════════════════
+   AI PREVIEW
+══════════════════════════════════════════ */
 .ai-preview-box { background: var(--surface2); border: 1.5px solid var(--bdr); border-radius: 16px; overflow: hidden; }
 .preview-header { display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: var(--surface); border-bottom: 1px solid var(--bdr); font-size: 10px; font-weight: 800; color: var(--text3); letter-spacing: 1px; }
 .preview-list { padding: 10px; display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
-.preview-item { display: flex; align-items: flex-start; gap: 10px; background: var(--surface); border: 1px solid var(--bdr); border-radius: 10px; padding: 10px; }
+.preview-item { display: flex; align-items: flex-start; gap: 10px; background: var(--surface); border: 1px solid var(--bdr); border-radius: 10px; padding: 10px; transition: border-color 0.2s; }
+.preview-item:hover { border-color: var(--amber-bdr); }
 .preview-num { width: 22px; height: 22px; border-radius: 7px; background: var(--amber-light); color: var(--amber-dark); font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .preview-content { flex: 1; min-width: 0; }
 .preview-q { font-size: 13px; font-weight: 700; color: var(--text); margin: 0 0 4px; }
@@ -1696,23 +1840,29 @@ onMounted(() => fetchData());
   cursor: pointer; font-family: inherit; transition: all 0.2s;
   display: flex; align-items: center;
 }
-.btn-qv-cancel:hover { background: var(--surface2); }
+.btn-qv-cancel:hover { background: var(--surface2); transform: translateY(-1px); }
 
 /* ══════════════════════════════════════════
-   TOAST
+   TOAST AMÉLIORÉ
 ══════════════════════════════════════════ */
 .enigma-toast {
   position: fixed; bottom: 28px; right: 28px;
   background: #0f172a; border-radius: 20px;
   padding: 16px 20px; display: flex; align-items: center; gap: 12px;
-  z-index: 9999; box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  z-index: 9999; box-shadow: 0 20px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.05);
   min-width: 280px; max-width: 380px; overflow: hidden;
   border-left: 4px solid var(--amber);
+}
+.enigma-toast::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(245,158,11,0.08), transparent);
+  pointer-events: none;
 }
 .t-success { border-left-color: var(--amber); }
 .t-error   { border-left-color: #ef4444; }
 .t-info    { border-left-color: #6366f1; }
-.t-ico { font-size: 20px; color: white; flex-shrink: 0; }
+.t-ico { font-size: 20px; color: white; flex-shrink: 0; position: relative; z-index: 1; }
+.t-body { position: relative; z-index: 1; }
 .t-body strong { font-size: 9px; font-weight: 900; color: #94a3b8; letter-spacing: 1.2px; display: block; margin-bottom: 2px; }
 .t-body p { font-size: 13px; font-weight: 700; color: white; }
 
@@ -1729,9 +1879,9 @@ onMounted(() => fetchData());
 /* ══════════════════════════════════════════
    TRANSITIONS
 ══════════════════════════════════════════ */
-.modal-quantum-enter-active { animation: zoomModalIn 0.3s var(--ease-spring); }
+.modal-quantum-enter-active { animation: zoomModalIn 0.35s var(--ease-spring); }
 .modal-quantum-leave-active { animation: zoomModalIn 0.2s ease-in reverse; }
-@keyframes zoomModalIn { from { opacity: 0; transform: scale(0.9) translateY(20px); } to { opacity: 1; transform: none; } }
+@keyframes zoomModalIn { from { opacity: 0; transform: scale(0.88) translateY(24px); } to { opacity: 1; transform: none; } }
 
 .card-anim-enter-active { transition: all 0.45s var(--ease-spring); transition-delay: var(--card-delay, 0s); }
 .card-anim-leave-active { transition: all 0.3s ease; position: absolute; }
@@ -1755,6 +1905,13 @@ onMounted(() => fetchData());
 @keyframes toastIn { from { transform: translateX(60px); opacity: 0; } to { transform: none; opacity: 1; } }
 
 /* ══════════════════════════════════════════
+   TEXT UTILITY
+══════════════════════════════════════════ */
+.text-amber { color: var(--amber) !important; }
+.fw-800 { font-weight: 800 !important; }
+.fw-900 { font-weight: 900 !important; }
+
+/* ══════════════════════════════════════════
    RESPONSIVE
 ══════════════════════════════════════════ */
 @media (max-width: 1024px) { .bq-workspace { padding: 20px !important; } .premium-title { font-size: 1.8rem; } }
@@ -1764,5 +1921,11 @@ onMounted(() => fetchData());
   .lang-cards-grid { grid-template-columns: 1fr; }
   .type-tiles-grid { grid-template-columns: repeat(3, 1fr); }
   .cats-grid { grid-template-columns: 1fr; }
+  .premium-title { font-size: 1.6rem; }
+  .search-inline-input { width: 130px; }
+}
+@media (max-width: 480px) {
+  .modal-footer-actions { flex-direction: column; }
+  .modal-footer-actions button { width: 100%; justify-content: center; }
 }
 </style>
