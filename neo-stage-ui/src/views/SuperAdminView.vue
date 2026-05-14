@@ -14,11 +14,6 @@
     <div class="main-orchestrator flex-grow-1 d-flex flex-column position-relative">
       <AppNavbar />
 
-      <!-- THEME TOGGLE -->
-      <button class="theme-toggle-btn" @click="isDark = !isDark" :title="isDark ? t('theme.light') : t('theme.dark')">
-        <i :class="isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
-      </button>
-
       <!-- LANG SWITCHER (Global) -->
       <div class="global-lang-switcher">
         <button

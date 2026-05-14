@@ -72,7 +72,7 @@
               </div>
 
               <div class="field-premium">
-                <label>Email Professionnel</label>
+                <label>Email</label>
                 <div class="input-glow-wrapper">
                   <i class="fa-solid fa-envelope-open-text"></i>
                   <input v-model="form.emailResponsable" type="email" placeholder="contact@domaine.pro" required>
@@ -134,8 +134,14 @@ const form = reactive({
 });
 
 onMounted(() => {
-  if (route.query.plan) {
-    console.log("Plan détecté :", route.query.plan);
+  const pendingPlan = localStorage.getItem('pending_plan');
+  if (pendingPlan) {
+    const planData = JSON.parse(pendingPlan);
+    form.plan = planData.name;
+    console.log("Plan récupéré depuis localStorage :", form.plan);
+  } else if (route.query.plan) {
+    form.plan = route.query.plan;
+    console.log("Plan détecté via URL :", form.plan);
   }
 });
 
@@ -145,8 +151,8 @@ const handleRegister = async () => {
   errorMessage.value = "";
   isLoading.value = true;
   try {
-    // 1. Enregistrement de l'entreprise
-    await axios.post('http://localhost:5172/api/Registration', form);
+    // 1. Enregistrement de l'entreprise via notre service API
+    await api.post('/Registration', form);
     
     // 2. Vérifier si un paiement est requis (Plan payant)
     const pendingPlan = localStorage.getItem('pending_plan');

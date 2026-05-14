@@ -10,3 +10,19 @@
 *.pyc
 *.user
 *.suo
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# Frontend Build
+dist/
+dist-ssr/
+
+# Backend Uploads (Dynamic Files)
+**/wwwroot/uploads/
+
+# OS generated files
+.DS_Store
+Thumbs.db

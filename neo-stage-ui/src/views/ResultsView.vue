@@ -18,7 +18,7 @@
         <!-- ══ LOADER ══ -->
         <div v-if="loading" class="full-loader">
           <div class="spinner-pro-premium"></div>
-          <p class="loader-label">CHARGEMENT DU RAPPORT…</p>
+          <p class="loader-label">{{ t('results.messages.loading') }}</p>
         </div>
 
         <!-- ══ ERREUR ══ -->
@@ -26,7 +26,7 @@
           <div class="error-icon"><i class="fa-solid fa-triangle-exclamation fa-3x text-danger"></i></div>
           <p class="loader-label mt-3 text-danger">{{ error }}</p>
           <button class="btn-enigma-primary mt-4" @click="$router.push('/historique')">
-            <div class="btn-content"><i class="fa-solid fa-arrow-left me-2"></i>Retour à l'historique</div>
+            <div class="btn-content"><i class="fa-solid fa-arrow-left me-2"></i>{{ t('back') }}</div>
             <div class="btn-glow"></div>
           </button>
         </div>
@@ -38,17 +38,17 @@
           <header class="d-flex justify-content-between align-items-end mb-5 flex-wrap gap-3">
             <div>
               <div class="breadcrumb-pro mb-2">
-                <span class="root" @click="$router.push('/dashboard')">Accueil</span>
+                <span class="root" @click="$router.push('/dashboard')">{{ t('sidebar.dashboard') }}</span>
                 <i class="fa-solid fa-chevron-right mx-2 separator"></i>
-                <span class="root" @click="$router.push('/historique')">Historique</span>
+                <span class="root" @click="$router.push('/historique')">{{ t('history.breadcrumb') }}</span>
                 <i class="fa-solid fa-chevron-right mx-2 separator"></i>
-                <span class="current">Rapport de Session</span>
+                <span class="current">{{ t('results.breadcrumb') }}</span>
               </div>
-              <h2 class="premium-title">Diagnostic &amp; <span class="gradient-text">Résultats</span></h2>
+              <h2 class="premium-title">{{ t('results.title').split('&')[0] }}&amp; <span class="gradient-text">{{ t('results.title').split('&')[1]?.trim() }}</span></h2>
               <div class="d-flex flex-wrap gap-2 mt-2">
                 <span class="meta-badge">
                   <i class="fa-solid fa-fingerprint me-1"></i>
-                  SESSION : {{ shortId }}
+                  {{ t('results.sessionId') }} {{ shortId }}
                 </span>
                 <span v-if="campagneName" class="meta-badge">
                   <i class="fa-solid fa-building me-1"></i>
@@ -58,11 +58,11 @@
             </div>
 
             <div class="d-flex align-items-center gap-3 flex-wrap">
-              <button class="btn-refresh-pro" @click="fetchResults" title="Rafraîchir">
+              <button class="btn-refresh-pro" @click="fetchResults" :title="t('refresh')">
                 <i class="fa-solid fa-rotate"></i>
               </button>
               <button class="btn-enigma-primary shadow-premium" @click="generatePDF">
-                <div class="btn-content"><i class="fa-solid fa-file-pdf me-2"></i>GÉNÉRER LE RAPPORT</div>
+                <div class="btn-content"><i class="fa-solid fa-file-pdf me-2"></i>{{ t('results.generate') }}</div>
                 <div class="btn-glow"></div>
               </button>
             </div>
@@ -88,7 +88,7 @@
 
             <!-- ── SCORE CIRCLE ── -->
             <div class="enigma-card p-5 score-card">
-              <div class="card-label mb-4">SCORE D'APTITUDE</div>
+              <div class="card-label mb-4">{{ t('results.score.label') }}</div>
 
               <div class="score-ring-outer mx-auto">
                 <svg viewBox="0 0 200 200" width="200" height="200">
@@ -106,26 +106,26 @@
               <div class="d-flex justify-content-center mt-4">
                 <span class="status-badge" :class="isPassed ? 'status-1' : 'status-2'">
                   <span class="status-dot"></span>
-                  {{ isPassed ? 'ADMIS' : 'ÉCHEC' }}
+                  {{ isPassed ? t('results.score.passed') : t('results.score.failed') }}
                 </span>
               </div>
-              <p class="seuil-note text-center mt-2">Seuil requis : {{ SCORE_REUSSITE }}%</p>
+              <p class="seuil-note text-center mt-2">{{ t('results.score.threshold') }} {{ SCORE_REUSSITE }}%</p>
 
               <div class="rep-row mt-4">
                 <div class="rep-item rep-ok">
                   <i class="fa-solid fa-check"></i>
                   <span class="rep-val">{{ correctCount }}</span>
-                  <span class="rep-lbl">Correctes</span>
+                  <span class="rep-lbl">{{ t('results.metrics.repartition.correct') }}</span>
                 </div>
                 <div class="rep-item rep-ko">
                   <i class="fa-solid fa-xmark"></i>
                   <span class="rep-val">{{ incorrectCount }}</span>
-                  <span class="rep-lbl">Incorrectes</span>
+                  <span class="rep-lbl">{{ t('results.metrics.repartition.incorrect') }}</span>
                 </div>
                 <div class="rep-item rep-skip">
                   <i class="fa-solid fa-minus"></i>
                   <span class="rep-val">{{ skippedCount }}</span>
-                  <span class="rep-lbl">Ignorées</span>
+                  <span class="rep-lbl">{{ t('results.metrics.repartition.skipped') }}</span>
                 </div>
               </div>
             </div>
@@ -133,10 +133,10 @@
             <!-- ── MÉTRIQUES ── -->
             <div class="enigma-card p-5 metrics-card">
               <div class="d-flex justify-content-between align-items-center mb-4">
-                <div class="card-label">MÉTRIQUES DE SESSION</div>
+                <div class="card-label">{{ t('results.metrics.title') }}</div>
                 <div class="ai-badge">
                   <span class="ai-dot"></span>
-                  SYSTÈME D'ÉVALUATION IA
+                  {{ t('results.metrics.aiSystem') }}
                 </div>
               </div>
 
@@ -158,8 +158,8 @@
               <div class="anticheat-box" :class="integrityScore >= 70 ? 'ac-ok' : 'ac-warn'">
                 <i class="fa-solid fa-shield-halved me-2"></i>
                 <div>
-                  <strong>Anti-Cheat v2.0</strong>
-                  <span>{{ result.infractions }} infraction(s) — Intégrité : {{ integrityScore }}%</span>
+                  <strong>{{ t('results.metrics.anticheat') }}</strong>
+                  <span>{{ result.infractions }} infraction(s) — {{ t('results.metrics.integrity') }} : {{ integrityScore }}%</span>
                 </div>
               </div>
 
@@ -169,7 +169,7 @@
 
               <button class="btn-voir-correction w-100" @click="toggleCorrection">
                 <i class="fa-solid fa-magnifying-glass me-2"></i>
-                {{ showCorrection ? 'MASQUER LA CORRECTION' : 'VOIR LA CORRECTION' }}
+                {{ showCorrection ? t('results.correction.hideBtn') : t('results.correction.seeBtn') }}
               </button>
             </div>
 
@@ -178,7 +178,7 @@
               <div class="ia-coach-terminal">
                 <div class="robot-glow-container"><i class="fa-solid fa-robot text-white"></i></div>
                 <div class="coach-text-v8">
-                  <h6>Coach EvaluaIA</h6>
+                  <h6>{{ t('dashboard.ai.coachTitle') }}</h6>
                   <p class="m-0 small">{{ coachMessage }}</p>
                 </div>
               </div>
@@ -191,7 +191,7 @@
 
           <!-- ── THÈMES ── -->
           <div v-if="themeBreakdown.length" class="enigma-card p-5 mb-5">
-            <div class="card-label mb-4">ANALYSE PAR THÈME</div>
+            <div class="card-label mb-4">{{ t('results.themes.title') }}</div>
             <div class="theme-list">
               <div v-for="th in themeBreakdown" :key="th.name" class="theme-row">
                 <div class="d-flex justify-content-between mb-2">
@@ -213,7 +213,7 @@
           <transition name="slide-down">
             <div v-if="showCorrection && normalizedCorrection.length" class="correction-section">
               <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-                <div class="card-label">CORRECTION DÉTAILLÉE</div>
+                <div class="card-label">{{ t('results.correction.title') }}</div>
                 <div class="d-flex gap-2 flex-wrap">
                   <button
                     v-for="f in corrFilters" :key="f.val"
@@ -245,7 +245,7 @@
                     <span class="status-badge"
                       :class="item.isCorrect ? 'status-1' : (item.userAnswer ? 'status-2' : 'status-skip')">
                       <span class="status-dot"></span>
-                      {{ item.isCorrect ? 'CORRECT' : (item.userAnswer ? 'INCORRECT' : 'IGNORÉ') }}
+                      {{ item.isCorrect ? t('results.correction.labels.correct2') : (item.userAnswer ? t('results.correction.labels.incorrect') : t('results.correction.labels.skipped')) }}
                     </span>
                   </div>
 
@@ -275,14 +275,14 @@
                       <div class="col-md-6">
                         <div class="preview-field-box p-3 rounded-3"
                           :style="item.isCorrect ? 'background:#f0fdf4;border:1.5px solid #6ee7b7;' : 'background:#fff1f2;border:1.5px solid #fca5a5;'">
-                          <span class="card-label d-block mb-2">VOTRE RÉPONSE</span>
-                          <p class="fw-800 small m-0">{{ item.userAnswer || 'AUCUNE RÉPONSE' }}</p>
+                          <span class="card-label d-block mb-2">{{ t('results.correction.labels.your') }}</span>
+                          <p class="fw-800 small m-0">{{ item.userAnswer || t('results.correction.labels.none') }}</p>
                         </div>
                       </div>
                       <div v-if="!item.isCorrect" class="col-md-6">
                         <div class="preview-field-box p-3 rounded-3"
                           style="background:#f0fdf4;border:1.5px solid #6ee7b7;">
-                          <span class="card-label d-block mb-2">RÉPONSE CORRECTE</span>
+                          <span class="card-label d-block mb-2">{{ t('results.correction.labels.correct') }}</span>
                           <p class="fw-800 small m-0">{{ item.correctAnswer }}</p>
                         </div>
                       </div>
@@ -297,7 +297,7 @@
 
                 <div v-if="filteredCorrection.length === 0" class="empty-state-pro py-5 text-center">
                   <i class="fa-solid fa-check-double fa-2x text-success mb-3"></i>
-                  <p class="fw-800">Aucune question dans cette catégorie.</p>
+                  <p class="fw-800">{{ t('results.correction.empty') }}</p>
                 </div>
               </div>
             </div>
@@ -311,7 +311,7 @@
     <transition name="toast-slide">
       <div v-if="toast.active" class="enigma-toast" :class="'t-' + toast.type">
         <div class="t-ico"><i :class="toast.icon"></i></div>
-        <div class="t-body"><strong>SYSTÈME</strong><p class="m-0 small">{{ toast.message }}</p></div>
+        <div class="t-body"><strong>{{ t('dashboard.toast.systemMessage') }}</strong><p class="m-0 small">{{ toast.message }}</p></div>
       </div>
     </transition>
 
@@ -321,26 +321,25 @@
 <script setup>
 import { ref, computed, onMounted, reactive } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import api from '@/services/api';
 import AppSidebar from '../components/AppSidebar.vue';
 import AppNavbar   from '../components/AppNavbar.vue';
+
+const { t } = useI18n();
 
 // ────────────────────────────────────────────────────────────────
 //  BACKEND : GET /api/Examen/results/{evaluationId}
 //  Réponse exacte du contrôleur C# :
 //  {
-//    Pourcentage        : int        ← Math.Round(eval.ScorePourcentage)
-//    ScoreTotal         : float      ← eval.ScoreTotal
+//    Pourcentage        : int
+//    ScoreTotal         : float
 //    DetailedCorrection : [
 //      { Enonce, UserAnswer, CorrectAnswer, IsCorrect,
 //        Options:string[], Theme, Points:float, Explication }
 //    ]
-//    Infractions        : int        ← 0 (hardcodé pour l'instant)
+//    Infractions        : int
 //  }
-//
-//  ABSENTS dans /results (récupérés ailleurs ou constants) :
-//    ScoreReussite  → SCORE_REUSSITE = 70  (identique au backend)
-//    CampagneNom    → appel secondaire GET /Examen/historique
 // ────────────────────────────────────────────────────────────────
 
 const SCORE_REUSSITE = 70;
@@ -362,7 +361,7 @@ const result = ref({
 });
 
 const toast = reactive({ active: false, message: '', type: 'success', icon: '' });
-let _toastTimer = null;
+let _toastTimerFn = null;
 
 const evaluationId = computed(() => route.params.id);
 
@@ -403,13 +402,13 @@ const fetchResults = async () => {
   } catch (err) {
     const status = err?.response?.status;
     if (status === 404) {
-      error.value = 'Session introuvable. Vérifiez l\'identifiant.';
+      error.value = t('results.messages.notFound');
     } else if (status === 401 || status === 403) {
-      error.value = 'Accès non autorisé. Veuillez vous reconnecter.';
+      error.value = t('results.messages.noAccess');
     } else {
       error.value = err?.response?.data?.message
                  ?? err?.response?.data
-                 ?? 'Erreur lors du chargement du rapport.';
+                 ?? t('results.messages.error');
     }
   } finally {
     loading.value = false;
@@ -484,17 +483,17 @@ const ringProgressStyle = computed(() => {
 });
 
 const kpiCards = computed(() => [
-  { label: 'SCORE GLOBAL',   value: result.value.pourcentage + '%',   icon: 'fa-solid fa-star',           color: '#f59e0b', bg: '#fffbeb' },
-  { label: 'INTÉGRITÉ',      value: integrityScore.value + '%',        icon: 'fa-solid fa-shield-halved',  color: '#10b981', bg: '#ecfdf5' },
-  { label: 'QUESTIONS',      value: normalizedCorrection.value.length, icon: 'fa-solid fa-list-check',     color: '#6366f1', bg: '#eef2ff' },
-  { label: 'POINTS OBTENUS', value: displayScore.value,                icon: 'fa-solid fa-trophy',         color: '#f59e0b', bg: '#fffbeb' },
+  { label: t('results.kpi.score'),    value: result.value.pourcentage + '%',   icon: 'fa-solid fa-star',           color: '#f59e0b', bg: '#fffbeb' },
+  { label: t('results.kpi.integrity'),value: integrityScore.value + '%',        icon: 'fa-solid fa-shield-halved',  color: '#10b981', bg: '#ecfdf5' },
+  { label: t('results.kpi.questions'),value: normalizedCorrection.value.length, icon: 'fa-solid fa-list-check',     color: '#6366f1', bg: '#eef2ff' },
+  { label: t('results.kpi.points'),   value: displayScore.value,                icon: 'fa-solid fa-trophy',         color: '#f59e0b', bg: '#fffbeb' },
 ]);
 
 const metricRows = computed(() => {
   const total = Math.max(normalizedCorrection.value.length, 1);
   return [
     {
-      label: 'Score obtenu',
+      label: t('results.metrics.score'),
       value: result.value.pourcentage + '%',
       pct:   result.value.pourcentage,
       icon:  'fa-solid fa-star',
@@ -502,7 +501,7 @@ const metricRows = computed(() => {
       fill:  'linear-gradient(90deg,#f59e0b,#fbbf24)',
     },
     {
-      label: 'Intégrité Anti-Cheat',
+      label: t('results.metrics.integrity'),
       value: integrityScore.value + '%',
       pct:   integrityScore.value,
       icon:  'fa-solid fa-shield-halved',
@@ -510,7 +509,7 @@ const metricRows = computed(() => {
       fill:  'linear-gradient(90deg,#6366f1,#818cf8)',
     },
     {
-      label: 'Réponses correctes',
+      label: t('results.metrics.correct'),
       value: `${correctCount.value} / ${normalizedCorrection.value.length}`,
       pct:   (correctCount.value / total) * 100,
       icon:  'fa-solid fa-circle-check',
@@ -523,41 +522,41 @@ const metricRows = computed(() => {
 const themeBreakdown = computed(() => {
   const map = {};
   normalizedCorrection.value.forEach(q => {
-    const t = q.theme || 'Général';
-    if (!map[t]) map[t] = { name: t, total: 0, correct: 0 };
-    map[t].total++;
-    if (q.isCorrect) map[t].correct++;
+    const th = q.theme || 'Général';
+    if (!map[th]) map[th] = { name: th, total: 0, correct: 0 };
+    map[th].total++;
+    if (q.isCorrect) map[th].correct++;
   });
-  return Object.values(map).map(t => ({
-    ...t,
-    pct: Math.round((t.correct / t.total) * 100),
+  return Object.values(map).map(th => ({
+    ...th,
+    pct: Math.round((th.correct / th.total) * 100),
   }));
 });
 
 const coachMessage = computed(() => {
   const p = result.value.pourcentage;
-  if (p >= 90) return "Excellente performance ! Maîtrise experte démontrée sur l'ensemble des modules. Votre profil est hautement qualifié.";
-  if (p >= 70) return "Bonne performance — session validée avec succès. Quelques axes d'amélioration identifiés sur les questions avancées.";
-  if (p >= 50) return "Performance intermédiaire. Des lacunes détectées sur certains modules. Une révision ciblée est recommandée.";
-  return "Performance insuffisante. Une préparation approfondie sur les fondamentaux est nécessaire avant de retenter.";
+  if (p >= 90) return t('results.coach.messages.excellent');
+  if (p >= 70) return t('results.coach.messages.good');
+  if (p >= 50) return t('results.coach.messages.average');
+  return t('results.coach.messages.poor');
 });
 
 const resultTags = computed(() => {
   const tags = [];
-  if (integrityScore.value === 100)   tags.push('✦ Intégrité parfaite');
-  if (result.value.pourcentage >= 90) tags.push('✦ Expert certifié');
-  else if (isPassed.value)            tags.push('✦ Standard validé');
-  if (skippedCount.value === 0)       tags.push('✦ 0 question ignorée');
+  if (integrityScore.value === 100)   tags.push(t('results.tags.integrity'));
+  if (result.value.pourcentage >= 90) tags.push(t('results.tags.expert'));
+  else if (isPassed.value)            tags.push(t('results.tags.standard'));
+  if (skippedCount.value === 0)       tags.push(t('results.tags.noSkipped'));
   if (correctCount.value === normalizedCorrection.value.length && correctCount.value > 0)
-    tags.push('✦ Score parfait');
+    tags.push(t('results.tags.perfect'));
   return tags;
 });
 
 const corrFilters = computed(() => [
-  { val: 'all',       label: 'Toutes',      count: normalizedCorrection.value.length },
-  { val: 'correct',   label: 'Correctes',   count: correctCount.value },
-  { val: 'incorrect', label: 'Incorrectes', count: incorrectCount.value },
-  { val: 'skipped',   label: 'Ignorées',    count: skippedCount.value },
+  { val: 'all',       label: t('results.correction.filters.all'),       count: normalizedCorrection.value.length },
+  { val: 'correct',   label: t('results.correction.filters.correct'),   count: correctCount.value },
+  { val: 'incorrect', label: t('results.correction.filters.incorrect'), count: incorrectCount.value },
+  { val: 'skipped',   label: t('results.correction.filters.skipped'),   count: skippedCount.value },
 ]);
 
 const filteredCorrection = computed(() => {
@@ -576,11 +575,10 @@ const toggleCorrection = () => {
 };
 
 const generatePDF = () => {
-  showToast('Préparation du rapport PDF…', 'success', 'fa-solid fa-file-pdf');
+  showToast(t('results.messages.pdfReady'), 'success', 'fa-solid fa-file-pdf');
   setTimeout(() => window.print(), 600);
 };
 
-let _toastTimerFn = null;
 const showToast = (message, type = 'success', icon = 'fa-solid fa-check') => {
   clearTimeout(_toastTimerFn);
   Object.assign(toast, { message, type, icon, active: true });
@@ -680,7 +678,7 @@ onMounted(fetchResults);
   gap: 20px;
 }
 
-/* ── ENIGMA CARD (même style que Campagnes) ── */
+/* ── ENIGMA CARD ── */
 .enigma-card { background: white; border-radius: 32px; border: 1px solid #eef2f6; }
 
 .card-label {
@@ -785,7 +783,6 @@ onMounted(fetchResults);
 .btn-voir-correction:hover { background: #0f172a; color: white; }
 
 /* ── COACH CARD ── */
-.coach-card {}
 .ia-coach-terminal {
   background: #0f172a; border-radius: 20px; padding: 20px;
   display: flex; gap: 16px; align-items: flex-start;
@@ -930,9 +927,7 @@ onMounted(fetchResults);
   .canvas-engine { height: auto !important; overflow: visible !important; }
 }
 
-/* ══════════════════════════════════════════════════
-   DARK MODE OVERRIDES (identique à Campagnes.vue)
-══════════════════════════════════════════════════ */
+/* ══ DARK MODE ══ */
 [data-theme="dark"] .results-root { background: #0d1117; color: #f0f6fc; }
 [data-theme="dark"] .canvas-engine { background: #0d1117; color: #f0f6fc; }
 [data-theme="dark"] .premium-title { color: #f0f6fc; }
@@ -952,7 +947,6 @@ onMounted(fetchResults);
 [data-theme="dark"] .cc-top { background: rgba(255,255,255,0.03); border-bottom-color: rgba(255,255,255,0.06); }
 [data-theme="dark"] .cc-opt { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.06); }
 [data-theme="dark"] .cco-text { color: #e6edf3; }
-[data-theme="dark"] .cc-question { color: #e6edf3; }
 [data-theme="dark"] .enigma-card h5 { color: #e6edf3; }
 
 [data-theme="dark"] .meta-badge { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.1); color: #8b949e; }

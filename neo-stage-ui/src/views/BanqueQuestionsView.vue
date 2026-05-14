@@ -1,5 +1,5 @@
 <template>
-  <div class="bq-root" :class="{ 'dark-mode': isDark }" @mousemove="handleParallax">
+  <div class="bq-root" @mousemove="handleParallax">
 
     <!-- ══════════════════════ BACKGROUND ENGINE ══════════════════════ -->
     <div class="cyber-engine-bg">
@@ -37,10 +37,10 @@
               </p>
             </div>
 
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-              <!-- DARK MODE TOGGLE -->
-              <button class="btn-refresh-pro" @click="isDark = !isDark" :title="isDark ? $t('theme.light') : $t('theme.dark')">
-                <i :class="isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
+            <div class="header-actions-group">
+              <!-- DARK MODE TOGGLE (SYNCED) -->
+              <button class="btn-refresh-pro" @click="toggleGlobalTheme" :title="isGlobalDark ? $t('theme.light') : $t('theme.dark')">
+                <i :class="isGlobalDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
               </button>
 
               <!-- SEARCH -->
@@ -59,23 +59,25 @@
                 </button>
               </div>
 
-              <button class="btn-outline-pro" @click="showCatManager = true">
-                <i class="fa-solid fa-sitemap me-2"></i>{{ $t('campaigns.studio.step1.theme').split(' ')[0] }}s
-              </button>
+              <div class="action-buttons-wrap">
+                <button class="btn-outline-pro" @click="showCatManager = true">
+                  <i class="fa-solid fa-sitemap me-2"></i>{{ $t('campaigns.studio.step1.theme').split(' ')[0] }}s
+                </button>
 
-              <button class="btn-ai-glow" @click="showAIModal = true">
-                <span class="btn-shine-layer"></span>
-                <i class="fa-solid fa-wand-magic-sparkles me-2"></i>
-                {{ $t('sidebar.links.ai') }}
-                <span class="lang-badge-pill ms-2">FR/EN</span>
-              </button>
+                <button class="btn-ai-glow" @click="showAIModal = true">
+                  <span class="btn-shine-layer"></span>
+                  <i class="fa-solid fa-wand-magic-sparkles me-2"></i>
+                  {{ $t('sidebar.links.ai') }}
+                  <span class="lang-badge-pill ms-2">FR/EN</span>
+                </button>
 
-              <button class="btn-enigma-primary shadow-premium" @click="openModal()">
-                <div class="btn-content">
-                  <i class="fa-solid fa-plus me-2"></i>{{ $t('create') }}
-                </div>
-                <div class="btn-glow"></div>
-              </button>
+                <button class="btn-enigma-primary shadow-premium" @click="openModal()">
+                  <div class="btn-content">
+                    <i class="fa-solid fa-plus me-2"></i>{{ $t('create') }}
+                  </div>
+                  <div class="btn-glow"></div>
+                </button>
+              </div>
             </div>
           </header>
 
@@ -424,9 +426,10 @@
                   <label>{{ $t('campaigns.studio.bank.stats.total').toUpperCase() }}</label>
                   <div class="number-stepper">
                     <button class="step-btn" @click="aiForm.n = Math.max(1, aiForm.n - 1)"><i class="fa-solid fa-minus"></i></button>
-                    <input v-model.number="aiForm.n" type="number" min="1" max="20" class="step-input">
-                    <button class="step-btn" @click="aiForm.n = Math.min(20, aiForm.n + 1)"><i class="fa-solid fa-plus"></i></button>
+                    <input v-model.number="aiForm.n" type="number" min="1" max="100" class="step-input" @input="aiForm.n = aiForm.n > 100 ? 100 : aiForm.n">
+                    <button class="step-btn" @click="aiForm.n = Math.min(100, aiForm.n + 1)"><i class="fa-solid fa-plus"></i></button>
                   </div>
+                  <small class="text-muted" v-if="aiForm.n > 0">Max 100 questions</small>
                 </div>
               </div>
               <div class="col-md-6">
@@ -928,6 +931,7 @@ const callAIAPI = async (lang) => {
 
 const previewAI = async () => {
   if (!aiForm.theme || !aiForm.sousTheme) { showToast(t('required'), 'error'); return; }
+  if (aiForm.n < 5 || aiForm.n > 100) { showToast("Le nombre de questions doit être entre 5 et 100", 'error'); return; }
   isAILoading.value = true; aiPreview.value = [];
   const timer = simulateProgress();
   try {
@@ -942,12 +946,17 @@ const previewAI = async () => {
 
 const handleAIGeneration = async () => {
   if (!aiForm.theme || !aiForm.sousTheme) { showToast(t('required'), 'error'); return; }
+  if (aiForm.n < 5 || aiForm.n > 100) { showToast("Le nombre de questions doit être entre 5 et 100", 'error'); return; }
 
   // 🛡️ VÉRIFICATION QUOTA (Limite de 2/jour)
   try {
-    await api.post('/Usage/validate-action');
+    await api.post(`/Usage/validate-action?questionCount=${aiForm.n}`);
   } catch (err) {
     if (err.response && err.response.status === 403) {
+      if (err.response.data.error === "MAX_QUESTIONS_EXCEEDED") {
+        showToast("Limite de 100 questions dépassée", 'error');
+        return;
+      }
       showAIModal.value = false;
       const secondsLeft = err.response.data.retryAfterSeconds || 0;
       const h = Math.floor(secondsLeft / 3600);
@@ -959,7 +968,7 @@ const handleAIGeneration = async () => {
         title: '<h2 style="font-size: 2.2rem; font-weight: 500; color: #1e293b; margin-top: 1.5rem;">Limite de génération atteinte</h2>',
         html: `
           <div style="padding: 1rem 2rem;">
-            <p style="color: #64748b; font-size: 1.1rem; margin-bottom: 2rem;">Le plan Starter est limité à <b>5 générations</b>.</p>
+            <p style="color: #64748b; font-size: 1.1rem; margin-bottom: 2rem;">Le plan Starter est limité à <b>3 générations</b> par 24h.</p>
             <div style="background-color: #fff1f2; border: 1px solid #fecaca; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; display: flex; align-items: center; justify-content: center; gap: 15px;">
               <i class="fa-solid fa-rotate-left" style="color: #ef4444; font-size: 1.5rem;"></i>
               <span style="color: #be123c; font-size: 1.2rem; font-weight: 500;">Réessayez dans :</span>
@@ -1134,6 +1143,15 @@ const handleParallax = (e) => {
   mousePos.y = (e.clientY - window.innerHeight / 2) / 20;
 };
 
+const isGlobalDark = ref(document.documentElement.getAttribute('data-theme') === 'dark');
+
+const toggleGlobalTheme = () => {
+  const newTheme = isGlobalDark.value ? 'light' : 'dark';
+  isGlobalDark.value = !isGlobalDark.value;
+  document.documentElement.setAttribute('data-theme', newTheme);
+  localStorage.setItem('theme_preferé_evalua', newTheme);
+};
+
 onMounted(() => fetchData());
 </script>
 
@@ -1176,9 +1194,9 @@ onMounted(() => fetchData());
 *, *::before, *::after { box-sizing: border-box; }
 
 /* ══════════════════════════════════════════
-   DARK MODE
+   DARK MODE (GLOBAL SYNC)
 ══════════════════════════════════════════ */
-.bq-root.dark-mode {
+[data-theme="dark"] .bq-root {
   --bg:          #0d1117;
   --surface:     #161b22;
   --surface2:    #1c2128;
@@ -1255,6 +1273,17 @@ onMounted(() => fetchData());
 /* ══════════════════════════════════════════
    BUTTONS AMÉLIORÉS
 ══════════════════════════════════════════ */
+.header-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+.action-buttons-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 .btn-refresh-pro {
   width: 44px; height: 44px; background: var(--surface);
   border: 1.5px solid var(--bdr); border-radius: 14px;

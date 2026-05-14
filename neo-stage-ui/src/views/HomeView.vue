@@ -46,11 +46,11 @@
           </ul>
 
           <div class="nav-auth">
-            <a href="/login" class="btn-text d-none d-sm-inline">Connexion</a>
-            <a href="/login" class="btn-amber-pill shadow-amber">
+            <router-link to="/login" class="btn-text d-none d-sm-inline">Connexion</router-link>
+            <router-link to="/login" class="btn-amber-pill shadow-amber">
               Essai Gratuit
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="ms-1"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>
-            </a>
+            </router-link>
           </div>
         </nav>
       </div>
@@ -103,10 +103,10 @@
             </div>
 
             <div class="hero-btns d-flex align-items-center gap-3">
-              <a href="/login" class="btn-amber-lg shadow-amber">
+              <router-link to="/login" class="btn-amber-lg shadow-amber">
                 Démarrer maintenant
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>
-              </a>
+              </router-link>
               <a href="#services" class="btn-outline-custom">Découvrir</a>
             </div>
 

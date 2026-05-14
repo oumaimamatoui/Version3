@@ -10,29 +10,27 @@ using Microsoft.EntityFrameworkCore;
 
 namespace NeoEvaluation.API.Controllers
 {
-    [Authorize]
+    [AllowAnonymous]
     [ApiController]
     [Route("api/[controller]")]
     public class PaymentsController : ControllerBase
     {
         private readonly IConfiguration _configuration;
         private readonly AppDbContext _context;
-        private readonly ITenantService _tenantService;
         private readonly ILogger<PaymentsController> _logger;
 
-        public PaymentsController(IConfiguration configuration, AppDbContext context, ITenantService tenantService, ILogger<PaymentsController> logger)
+        public PaymentsController(IConfiguration configuration, AppDbContext context, ILogger<PaymentsController> logger)
         {
             _configuration = configuration;
             _context = context;
-            _tenantService = tenantService;
             _logger = logger;
         }
 
         [AllowAnonymous]
         [HttpPost("create-checkout-session")]
-        public async Task<ActionResult<CheckoutSessionResponse>> CreateCheckoutSession([FromBody] CreateCheckoutSessionRequest request)
+        public async Task<ActionResult<CheckoutSessionResponse>> CreateCheckoutSession([FromBody] CreateCheckoutSessionRequest request, [FromServices] ITenantService tenantService)
         {
-            var enterpriseId = _tenantService.GetTenantId() ?? Guid.Parse("00000000-0000-0000-0000-000000000001");
+            var enterpriseId = tenantService.GetTenantId() ?? Guid.Parse("00000000-0000-0000-0000-000000000001");
             
             var domain = _configuration["AppSettings:FrontendUrl"] ?? "http://localhost:5173";
 
@@ -45,8 +43,8 @@ namespace NeoEvaluation.API.Controllers
                     {
                         PriceData = new SessionLineItemPriceDataOptions
                         {
-                            UnitAmount = (long)(request.Price * 100), // En centimes
-                            Currency = "eur", // Ou "tnd" si supporté par votre compte Stripe
+                            UnitAmount = (long)(request.Price * 100), 
+                            Currency = "eur", 
                             ProductData = new SessionLineItemPriceDataProductDataOptions
                             {
                                 Name = request.PlanName,
@@ -69,15 +67,6 @@ namespace NeoEvaluation.API.Controllers
                 }
             };
 
-            // Ajout de la période d'essai de 14 jours pour le plan Business IA
-            if (request.PlanName.Contains("Business IA", StringComparison.OrdinalIgnoreCase))
-            {
-                options.SubscriptionData = new SessionSubscriptionDataOptions
-                {
-                    TrialPeriodDays = 14
-                };
-            }
-
             var service = new SessionService();
             Session session = await service.CreateAsync(options);
 
@@ -90,6 +79,53 @@ namespace NeoEvaluation.API.Controllers
         }
 
         [AllowAnonymous]
+        [HttpPost("confirm-session")]
+        public async Task<IActionResult> ConfirmSession([FromQuery] string sessionId)
+        {
+            try
+            {
+                var service = new SessionService();
+                var session = await service.GetAsync(sessionId);
+
+                if (session.PaymentStatus == "paid")
+                {
+                    await HandleSubscriptionSuccess(session);
+                    return Ok(new { message = "Plan mis à jour avec succès" });
+                }
+                return BadRequest("La session n'est pas payée.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        
+        [AllowAnonymous]
+        [HttpGet("session-invoice/{sessionId}")]
+        public async Task<IActionResult> GetSessionInvoice(string sessionId)
+        {
+            try
+            {
+                var service = new SessionService();
+                var session = await service.GetAsync(sessionId, new SessionGetOptions
+                {
+                    Expand = new List<string> { "invoice", "subscription" }
+                });
+
+                if (session?.Invoice == null) return NotFound("Facture non trouvée.");
+
+                return Ok(new { 
+                    invoiceUrl = session.Invoice.InvoicePdf,
+                    hostedUrl = session.Invoice.HostedInvoiceUrl
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [AllowAnonymous]
         [HttpPost("webhook")]
         public async Task<IActionResult> Webhook()
         {
@@ -99,7 +135,6 @@ namespace NeoEvaluation.API.Controllers
                 var stripeEvent = EventUtility.ConstructEvent(json,
                     Request.Headers["Stripe-Signature"], _configuration["Stripe:WebhookSecret"]);
 
-                // Handle the event
                 if (stripeEvent.Type == EventTypes.CheckoutSessionCompleted)
                 {
                     if (stripeEvent.Data.Object is Session session)
@@ -107,7 +142,6 @@ namespace NeoEvaluation.API.Controllers
                         await HandleSubscriptionSuccess(session);
                     }
                 }
-
                 return Ok();
             }
             catch (StripeException e)
@@ -130,11 +164,8 @@ namespace NeoEvaluation.API.Controllers
                 if (enterprise != null)
                 {
                     enterprise.Plan = planName;
-                    // Mise à jour de la date d'expiration (simplifié)
-                    enterprise.AbonnementFin = DateTime.UtcNow.AddDays(30 + (planName.Contains("Business IA") ? 14 : 0));
-                    
+                    enterprise.AbonnementFin = DateTime.UtcNow.AddDays(30);
                     await _context.SaveChangesAsync();
-                    _logger.LogInformation($"Abonnement activé pour l'entreprise {enterpriseId} : {planName}");
                 }
             }
         }

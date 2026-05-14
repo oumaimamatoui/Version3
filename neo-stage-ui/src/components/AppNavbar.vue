@@ -1,7 +1,6 @@
 <template>
   <nav class="barre-top" role="banner">
     <div class="barre-top-interieur">
-
       <!-- ── GAUCHE : RECHERCHE ── -->
       <div class="zone-recherche">
         <div class="recherche-wrap">
@@ -17,8 +16,7 @@
           <kbd class="recherche-raccourci">⌘K</kbd>
         </div>
       </div>
-
-      <!-- ── DROITE : ACTIONS ── -->
+   <!-- ── DROITE : ACTIONS ── -->
       <div class="barre-top-actions">
 
         <!-- THÈME -->
@@ -78,7 +76,7 @@
                   <Check v-if="localeActive === locale.code" :size="13" class="ico-coche" />
                 </button>
 
-                <!-- Aucune langue disponible (cas impossible mais défensif) -->
+   <!-- Aucune langue disponible (cas impossible mais défensif) -->
                 <div v-if="localesDisponibles.length === 0" class="lang-vide">
                   <span>Aucune langue configurée</span>
                 </div>
@@ -139,6 +137,53 @@
             </div>
           </Transition>
         </div>
+   <!-- PLAN SELECTOR — Uniquement pour l'AdminEntreprise -->
+        <div v-if="authStore.role === 'AdminEntreprise'" class="menu-deroulant" ref="menuDeroulantPlan">
+          <button class="btn-plan-selector" @click="basculerMenu('plan')">
+            <span class="plan-brand">EvaluaTech</span>
+            <span class="plan-current">{{ authStore.user?.subscriptionPlan || 'Starter' }}</span>
+            <ChevronDown :size="12" class="chevron" :class="{ pivote: menuOuvert === 'plan' }" />
+          </button>
+          <Transition name="menu-fondu">
+            <div v-if="menuOuvert === 'plan'" class="panneau-deroulant panneau-plan">
+              <div class="plan-item premium-opt" @click="router.push('/pricing'); fermerMenu()">
+                <div class="plan-info-header">
+                  <div class="plan-title-wrap">
+                    <div class="plan-icon-hex"><i class="fa-solid fa-sparkles"></i></div>
+                    <span class="plan-title">EvaluaTech Go</span>
+                  </div>
+                  <button class="btn-upgrade-sm">Passer au Pro</button>
+                </div>
+                <p class="plan-desc">Utilisation continue, IA illimitée et rapports avancés.</p>
+              </div>
+
+              <div class="plan-divider"></div>
+
+              <div class="plan-item active">
+                <div class="plan-info-header">
+                  <div class="plan-title-wrap">
+                    <div class="plan-icon-bolt"><i class="fa-solid fa-bolt"></i></div>
+                    <span class="plan-title">Starter</span>
+                  </div>
+                  <i class="fa-solid fa-check text-success"></i>
+                </div>
+                <p class="plan-desc">Idéal pour découvrir les bases (limite de 3 actions/jour).</p>
+                
+                <div class="usage-stats" v-if="authStore.user?.subscriptionPlan !== 'EvaluaTech Go'">
+                  <div class="usage-bar-wrap">
+                    <div class="usage-bar-fill" :style="{ width: Math.min(100, (usageCount / 3) * 100) + '%' }"></div>
+                  </div>
+                  
+                </div>
+                <div class="usage-stats" v-else>
+                   <div class="plan-status-badge premium">
+                      <i class="fa-solid fa-clock me-1"></i> Restant: {{ daysRemaining }} jours
+                   </div>
+                </div>
+              </div>
+            </div>
+          </Transition>
+        </div>
 
         <!-- SÉPARATEUR -->
         <span class="separateur"></span>
@@ -170,7 +215,7 @@
                 <UserCircle :size="14" class="ico-item" /><span>{{ t('profile.myProfile') }}</span>
               </router-link>
               <router-link to="/settings" class="item-deroulant" @click="fermerMenu">
-                <Settings :size="14" class="ico-item" /><span>{{ t('settings.tabs.profile') }}</span>
+                <Settings :size="14" class="ico-item" /><span>{{ t('sidebar.links.settings') }}</span>
               </router-link>
               <div class="separateur-menu"></div>
               <button class="item-deroulant danger" @click="deconnexion">
@@ -225,6 +270,14 @@ const champRecherche     = ref(null);
 const rechercheFocalisee = ref(false);
 const menuOuvert         = ref(null);
 const estSombre          = ref(false);
+const usageCount         = ref(0); // Restored usage count
+const daysRemaining      = ref(0); // Countdown days
+
+// REFS MENUS
+const menuDeroulantLang   = ref(null);
+const menuDeroulantNotif  = ref(null);
+const menuDeroulantProfil = ref(null);
+const menuDeroulantPlan   = ref(null);
 
 // ════════════════════════════════════════════════════════════
 //  LANGUE — Système Super Admin
@@ -379,6 +432,17 @@ const gererToucheClavier = (e) => {
   if (e.key === 'Escape') fermerMenu();
 };
 
+const fetchUsageStats = async () => {
+  if (!authStore.isAuthenticated) return;
+  try {
+    const res = await api.get('/Usage/validate-action?questionCount=0');
+    usageCount.value = res.data.current || 0; 
+    daysRemaining.value = res.data.daysRemaining || 0;
+  } catch (err) {
+    console.error('Erreur fetch usage:', err);
+  }
+};
+
 // ════════════════════════════════════════════════════════════
 //  LIFECYCLE
 // ════════════════════════════════════════════════════════════
@@ -396,9 +460,17 @@ onMounted(() => {
   locale.value       = localeActive.value;
   appliquerDirection(localeActive.value);
 
+  // Usage Stats
+  fetchUsageStats();
+
   // Listeners
   window.addEventListener('keydown', gererToucheClavier);
   window.addEventListener('storage', onStorageChange);   // cross-tab sync
+});
+
+// Rafraîchir l'usage quand on ouvre le menu plan
+watch(() => menuOuvert.value, (newVal) => {
+  if (newVal === 'plan') fetchUsageStats();
 });
 
 onUnmounted(() => {
@@ -428,6 +500,157 @@ onUnmounted(() => {
   background: rgba(13, 17, 23, 0.88);
   border-bottom-color: rgba(255, 255, 255, 0.06);
 }
+
+/* ════════════════════════════════
+   PLAN SELECTOR UI (RESTORED)
+════════════════════════════════ */
+.btn-plan-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-plan-selector:hover {
+  background: #f1f5f9;
+}
+[data-theme="dark"] .btn-plan-selector:hover {
+  background: rgba(255,255,255,0.05);
+}
+.plan-brand {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0d1117;
+}
+[data-theme="dark"] .plan-brand { color: #f0f6fc; }
+.plan-current {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+/* Panneau Plan Dropdown */
+.panneau-plan {
+  width: 320px;
+  padding: 12px;
+}
+.plan-item {
+  padding: 16px;
+  border-radius: 14px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.plan-item.premium-opt {
+  background: #f8fafc;
+  margin-bottom: 8px;
+}
+.plan-item.premium-opt:hover {
+  background: #f1f5f9;
+}
+.plan-item.active {
+  background: #f8fafc;
+  border: 1px dashed #e2e8f0;
+}
+[data-theme="dark"] .plan-item { background: rgba(255,255,255,0.02); }
+
+.plan-info-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.plan-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.plan-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+[data-theme="dark"] .plan-title { color: #f1f5f9; }
+.plan-desc {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+.btn-upgrade-sm {
+  background: white;
+  border: 1px solid #e2e8f0;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btn-upgrade-sm:hover { background: #0f172a; color: white; border-color: #0f172a; }
+
+.usage-stats {
+  margin-top: 15px;
+}
+.usage-bar-wrap {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 100px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.usage-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #eab308, #fbbf24);
+  border-radius: 100px;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.usage-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  font-family: 'JetBrains Mono', monospace;
+}
+.plan-status-badge.premium {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.plan-icon-hex {
+  width: 28px;
+  height: 28px;
+  background: #fffbeb;
+  color: #eab308;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.plan-icon-bolt {
+  width: 28px;
+  height: 28px;
+  background: #f1f5f9;
+  color: #64748b;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.plan-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 12px 0;
+}
+[data-theme="dark"] .plan-divider { background: rgba(255,255,255,0.05); }
 
 .barre-top-interieur {
   height: 100%;
@@ -772,7 +995,7 @@ onUnmounted(() => {
   border: 1px solid #edf0f4;
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(13, 17, 23, 0.1), 0 2px 8px rgba(13, 17, 23, 0.06);
-  z-index: 1100;
+  z-index: 2100;
   min-width: 180px;
   overflow: hidden;
 }
@@ -921,9 +1144,15 @@ onUnmounted(() => {
 [data-theme="dark"] .item-deroulant:hover { background: rgba(255,255,255,0.06); color: #f0f6fc; }
 .item-deroulant.actif { color: #d97706; font-weight: 600; background: #fffbeb; }
 [data-theme="dark"] .item-deroulant.actif { background: rgba(245,158,11,0.08); }
-.item-deroulant.danger { color: #e11d48; }
-.item-deroulant.danger:hover { background: #fff1f2; color: #be123c; }
-[data-theme="dark"] .item-deroulant.danger:hover { background: rgba(225,29,72,0.08); }
+.item-deroulant.danger { 
+  color: #ef4444; 
+  font-weight: 700;
+  border-top: 1px solid rgba(0,0,0,0.05);
+  margin-top: 5px;
+}
+.item-deroulant.danger:hover { background: #fef2f2; color: #dc2626; }
+[data-theme="dark"] .item-deroulant.danger { color: #f87171; border-top-color: rgba(255,255,255,0.05); }
+[data-theme="dark"] .item-deroulant.danger:hover { background: rgba(239,68,68,0.1); }
 
 .ico-item { color: #d97706; flex-shrink: 0; }
 .item-deroulant.danger .ico-item { color: inherit; }
@@ -940,7 +1169,7 @@ onUnmounted(() => {
 /* ════════════════════════════════
    OVERLAY
 ════════════════════════════════ */
-.clic-exterieur { position: fixed; inset: 0; z-index: 1099; }
+.clic-exterieur { position: fixed; inset: 0; z-index: 2099; }
 
 /* ════════════════════════════════
    TRANSITIONS

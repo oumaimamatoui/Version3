@@ -20,29 +20,29 @@
           <header class="d-flex justify-content-between align-items-end mb-5 flex-wrap gap-3">
             <div>
               <div class="breadcrumb-pro mb-2">
-                <span class="root">Plateforme</span>
+                <span class="root">{{ t('myTests.breadcrumb') }}</span>
                 <i class="fa-solid fa-chevron-right mx-2 separator"></i>
-                <span class="current">Tableau de Bord</span>
+                <span class="current">{{ t('myTests.title') }}</span>
               </div>
-              <h2 class="premium-title">Mes <span class="gradient-text">Évaluations</span></h2>
-              <p class="subtitle-pro mt-1">Propulsez votre carrière avec nos tests techniques.</p>
+              <h2 class="premium-title">{{ t('sidebar.links.takeTest').split(' ')[0] }} <span class="gradient-text animated-word">{{ t('myTests.title').split(' ').slice(1).join(' ') }}</span></h2>
+              <p class="subtitle-pro mt-1">{{ t('myTests.subtitle') }}</p>
             </div>
 
             <!-- STATS PILL -->
             <div class="stats-bento-pill">
               <div class="stat-item text-center">
                 <div class="stat-value">{{ activeTests.length }}</div>
-                <div class="stat-label">DISPONIBLES</div>
+                <div class="stat-label">{{ t('myTests.stats.available') }}</div>
               </div>
               <div class="stat-divider"></div>
               <div class="stat-item text-center">
                 <div class="stat-value muted">{{ expiredTests.length }}</div>
-                <div class="stat-label">ARCHIVÉS</div>
+                <div class="stat-label">{{ t('myTests.stats.archived') }}</div>
               </div>
               <div class="stat-divider"></div>
               <div class="stat-item text-center">
                 <div class="stat-value indigo">{{ upcomingTests.length }}</div>
-                <div class="stat-label">EN ATTENTE</div>
+                <div class="stat-label">{{ t('myTests.stats.pending') }}</div>
               </div>
             </div>
           </header>
@@ -54,7 +54,7 @@
               <input
                 type="text"
                 v-model="searchQuery"
-                placeholder="Rechercher un test..."
+                :placeholder="t('search')"
                 class="search-inline-input"
               >
               <button v-if="searchQuery" @click="searchQuery = ''" class="btn-clear-search">
@@ -65,19 +65,19 @@
               <button
                 :class="['btn-view-toggle', { active: viewMode === 'grid' }]"
                 @click="viewMode = 'grid'"
-                title="Vue grille"
+                :title="t('view')"
               >
                 <i class="fa-solid fa-table-cells-large"></i>
               </button>
               <button
                 :class="['btn-view-toggle', { active: viewMode === 'list' }]"
                 @click="viewMode = 'list'"
-                title="Vue liste"
+                :title="t('view')"
               >
                 <i class="fa-solid fa-list-ul"></i>
               </button>
             </div>
-            <button class="btn-refresh-pro" @click="fetchMyTests" :disabled="loading" title="Rafraîchir">
+            <button class="btn-refresh-pro" @click="fetchMyTests" :disabled="loading" :title="t('refresh')">
               <i class="fa-solid fa-rotate" :class="{ 'fa-spin': loading }"></i>
             </button>
           </div>
@@ -85,7 +85,7 @@
           <!-- ═══════════════════ LOADER ═══════════════════ -->
           <div v-if="loading" class="loader-portal-pro">
             <div class="spinner-pro-premium"></div>
-            <span class="loading-text-pro">Analyse de vos sessions...</span>
+            <span class="loading-text-pro">{{ t('myTests.loading') }}</span>
           </div>
 
           <div v-else>
@@ -95,7 +95,7 @@
               <div class="mb-4">
                 <div class="section-tag-premium">
                   <span class="pulse-dot-amber"></span>
-                  SESSIONS ACTIVES
+                  {{ t('myTests.sections.active') }}
                   <span class="count-pill">{{ filteredActive.length }}</span>
                 </div>
               </div>
@@ -104,15 +104,15 @@
               <div v-if="filteredActive.length === 0" class="empty-state-pro py-5 text-center">
                 <i class="fa-solid fa-wind fa-3x text-muted mb-3 d-block"></i>
                 <h5 class="fw-800">
-                  {{ searchQuery ? 'Aucun test trouvé...' : 'C\'est le calme plat ici...' }}
+                  {{ searchQuery ? t('myTests.empty.search') : t('myTests.empty.active') }}
                 </h5>
                 <p class="text-muted">
-                  {{ searchQuery ? 'Modifiez votre recherche.' : 'Aucun test en attente pour le moment.' }}
+                  {{ searchQuery ? t('myTests.empty.modify') : t('myTests.empty.noTests') }}
                 </p>
               </div>
 
               <!-- ── GRID VIEW ── -->
-              <div v-else-if="viewMode === 'grid'" class="row g-4">
+              <div v-else-if="viewMode === 'grid'" class="row g-5">
                 <div
                   v-for="(c, index) in filteredActive"
                   :key="c.id"
@@ -134,37 +134,34 @@
                         :class="isUpcoming(c.dateDebut) ? 'status-waiting' : 'status-open'"
                       >
                         <span class="status-dot"></span>
-                        {{ isUpcoming(c.dateDebut) ? 'EN ATTENTE' : 'OUVERT' }}
+                        {{ isUpcoming(c.dateDebut) ? t('myTests.card.waiting') : t('myTests.card.open') }}
                       </span>
-                      <!-- backend: dureeMinutes -->
                       <div class="duration-tag">
                         <i class="fa-regular fa-hourglass-half me-1"></i>
                         {{ c.dureeMinutes }} min
                       </div>
                     </div>
 
-                    <!-- TITLE & DESCRIPTION  ← backend: nom, description -->
                     <h5 class="campaign-title-modern fw-800 mb-2">{{ c.nom }}</h5>
                     <p class="test-description-pro">
-                      {{ c.description || 'Validation des compétences techniques avancées.' }}
+                      {{ c.description || t('myTests.subtitle') }}
                     </p>
 
-                    <!-- DATE LIMITE BOX  ← backend: dateFin, nbCandidats -->
                     <div class="test-attachment-box mt-3 mb-3 p-3 rounded-4 d-flex align-items-center gap-3">
                       <div class="icon-file text-amber">
                         <i class="fa-solid fa-calendar-xmark fa-lg"></i>
                       </div>
                       <div class="flex-grow-1 overflow-hidden">
-                        <span class="text-overline d-block">DATE LIMITE</span>
+                        <span class="text-overline d-block">{{ t('myTests.card.deadline') }}</span>
                         <p class="m-0 fw-bold small">{{ formatDate(c.dateFin) }}</p>
                       </div>
                       <div v-if="c.nbCandidats != null" class="questions-count-box">
                         <span class="q-count">{{ c.nbCandidats }}</span>
-                        <span class="q-label">CND.</span>
+                        <span class="q-label">{{ t('myTests.card.candidates') }}</span>
                       </div>
                     </div>
 
-                    <!-- PROGRESS BAR (time elapsed) -->
+                    <!-- PROGRESS BAR -->
                     <div class="progress-slim mb-3">
                       <div
                         class="progress-fill"
@@ -179,15 +176,15 @@
                     <div class="d-flex justify-content-between align-items-center mb-3 small text-muted">
                       <span v-if="!isUpcoming(c.dateDebut)">
                         <i class="fa-solid fa-clock me-1"></i>
-                        Ferme {{ getRelativeTime(c.dateFin) }}
+                        {{ t('myTests.card.closes', { time: getRelativeTime(c.dateFin) }) }}
                       </span>
                       <span v-else>
                         <i class="fa-solid fa-calendar-day me-1"></i>
-                        Ouvre {{ formatDate(c.dateDebut) }}
+                        {{ t('myTests.card.opens', { date: formatDate(c.dateDebut) }) }}
                       </span>
                     </div>
 
-                    <!-- ACTION BUTTON  ← routing uses: candidatureId || id -->
+                    <!-- ACTION BUTTON -->
                     <button
                       @click.stop="startExam(c)"
                       class="btn-enigma-primary w-100 mt-1"
@@ -196,11 +193,11 @@
                       <div class="btn-content justify-content-center">
                         <template v-if="isUpcoming(c.dateDebut)">
                           <i class="fa-solid fa-lock me-2"></i>
-                          OUVRE DANS {{ getCountdown(c.dateDebut) }}
+                          {{ t('myTests.card.opensIn', { countdown: getCountdown(c.dateDebut) }) }}
                         </template>
                         <template v-else>
                           <i class="fa-solid fa-bolt me-2"></i>
-                          COMMENCER LE TEST
+                          {{ t('myTests.card.start') }}
                           <i class="fa-solid fa-arrow-right ms-2"></i>
                         </template>
                       </div>
@@ -213,11 +210,11 @@
               <!-- ── LIST VIEW ── -->
               <div v-else class="list-view-pro animate__animated animate__fadeIn">
                 <div class="list-header-row d-flex align-items-center px-4 py-2 mb-2">
-                  <span style="width:150px" class="list-col-label">STATUT</span>
-                  <span class="flex-grow-1 list-col-label">NOM</span>
-                  <span style="width:160px" class="list-col-label">DATE LIMITE</span>
+                  <span style="width:150px" class="list-col-label">{{ t('status') }}</span>
+                  <span class="flex-grow-1 list-col-label">{{ t('name') }}</span>
+                  <span style="width:160px" class="list-col-label">{{ t('myTests.card.deadline') }}</span>
                   <span style="width:90px"  class="list-col-label text-center">DURÉE</span>
-                  <span style="width:80px"  class="list-col-label text-center">ACTION</span>
+                  <span style="width:80px"  class="list-col-label text-center">{{ t('actions') }}</span>
                 </div>
                 <div
                   v-for="c in filteredActive"
@@ -227,13 +224,13 @@
                   <div style="width:150px">
                     <span class="status-badge" :class="isUpcoming(c.dateDebut) ? 'status-waiting' : 'status-open'">
                       <span class="status-dot"></span>
-                      {{ isUpcoming(c.dateDebut) ? 'EN ATTENTE' : 'OUVERT' }}
+                      {{ isUpcoming(c.dateDebut) ? t('myTests.card.waiting') : t('myTests.card.open') }}
                     </span>
                   </div>
                   <div class="flex-grow-1 pe-3">
                     <div class="fw-800 small">{{ c.nom }}</div>
                     <div class="text-muted" style="font-size:0.72rem">
-                      Ferme {{ getRelativeTime(c.dateFin) }}
+                      {{ t('myTests.card.closes', { time: getRelativeTime(c.dateFin) }) }}
                     </div>
                   </div>
                   <div style="width:160px" class="small text-muted">{{ formatDate(c.dateFin) }}</div>
@@ -261,18 +258,18 @@
             <section v-if="filteredExpired.length > 0">
               <div class="mb-4">
                 <div class="section-tag-muted">
-                  HISTORIQUE DES SESSIONS
+                  {{ t('myTests.sections.history') }}
                   <span class="count-pill-muted">{{ filteredExpired.length }}</span>
                 </div>
               </div>
 
               <!-- GRID VIEW -->
-              <div v-if="viewMode === 'grid'" class="row g-4">
+              <div v-if="viewMode === 'grid'" class="row g-5">
                 <div v-for="c in filteredExpired" :key="c.id" class="col-md-6 col-xl-4">
                   <div class="campaign-card-modern expired">
                     <div class="card-header-modern mb-3 d-flex justify-content-between align-items-start">
                       <span class="status-badge status-done">
-                        <span class="status-dot"></span> TERMINÉ
+                        <span class="status-dot"></span> {{ t('myTests.card.done') }}
                       </span>
                       <div class="duration-tag">
                         <i class="fa-regular fa-hourglass-half me-1"></i>
@@ -284,7 +281,7 @@
                     <div class="test-attachment-box mt-3 mb-3 p-3 rounded-4 d-flex align-items-center gap-3">
                       <div style="color:#94a3b8"><i class="fa-solid fa-calendar-check fa-lg"></i></div>
                       <div class="flex-grow-1 overflow-hidden">
-                        <span class="text-overline d-block">Clôturé le</span>
+                        <span class="text-overline d-block">{{ t('myTests.card.closedOn') }}</span>
                         <p class="m-0 fw-bold small">{{ formatDate(c.dateFin) }}</p>
                       </div>
                     </div>
@@ -298,9 +295,9 @@
               <!-- LIST VIEW EXPIRED -->
               <div v-else class="list-view-pro animate__animated animate__fadeIn">
                 <div class="list-header-row d-flex align-items-center px-4 py-2 mb-2">
-                  <span style="width:150px" class="list-col-label">STATUT</span>
-                  <span class="flex-grow-1 list-col-label">NOM</span>
-                  <span style="width:160px" class="list-col-label">CLÔTURÉ LE</span>
+                  <span style="width:150px" class="list-col-label">{{ t('status') }}</span>
+                  <span class="flex-grow-1 list-col-label">{{ t('name') }}</span>
+                  <span style="width:160px" class="list-col-label">{{ t('myTests.card.closedOn') }}</span>
                   <span style="width:90px"  class="list-col-label text-center">DURÉE</span>
                 </div>
                 <div
@@ -310,7 +307,7 @@
                 >
                   <div style="width:150px">
                     <span class="status-badge status-done">
-                      <span class="status-dot"></span> TERMINÉ
+                      <span class="status-dot"></span> {{ t('myTests.card.done') }}
                     </span>
                   </div>
                   <div class="flex-grow-1 pe-3">
@@ -340,12 +337,11 @@
           <div class="preview-modal-header d-flex align-items-start justify-content-between mb-4">
             <div>
               <span class="status-badge status-open mb-2" style="display:inline-flex">
-                <span class="status-dot"></span> OUVERT
+                <span class="status-dot"></span> {{ t('myTests.card.open') }}
               </span>
-              <!-- backend: nom -->
               <h4 class="fw-900 mt-2 mb-1">{{ previewModal.data?.nom }}</h4>
               <p class="text-muted small mb-0">
-                {{ previewModal.data?.description || 'Validation des compétences techniques.' }}
+                {{ previewModal.data?.description || t('myTests.subtitle') }}
               </p>
             </div>
             <button @click="closePreview" class="btn-icon-sm flex-shrink-0 ms-3">
@@ -353,14 +349,13 @@
             </button>
           </div>
 
-          <!-- INFO GRID — only fields returned by backend -->
+          <!-- INFO GRID -->
           <div class="row g-3 mb-4">
             <div class="col-6">
               <div class="preview-info-box">
                 <div class="pib-icon text-amber"><i class="fa-regular fa-clock fa-lg"></i></div>
                 <div>
                   <div class="text-overline">DURÉE</div>
-                  <!-- backend: dureeMinutes -->
                   <div class="fw-800">{{ previewModal.data?.dureeMinutes }} min</div>
                 </div>
               </div>
@@ -369,8 +364,7 @@
               <div class="preview-info-box">
                 <div class="pib-icon" style="color:#6366f1"><i class="fa-solid fa-users fa-lg"></i></div>
                 <div>
-                  <div class="text-overline">CANDIDATS</div>
-                  <!-- backend: nbCandidats -->
+                  <div class="text-overline">{{ t('dashboard.kpis.candidates') }}</div>
                   <div class="fw-800">{{ previewModal.data?.nbCandidats ?? '—' }}</div>
                 </div>
               </div>
@@ -380,7 +374,6 @@
                 <div class="pib-icon" style="color:#10b981"><i class="fa-solid fa-user-group fa-lg"></i></div>
                 <div>
                   <div class="text-overline">MAX PLACES</div>
-                  <!-- backend: maxCandidats -->
                   <div class="fw-800">{{ previewModal.data?.maxCandidats ?? '—' }}</div>
                 </div>
               </div>
@@ -389,8 +382,7 @@
               <div class="preview-info-box">
                 <div class="pib-icon" style="color:#f43f5e"><i class="fa-solid fa-calendar-xmark fa-lg"></i></div>
                 <div>
-                  <div class="text-overline">CLÔTURE</div>
-                  <!-- backend: dateFin -->
+                  <div class="text-overline">{{ t('myTests.card.deadline') }}</div>
                   <div class="fw-800">{{ formatDate(previewModal.data?.dateFin) }}</div>
                 </div>
               </div>
@@ -399,35 +391,35 @@
 
           <!-- CHECKLIST PRÉ-TEST -->
           <div class="pre-exam-checklist mb-4">
-            <div class="checklist-label mb-3">AVANT DE COMMENCER</div>
+            <div class="checklist-label mb-3">{{ t('myTests.preview.title') }}</div>
             <div class="check-item passed">
               <i class="fa-solid fa-check-circle text-success"></i>
-              <span>Assurez-vous d'être dans un environnement calme</span>
+              <span>{{ t('myTests.preview.checks.quiet') }}</span>
             </div>
             <div class="check-item passed">
               <i class="fa-solid fa-check-circle text-success"></i>
-              <span>Connexion internet stable recommandée</span>
+              <span>{{ t('myTests.preview.checks.connection') }}</span>
             </div>
             <div class="check-item passed">
               <i class="fa-solid fa-check-circle text-success"></i>
-              <span>Le timer démarre dès que vous accédez au test</span>
+              <span>{{ t('myTests.preview.checks.timer') }}</span>
             </div>
             <div class="check-item">
               <i class="fa-regular fa-circle text-muted"></i>
-              <span>Surveillance anti-triche activée</span>
+              <span>{{ t('myTests.preview.checks.anticheat') }}</span>
             </div>
           </div>
 
           <!-- CTA -->
           <div class="d-flex gap-3">
-            <button @click="closePreview" class="btn-qv-cancel flex-grow-1">ANNULER</button>
+            <button @click="closePreview" class="btn-qv-cancel flex-grow-1">{{ t('myTests.preview.cancel') }}</button>
             <button
               @click="startExam(previewModal.data); closePreview()"
               class="btn-enigma-primary flex-grow-1"
             >
               <div class="btn-content justify-content-center">
                 <i class="fa-solid fa-bolt me-2"></i>
-                DÉMARRER MAINTENANT
+                {{ t('myTests.preview.start') }}
               </div>
               <div class="btn-glow"></div>
             </button>
@@ -441,7 +433,7 @@
       <div v-if="globalToast.active" class="enigma-toast" :class="globalToast.type">
         <div class="t-ico"><i :class="globalToast.icon"></i></div>
         <div class="t-body">
-          <strong>SYSTEM MESSAGE</strong>
+          <strong>{{ t('dashboard.toast.systemMessage') }}</strong>
           <p class="m-0 small">{{ globalToast.message }}</p>
         </div>
       </div>
@@ -453,9 +445,12 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, reactive } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import api from '@/services/api';
 import AppSidebar from '../components/AppSidebar.vue';
 import AppNavbar from '../components/AppNavbar.vue';
+
+const { t } = useI18n();
 
 const router      = useRouter();
 const campaigns   = ref([]);
@@ -492,7 +487,7 @@ const fetchMyTests = async () => {
     campaigns.value = res.data;
   } catch (err) {
     console.error('Erreur API:', err);
-    showPulseToast('Impossible de charger les tests.', 'error', 'fa-solid fa-triangle-exclamation');
+    showPulseToast(t('myTests.error'), 'error', 'fa-solid fa-triangle-exclamation');
   } finally {
     loading.value = false;
   }
@@ -525,9 +520,6 @@ const filteredExpired = computed(() => {
 
 /* ─────────────────────────────────────────────────────────────
    NAVIGATION
-   candidatureId (Guid) is the correct exam-lobby param when set
-   (backend sets it to the candidature id for the current user).
-   Empty Guid "00000000-…" → fall back to campagne id.
 ────────────────────────────────────────────────────────────── */
 const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
 const startExam = (campaign) => {
@@ -547,10 +539,8 @@ const closePreview = ()  => { previewModal.show = false; previewModal.data = nul
 /* ─────────────────────────────────────────────────────────────
    DATE & TIME HELPERS
 ────────────────────────────────────────────────────────────── */
-// dateDebut in the future → test not yet open
 const isUpcoming = (dateDebut) => new Date(dateDebut) > now.value;
 
-// "07 juin 2026, 01:28"
 const formatDate = (d) => {
   if (!d) return '—';
   return new Date(d).toLocaleDateString('fr-FR', {
@@ -559,7 +549,6 @@ const formatDate = (d) => {
   });
 };
 
-// "dans 29j" / "dans 3h" / "dans 12min"
 const getRelativeTime = (dateStr) => {
   const diff = new Date(dateStr) - now.value;
   if (diff <= 0) return 'maintenant';
@@ -572,7 +561,6 @@ const getRelativeTime = (dateStr) => {
   return 'bientôt';
 };
 
-// Live countdown "HH:MM:SS" shown on locked (upcoming) cards
 const getCountdown = (dateDebut) => {
   const diff = new Date(dateDebut) - now.value;
   if (diff <= 0) return '00:00:00';
@@ -582,7 +570,6 @@ const getCountdown = (dateDebut) => {
   return `${h}:${m}:${s}`;
 };
 
-// % of the campaign window already elapsed
 const getTimeProgress = (c) => {
   const total   = new Date(c.dateFin) - new Date(c.dateDebut);
   const elapsed = now.value - new Date(c.dateDebut);
@@ -590,7 +577,6 @@ const getTimeProgress = (c) => {
   return Math.min(100, Math.max(0, Math.round((elapsed / total) * 100)));
 };
 
-// green → amber → red encodes urgency
 const getProgressColor = (p) => {
   if (p >= 80) return '#f43f5e';
   if (p >= 50) return '#f59e0b';
@@ -666,6 +652,29 @@ onUnmounted(() => {
   background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
+
+/* ══ ANIMATED WORD ════════════════════════════════════════ */
+.animated-word {
+  display: inline-block;
+  animation: wordFloat 3s ease-in-out infinite, shimmerGlow 3s ease-in-out infinite;
+  background-size: 200% auto;
+  background-image: linear-gradient(135deg, #f59e0b 0%, #fbbf24 40%, #f97316 60%, #f59e0b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@keyframes wordFloat {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-4px); }
+}
+
+@keyframes shimmerGlow {
+  0%   { background-position: 0% center; }
+  50%  { background-position: 100% center; }
+  100% { background-position: 0% center; }
+}
+
 .subtitle-pro { color: #64748b; font-size: 1rem; font-weight: 600; margin: 0; }
 .breadcrumb-pro { font-size: 0.72rem; font-weight: 700; color: #94a3b8; }
 .breadcrumb-pro .root  { cursor: pointer; }
@@ -740,26 +749,55 @@ onUnmounted(() => {
 @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
 
 /* ══ CARDS ════════════════════════════════════════════════ */
+/* NOTE : l'espacement entre les cartes est géré par Bootstrap g-5 (gap: 3rem).
+   La classe g-4 a été remplacée par g-5 dans les deux grilles (actives + expirées)
+   pour ajouter de l'espace entre les cartes. */
 .campaign-card-modern {
-  background: white; border-radius: 30px; padding: 28px;
-  border: 1px solid #eef2f6;
-  transition: 0.3s cubic-bezier(0.4,0,0.2,1);
+  background: white;
+  border-radius: 22px;
+  padding: 22px;
+  border: 1.5px solid #f1f5f9;
+  transition: 0.35s cubic-bezier(0.4,0,0.2,1);
   height: 100%; cursor: default;
+  box-shadow: 0 2px 8px rgba(15,23,42,0.04);
+  position: relative;
+  overflow: hidden;
+}
+.campaign-card-modern::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  opacity: 0;
+  transition: opacity 0.3s;
 }
 .campaign-card-modern.card-clickable { cursor: pointer; }
 .campaign-card-modern.card-clickable:hover {
-  transform: translateY(-10px);
-  border-color: #f59e0b;
-  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.08);
+  transform: translateY(-5px);
+  border-color: #fde68a;
+  box-shadow: 0 14px 32px -6px rgba(245,158,11,0.14), 0 4px 10px rgba(0,0,0,0.05);
 }
-.campaign-card-modern.expired       { opacity: 0.65; }
-.campaign-card-modern.expired:hover { opacity: 0.9; transform: translateY(-4px); }
-.campaign-card-modern.is-upcoming   { border-left: 4px solid #6366f1; }
+.campaign-card-modern.card-clickable:hover::before { opacity: 1; }
+.campaign-card-modern.expired       { opacity: 0.6; }
+.campaign-card-modern.expired:hover { opacity: 0.85; transform: translateY(-3px); }
+.campaign-card-modern.is-upcoming   {
+  border-left: 3px solid #6366f1;
+  background: linear-gradient(135deg, #fafbff 0%, white 100%);
+}
+.campaign-card-modern.is-upcoming::before {
+  background: linear-gradient(90deg, #6366f1, #818cf8);
+}
 
 .card-header-modern    { display: flex; justify-content: space-between; align-items: flex-start; }
-.campaign-title-modern { font-size: 1rem; color: #0f172a; }
-.test-description-pro  { color: #64748b; font-size: 0.88rem; font-weight: 600; line-height: 1.5; margin: 0; }
-.duration-tag          { font-size: 0.75rem; font-weight: 600; color: #94a3b8; }
+.campaign-title-modern { font-size: 1.05rem; color: #0f172a; line-height: 1.3; }
+.test-description-pro  { color: #94a3b8; font-size: 0.82rem; font-weight: 600; line-height: 1.55; margin: 0; }
+.duration-tag {
+  font-size: 0.72rem; font-weight: 700; color: #64748b;
+  background: #f8fafc; border: 1px solid #eef2f6;
+  padding: 4px 10px; border-radius: 8px;
+  display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+}
 
 /* ══ STATUS BADGES ════════════════════════════════════════ */
 .status-badge {
@@ -773,7 +811,11 @@ onUnmounted(() => {
 .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; margin-right: 6px; }
 
 /* ══ ATTACHMENT BOX ═══════════════════════════════════════ */
-.test-attachment-box { background: #f8fafc; border: 1px solid #f1f5f9; }
+.test-attachment-box {
+  background: linear-gradient(135deg, #f8fafc 0%, #fff7ed 100%);
+  border: 1px solid #fde68a;
+  border-radius: 14px !important;
+}
 .text-overline { font-size: 0.6rem; font-weight: 900; opacity: 0.5; text-transform: uppercase; letter-spacing: 1px; }
 .text-amber { color: #f59e0b; }
 .icon-file  { flex-shrink: 0; }
@@ -931,13 +973,15 @@ onUnmounted(() => {
 [data-theme="dark"] .section-tag-muted   { background: #0d1117; border-color: rgba(255,255,255,0.05); color: #8b949e; }
 [data-theme="dark"] .count-pill          { background: #f0f6fc; color: #0d1117; }
 
-[data-theme="dark"] .campaign-card-modern                    { background: #161b22; border-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .campaign-card-modern                    { background: #161b22; border-color: rgba(255,255,255,0.08); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+[data-theme="dark"] .campaign-card-modern::before { opacity: 0; }
+[data-theme="dark"] .campaign-card-modern.card-clickable:hover::before { opacity: 1; }
 [data-theme="dark"] .campaign-card-modern.card-clickable:hover { border-color: #d97706; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
 [data-theme="dark"] .campaign-card-modern.is-upcoming        { border-left-color: #818cf8; }
 [data-theme="dark"] .campaign-title-modern                   { color: #f0f6fc; }
 [data-theme="dark"] .test-description-pro                    { color: #8b949e; }
 
-[data-theme="dark"] .test-attachment-box  { background: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.06) !important; }
+[data-theme="dark"] .test-attachment-box  { background: rgba(245,158,11,0.06) !important; border-color: rgba(245,158,11,0.2) !important; }
 [data-theme="dark"] .test-attachment-box p { color: #f0f6fc; }
 
 [data-theme="dark"] .progress-slim { background: rgba(255,255,255,0.06); }

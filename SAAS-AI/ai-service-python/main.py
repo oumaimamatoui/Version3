@@ -18,6 +18,8 @@ EvaluaTech AI Engine v9.0 — CODE COMPLET CORRIGÉ A→Z
 """
 
 import os, io, json, logging, time, asyncio, hashlib, random, re
+from dotenv import load_dotenv
+load_dotenv()
 from contextlib import asynccontextmanager
 from collections import deque, OrderedDict
 from concurrent.futures import ThreadPoolExecutor
@@ -2319,12 +2321,12 @@ async def generate_bilingual(
     n: int = Form(5), langue: str = Form("fr"), type: int = Form(0)
 ):
     ck = make_cache_key("bilingual-v9", theme, sousTheme, n, langue)
-    if hit := _cache.get(ck): return hit
+    # if hit := _cache.get(ck): return hit
 
     lang_instructions = {
-        "fr": f"Génère {n} questions QCM en FRANÇAIS sur '{theme}' sous-thème '{sousTheme}'.",
-        "en": f"Generate {n} QCM questions in ENGLISH about '{theme}' sub-theme '{sousTheme}'.",
-        "ar": f"أنشئ {n} أسئلة اختيار من متعدد باللغة العربية حول '{theme}' الموضوع الفرعي '{sousTheme}'.",
+        "fr": f"Génère EXACTEMENT {n} questions QCM distinctes en FRANÇAIS sur '{theme}' (sous-thème: '{sousTheme}'). C'est une commande impérative, je veux {n} questions.",
+        "en": f"Generate EXACTLY {n} distinct MCQ questions in ENGLISH about '{theme}' (sub-theme: '{sousTheme}'). This is an imperative command, I want {n} questions.",
+        "ar": f"أنشئ بالضبط {n} سؤالاً مختلفاً من نوع QCM باللغة العربية حول '{theme}' (الموضوع الفرعي: '{sousTheme}'). هذا أمر إلزامي، أريد {n} سؤالاً.",
     }
     prompt = f"""{lang_instructions.get(langue, lang_instructions['fr'])}
 

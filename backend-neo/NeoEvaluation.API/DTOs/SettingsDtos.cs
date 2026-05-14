@@ -10,6 +10,9 @@ namespace NeoEvaluation.API.Dtos
         public string? JoinDate { get; set; } // Formaté pour l'affichage
         public string ThemePreference { get; set; } = "light";
         public string? EntrepriseNom { get; set; }
+        public string? SubscriptionPlan { get; set; }
+        public string? SubscriptionDate { get; set; }
+        public string? SubscriptionExpiry { get; set; }
     }
     public class ChangePasswordDto
     {

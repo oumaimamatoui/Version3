@@ -107,7 +107,7 @@ namespace NeoEvaluation.API.Controllers
                 Nom = reg.NomEntreprise,
                 MatriculeFiscale = reg.MatriculeFiscale,
                 AbonnementFin = DateTime.UtcNow.AddYears(1), // 1 an d'essai gratuit
-                Plan = "Gratuit"
+                Plan = "Starter"
             };
             _context.Entreprises.Add(entreprise);
 

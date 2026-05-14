@@ -142,13 +142,16 @@ const route = useRoute();
 // --- LOGIQUE SÉCURITÉ ---
 const strengthScore = computed(() => {
   let score = 0;
-  if (pass.value.length >= 8) score++;
+  if (pass.value.length >= 8 && pass.value.length <= 20) score++;
   if (/[A-Z]/.test(pass.value)) score++;
   if (/[0-9]/.test(pass.value)) score++;
   return score;
 });
 
-const strengthText = computed(() => ["Trop court", "Faible", "Moyen", "Robuste"][strengthScore.value]);
+const strengthText = computed(() => {
+  if (pass.value.length > 20) return "Trop long (max 20)";
+  return ["Trop court (min 8)", "Faible", "Moyen", "Robuste"][strengthScore.value];
+});
 const strengthColor = computed(() => ["#94a3b8", "#ef4444", "#f59e0b", "#10b981"][strengthScore.value]);
 
 const getStrengthClass = (n) => {
@@ -160,7 +163,7 @@ const getStrengthClass = (n) => {
   return '';
 };
 
-const isFormValid = computed(() => pass.value.length >= 6 && pass.value === conf.value);
+const isFormValid = computed(() => pass.value.length >= 8 && pass.value.length <= 20 && pass.value === conf.value);
 
 onMounted(() => {
   token.value = route.query.token;

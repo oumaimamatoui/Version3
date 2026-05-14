@@ -34,7 +34,7 @@
           </ul>
 
           <div class="nav-auth">
-            <router-link to="/connexion" class="btn-text d-none d-sm-inline">Connexion</router-link>
+            <router-link to="/login" class="btn-text d-none d-sm-inline">Connexion</router-link>
             <router-link to="/register" class="btn-amber-pill shadow-amber">
               Essai Gratuit
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="ms-1"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>
