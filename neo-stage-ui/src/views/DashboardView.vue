@@ -17,9 +17,7 @@
       <main class="canvas-engine flex-grow-1 overflow-auto custom-scrollbar">
         <div class="content-area p-4 p-lg-5">
 
-          <!-- ═══════════════════════════════════
-               TERMINAL HEADER BAR
-          ═══════════════════════════════════ -->
+          <!-- TERMINAL HEADER BAR -->
           <header class="terminal-bar mb-5 d-flex align-items-center justify-content-between flex-wrap gap-3">
             <div class="terminal-left d-flex align-items-center gap-3">
               <div class="ai-robot-terminal">
@@ -40,9 +38,7 @@
                   <i class="fa-solid fa-chevron-right mx-2 separator"></i>
                   <span class="current">{{ roleLabel }}</span>
                 </div>
-                <h2 class="premium-title m-0">
-                  {{ $t('dashboard.title') }}
-                </h2>
+                <h2 class="premium-title m-0">{{ $t('dashboard.title') }}</h2>
               </div>
             </div>
             <div class="terminal-right d-flex align-items-center gap-3 flex-wrap">
@@ -65,9 +61,7 @@
             </div>
           </header>
 
-          <!-- ═══════════════════════════════════
-               HERO CARD
-          ═══════════════════════════════════ -->
+          <!-- HERO CARD -->
           <div class="hero-card mb-5">
             <div class="scanner-sweep"></div>
             <div class="hero-inner">
@@ -111,9 +105,7 @@
             </div>
           </div>
 
-          <!-- ═══════════════════════════════════
-               KPI GRID — DONNÉES .NET RÉELLES
-          ═══════════════════════════════════ -->
+          <!-- KPI GRID -->
           <div class="kpi-grid mb-5">
             <div v-for="(stat, i) in kpiCards" :key="i" class="kpi-card" :style="{'--accent': stat.color}">
               <div class="kpi-top d-flex justify-content-between align-items-start mb-4">
@@ -138,7 +130,7 @@
           </div>
 
           <!-- ══════════════════════════════════════════════════════
-               RECOMMANDATIONS IA
+               RECOMMANDATIONS IA — ROUTING PAR RÔLE
           ══════════════════════════════════════════════════════ -->
           <div class="reco-section mb-5">
             <div class="reco-header d-flex align-items-center justify-content-between mb-4">
@@ -151,7 +143,7 @@
                   <span class="reco-sub">{{ $t('dashboard.ai.recoSub') }}</span>
                 </div>
               </div>
-              <button class="btn-refresh-reco" @click="loadRecommendations(true)" :disabled="recoLoading">
+              <button class="btn-refresh-reco" @click="refreshRecommendations" :disabled="recoLoading">
                 <i class="fa-solid" :class="recoLoading ? 'fa-spinner fa-spin' : 'fa-rotate-right'"></i>
                 {{ recoLoading ? $t('dashboard.ai.refreshing') : $t('dashboard.ai.refresh') }}
               </button>
@@ -166,9 +158,9 @@
               </div>
             </div>
 
-            <div v-else-if="recommendations.length" class="reco-grid">
+            <div v-else class="reco-grid">
               <div
-                v-for="(reco, i) in recommendations"
+                v-for="(reco, i) in roleRecommendations"
                 :key="i"
                 class="reco-card"
                 :style="{'--reco-color': reco.color}"
@@ -183,16 +175,11 @@
                 </div>
                 <h6 class="reco-card-title">{{ reco.title }}</h6>
                 <p class="reco-card-desc">{{ reco.description }}</p>
-                <div class="reco-card-action">
+                <div class="reco-card-action" @click="handleRecoAction(reco)">
                   <span>{{ reco.actionLabel }}</span>
                   <i class="fa-solid fa-arrow-right"></i>
                 </div>
               </div>
-            </div>
-
-            <div v-else class="reco-empty">
-              <i class="fa-solid fa-robot fa-2x mb-3 d-block" style="color:#f59e0b"></i>
-              <p v-html="$t('dashboard.ai.empty')"></p>
             </div>
           </div>
 
@@ -218,12 +205,8 @@
                   </div>
                 </div>
                 <div v-else class="test-list">
-                  <div
-                    v-for="test in candidatTests"
-                    :key="test.candidatureId"
-                    class="test-item"
-                    @click="router.push('/exam-lobby/' + test.candidatureId)"
-                  >
+                  <div v-for="test in candidatTests" :key="test.candidatureId" class="test-item"
+                    @click="router.push('/exam-lobby/' + test.candidatureId)">
                     <div class="test-left">
                       <div class="test-ico" :style="{background: getTestColor(test.statut)+'18', color: getTestColor(test.statut)}">
                         <i class="fa-solid fa-brain"></i>
@@ -253,7 +236,9 @@
                     <i class="fa-solid fa-chart-line text-green me-2"></i>
                     {{ $t('dashboard.candidat.progression') }}
                   </h5>
-                  <button class="btn-see-all" @click="router.push('/history')">{{ $t('dashboard.buttons.history') }} <i class="fa-solid fa-arrow-right ms-1"></i></button>
+                  <button class="btn-see-all" @click="router.push('/history')">
+                    {{ $t('dashboard.buttons.history') }} <i class="fa-solid fa-arrow-right ms-1"></i>
+                  </button>
                 </div>
                 <div class="progress-list">
                   <div v-for="(item, i) in candidatProgression" :key="i" class="progress-row">
@@ -279,7 +264,8 @@
 
             <!-- CV ANALYSIS + LETTRE DE MOTIVATION -->
             <div class="two-col-grid mb-5">
-              <div class="panel cv-panel d-flex flex-column">
+              <!-- CV SCAN -->
+              <div id="cv-scan-section" class="panel cv-panel d-flex flex-column">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-3">
                   <div class="d-flex align-items-center gap-3">
                     <div class="kpi-icon" style="background:#fef3c7;color:#fbbf24;"><i class="fa-solid fa-file-pdf"></i></div>
@@ -347,39 +333,22 @@
                     <div class="kpi-icon" style="background:#ede9fe;color:#8b5cf6;"><i class="fa-solid fa-envelope-open-text"></i></div>
                     <div>
                       <h6 class="panel-title m-0">{{ $t('dashboard.lettre.title') }}</h6>
-                      <span class="neural-badge" style="background:rgba(139,92,246,0.15);color:#7c3aed;">{{ $t('dashboard.lettre.badge') }}</span>
+                      <span class="neural-badge" style="background:rgba(139,92,246,0.15);color:#7c3aed;">Generative AI · Gemini</span>
                     </div>
                   </div>
                 </div>
                 <p class="cv-desc">{{ $t('dashboard.lettre.desc') }}</p>
-                <transition name="fade-up">
-                  <div v-if="lettreResult" class="lettre-result">
-                    <div class="lettre-header-row d-flex justify-content-between align-items-center mb-3">
-                      <span class="lettre-label"><i class="fa-solid fa-check-circle me-2" style="color:#10b981"></i>{{ $t('dashboard.lettre.generated') }}</span>
-                      <div class="d-flex gap-2">
-                        <button class="btn-copy-lettre" @click="copyLettre">
-                          <i class="fa-solid" :class="letterCopied ? 'fa-check' : 'fa-copy'"></i>
-                          {{ letterCopied ? $t('dashboard.lettre.copied') : $t('dashboard.lettre.copy') }}
-                        </button>
-                        <button class="btn-reset" @click="lettreResult=null">
-                          <i class="fa-solid fa-rotate me-1"></i>{{ $t('dashboard.lettre.newLetter') }}
-                        </button>
-                      </div>
-                    </div>
-                    <div class="lettre-content">{{ lettreResult }}</div>
-                  </div>
-                </transition>
-                <div v-if="!lettreResult" class="lettre-form">
+                <div class="lettre-form" v-if="!lettreResult">
                   <div class="lettre-field mb-3">
-                    <label class="lettre-label-field">{{ $t('dashboard.lettre.name') }}</label>
+                    <label class="lettre-label-field">NOM COMPLET</label>
                     <input v-model="lettreData.nom" class="job-input" :placeholder="authStore.user?.name || 'Ahmed Ben Ali'" />
                   </div>
                   <div class="lettre-field mb-3">
-                    <label class="lettre-label-field">{{ $t('dashboard.lettre.position') }}</label>
+                    <label class="lettre-label-field">{{ $t('dashboard.lettre.position') }} <span style="color:#ef4444">*</span></label>
                     <input v-model="lettreData.poste" class="job-input" :placeholder="$t('dashboard.lettre.position')" />
                   </div>
                   <div class="lettre-field mb-3">
-                    <label class="lettre-label-field">{{ $t('dashboard.lettre.company') }}</label>
+                    <label class="lettre-label-field">{{ $t('dashboard.lettre.company') }} <span style="color:#ef4444">*</span></label>
                     <input v-model="lettreData.entreprise" class="job-input" :placeholder="$t('dashboard.lettre.company')" />
                   </div>
                   <div class="lettre-field mb-3">
@@ -387,12 +356,28 @@
                     <input v-model="lettreData.competences" class="job-input" :placeholder="$t('dashboard.lettre.skills')" />
                   </div>
                   <div class="lettre-field mb-3">
+                    <label class="lettre-label-field">STYLE</label>
+                    <select v-model="lettreData.style" class="job-input">
+                      <option value="professionnel">Professionnel — Classique et formel</option>
+                      <option value="créatif">Créatif — Dynamique et original</option>
+                      <option value="concis">Concis — Court et percutant</option>
+                    </select>
+                  </div>
+                  <div class="lettre-field mb-3">
                     <label class="lettre-label-field">{{ $t('dashboard.lettre.language') }}</label>
                     <select v-model="lettreData.langue" class="job-input">
-                      <option value="fr">{{ $t('dashboard.lettre.langFr') }}</option>
-                      <option value="en">{{ $t('dashboard.lettre.langEn') }}</option>
-                      <option value="ar">{{ $t('dashboard.lettre.langAr') }}</option>
+                      <option value="fr">🇫🇷 Français</option>
+                      <option value="en">🇬🇧 English</option>
+                      <option value="ar">🇸🇦 العربية</option>
                     </select>
+                    <div class="lang-indicator mt-2 d-flex align-items-center gap-2">
+                      <span class="lang-badge-pill" :class="`lang-pill-${lettreData.langue}`">
+                        {{ { fr: '🇫🇷 Français', en: '🇬🇧 English', ar: '🇸🇦 العربية' }[lettreData.langue] }}
+                      </span>
+                      <small style="font-size:11px;color:var(--text-muted,#94a3b8);font-style:italic;">
+                        La lettre sera générée entièrement dans cette langue
+                      </small>
+                    </div>
                   </div>
                   <button @click="generateLettre"
                     :disabled="!lettreData.poste || !lettreData.entreprise || isGeneratingLettre"
@@ -401,6 +386,33 @@
                     <span v-else><i class="fa-solid fa-wand-magic-sparkles me-2"></i>{{ $t('dashboard.lettre.generate') }}</span>
                   </button>
                 </div>
+                <transition name="fade-up">
+                  <div v-if="lettreResult" class="lettre-result">
+                    <div class="result-lang-bar d-flex align-items-center gap-2 flex-wrap mb-3">
+                      <span class="lang-badge-pill" :class="`lang-pill-${lettreData.langue}`">
+                        {{ { fr: '🇫🇷 Français', en: '🇬🇧 English', ar: '🇸🇦 العربية' }[lettreData.langue] }}
+                      </span>
+                      <span class="result-style-badge">{{ lettreData.style || 'professionnel' }}</span>
+                      <span class="source-gemini">✨ Gemini IA</span>
+                    </div>
+                    <div class="lettre-header-row d-flex justify-content-between align-items-center mb-3">
+                      <span class="lettre-label"><i class="fa-solid fa-check-circle me-2" style="color:#10b981"></i>{{ $t('dashboard.lettre.generated') }}</span>
+                      <div class="d-flex gap-2">
+                        <button class="btn-copy-lettre" @click="copyLettre">
+                          <i class="fa-solid" :class="letterCopied ? 'fa-check' : 'fa-copy'"></i>
+                          {{ letterCopied ? $t('dashboard.lettre.copied') : $t('dashboard.lettre.copy') }}
+                        </button>
+                        <button class="btn-copy-lettre" @click="downloadLettre">
+                          <i class="fa-solid fa-download"></i> .txt
+                        </button>
+                        <button class="btn-reset" @click="lettreResult=null">
+                          <i class="fa-solid fa-rotate me-1"></i>{{ $t('dashboard.lettre.newLetter') }}
+                        </button>
+                      </div>
+                    </div>
+                    <div class="lettre-content" :dir="lettreData.langue === 'ar' ? 'rtl' : 'ltr'">{{ lettreResult }}</div>
+                  </div>
+                </transition>
               </div>
             </div>
 
@@ -517,7 +529,7 @@
 
             <!-- SCAN CV + TOP SKILLS -->
             <div class="two-col-grid mb-5">
-              <div class="panel cv-panel d-flex flex-column">
+              <div id="cv-scan-section" class="panel cv-panel d-flex flex-column">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-3">
                   <div class="d-flex align-items-center gap-3">
                     <div class="kpi-icon" style="background:#fef3c7;color:#fbbf24;"><i class="fa-solid fa-file-pdf"></i></div>
@@ -687,7 +699,7 @@
 
             <!-- SCAN CV + CANDIDATS RÉCENTS -->
             <div class="two-col-grid mb-5">
-              <div class="panel cv-panel d-flex flex-column">
+              <div id="cv-scan-section" class="panel cv-panel d-flex flex-column">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-3">
                   <div class="d-flex align-items-center gap-3">
                     <div class="kpi-icon" style="background:#fef3c7;color:#fbbf24;"><i class="fa-solid fa-file-pdf"></i></div>
@@ -743,7 +755,6 @@
                 </button>
               </div>
 
-              <!-- CANDIDATS RÉCENTS -->
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
                   <h5 class="panel-title m-0">{{ $t('dashboard.admin.recentCandidates') }}</h5>
@@ -862,7 +873,7 @@
 
             <!-- SCAN CV + UTILISATEURS -->
             <div class="two-col-grid mb-5">
-              <div class="panel cv-panel d-flex flex-column">
+              <div id="cv-scan-section" class="panel cv-panel d-flex flex-column">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-3">
                   <div class="d-flex align-items-center gap-3">
                     <div class="kpi-icon" style="background:#fef3c7;color:#fbbf24;"><i class="fa-solid fa-file-pdf"></i></div>
@@ -915,7 +926,6 @@
                 </button>
               </div>
 
-              <!-- UTILISATEURS PLATEFORME -->
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
                   <h5 class="panel-title m-0">{{ $t('dashboard.superAdmin.users') }}</h5>
@@ -1032,7 +1042,6 @@ import { useI18n } from 'vue-i18n';
 
 const { t, locale } = useI18n();
 
-// ── CONFIG API ──
 const API_NET = import.meta.env.VITE_API_URL || 'http://localhost:5172/api';
 const API_IA  = import.meta.env.VITE_IA_URL  || 'http://localhost:8000';
 
@@ -1049,46 +1058,317 @@ const mousePos      = reactive({ x: 0, y: 0 });
 const globalToast   = reactive({ active: false, message: '', type: '', icon: '' });
 const iaInsight     = ref(t('dashboard.hero.loading'));
 
-// ── CV / LETTRE STATE ──
-const isAnalyzing        = ref(false);
-const isDragging         = ref(false);
-const selectedFile       = ref(null);
-const cvResult           = ref(null);
-const jobDescription     = ref('');
+// ── CV STATE ──
+const isAnalyzing    = ref(false);
+const isDragging     = ref(false);
+const selectedFile   = ref(null);
+const cvResult       = ref(null);
+const jobDescription = ref('');
+
+// ── LETTRE STATE ──
 const isGeneratingLettre = ref(false);
 const lettreResult       = ref(null);
 const letterCopied       = ref(false);
-const lettreData         = reactive({ nom: '', poste: '', entreprise: '', competences: '', langue: 'fr' });
+const lettreData         = reactive({
+  nom:         '',
+  poste:       '',
+  entreprise:  '',
+  competences: '',
+  style:       'professionnel',
+  langue:      'fr',
+});
 
-// ── RECOMMANDATIONS IA ──
-const recommendations = ref([]);
-const recoLoading     = ref(false);
+// ── RECOMMANDATIONS ──
+const recoLoading = ref(false);
+
+// ══════════════════════════════════════════════
+// RECOMMANDATIONS PAR RÔLE — ROUTING INTÉGRÉ
+// ══════════════════════════════════════════════
+
+const RECO_BY_ROLE = {
+  Candidat: [
+    {
+      priority: 'Urgent',
+      priorityBg: 'rgba(239,68,68,0.12)', priorityColor: '#ef4444',
+      color: '#ef4444',
+      icon: 'fa-solid fa-clipboard-list',
+      title: 'Complétez vos tests en attente',
+      description: '2 tests en attente. Les compléter augmentera votre profil de 15 points.',
+      actionLabel: 'Voir mes tests',
+      route: '/my-tests',
+      scrollTo: null,
+    },
+    {
+      priority: 'Priorité',
+      priorityBg: 'rgba(245,158,11,0.12)', priorityColor: '#f59e0b',
+      color: '#f59e0b',
+      icon: 'fa-solid fa-microphone',
+      title: 'Préparez votre entretien IA',
+      description: 'Entraînez-vous sur des questions comportementales et techniques.',
+      actionLabel: 'Commencer préparation',
+      route: '/interview-prep',
+      scrollTo: null,
+    },
+    {
+      priority: 'Standard',
+      priorityBg: 'rgba(16,185,129,0.12)', priorityColor: '#10b981',
+      color: '#10b981',
+      icon: 'fa-solid fa-file-pdf',
+      title: 'Analysez votre CV avec Gemini',
+      description: 'Obtenez des conseils personnalisés pour augmenter votre score de matching.',
+      actionLabel: 'Analyser mon CV',
+      route: null,
+      scrollTo: 'cv-scan-section',
+    },
+  ],
+
+  Evaluateur: [
+    {
+      priority: 'Urgent',
+      priorityBg: 'rgba(239,68,68,0.12)', priorityColor: '#ef4444',
+      color: '#ef4444',
+      icon: 'fa-solid fa-users-slash',
+      title: '8 candidats sans analyse depuis 48h',
+      description: 'Traitez-les avant expiration des liens.',
+      actionLabel: 'Voir le pipeline',
+      route: '/evaluations',
+      scrollTo: null,
+    },
+    {
+      priority: 'Priorité',
+      priorityBg: 'rgba(245,158,11,0.12)', priorityColor: '#f59e0b',
+      color: '#f59e0b',
+      icon: 'fa-solid fa-file-chart-column',
+      title: 'Générer le rapport mensuel',
+      description: "Le rapport de ce mois n'a pas encore été généré.",
+      actionLabel: 'Générer rapport',
+      route: '/reports/generate',
+      scrollTo: null,
+    },
+    {
+      priority: 'Standard',
+      priorityBg: 'rgba(16,185,129,0.12)', priorityColor: '#10b981',
+      color: '#10b981',
+      icon: 'fa-solid fa-user-plus',
+      title: 'Inviter de nouveaux membres RH',
+      description: 'Équipe en sous-effectif. Invitez 2 membres supplémentaires.',
+      actionLabel: 'Inviter membres',
+      route: '/invite',
+      scrollTo: null,
+    },
+  ],
+
+  RH: [
+    {
+      priority: 'Urgent',
+      priorityBg: 'rgba(239,68,68,0.12)', priorityColor: '#ef4444',
+      color: '#ef4444',
+      icon: 'fa-solid fa-users-slash',
+      title: '8 candidats sans analyse depuis 48h',
+      description: 'Traitez-les avant expiration des liens.',
+      actionLabel: 'Voir le pipeline',
+      route: '/evaluations',
+      scrollTo: null,
+    },
+    {
+      priority: 'Priorité',
+      priorityBg: 'rgba(245,158,11,0.12)', priorityColor: '#f59e0b',
+      color: '#f59e0b',
+      icon: 'fa-solid fa-file-chart-column',
+      title: 'Générer le rapport mensuel',
+      description: "Le rapport de ce mois n'a pas encore été généré.",
+      actionLabel: 'Générer rapport',
+      route: '/reports/generate',
+      scrollTo: null,
+    },
+    {
+      priority: 'Standard',
+      priorityBg: 'rgba(16,185,129,0.12)', priorityColor: '#10b981',
+      color: '#10b981',
+      icon: 'fa-solid fa-user-plus',
+      title: 'Inviter de nouveaux membres RH',
+      description: 'Équipe en sous-effectif. Invitez 2 membres supplémentaires.',
+      actionLabel: 'Inviter membres',
+      route: '/invite',
+      scrollTo: null,
+    },
+  ],
+
+  Recruteur: [
+    {
+      priority: 'Urgent',
+      priorityBg: 'rgba(239,68,68,0.12)', priorityColor: '#ef4444',
+      color: '#ef4444',
+      icon: 'fa-solid fa-users-slash',
+      title: '8 candidats sans analyse depuis 48h',
+      description: 'Traitez-les avant expiration des liens.',
+      actionLabel: 'Voir le pipeline',
+      route: '/evaluations',
+      scrollTo: null,
+    },
+    {
+      priority: 'Priorité',
+      priorityBg: 'rgba(245,158,11,0.12)', priorityColor: '#f59e0b',
+      color: '#f59e0b',
+      icon: 'fa-solid fa-handshake',
+      title: 'Nouveaux profils à contacter',
+      description: '5 candidats qualifiés attendent votre retour.',
+      actionLabel: 'Voir les profils',
+      route: '/candidates-list',
+      scrollTo: null,
+    },
+    {
+      priority: 'Standard',
+      priorityBg: 'rgba(16,185,129,0.12)', priorityColor: '#10b981',
+      color: '#10b981',
+      icon: 'fa-solid fa-file-pdf',
+      title: 'Analyser un CV candidat',
+      description: 'Utilisez Gemini pour scorer automatiquement les CVs reçus.',
+      actionLabel: 'Analyser un CV',
+      route: null,
+      scrollTo: 'cv-scan-section',
+    },
+  ],
+
+  AdminEntreprise: [
+    {
+      priority: 'Urgent',
+      priorityBg: 'rgba(239,68,68,0.12)', priorityColor: '#ef4444',
+      color: '#ef4444',
+      icon: 'fa-solid fa-bolt',
+      title: 'Activité critique détectée',
+      description: 'Anomalie dans 3 campagnes actives. Vérification immédiate requise.',
+      actionLabel: "Voir l'activité",
+      route: '/admin/activity',
+      scrollTo: null,
+    },
+    {
+      priority: 'Priorité',
+      priorityBg: 'rgba(245,158,11,0.12)', priorityColor: '#f59e0b',
+      color: '#f59e0b',
+      icon: 'fa-solid fa-chart-bar',
+      title: 'Rapport de performance hebdo',
+      description: 'Le rapport de cette semaine est disponible pour votre équipe.',
+      actionLabel: 'Voir rapport',
+      route: '/reports',
+      scrollTo: null,
+    },
+    {
+      priority: 'Standard',
+      priorityBg: 'rgba(16,185,129,0.12)', priorityColor: '#10b981',
+      color: '#10b981',
+      icon: 'fa-solid fa-bullhorn',
+      title: 'Configurer vos campagnes',
+      description: '2 campagnes en brouillon. Finalisez-les pour démarrer les évaluations.',
+      actionLabel: 'Gérer campagnes',
+      route: '/campaigns',
+      scrollTo: null,
+    },
+  ],
+
+  SuperAdmin: [
+    {
+      priority: 'Urgent',
+      priorityBg: 'rgba(239,68,68,0.12)', priorityColor: '#ef4444',
+      color: '#ef4444',
+      icon: 'fa-solid fa-circle-exclamation',
+      title: 'Service Mailer en panne — CRITIQUE',
+      description: 'DOWN depuis 2h. 47 invitations bloquées. Intervention immédiate.',
+      actionLabel: 'Diagnostiquer',
+      route: '/super-admin/health',
+      scrollTo: null,
+    },
+    {
+      priority: 'Priorité',
+      priorityBg: 'rgba(245,158,11,0.12)', priorityColor: '#f59e0b',
+      color: '#f59e0b',
+      icon: 'fa-solid fa-credit-card',
+      title: '3 abonnements expirant dans 7 jours',
+      description: 'Contactez les entreprises pour le renouvellement.',
+      actionLabel: 'Voir abonnements',
+      route: '/gestion-abonnements',
+      scrollTo: null,
+    },
+    {
+      priority: 'Standard',
+      priorityBg: 'rgba(16,185,129,0.12)', priorityColor: '#10b981',
+      color: '#10b981',
+      icon: 'fa-solid fa-shield-halved',
+      title: 'Audit de sécurité recommandé',
+      description: 'Aucun audit depuis 30 jours. Planifiez une vérification.',
+      actionLabel: 'Lancer audit',
+      route: '/super-admin/security-audit',
+      scrollTo: null,
+    },
+  ],
+};
+
+// Recommandations selon le rôle courant
+const roleRecommendations = computed(() => {
+  return RECO_BY_ROLE[role.value] || RECO_BY_ROLE['AdminEntreprise'];
+});
+
+// Handler de clic sur une recommandation
+const handleRecoAction = (reco) => {
+  // Si scrollTo est défini → scroll vers l'ancre sur la même page
+  if (reco.scrollTo) {
+    const el = document.getElementById(reco.scrollTo);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      el.classList.add('panel-highlight');
+      setTimeout(() => el.classList.remove('panel-highlight'), 2000);
+    }
+    return;
+  }
+  // Sinon → navigation vers la route
+  if (reco.route) {
+    router.push(reco.route);
+  }
+};
+
+// Refresh avec animation (garde compatibilité avec l'API IA si dispo)
+const refreshRecommendations = async () => {
+  recoLoading.value = true;
+  try {
+    // Tentative appel API IA optionnel
+    const fd = new FormData();
+    fd.append('role', role.value);
+    fd.append('lang', locale.value.toLowerCase());
+    fd.append('force_refresh', 'true');
+    await axios.post(`${API_IA}/ia/recommendations`, fd);
+  } catch {
+    // silencieux — on utilise les recommandations statiques enrichies
+  } finally {
+    await new Promise(r => setTimeout(r, 800));
+    recoLoading.value = false;
+    showToast(t('dashboard.toast.recoRefreshed') || 'Recommandations actualisées', 'success', 'fa-solid fa-check');
+  }
+};
 
 // ── DONNÉES .NET ──
-const dotnetStats       = reactive({ kpis: {}, chart: [], leaders: [], recentResults: [] });
-const evalQueue         = ref([]);
-const campagnes         = ref([]);
-const staffMembers      = ref([]);
+const dotnetStats        = reactive({ kpis: {}, chart: [], leaders: [], recentResults: [] });
+const evalQueue          = ref([]);
+const campagnes          = ref([]);
+const staffMembers       = ref([]);
 const historiqueCandidat = ref([]);
-const candidatTests     = ref([]);
-const superAdminStats   = reactive({ totalEntreprises: 0, totalUtilisateurs: 0, demandesEnAttente: 0, totalTests: 0, croissanceStats: [] });
-const platformUsers     = ref([]);
-const analyticsData     = reactive({ kpis: {}, recentActivities: [], chartData: [] });
+const candidatTests      = ref([]);
+const superAdminStats    = reactive({ totalEntreprises: 0, totalUtilisateurs: 0, demandesEnAttente: 0, totalTests: 0, croissanceStats: [] });
+const platformUsers      = ref([]);
 
 // ── DONNÉES IA PYTHON ──
-const iaServices   = ref([]);
+const iaServices       = ref([]);
 const recentActivities = ref([]);
 
 // ── ROLE ──
 const role = computed(() => authStore.role || 'AdminEntreprise');
 
 const roleConfig = computed(() => ({
-  Candidat:        { label: t('dashboard.roleLabels.Candidat'),       icon: 'fa-solid fa-user-graduate',   accent: '#3b82f6', accentLight: '#60a5fa', insightIcon: 'fa-solid fa-trophy',               insightLabel: t('dashboard.roleInsights.Candidat'),        botIcon: 'fa-user-graduate',  tagBg: 'rgba(59,130,246,0.1)',  tagBorder: 'rgba(59,130,246,0.25)',  tagColor: '#3b82f6' },
-  Evaluateur:      { label: t('dashboard.roleLabels.Evaluateur'),      icon: 'fa-solid fa-clipboard-check', accent: '#f59e0b', accentLight: '#fbbf24', insightIcon: 'fa-solid fa-magnifying-glass-chart', insightLabel: t('dashboard.roleInsights.Evaluateur'), botIcon: 'fa-clipboard-check', tagBg: 'rgba(245,158,11,0.1)', tagBorder: 'rgba(245,158,11,0.25)', tagColor: '#f59e0b' },
-  RH:              { label: t('dashboard.roleLabels.RH'),              icon: 'fa-solid fa-people-arrows',   accent: '#8b5cf6', accentLight: '#a78bfa', insightIcon: 'fa-solid fa-chart-pie',             insightLabel: t('dashboard.roleInsights.RH'),          botIcon: 'fa-people-arrows',  tagBg: 'rgba(139,92,246,0.1)', tagBorder: 'rgba(139,92,246,0.25)', tagColor: '#8b5cf6' },
-  Recruteur:       { label: t('dashboard.roleLabels.Recruteur'),        icon: 'fa-solid fa-handshake',       accent: '#10b981', accentLight: '#34d399', insightIcon: 'fa-solid fa-user-plus',             insightLabel: t('dashboard.roleInsights.Recruteur'),            botIcon: 'fa-handshake',      tagBg: 'rgba(16,185,129,0.1)', tagBorder: 'rgba(16,185,129,0.25)', tagColor: '#10b981' },
-  AdminEntreprise: { label: t('dashboard.roleLabels.AdminEntreprise'), icon: 'fa-solid fa-building-user',   accent: '#f59e0b', accentLight: '#fbbf24', insightIcon: 'fa-solid fa-brain',                insightLabel: t('dashboard.roleInsights.AdminEntreprise'),          botIcon: 'fa-robot',          tagBg: 'rgba(245,158,11,0.1)', tagBorder: 'rgba(245,158,11,0.25)', tagColor: '#f59e0b' },
-  SuperAdmin:      { label: t('dashboard.roleLabels.SuperAdmin'),      icon: 'fa-solid fa-shield-halved',   accent: '#6366f1', accentLight: '#818cf8', insightIcon: 'fa-solid fa-server',               insightLabel: t('dashboard.roleInsights.SuperAdmin'),          botIcon: 'fa-shield-halved',  tagBg: 'rgba(99,102,241,0.1)', tagBorder: 'rgba(99,102,241,0.25)', tagColor: '#6366f1' },
+  Candidat:        { label: t('dashboard.roleLabels.Candidat'),       icon: 'fa-solid fa-user-graduate',   accent: '#3b82f6', accentLight: '#60a5fa', insightIcon: 'fa-solid fa-trophy',               insightLabel: t('dashboard.roleInsights.Candidat'),       botIcon: 'fa-user-graduate',  tagBg: 'rgba(59,130,246,0.1)',  tagBorder: 'rgba(59,130,246,0.25)',  tagColor: '#3b82f6' },
+  Evaluateur:      { label: t('dashboard.roleLabels.Evaluateur'),      icon: 'fa-solid fa-clipboard-check', accent: '#f59e0b', accentLight: '#fbbf24', insightIcon: 'fa-solid fa-magnifying-glass-chart', insightLabel: t('dashboard.roleInsights.Evaluateur'),     botIcon: 'fa-clipboard-check', tagBg: 'rgba(245,158,11,0.1)', tagBorder: 'rgba(245,158,11,0.25)', tagColor: '#f59e0b' },
+  RH:              { label: t('dashboard.roleLabels.RH'),              icon: 'fa-solid fa-people-arrows',   accent: '#8b5cf6', accentLight: '#a78bfa', insightIcon: 'fa-solid fa-chart-pie',             insightLabel: t('dashboard.roleInsights.RH'),             botIcon: 'fa-people-arrows',  tagBg: 'rgba(139,92,246,0.1)', tagBorder: 'rgba(139,92,246,0.25)', tagColor: '#8b5cf6' },
+  Recruteur:       { label: t('dashboard.roleLabels.Recruteur'),       icon: 'fa-solid fa-handshake',       accent: '#10b981', accentLight: '#34d399', insightIcon: 'fa-solid fa-user-plus',             insightLabel: t('dashboard.roleInsights.Recruteur'),      botIcon: 'fa-handshake',      tagBg: 'rgba(16,185,129,0.1)', tagBorder: 'rgba(16,185,129,0.25)', tagColor: '#10b981' },
+  AdminEntreprise: { label: t('dashboard.roleLabels.AdminEntreprise'), icon: 'fa-solid fa-building-user',   accent: '#f59e0b', accentLight: '#fbbf24', insightIcon: 'fa-solid fa-brain',                insightLabel: t('dashboard.roleInsights.AdminEntreprise'), botIcon: 'fa-robot',          tagBg: 'rgba(245,158,11,0.1)', tagBorder: 'rgba(245,158,11,0.25)', tagColor: '#f59e0b' },
+  SuperAdmin:      { label: t('dashboard.roleLabels.SuperAdmin'),      icon: 'fa-solid fa-shield-halved',   accent: '#6366f1', accentLight: '#818cf8', insightIcon: 'fa-solid fa-server',               insightLabel: t('dashboard.roleInsights.SuperAdmin'),     botIcon: 'fa-shield-halved',  tagBg: 'rgba(99,102,241,0.1)', tagBorder: 'rgba(99,102,241,0.25)', tagColor: '#6366f1' },
 }));
 
 const cfg             = computed(() => roleConfig.value[role.value] || roleConfig.value.AdminEntreprise);
@@ -1115,30 +1395,29 @@ const cvScoreColor = computed(() => {
 const kpiCards = computed(() => {
   const r = role.value;
   const k = dotnetStats.kpis;
-
   if (r === 'Candidat') return [
-    { label: t('dashboard.kpis.totalTests'),  value: k.totalTests ?? '—', icon: 'fa-solid fa-clipboard-check', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', trend: '↑', sparkPoints: '0,22 80,6' },
-    { label: t('dashboard.kpis.avgScore'),   value: k.moyenne != null ? k.moyenne+'%' : '—', icon: 'fa-solid fa-star', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  trend: '↑',   sparkPoints: '0,24 80,4' },
-    { label: t('dashboard.kpis.campaigns'),     value: k.totalCampagnes ?? '—', icon: 'fa-solid fa-bullhorn',     color: '#ef4444', bg: 'rgba(239,68,68,0.12)',   trend: '→',   sparkPoints: '0,20 80,8' },
-    { label: t('dashboard.kpis.talents'),       value: k.totalTalents ?? '—',   icon: 'fa-solid fa-users',        color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)',  trend: '↑',   sparkPoints: '0,26 80,6' },
+    { label: t('dashboard.kpis.totalTests'),  value: k.totalTests ?? '—',  icon: 'fa-solid fa-clipboard-check', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)',  trend: '↑', sparkPoints: '0,22 80,6' },
+    { label: t('dashboard.kpis.avgScore'),    value: k.moyenne != null ? k.moyenne+'%' : '—', icon: 'fa-solid fa-star', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', trend: '↑', sparkPoints: '0,24 80,4' },
+    { label: t('dashboard.kpis.campaigns'),   value: k.totalCampagnes ?? '—', icon: 'fa-solid fa-bullhorn', color: '#ef4444', bg: 'rgba(239,68,68,0.12)', trend: '→', sparkPoints: '0,20 80,8' },
+    { label: t('dashboard.kpis.talents'),     value: k.totalTalents ?? '—',  icon: 'fa-solid fa-users', color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)', trend: '↑', sparkPoints: '0,26 80,6' },
   ];
   if (['Evaluateur','RH','Recruteur'].includes(r)) return [
-    { label: t('dashboard.kpis.evaluationsIA'),   value: k.totalTests ?? '—',     icon: 'fa-solid fa-clipboard-check', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  trend: '↑',   sparkPoints: '0,22 80,6' },
-    { label: t('dashboard.kpis.scoreGlobal'),   value: k.moyenne != null ? k.moyenne+'%' : '—', icon: 'fa-solid fa-chart-bar', color: '#10b981', bg: 'rgba(16,185,129,0.12)',  trend: '↑',  sparkPoints: '0,24 80,4' },
-    { label: t('dashboard.kpis.campagnesActives'),     value: k.totalCampagnes ?? '—', icon: 'fa-solid fa-calendar-days', color: '#6366f1', bg: 'rgba(99,102,241,0.12)',  trend: '↑',   sparkPoints: '0,20 80,8' },
-    { label: t('dashboard.kpis.talentsActifs'),value: k.totalTalents ?? '—',   icon: 'fa-solid fa-user-group',   color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)',  trend: '↑',   sparkPoints: '0,26 80,6' },
+    { label: t('dashboard.kpis.evaluationsIA'),    value: k.totalTests ?? '—',     icon: 'fa-solid fa-clipboard-check', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  trend: '↑', sparkPoints: '0,22 80,6' },
+    { label: t('dashboard.kpis.scoreGlobal'),      value: k.moyenne != null ? k.moyenne+'%' : '—', icon: 'fa-solid fa-chart-bar', color: '#10b981', bg: 'rgba(16,185,129,0.12)', trend: '↑', sparkPoints: '0,24 80,4' },
+    { label: t('dashboard.kpis.campagnesActives'), value: k.totalCampagnes ?? '—', icon: 'fa-solid fa-calendar-days', color: '#6366f1', bg: 'rgba(99,102,241,0.12)', trend: '↑', sparkPoints: '0,20 80,8' },
+    { label: t('dashboard.kpis.talentsActifs'),    value: k.totalTalents ?? '—',   icon: 'fa-solid fa-user-group', color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)', trend: '↑', sparkPoints: '0,26 80,6' },
   ];
   if (r === 'AdminEntreprise') return [
-    { label: t('dashboard.kpis.talentsActifs'),value: k.totalTalents ?? '—',   icon: 'fa-solid fa-user-group',    color: '#fbbf24', bg: 'rgba(251,191,36,0.12)',  trend: '↑',   sparkPoints: '0,22 80,6' },
-    { label: t('dashboard.kpis.scoreGlobal'),   value: k.moyenne != null ? k.moyenne+'%' : '—', icon: 'fa-solid fa-circle-check', color: '#10b981', bg: 'rgba(16,185,129,0.12)',  trend: '↑', sparkPoints: '0,24 80,4' },
-    { label: t('dashboard.kpis.campagnesActives'),     value: k.totalCampagnes ?? '—', icon: 'fa-solid fa-bolt-lightning', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)',  trend: '↑',   sparkPoints: '0,20 80,8' },
-    { label: t('dashboard.kpis.evaluationsIA'),value: k.iaProcessed ?? '—',    icon: 'fa-solid fa-brain',          color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)',  trend: '↑',   sparkPoints: '0,26 80,6' },
+    { label: t('dashboard.kpis.talentsActifs'),    value: k.totalTalents ?? '—',   icon: 'fa-solid fa-user-group', color: '#fbbf24', bg: 'rgba(251,191,36,0.12)',  trend: '↑', sparkPoints: '0,22 80,6' },
+    { label: t('dashboard.kpis.scoreGlobal'),      value: k.moyenne != null ? k.moyenne+'%' : '—', icon: 'fa-solid fa-circle-check', color: '#10b981', bg: 'rgba(16,185,129,0.12)', trend: '↑', sparkPoints: '0,24 80,4' },
+    { label: t('dashboard.kpis.campagnesActives'), value: k.totalCampagnes ?? '—', icon: 'fa-solid fa-bolt-lightning', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', trend: '↑', sparkPoints: '0,20 80,8' },
+    { label: t('dashboard.kpis.evaluationsIA'),    value: k.iaProcessed ?? '—',    icon: 'fa-solid fa-brain', color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)', trend: '↑', sparkPoints: '0,26 80,6' },
   ];
   if (r === 'SuperAdmin') return [
-    { label: t('dashboard.kpis.companies'),   value: superAdminStats.totalEntreprises ?? '—', icon: 'fa-solid fa-building', color: '#6366f1', bg: 'rgba(99,102,241,0.12)',  trend: '↑', sparkPoints: '0,22 80,6' },
-    { label: t('dashboard.kpis.users'),  value: superAdminStats.totalUtilisateurs ?? '—', icon: 'fa-solid fa-users', color: '#10b981', bg: 'rgba(16,185,129,0.12)',  trend: '↑',  sparkPoints: '0,24 80,4' },
-    { label: t('dashboard.kpis.evaluations'),   value: superAdminStats.totalTests ?? '—',        icon: 'fa-solid fa-wave-square', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  trend: '↑', sparkPoints: '0,20 80,8' },
-    { label: t('dashboard.kpis.pending'),    value: superAdminStats.demandesEnAttente ?? '—', icon: 'fa-solid fa-clock', color: '#ef4444', bg: 'rgba(239,68,68,0.12)',  trend: '!',  sparkPoints: '0,26 80,6' },
+    { label: t('dashboard.kpis.companies'),  value: superAdminStats.totalEntreprises ?? '—', icon: 'fa-solid fa-building', color: '#6366f1', bg: 'rgba(99,102,241,0.12)',  trend: '↑', sparkPoints: '0,22 80,6' },
+    { label: t('dashboard.kpis.users'),      value: superAdminStats.totalUtilisateurs ?? '—', icon: 'fa-solid fa-users', color: '#10b981', bg: 'rgba(16,185,129,0.12)', trend: '↑', sparkPoints: '0,24 80,4' },
+    { label: t('dashboard.kpis.evaluations'),value: superAdminStats.totalTests ?? '—', icon: 'fa-solid fa-wave-square', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', trend: '↑', sparkPoints: '0,20 80,8' },
+    { label: t('dashboard.kpis.pending'),    value: superAdminStats.demandesEnAttente ?? '—', icon: 'fa-solid fa-clock', color: '#ef4444', bg: 'rgba(239,68,68,0.12)', trend: '!', sparkPoints: '0,26 80,6' },
   ];
   return [];
 });
@@ -1157,22 +1436,22 @@ const topSkills = computed(() => {
   ];
   const avg = Math.round(leaders.reduce((a, b) => a + (b.score || 0), 0) / leaders.length);
   return [
-    { label: 'Performance globale', value: avg,                    color: '#3b82f6' },
-    { label: 'Meilleur candidat',   value: leaders[0]?.score || 0, color: '#10b981' },
-    { label: 'Taux de réussite',    value: dotnetStats.kpis?.moyenne || 0, color: '#f59e0b' },
+    { label: 'Performance globale', value: avg,                                          color: '#3b82f6' },
+    { label: 'Meilleur candidat',   value: leaders[0]?.score || 0,                      color: '#10b981' },
+    { label: 'Taux de réussite',    value: dotnetStats.kpis?.moyenne || 0,              color: '#f59e0b' },
     { label: 'Campagnes actives',   value: Math.min(100, (dotnetStats.kpis?.totalCampagnes || 0) * 10), color: '#8b5cf6' },
   ];
 });
 
-const recentCandidates = computed(() => dotnetStats.recentResults || []);
+const recentCandidates    = computed(() => dotnetStats.recentResults || []);
 const candidatProgression = computed(() => historiqueCandidat.value.map(h => ({
   campagneNom: h.titreExamen,
   score: h.score,
 })));
 
-// ════════════════════════════════════════════════════════════
-// ██  CHARGEMENT DONNÉES ██
-// ════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════
+// CHARGEMENT DONNÉES
+// ══════════════════════════════════════════════
 
 const getAuthHeaders = () => {
   const token = authStore.token || localStorage.getItem('token');
@@ -1204,27 +1483,6 @@ const loadAnalytics = async () => {
   } catch (e) { console.warn(e.message); }
 };
 
-const loadRecommendations = async (forceRefresh = false) => {
-  recoLoading.value = true;
-  recommendations.value = [];
-  try {
-    const fd = new FormData();
-    fd.append('role', role.value);
-    fd.append('lang', locale.value.toLowerCase());
-    fd.append('force_refresh', forceRefresh ? 'true' : 'false');
-    const ctx = {
-      total_tests: dotnetStats.kpis?.totalTests || 0,
-      score_moyen: dotnetStats.kpis?.moyenne || 0,
-      total_talents: dotnetStats.kpis?.totalTalents || 0,
-      campagnes: dotnetStats.kpis?.totalCampagnes || 0,
-    };
-    fd.append('context', JSON.stringify(ctx));
-    const res = await axios.post(`${API_IA}/ia/recommendations`, fd);
-    recommendations.value = res.data.recommendations || [];
-  } catch (e) { console.warn(e.message); }
-  finally { recoLoading.value = false; }
-};
-
 const runCvAnalysis = async () => {
   if (!selectedFile.value) return;
   isAnalyzing.value = true;
@@ -1245,13 +1503,18 @@ const generateLettre = async () => {
   isGeneratingLettre.value = true;
   try {
     const fd = new FormData();
-    fd.append('nom', lettreData.nom || authStore.user?.name || '');
-    fd.append('poste', lettreData.poste);
-    fd.append('entreprise', lettreData.entreprise);
+    fd.append('nom',         lettreData.nom || authStore.user?.name || '');
+    fd.append('poste',       lettreData.poste);
+    fd.append('entreprise',  lettreData.entreprise);
     fd.append('competences', lettreData.competences);
-    fd.append('langue', locale.value.toLowerCase());
+    fd.append('style',       lettreData.style);
+    fd.append('langue',      lettreData.langue);
     const res = await axios.post(`${API_IA}/ia/lettre-motivation`, fd);
-    lettreResult.value = res.data.lettre;
+    if (res.data.status === 'SUCCESS' && res.data.lettre) {
+      lettreResult.value = res.data.lettre;
+    } else {
+      lettreResult.value = res.data.lettre || res.data;
+    }
     showToast(t('dashboard.toast.lettreSuccess'), 'success', 'fa-solid fa-envelope');
   } catch (e) { showToast(t('dashboard.toast.lettreError'), 'error', 'fa-solid fa-x'); }
   finally { isGeneratingLettre.value = false; }
@@ -1264,57 +1527,86 @@ const copyLettre = async () => {
     letterCopied.value = true;
     setTimeout(() => { letterCopied.value = false; }, 2500);
     showToast(t('dashboard.toast.letterCopied'), 'success', 'fa-solid fa-check');
-  } catch { showToast(t('dashboard.toast.copyError'), 'error', 'fa-solid fa-x'); }
+  } catch {
+    const el = document.createElement('textarea');
+    el.value = lettreResult.value;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    letterCopied.value = true;
+    setTimeout(() => { letterCopied.value = false; }, 2500);
+  }
+};
+
+const downloadLettre = () => {
+  if (!lettreResult.value) return;
+  const blob = new Blob([lettreResult.value], { type: 'text/plain;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `lettre_${lettreData.poste.replace(/\s+/g,'_')}_${lettreData.langue}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
 };
 
 const loadIaServices = async () => {
   try {
     const res = await axios.get(`${API_IA}/ia/health`);
     iaServices.value = [
-      { key: 'gateway', name: 'API Gateway .NET',   latency: '~',   up: true },
-      { key: 'iaEngine', name: 'IA Engine (Gemini)', latency: `${res.data.avg_latency_ms || 0}ms`, up: res.data.circuit_state === 'CLOSED' },
-      { key: 'auth', name: 'Auth Service',       latency: '~',   up: true },
+      { key: 'gateway',  name: 'API Gateway .NET',    latency: '~',   up: true },
+      { key: 'iaEngine', name: 'IA Engine (Gemini)',  latency: `${res.data.avg_latency_ms || 0}ms`, up: res.data.circuit_state === 'CLOSED' },
+      { key: 'auth',     name: 'Auth Service',        latency: '~',   up: true },
     ];
   } catch { iaServices.value = [{ key: 'gateway', name: 'API Gateway .NET', up: false }]; }
 };
 
-// ── ROLE DATA LOADING ──
 const loadAllData = async () => {
   loading.value = true;
   try {
     await Promise.allSettled([loadDotnetDashboard(), loadAnalytics()]);
     const r = role.value;
     if (r === 'Candidat') {
-      const [tr, hr] = await Promise.allSettled([axios.get(`${API_NET}/Candidatures/mes-tests`, { headers: getAuthHeaders() }), axios.get(`${API_NET}/Examen/historique`, { headers: getAuthHeaders() })]);
-      if (tr.status === 'fulfilled') candidatTests.value = tr.value.data || [];
+      const [tr, hr] = await Promise.allSettled([
+        axios.get(`${API_NET}/Candidatures/mes-tests`, { headers: getAuthHeaders() }),
+        axios.get(`${API_NET}/Examen/historique`,      { headers: getAuthHeaders() }),
+      ]);
+      if (tr.status === 'fulfilled') candidatTests.value      = tr.value.data || [];
       if (hr.status === 'fulfilled') historiqueCandidat.value = hr.value.data || [];
     } else if (['Evaluateur','RH','Recruteur','AdminEntreprise'].includes(r)) {
-      const [er, cr, sr] = await Promise.allSettled([axios.get(`${API_NET}/Examen/all`, { headers: getAuthHeaders() }), axios.get(`${API_NET}/Campagnes`, { headers: getAuthHeaders() }), axios.get(`${API_NET}/Staff`, { headers: getAuthHeaders() })]);
-      if (er.status === 'fulfilled') evalQueue.value = er.value.data || [];
-      if (cr.status === 'fulfilled') campagnes.value = cr.value.data || [];
+      const [er, cr, sr] = await Promise.allSettled([
+        axios.get(`${API_NET}/Examen/all`,  { headers: getAuthHeaders() }),
+        axios.get(`${API_NET}/Campagnes`,   { headers: getAuthHeaders() }),
+        axios.get(`${API_NET}/Staff`,       { headers: getAuthHeaders() }),
+      ]);
+      if (er.status === 'fulfilled') evalQueue.value    = er.value.data || [];
+      if (cr.status === 'fulfilled') campagnes.value    = cr.value.data || [];
       if (sr.status === 'fulfilled') staffMembers.value = sr.value.data || [];
     } else if (r === 'SuperAdmin') {
-      const [str, ur] = await Promise.allSettled([axios.get(`${API_NET}/SuperAdmin/stats`, { headers: getAuthHeaders() }), axios.get(`${API_NET}/SuperAdmin/users`, { headers: getAuthHeaders() })]);
+      const [str, ur] = await Promise.allSettled([
+        axios.get(`${API_NET}/SuperAdmin/stats`, { headers: getAuthHeaders() }),
+        axios.get(`${API_NET}/SuperAdmin/users`, { headers: getAuthHeaders() }),
+      ]);
       if (str.status === 'fulfilled') Object.assign(superAdminStats, str.value.data);
-      if (ur.status === 'fulfilled') platformUsers.value = ur.value.data || [];
+      if (ur.status === 'fulfilled')  platformUsers.value = ur.value.data || [];
       await loadIaServices();
     }
   } finally { loading.value = false; }
 };
 
 // ── UI HELPERS ──
-const getInitials = (name = '') => (name || '?').split(' ').filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase();
-const getScoreColor = (s) => (s >= 75 ? '#10b981' : s >= 50 ? '#f59e0b' : '#ef4444');
+const getInitials    = (name = '') => (name || '?').split(' ').filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase();
+const getScoreColor  = (s) => (s >= 75 ? '#10b981' : s >= 50 ? '#f59e0b' : '#ef4444');
 const getAvatarColor = (role) => ({'RH':'#6366f1','Evaluateur':'#f59e0b','Recruteur':'#10b981','AdminEntreprise':'#fbbf24','SuperAdmin':'#8b5cf6'}[role] || '#64748b');
-const getTestColor = (statut) => ({ 'EN_COURS': '#3b82f6', 'TERMINE': '#10b981', 'POSTULE': '#f59e0b', 'NON_COMMENCE': '#94a3b8' }[statut] || '#94a3b8');
-const getStatusBg = (s) => ({ 'EN_COURS': '#eff6ff', 'TERMINE': '#ecfdf5', 'NON_COMMENCE': '#fef9ec' }[s] || '#f8fafc');
+const getTestColor   = (statut) => ({ 'EN_COURS': '#3b82f6', 'TERMINE': '#10b981', 'POSTULE': '#f59e0b', 'NON_COMMENCE': '#94a3b8' }[statut] || '#94a3b8');
+const getStatusBg    = (s) => ({ 'EN_COURS': '#eff6ff', 'TERMINE': '#ecfdf5', 'NON_COMMENCE': '#fef9ec' }[s] || '#f8fafc');
 const getStatusColor = (s) => ({ 'EN_COURS': '#3b82f6', 'TERMINE': '#10b981', 'NON_COMMENCE': '#f59e0b' }[s] || '#94a3b8');
-const formatStatut = (s) => t(`dashboard.testStatus.${s}`);
-const formatDate = (d) => d ? new Date(d).toLocaleDateString(locale.value === 'AR' ? 'ar-TN' : 'fr-FR', { day: '2-digit', month: 'short' }) : '—';
+const formatStatut   = (s) => t(`dashboard.testStatus.${s}`);
+const formatDate     = (d) => d ? new Date(d).toLocaleDateString(locale.value === 'AR' ? 'ar-TN' : 'fr-FR', { day: '2-digit', month: 'short' }) : '—';
 const handleCvUpload = (e) => { selectedFile.value = e.target.files[0]; };
-const handleDrop = (e) => { isDragging.value = false; const f = e.dataTransfer.files[0]; if (f && (f.name.endsWith('.pdf') || f.name.endsWith('.docx'))) selectedFile.value = f; };
-const updateClock = () => { currentTime.value = new Date().toLocaleTimeString(locale.value === 'AR' ? 'ar-TN' : 'fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); };
-const orbStyle = (f) => ({ transform: `translate(${mousePos.x * f * 10}px, ${mousePos.y * f * 10}px)` });
+const handleDrop     = (e) => { isDragging.value = false; const f = e.dataTransfer.files[0]; if (f && (f.name.endsWith('.pdf') || f.name.endsWith('.docx'))) selectedFile.value = f; };
+const updateClock    = () => { currentTime.value = new Date().toLocaleTimeString(locale.value === 'AR' ? 'ar-TN' : 'fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); };
+const orbStyle       = (f) => ({ transform: `translate(${mousePos.x * f * 10}px, ${mousePos.y * f * 10}px)` });
 const handleParallax = (e) => { mousePos.x = (e.clientX - window.innerWidth / 2) / 20; mousePos.y = (e.clientY - window.innerHeight / 2) / 20; };
 
 // ── CHART ──
@@ -1326,7 +1618,7 @@ const initChart = async (period = 'week') => {
   if (chartInstance) chartInstance.destroy();
 
   const accent = roleAccent.value;
-  const dark = isDark.value;
+  const dark   = isDark.value;
   let labels = [], values = [];
 
   if (dotnetStats.chart?.length) {
@@ -1343,18 +1635,38 @@ const initChart = async (period = 'week') => {
 
   chartInstance = new Chart(canvas, {
     type: 'line',
-    data: { labels, datasets: [{ data: values, borderColor: accent, backgroundColor: accent + '18', tension: 0.4, fill: true, pointBackgroundColor: accent, pointBorderColor: dark ? '#0d1117' : '#fff', pointBorderWidth: 2, pointRadius: 4 }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: dark ? 'rgba(255,255,255,0.06)' : '#f1f5f9' }, ticks: { color: dark ? '#94a3b8' : '#64748b' } }, y: { grid: { color: dark ? 'rgba(255,255,255,0.06)' : '#f1f5f9' }, ticks: { color: dark ? '#94a3b8' : '#64748b' } } } }
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        borderColor: accent,
+        backgroundColor: accent + '18',
+        tension: 0.4,
+        fill: true,
+        pointBackgroundColor: accent,
+        pointBorderColor: dark ? '#0d1117' : '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 4,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: dark ? 'rgba(255,255,255,0.06)' : '#f1f5f9' }, ticks: { color: dark ? '#94a3b8' : '#64748b' } },
+        y: { grid: { color: dark ? 'rgba(255,255,255,0.06)' : '#f1f5f9' }, ticks: { color: dark ? '#94a3b8' : '#64748b' } },
+      },
+    },
   });
 };
 
 const switchPeriod = async (p) => { activePeriod.value = p; await initChart(p); };
 
 // ── WATCHERS ──
-watch(isDark, async () => { await nextTick(); await initChart(activePeriod.value); });
-watch(role,   async () => { await nextTick(); await initChart(activePeriod.value); await loadAllData(); });
-watch(locale, (newLang) => {
-  // تفعيل الـ RTL للعربية
+watch(isDark,  async () => { await nextTick(); await initChart(activePeriod.value); });
+watch(role,    async () => { await nextTick(); await initChart(activePeriod.value); await loadAllData(); });
+watch(locale,  (newLang) => {
   document.documentElement.dir = newLang === 'AR' ? 'rtl' : 'ltr';
   initChart(activePeriod.value);
 }, { immediate: true });
@@ -1374,7 +1686,6 @@ onMounted(async () => {
   _clockInterval = setInterval(updateClock, 1000);
   await loadAllData();
   await initChart();
-  await loadRecommendations();
   setInterval(loadAllData, 60000);
 });
 
@@ -1385,9 +1696,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* ═══════════════════════════════════════════
-   IMPORTS
-═══════════════════════════════════════════ */
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap');
 
 /* ─── BASE ─── */
@@ -1413,7 +1721,6 @@ onUnmounted(() => {
 .breadcrumb-pro .separator { font-size: 8px; opacity: 0.5; }
 .breadcrumb-pro .current { color: #f59e0b; font-weight: 700; }
 .premium-title { font-weight: 800; font-size: clamp(1.4rem,2.5vw,1.9rem); letter-spacing: -1px; color: var(--text-main,#0f172a); }
-.gradient-text { background: linear-gradient(135deg,#f59e0b,#fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 .theme-toggle-btn { display: flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 100px; border: 1px solid var(--border-color,#eef2f6); background: var(--bg-input,#f8fafc); color: var(--text-main,#0f172a); font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.25s; font-family: inherit; }
 .theme-toggle-btn:hover { border-color: #f59e0b; color: #d97706; }
 .metric-pill { background: var(--bg-input,#f8fafc); padding: 8px 16px; border-radius: 100px; font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: var(--text-muted,#94a3b8); border: 1px solid var(--border-color,#eef2f6); font-family: 'JetBrains Mono', monospace; }
@@ -1446,7 +1753,7 @@ onUnmounted(() => {
 .ia-status-badge { font-size: 9px; background: #ecfdf5; color: #059669; padding: 2px 8px; border-radius: 100px; font-weight: 700; }
 .ia-msg      { font-size: 13px; color: var(--text-muted,#64748b); margin: 0; line-height: 1.6; }
 .shimmer-text { background: linear-gradient(90deg,var(--text-muted,#94a3b8) 25%,var(--border-color,#e2e8f0) 50%,var(--text-muted,#94a3b8) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin: 0; }
-.shimmer-val { background: linear-gradient(90deg,#94a3b8 25%,#e2e8f0 50%,#94a3b8 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.shimmer-val  { background: linear-gradient(90deg,#94a3b8 25%,#e2e8f0 50%,#94a3b8 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 
 /* ─── KPI GRID ─── */
 .kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 20px; }
@@ -1481,13 +1788,31 @@ onUnmounted(() => {
 .reco-priority-badge { font-size:10px; font-weight:800; padding:4px 10px; border-radius:100px; }
 .reco-card-title  { font-size:14px; font-weight:800; color:var(--text-main,#0f172a); margin-bottom:8px; line-height:1.3; }
 .reco-card-desc   { font-size:12px; color:var(--text-muted,#64748b); line-height:1.6; margin-bottom:16px; }
-.reco-card-action { display:flex; align-items:center; justify-content:space-between; font-size:12px; font-weight:700; color:var(--reco-color); cursor:pointer; padding:10px 14px; background:var(--bg-card,#fff); border-radius:12px; border:1px solid var(--border-color,#eef2f6); transition:all 0.2s; }
-.reco-card-action:hover { background:rgba(0,0,0,0.02); }
+.reco-card-action {
+  display:flex; align-items:center; justify-content:space-between;
+  font-size:12px; font-weight:700; color:var(--reco-color);
+  cursor:pointer; padding:10px 14px;
+  background:var(--bg-card,#fff); border-radius:12px;
+  border:1px solid var(--border-color,#eef2f6);
+  transition:all 0.2s;
+  user-select:none;
+}
+.reco-card-action:hover { background:rgba(0,0,0,0.02); transform:translateX(4px); }
 .reco-card-skel { background:var(--bg-input,#f8fafc); border-radius:24px; padding:24px; border:1px solid var(--border-color,#eef2f6); }
 .reco-skel-top  { height:44px; width:44px; border-radius:12px; background:var(--border-color,#e2e8f0); animation:shimmer 1.5s infinite; margin-bottom:16px; }
 .reco-skel-line { height:10px; border-radius:6px; background:var(--border-color,#e2e8f0); animation:shimmer 1.5s infinite; margin-bottom:8px; }
 .w-80{width:80%;}.w-60{width:60%;}.w-90{width:90%;}
-.reco-empty { text-align:center; padding:32px; color:var(--text-muted,#94a3b8); }
+
+/* ─── HIGHLIGHT ANIMATION pour scroll-to ─── */
+@keyframes panelPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(245,158,11,0.4); }
+  70%  { box-shadow: 0 0 0 12px rgba(245,158,11,0); }
+  100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); }
+}
+.panel-highlight {
+  animation: panelPulse 1.5s ease-out;
+  border-color: #f59e0b !important;
+}
 
 /* ─── GRIDS ─── */
 .two-col-grid   { display:grid; grid-template-columns:var(--col1,1fr) var(--col2,1fr); gap:24px; }
@@ -1495,7 +1820,7 @@ onUnmounted(() => {
 @media(max-width:960px){.two-col-grid,.three-col-grid{grid-template-columns:1fr;}}
 
 /* ─── PANEL ─── */
-.panel { background:var(--bg-card,#fff); border-radius:32px; padding:28px; border:1px solid var(--border-color,#eef2f6); box-shadow:0 4px 16px rgba(0,0,0,0.03); transition:background-color 0.3s,border-color 0.3s; }
+.panel { background:var(--bg-card,#fff); border-radius:32px; padding:28px; border:1px solid var(--border-color,#eef2f6); box-shadow:0 4px 16px rgba(0,0,0,0.03); transition:background-color 0.3s,border-color 0.3s,box-shadow 0.3s; }
 .panel-title { font-size:15px; font-weight:800; color:var(--text-main,#0f172a); }
 .text-amber { color:#f59e0b !important; }
 .text-blue  { color:#3b82f6 !important; }
@@ -1567,7 +1892,6 @@ onUnmounted(() => {
 .skill-radar-list { display:flex; flex-direction:column; gap:12px; }
 .skill-bar-label  { font-size:12px; font-weight:600; color:var(--text-main,#0f172a); }
 .skill-bar-pct    { font-size:12px; font-weight:800; }
-.skill-bar-row    { }
 
 /* ─── TEAM ─── */
 .team-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
@@ -1657,12 +1981,18 @@ select.job-input { cursor:pointer; }
 /* ─── LETTRE ─── */
 .lettre-form { display:flex; flex-direction:column; }
 .lettre-label-field { font-size:11px; font-weight:700; color:var(--text-muted,#64748b); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:5px; }
+.lang-badge-pill { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+.lang-pill-fr { background:rgba(59,130,246,0.12); color:#2563eb; }
+.lang-pill-en { background:rgba(16,185,129,0.12); color:#059669; }
+.lang-pill-ar { background:rgba(245,158,11,0.12); color:#d97706; }
+.result-style-badge { padding:3px 10px; background:var(--bg-input,#f1f5f9); border-radius:20px; font-size:11px; font-weight:600; color:var(--text-muted,#64748b); text-transform:capitalize; }
+.source-gemini { padding:3px 10px; background:rgba(16,185,129,0.1); color:#059669; border-radius:20px; font-size:11px; font-weight:600; }
 .btn-lettre-primary { background:linear-gradient(135deg,#8b5cf6,#7c3aed); color:white; border:none; padding:14px 24px; border-radius:18px; font-weight:800; cursor:pointer; font-family:inherit; font-size:13px; display:flex; align-items:center; justify-content:center; gap:8px; transition:all 0.25s; width:100%; }
 .btn-lettre-primary:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 8px 20px rgba(139,92,246,0.3); }
 .btn-lettre-primary:disabled { opacity:0.45; cursor:not-allowed; }
-.lettre-result { display:flex; flex-direction:column; height:100%; }
+.lettre-result { display:flex; flex-direction:column; }
 .lettre-label  { font-size:12px; font-weight:700; color:var(--text-main,#0f172a); display:flex; align-items:center; }
-.lettre-content { background:var(--bg-input,#f8fafc); border:1px solid var(--border-color,#eef2f6); border-radius:16px; padding:18px; font-size:12px; line-height:1.8; color:var(--text-muted,#64748b); white-space:pre-line; overflow-y:auto; max-height:320px; flex:1; }
+.lettre-content { background:var(--bg-input,#f8fafc); border:1px solid var(--border-color,#eef2f6); border-radius:16px; padding:18px; font-size:12px; line-height:1.8; color:var(--text-muted,#64748b); white-space:pre-line; overflow-y:auto; max-height:320px; margin-top:4px; }
 .btn-copy-lettre { display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:700; padding:6px 12px; border-radius:10px; border:1px solid var(--border-color,#e2e8f0); background:var(--bg-input,#f8fafc); color:var(--text-muted,#64748b); cursor:pointer; transition:all 0.2s; font-family:inherit; }
 .btn-copy-lettre:hover { border-color:#8b5cf6; color:#8b5cf6; }
 
@@ -1688,7 +2018,7 @@ select.job-input { cursor:pointer; }
 [data-theme="dark"] .aura-dashboard { background:#0d1117;color:#f0f6fc; }
 [data-theme="dark"] .terminal-bar,[data-theme="dark"] .hero-card,[data-theme="dark"] .panel,[data-theme="dark"] .kpi-card,[data-theme="dark"] .reco-section { background:#161b22;border-color:rgba(255,255,255,0.08); }
 [data-theme="dark"] .reco-card,[data-theme="dark"] .reco-card-skel,[data-theme="dark"] .test-item,[data-theme="dark"] .eval-item,[data-theme="dark"] .session-item,[data-theme="dark"] .team-card,[data-theme="dark"] .health-row,[data-theme="dark"] .company-row { background:rgba(255,255,255,0.03);border-color:rgba(255,255,255,0.08); }
-[data-theme="dark"] .reco-card-title,[data-theme="dark"] .reco-title,[data-theme="dark"] .kpi-value,[data-theme="dark"] .hero-title,[data-theme="dark"] .premium-title,[data-theme="dark"] .panel-title,[data-theme="dark"] .ia-label,[data-theme="dark"] .eval-name,[data-theme="dark"] .sess-title,[data-theme="dark"] .team-name,[data-theme="dark"] .health-name,[data-theme="dark"] .company-name,[data-theme="dark"] .cand-name,[data-theme="dark"] .sub-plan,[data-theme="dark"] .skill-bar-label,[data-theme="dark"] .progress-label,[data-theme="dark"] .act-user,[data-theme="dark"] .test-name,[data-theme="dark"] .result-name { color:#f0f6fc; }
+[data-theme="dark"] .reco-card-title,[data-theme="dark"] .reco-title,[data-theme="dark"] .kpi-value,[data-theme="dark"] .hero-title,[data-theme="dark"] .premium-title,[data-theme="dark"] .panel-title,[data-theme="dark"] .ia-label,[data-theme="dark"] .eval-name,[data-theme="dark"] .sess-title,[data-theme="dark"] .team-name,[data-theme="dark"] .health-name,[data-theme="dark"] .company-name,[data-theme="dark"] .cand-name,[data-theme="dark"] .skill-bar-label,[data-theme="dark"] .progress-label,[data-theme="dark"] .act-user,[data-theme="dark"] .test-name,[data-theme="dark"] .result-name { color:#f0f6fc; }
 [data-theme="dark"] .reco-card-desc,[data-theme="dark"] .ia-msg,[data-theme="dark"] .act-action,[data-theme="dark"] .lettre-content { color:#8b949e; }
 [data-theme="dark"] .reco-card-action,[data-theme="dark"] .ia-insight,[data-theme="dark"] .mini-stat,[data-theme="dark"] .metric-pill { background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.08); }
 [data-theme="dark"] .next-test-cta,[data-theme="dark"] .analyse-cta,[data-theme="dark"] .invite-cta,[data-theme="dark"] .analytics-cta { background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.08);color:#f0f6fc; }
@@ -1710,4 +2040,11 @@ select.job-input { cursor:pointer; }
 [data-theme="dark"] .progress-bar-wrap { background:rgba(255,255,255,0.08); }
 [data-theme="dark"] .btn-copy-lettre { background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.1);color:#8b949e; }
 [data-theme="dark"] .neural-badge { color:#fbbf24;background:rgba(245,158,11,0.2); }
+[data-theme="dark"] .lang-pill-fr { background:rgba(59,130,246,0.2); }
+[data-theme="dark"] .lang-pill-en { background:rgba(16,185,129,0.2); }
+[data-theme="dark"] .lang-pill-ar { background:rgba(245,158,11,0.2); }
+[data-theme="dark"] .result-style-badge { background:rgba(255,255,255,0.06);color:#8b949e; }
+[data-theme="dark"] .source-gemini { background:rgba(16,185,129,0.15);color:#34d399; }
+[data-theme="dark"] .lettre-content { background:rgba(255,255,255,0.03);border-color:rgba(255,255,255,0.08); }
+[data-theme="dark"] .panel-highlight { border-color:#f59e0b !important; }
 </style>

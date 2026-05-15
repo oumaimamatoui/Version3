@@ -26,34 +26,29 @@
                 <span class="current">{{ $t('sidebar.links.bank') }}</span>
               </div>
               <h2 class="premium-title">
-                {{ $t('sidebar.links.bank').split(' ')[0] }} <span class="gradient-text">{{ $t('sidebar.links.bank').split(' ').slice(1).join(' ') }}</span>
+                {{ $t('sidebar.links.bank').split(' ')[0] }}
+                <span class="gradient-text">{{ $t('sidebar.links.bank').split(' ').slice(1).join(' ') }}</span>
               </h2>
               <p class="brand-subtitle-v2 d-flex align-items-center gap-2 mt-2">
                 <span class="live-dot-wrap">
                   <span class="live-dot"></span>
                   <span class="live-ring"></span>
                 </span>
-                {{ $t('dashboard.kpis.talentsActifs') }} IA · {{ $t('sidebar.links.ai') }} FR/EN · <strong>{{ questions.length }}</strong> actifs
+                {{ $t('dashboard.kpis.talentsActifs') }} IA · {{ $t('sidebar.links.ai') }} FR/EN ·
+                <strong>{{ questions.length }}</strong> actifs
               </p>
             </div>
 
             <div class="header-actions-group">
-              <!-- DARK MODE TOGGLE (SYNCED) -->
-              <button class="btn-refresh-pro" @click="toggleGlobalTheme" :title="isGlobalDark ? $t('theme.light') : $t('theme.dark')">
+              <button class="btn-refresh-pro" @click="toggleGlobalTheme"
+                :title="isGlobalDark ? $t('theme.light') : $t('theme.dark')">
                 <i :class="isGlobalDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
               </button>
 
-              <!-- SEARCH -->
               <div class="search-inline-box" :class="{ focused: searchFocused }">
                 <i class="fa-solid fa-magnifying-glass"></i>
-                <input
-                  v-model="searchQuery"
-                  @focus="searchFocused = true"
-                  @blur="searchFocused = false"
-                  type="text"
-                  :placeholder="$t('search')"
-                  class="search-inline-input"
-                >
+                <input v-model="searchQuery" @focus="searchFocused = true" @blur="searchFocused = false"
+                  type="text" :placeholder="$t('search')" class="search-inline-input">
                 <button v-if="searchQuery" @click="searchQuery = ''" class="btn-clear-search">
                   <i class="fa-solid fa-xmark"></i>
                 </button>
@@ -63,14 +58,12 @@
                 <button class="btn-outline-pro" @click="showCatManager = true">
                   <i class="fa-solid fa-sitemap me-2"></i>{{ $t('campaigns.studio.step1.theme').split(' ')[0] }}s
                 </button>
-
                 <button class="btn-ai-glow" @click="showAIModal = true">
                   <span class="btn-shine-layer"></span>
                   <i class="fa-solid fa-wand-magic-sparkles me-2"></i>
                   {{ $t('sidebar.links.ai') }}
                   <span class="lang-badge-pill ms-2">FR/EN</span>
                 </button>
-
                 <button class="btn-enigma-primary shadow-premium" @click="openModal()">
                   <div class="btn-content">
                     <i class="fa-solid fa-plus me-2"></i>{{ $t('create') }}
@@ -102,26 +95,18 @@
 
           <!-- ══════════════════════ TOOLBAR ══════════════════════ -->
           <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-            <!-- TYPE FILTERS -->
             <div class="d-flex align-items-center gap-2 flex-wrap">
               <div class="tabs-container">
                 <div class="d-flex gap-2 p-1 rounded-4 shadow-sm border tabs-pill-wrap">
-                  <button
-                    class="nav-tab-btn-modern"
-                    :class="{ active: activeFilter === -1 }"
-                    @click="activeFilter = -1"
-                  >
+                  <button class="nav-tab-btn-modern" :class="{ active: activeFilter === -1 }" @click="activeFilter = -1">
                     <i class="fa-solid fa-border-all me-1"></i>{{ $t('all') }}
                     <span class="tab-count">{{ questions.length }}</span>
                   </button>
-                  <button
-                    v-for="t in typeDefinitions"
-                    :key="t.val"
+                  <button v-for="t in typeDefinitions" :key="t.val"
                     class="nav-tab-btn-modern"
                     :class="{ active: activeFilter === t.val }"
                     :style="activeFilter === t.val ? { '--tab-accent': t.color } : {}"
-                    @click="activeFilter = t.val"
-                  >
+                    @click="activeFilter = t.val">
                     <i :class="t.icon + ' me-1'" :style="{ color: activeFilter === t.val ? t.color : '' }"></i>
                     {{ t.label }}
                     <span class="tab-count">{{ countByType(t.val) }}</span>
@@ -131,7 +116,6 @@
             </div>
 
             <div class="d-flex align-items-center gap-2 flex-wrap">
-              <!-- CATEGORY SELECT -->
               <div class="sort-select-wrap">
                 <i class="fa-solid fa-layer-group sort-ico"></i>
                 <select v-model="selectedCat" class="sort-select-pro">
@@ -141,7 +125,6 @@
                 <i class="fa-solid fa-chevron-down sort-arrow"></i>
               </div>
 
-              <!-- LANG FILTER -->
               <div class="lang-cluster">
                 <button :class="['lang-tab', { active: filterLang === 'all' }]" @click="filterLang = 'all'">
                   <i class="fa-solid fa-globe"></i> {{ $t('all') }}
@@ -155,25 +138,76 @@
                 </button>
               </div>
 
-              <!-- VIEW TOGGLE -->
               <div class="view-toggle-cluster">
-                <button :class="['btn-view-toggle', { active: viewMode === 'grid' }]" @click="viewMode = 'grid'" :title="$t('view')">
+                <button :class="['btn-view-toggle', { active: viewMode === 'grid' }]"
+                  @click="viewMode = 'grid'" :title="$t('view')">
                   <i class="fa-solid fa-table-cells-large"></i>
                 </button>
-                <button :class="['btn-view-toggle', { active: viewMode === 'list' }]" @click="viewMode = 'list'" :title="$t('filter')">
+                <button :class="['btn-view-toggle', { active: viewMode === 'list' }]"
+                  @click="viewMode = 'list'" :title="$t('filter')">
                   <i class="fa-solid fa-list-ul"></i>
                 </button>
               </div>
+
+           
+              <button
+                :class="['btn-select-mode', { active: selectMode }]"
+                @click="toggleSelectMode"
+                :title="selectMode ? 'Quitter la sélection' : 'Sélectionner des questions'">
+                <i :class="selectMode ? 'fa-solid fa-xmark' : 'fa-solid fa-check-double'"></i>
+                <span class="d-none d-md-inline ms-1">{{ selectMode ? 'Annuler' : 'Sélectionner' }}</span>
+              </button>
             </div>
           </div>
 
-          <!-- ══════════════════════ LOADING STATE ══════════════════════ -->
-          <div v-if="loading" class="empty-state-pro py-5 text-center">
-            <div class="spinner-pro-premium"></div>
-            <p class="state-label mt-3"><i class="fa-solid fa-satellite-dish fa-spin me-2"></i>{{ $t('loading') }}</p>
+          <!-- ══════════════════════ BULK ACTION BAR ══════════════════════ -->
+          <transition name="bulk-bar-anim">
+            <div v-if="selectMode && selectedIds.size > 0" class="bulk-action-bar mb-4">
+              <div class="bulk-info">
+                <div class="bulk-count-badge">
+                  <i class="fa-solid fa-check-circle me-1"></i>
+                  {{ selectedIds.size }} sélectionnée{{ selectedIds.size > 1 ? 's' : '' }}
+                </div>
+                <span class="bulk-label">sur {{ filteredQuestions.length }} questions</span>
+              </div>
+              <div class="bulk-actions">
+                <button class="bulk-btn bulk-select-all" @click="selectAll">
+                  <i class="fa-solid fa-check-double me-1"></i>Tout sélectionner
+                </button>
+                <button class="bulk-btn bulk-deselect" @click="deselectAll">
+                  <i class="fa-solid fa-square me-1"></i>Désélectionner
+                </button>
+                <div class="bulk-separator"></div>
+                <button class="bulk-btn bulk-export" @click="exportSelectedCSV">
+                  <i class="fa-solid fa-file-csv me-1"></i>Export CSV
+                </button>
+                <button class="bulk-btn bulk-export" @click="exportSelectedJSON">
+                  <i class="fa-solid fa-file-code me-1"></i>Export JSON
+                </button>
+                <div class="bulk-separator"></div>
+                <button class="bulk-btn bulk-delete" @click="bulkDelete">
+                  <i class="fa-solid fa-trash-can me-1"></i>Supprimer ({{ selectedIds.size }})
+                </button>
+              </div>
+            </div>
+          </transition>
+
+          <!-- Select All mini bar when select mode active but nothing selected -->
+          <div v-if="selectMode && selectedIds.size === 0" class="select-hint-bar mb-3">
+            <i class="fa-solid fa-hand-pointer me-2 text-amber"></i>
+            Cliquez sur les cartes pour les sélectionner ·
+            <button class="select-hint-btn ms-2" @click="selectAll">Tout sélectionner</button>
           </div>
 
-          <!-- ══════════════════════ EMPTY STATE ══════════════════════ -->
+          <!-- ══════════════════════ LOADING ══════════════════════ -->
+          <div v-if="loading" class="empty-state-pro py-5 text-center">
+            <div class="spinner-pro-premium"></div>
+            <p class="state-label mt-3">
+              <i class="fa-solid fa-satellite-dish fa-spin me-2"></i>{{ $t('loading') }}
+            </p>
+          </div>
+
+          <!-- ══════════════════════ EMPTY ══════════════════════ -->
           <div v-else-if="filteredQuestions.length === 0" class="empty-state-pro py-5 text-center">
             <div class="empty-graphic mb-4">
               <div class="empty-ring r1"></div>
@@ -192,56 +226,58 @@
           </div>
 
           <!-- ══════════════════════ GRID VIEW ══════════════════════ -->
-          <transition-group
-            v-else-if="viewMode === 'grid'"
-            name="card-anim"
-            tag="div"
-            class="questions-grid"
-          >
-            <div
-              v-for="(q, i) in filteredQuestions"
-              :key="q.id"
+          <transition-group v-else-if="viewMode === 'grid'" name="card-anim" tag="div" class="questions-grid">
+            <div v-for="(q, i) in filteredQuestions" :key="q.id"
               class="q-card campaign-card-modern"
+              :class="{
+                'card-selected': selectMode && selectedIds.has(q.id),
+                'card-select-mode': selectMode
+              }"
               :style="{ '--card-delay': i * 0.04 + 's', '--type-color': getTypeInfo(q.type).color }"
-            >
-              <!-- TOP STRIPE -->
+              @click="selectMode ? toggleSelect(q.id) : null">
+
+           
+              <div v-if="selectMode" class="select-overlay" @click.stop="toggleSelect(q.id)">
+                <div :class="['select-checkbox', { checked: selectedIds.has(q.id) }]">
+                  <i v-if="selectedIds.has(q.id)" class="fa-solid fa-check"></i>
+                </div>
+              </div>
+
               <div class="card-type-stripe" :style="{ background: getTypeInfo(q.type).color }"></div>
 
-              <!-- LANG BANNER -->
               <div class="card-lang-banner" :class="`lang-${resolveQuestionLang(q)}`">
                 <span>{{ resolveQuestionLang(q) === 'en' ? '🇬🇧' : '🇫🇷' }}</span>
                 <span class="lang-banner-name">{{ resolveQuestionLang(q) === 'en' ? 'English' : 'Français' }}</span>
               </div>
 
-              <!-- CARD HEAD -->
               <div class="card-header-modern mb-3 d-flex justify-content-between align-items-start">
-                <div class="card-cat-pill">
-                  <i class="fa-solid fa-folder-open me-1"></i>
-                  <span>{{ q.theme || 'Non classé' }}</span>
+                <div class="card-cat-pill" :class="{ 'cat-pill-unclassified': getDisplayTheme(q) === 'Non classé' }">
+                  <i :class="getDisplayTheme(q) === 'Non classé' ? 'fa-solid fa-folder me-1' : 'fa-solid fa-folder-open me-1'"></i>
+                  <span>{{ getDisplayTheme(q) }}</span>
                 </div>
-                <div class="d-flex gap-2 align-items-center">
-                  <button class="btn-icon-sm" @click="openModal(q)" :title="$t('edit')">
+                <div v-if="!selectMode" class="d-flex gap-2 align-items-center">
+                  <button class="btn-icon-sm" @click.stop="openModal(q)" :title="$t('edit')">
                     <i class="fa-solid fa-pen-to-square"></i>
                   </button>
-                  <button class="btn-icon-sm danger" @click="handleDelete(q.id)" :title="$t('delete')">
+                  <button class="btn-icon-sm danger" @click.stop="handleDelete(q.id)" :title="$t('delete')">
                     <i class="fa-solid fa-trash-can"></i>
                   </button>
                 </div>
               </div>
 
-              <!-- TYPE BADGE -->
               <div class="type-badge-row" :style="{ '--badge-c': getTypeInfo(q.type).color }">
-                <div class="type-badge-icon-box" :style="{ background: getTypeInfo(q.type).color + '18', border: '1px solid ' + getTypeInfo(q.type).color + '35' }">
+                <div class="type-badge-icon-box"
+                  :style="{ background: getTypeInfo(q.type).color + '18', border: '1px solid ' + getTypeInfo(q.type).color + '35' }">
                   <i :class="getTypeInfo(q.type).icon" :style="{ color: getTypeInfo(q.type).color }"></i>
                 </div>
-                <span class="type-badge-label" :style="{ color: getTypeInfo(q.type).color }">{{ getTypeInfo(q.type).label }}</span>
+                <span class="type-badge-label" :style="{ color: getTypeInfo(q.type).color }">
+                  {{ getTypeInfo(q.type).label }}
+                </span>
                 <span class="type-badge-live" :style="{ background: getTypeInfo(q.type).color }"></span>
               </div>
 
-              <!-- ÉNONCÉ -->
               <p class="card-enonce">{{ q.enonce }}</p>
 
-              <!-- OPTIONS PREVIEW -->
               <div v-if="q.choix && q.choix.length > 0" class="card-options-preview">
                 <div class="opts-preview-header">
                   <i class="fa-solid fa-list-check text-amber me-1"></i>
@@ -256,21 +292,18 @@
                 </div>
               </div>
 
-              <!-- CARD FOOTER -->
               <div class="card-footer-modern d-flex justify-content-between align-items-center pt-3 border-top">
                 <div class="level-indicator">
                   <span class="level-label-sm"><i class="fa-solid fa-signal me-1"></i>NIV.</span>
                   <div class="level-dots">
-                    <span
-                      v-for="d in 5" :key="d"
-                      class="ldot"
-                      :class="{ 'ldot-on': d <= q.points }"
-                      :style="d <= q.points ? { background: getLevelColor(q.points), boxShadow: '0 0 4px ' + getLevelColor(q.points) } : {}"
-                    ></span>
+                    <span v-for="d in 5" :key="d" class="ldot" :class="{ 'ldot-on': d <= q.points }"
+                      :style="d <= q.points ? { background: getLevelColor(q.points), boxShadow: '0 0 4px ' + getLevelColor(q.points) } : {}">
+                    </span>
                   </div>
                   <span class="level-val" :style="{ color: getLevelColor(q.points) }">{{ q.points }}/5</span>
                 </div>
-                <span class="slot-badge" :style="{ background: getLevelColor(q.points) + '18', color: getLevelColor(q.points), border: '1px solid ' + getLevelColor(q.points) + '35' }">
+                <span class="slot-badge"
+                  :style="{ background: getLevelColor(q.points) + '18', color: getLevelColor(q.points), border: '1px solid ' + getLevelColor(q.points) + '35' }">
                   <i class="fa-solid fa-gauge me-1"></i>Niv. {{ q.points }}
                 </span>
               </div>
@@ -280,17 +313,37 @@
           <!-- ══════════════════════ LIST VIEW ══════════════════════ -->
           <div v-else class="list-view-pro">
             <div class="list-header-row d-flex align-items-center px-4 py-2 mb-2">
-              <span style="width:110px" class="list-col-label">{{ $t('campaigns.studio.step2.bank').replace('BANQUE','TYPE') }}</span>
-              <span style="width:80px"  class="list-col-label">LANG</span>
+        
+              <span v-if="selectMode" style="width:40px" class="list-col-label">
+                <input type="checkbox" class="asset-checkbox"
+                  :checked="selectedIds.size === filteredQuestions.length && filteredQuestions.length > 0"
+                  @change="selectedIds.size === filteredQuestions.length ? deselectAll() : selectAll()"
+                  style="accent-color:#f59e0b; cursor:pointer">
+              </span>
+              <span style="width:110px" class="list-col-label">TYPE</span>
+              <span style="width:80px" class="list-col-label">LANG</span>
               <span class="flex-grow-1 list-col-label">QUESTION</span>
               <span style="width:150px" class="list-col-label">{{ $t('campaigns.studio.step1.theme') }}</span>
-              <span style="width:80px"  class="list-col-label text-center">{{ $t('campaigns.studio.step1.tiers.high').toUpperCase() }}</span>
-              <span style="width:80px"  class="list-col-label text-center">{{ $t('actions') }}</span>
+              <span style="width:80px" class="list-col-label text-center">NIV.</span>
+              <span style="width:80px" class="list-col-label text-center">{{ $t('actions') }}</span>
             </div>
             <transition-group name="row-anim" tag="div">
-              <div v-for="(q, i) in filteredQuestions" :key="q.id" class="list-row-item d-flex align-items-center px-4 py-3 mb-2" :style="{ '--row-delay': i * 0.02 + 's' }">
+              <div v-for="(q, i) in filteredQuestions" :key="q.id"
+                class="list-row-item d-flex align-items-center px-4 py-3 mb-2"
+                :class="{ 'row-selected': selectMode && selectedIds.has(q.id) }"
+                :style="{ '--row-delay': i * 0.02 + 's' }"
+                @click="selectMode ? toggleSelect(q.id) : null">
+
+             
+                <div v-if="selectMode" style="width:40px" @click.stop="toggleSelect(q.id)">
+                  <div :class="['select-checkbox-sm', { checked: selectedIds.has(q.id) }]">
+                    <i v-if="selectedIds.has(q.id)" class="fa-solid fa-check"></i>
+                  </div>
+                </div>
+
                 <div style="width:110px">
-                  <span class="row-type-badge" :style="{ color: getTypeInfo(q.type).color, background: getTypeInfo(q.type).color + '12', borderColor: getTypeInfo(q.type).color + '30' }">
+                  <span class="row-type-badge"
+                    :style="{ color: getTypeInfo(q.type).color, background: getTypeInfo(q.type).color + '12', borderColor: getTypeInfo(q.type).color + '30' }">
                     <i :class="getTypeInfo(q.type).icon + ' me-1'"></i>
                     <span class="d-none d-xl-inline">{{ getTypeInfo(q.type).label }}</span>
                   </span>
@@ -309,16 +362,31 @@
                   </div>
                 </div>
                 <div style="width:150px">
-                  <span class="meta-chip"><i class="fa-solid fa-folder-open me-1"></i>{{ q.theme || 'Non classé' }}</span>
+                  <span class="meta-chip" :class="{ 'chip-unclassified': getDisplayTheme(q) === 'Non classé' }">
+                    <i :class="getDisplayTheme(q) === 'Non classé' ? 'fa-solid fa-folder me-1' : 'fa-solid fa-folder-open me-1'"></i>
+                    {{ getDisplayTheme(q) }}
+                  </span>
                 </div>
                 <div style="width:80px" class="text-center">
-                  <span class="slot-badge" :style="{ background: getLevelColor(q.points) + '18', color: getLevelColor(q.points), border: '1px solid ' + getLevelColor(q.points) + '35' }">
+                  <span class="slot-badge"
+                    :style="{ background: getLevelColor(q.points) + '18', color: getLevelColor(q.points), border: '1px solid ' + getLevelColor(q.points) + '35' }">
                     {{ q.points }}/5
                   </span>
                 </div>
                 <div style="width:80px" class="d-flex gap-2 justify-content-center">
-                  <button class="btn-icon-sm" @click="openModal(q)"><i class="fa-solid fa-pen-to-square"></i></button>
-                  <button class="btn-icon-sm danger" @click="handleDelete(q.id)"><i class="fa-solid fa-trash-can"></i></button>
+                  <template v-if="!selectMode">
+                    <button class="btn-icon-sm" @click.stop="openModal(q)">
+                      <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    <button class="btn-icon-sm danger" @click.stop="handleDelete(q.id)">
+                      <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                  </template>
+                  <template v-else>
+                    <div :class="['select-checkbox-sm', { checked: selectedIds.has(q.id) }]" @click.stop="toggleSelect(q.id)">
+                      <i v-if="selectedIds.has(q.id)" class="fa-solid fa-check"></i>
+                    </div>
+                  </template>
                 </div>
               </div>
             </transition-group>
@@ -345,7 +413,9 @@
               </div>
               <div>
                 <h5 class="fw-900 m-0">{{ $t('sidebar.links.ai') }} <em class="text-amber">Bilingue</em></h5>
-                <p class="small text-muted m-0"><i class="fa-solid fa-microchip me-1"></i>Moteur Gemini · Questions FR &amp; EN</p>
+                <p class="small text-muted m-0">
+                  <i class="fa-solid fa-microchip me-1"></i>Moteur Gemini · Questions FR &amp; EN
+                </p>
               </div>
             </div>
             <button class="btn-modal-close" @click="showAIModal = false">
@@ -360,8 +430,7 @@
               <div class="lang-cards-grid">
                 <label v-for="l in langOptions" :key="l.val"
                   :class="['lang-card', { 'lang-card-active': aiForm.langue === l.val }]"
-                  @click="aiForm.langue = l.val"
-                >
+                  @click="aiForm.langue = l.val">
                   <input type="radio" v-model="aiForm.langue" :value="l.val" style="display:none">
                   <span class="lc-flag">{{ l.flag }}</span>
                   <span class="lc-name">{{ l.name }}</span>
@@ -375,13 +444,10 @@
             <div class="enigma-input-wrap mb-4">
               <label>{{ $t('campaigns.studio.quickAdd.type').toUpperCase() }}</label>
               <div class="type-tiles-grid">
-                <div
-                  v-for="t in typeDefinitions"
-                  :key="t.val"
+                <div v-for="t in typeDefinitions" :key="t.val"
                   :class="['type-tile', { 'type-tile-active': aiForm.type === t.val }]"
                   :style="aiForm.type === t.val ? { '--tile-c': t.color } : {}"
-                  @click="aiForm.type = t.val"
-                >
+                  @click="aiForm.type = t.val">
                   <div class="tile-icon-wrap" :style="{ color: t.color }">
                     <i :class="t.icon"></i>
                   </div>
@@ -391,15 +457,19 @@
               </div>
             </div>
 
-            <!-- CATÉGORIE + SOUS-THÈME -->
+            <!-- ✅ CATÉGORIE + SOUS-THÈME — required with visual indicator -->
             <div class="row g-3 mb-4">
               <div class="col-md-6">
                 <div class="enigma-input-wrap">
-                  <label>{{ $t('campaigns.studio.step1.theme') }}</label>
-                  <div class="theme-select-wrapper">
+                  <label class="d-flex justify-content-between">
+                    <span>{{ $t('campaigns.studio.step1.theme') }}</span>
+                    <span class="required-badge">Requis ✦</span>
+                  </label>
+                  <div class="theme-select-wrapper" :class="{ 'field-required-glow': !aiForm.theme && aiAttempted }">
                     <i class="fa-solid fa-folder theme-select-icon"></i>
-                    <select v-model="aiForm.theme" class="enigma-field theme-select" @change="aiForm.sousTheme = ''">
-                      <option value="">— {{ $t('confirm') }} —</option>
+                    <select v-model="aiForm.theme" class="enigma-field theme-select"
+                      @change="aiForm.sousTheme = ''">
+                      <option value="">— Choisir un thème —</option>
                       <option v-for="cat in categoriesList" :key="cat.id" :value="cat.nom">{{ cat.nom }}</option>
                     </select>
                   </div>
@@ -407,43 +477,71 @@
               </div>
               <div class="col-md-6">
                 <div class="enigma-input-wrap">
-                  <label>{{ $t('campaigns.studio.step1.subTheme') }}</label>
-                  <div class="theme-select-wrapper" :class="{ 'disabled-wrapper': !aiForm.theme }">
+                  <label class="d-flex justify-content-between">
+                    <span>{{ $t('campaigns.studio.step1.subTheme') }}</span>
+                    <span class="required-badge">Requis ✦</span>
+                  </label>
+                  <div class="theme-select-wrapper" :class="{ 'disabled-wrapper': !aiForm.theme, 'field-required-glow': !aiForm.sousTheme && aiAttempted }">
                     <i class="fa-solid fa-tags theme-select-icon"></i>
-                    <select v-model="aiForm.sousTheme" class="enigma-field theme-select" :disabled="!aiForm.theme">
+                    <select v-model="aiForm.sousTheme" class="enigma-field theme-select"
+                      :disabled="!aiForm.theme">
                       <option value="">— {{ $t('optional') }} —</option>
-                      <option v-for="sub in aiDynamicSubCategories" :key="sub.id" :value="sub.nom">{{ sub.nom }}</option>
+                      <option v-for="sub in aiDynamicSubCategories" :key="sub.id" :value="sub.nom">
+                        {{ sub.nom }}
+                      </option>
                     </select>
                   </div>
+                  <!-- ✅ inline warning if no subcategories -->
+                  <small v-if="aiForm.theme && aiDynamicSubCategories.length === 0" class="text-warning mt-1 d-block">
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                    Aucun sous-thème — ajoutez-en dans Gestion Thèmes
+                  </small>
                 </div>
               </div>
             </div>
+
+            <!-- ✅ THEME PREVIEW BADGE -->
+            <transition name="fade-up">
+              <div v-if="aiForm.theme && aiForm.sousTheme" class="theme-preview-badge mb-4">
+                <i class="fa-solid fa-folder-open me-2 text-amber"></i>
+                <span class="theme-preview-path">{{ aiForm.theme }}</span>
+                <i class="fa-solid fa-chevron-right mx-2" style="font-size:9px;opacity:0.5"></i>
+                <span class="theme-preview-sub">{{ aiForm.sousTheme }}</span>
+                <span class="theme-preview-tick ms-2">
+                  <i class="fa-solid fa-check"></i>
+                </span>
+              </div>
+            </transition>
 
             <!-- NOMBRE + DIFFICULTÉ -->
             <div class="row g-3 mb-4">
               <div class="col-md-6">
                 <div class="enigma-input-wrap">
-                  <label>{{ $t('campaigns.studio.bank.stats.total').toUpperCase() }}</label>
+                  <label>NOMBRE DE QUESTIONS</label>
                   <div class="number-stepper">
-                    <button class="step-btn" @click="aiForm.n = Math.max(1, aiForm.n - 1)"><i class="fa-solid fa-minus"></i></button>
-                    <input v-model.number="aiForm.n" type="number" min="1" max="100" class="step-input" @input="aiForm.n = aiForm.n > 100 ? 100 : aiForm.n">
-                    <button class="step-btn" @click="aiForm.n = Math.min(100, aiForm.n + 1)"><i class="fa-solid fa-plus"></i></button>
+                    <button class="step-btn" @click="aiForm.n = Math.max(1, aiForm.n - 1)">
+                      <i class="fa-solid fa-minus"></i>
+                    </button>
+                    <input v-model.number="aiForm.n" type="number" min="1" max="100" class="step-input"
+                      @input="aiForm.n = aiForm.n > 100 ? 100 : aiForm.n < 1 ? 1 : aiForm.n">
+                    <button class="step-btn" @click="aiForm.n = Math.min(100, aiForm.n + 1)">
+                      <i class="fa-solid fa-plus"></i>
+                    </button>
                   </div>
-                  <small class="text-muted" v-if="aiForm.n > 0">Max 100 questions</small>
+                  <small :class="aiForm.n < 5 ? 'text-danger' : 'text-muted'">
+                    {{ aiForm.n < 5 ? 'Minimum 5 questions requis' : 'Max 100 questions' }}
+                  </small>
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="enigma-input-wrap">
                   <label>{{ $t('campaigns.studio.quickAdd.difficulty').toUpperCase() }}</label>
                   <div class="d-flex gap-2">
-                    <button
-                      v-for="d in difficultyLevels"
-                      :key="d.val"
+                    <button v-for="d in difficultyLevels" :key="d.val"
                       class="diff-btn flex-grow-1"
                       :class="{ 'diff-btn-active': aiForm.difficulty === d.val }"
                       :style="aiForm.difficulty === d.val ? { background: d.color, borderColor: d.color, color: '#fff' } : {}"
-                      @click="aiForm.difficulty = d.val"
-                    >
+                      @click="aiForm.difficulty = d.val">
                       <i :class="d.icon + ' me-1'"></i>{{ d.label }}
                     </button>
                   </div>
@@ -454,8 +552,12 @@
             <!-- PROGRESS -->
             <transition name="fade-up">
               <div v-if="isAILoading" class="ai-progress-box mb-4">
-                <div class="ai-prog-track"><div class="ai-prog-fill" :style="{ width: aiProgress + '%' }"></div></div>
-                <div class="ai-prog-text mt-2"><i class="fa-solid fa-circle-notch fa-spin me-2"></i>{{ aiStatusText }}</div>
+                <div class="ai-prog-track">
+                  <div class="ai-prog-fill" :style="{ width: aiProgress + '%' }"></div>
+                </div>
+                <div class="ai-prog-text mt-2">
+                  <i class="fa-solid fa-circle-notch fa-spin me-2"></i>{{ aiStatusText }}
+                </div>
               </div>
             </transition>
 
@@ -464,10 +566,22 @@
               <div v-if="aiPreview.length > 0 && !isAILoading" class="ai-preview-box">
                 <div class="preview-header">
                   <i class="fa-solid fa-eye me-2 text-amber"></i>
-                  <span>{{ aiPreview.length }} {{ $t('campaigns.studio.bank.found').replace('{count}', '').trim().toUpperCase() }}</span>
-                  <span class="ms-2 row-lang-chip lc-fr">🇫🇷 {{ aiPreview.filter(q => resolvePreviewLang(q) === 'fr').length }}</span>
-                  <span class="ms-1 row-lang-chip lc-en">🇬🇧 {{ aiPreview.filter(q => resolvePreviewLang(q) === 'en').length }}</span>
-                  <button class="btn-clear-search ms-auto" @click="aiPreview = []"><i class="fa-solid fa-xmark"></i></button>
+                  <span>{{ aiPreview.length }} QUESTIONS</span>
+                  <span class="ms-2 row-lang-chip lc-fr">
+                    🇫🇷 {{ aiPreview.filter(q => resolvePreviewLang(q) === 'fr').length }}
+                  </span>
+                  <span class="ms-1 row-lang-chip lc-en">
+                    🇬🇧 {{ aiPreview.filter(q => resolvePreviewLang(q) === 'en').length }}
+                  </span>
+                
+                  <span v-if="aiPreview[0]?.theme" class="ms-auto meta-chip">
+                    <i class="fa-solid fa-folder-open me-1"></i>{{ aiPreview[0].theme }}
+                    <i class="fa-solid fa-chevron-right mx-1" style="font-size:8px"></i>
+                    {{ aiPreview[0].sousTheme }}
+                  </span>
+                  <button class="btn-clear-search ms-2" @click="aiPreview = []">
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
                 </div>
                 <div class="preview-list fancy-scroll">
                   <div v-for="(pq, pi) in aiPreview" :key="pi" class="preview-item">
@@ -476,7 +590,7 @@
                       <p class="preview-q">{{ pq.question }}</p>
                       <div v-if="pq.options && pq.options.length" class="d-flex flex-wrap gap-1 mt-1">
                         <span v-for="(opt, oi) in pq.options.slice(0, 4)" :key="oi" class="meta-chip">
-                          {{ String.fromCharCode(65+oi) }}. {{ opt }}
+                          {{ String.fromCharCode(65 + oi) }}. {{ opt }}
                         </span>
                       </div>
                     </div>
@@ -490,11 +604,17 @@
           </div>
 
           <div class="modal-footer-actions">
-            <button class="btn-qv-cancel" @click="showAIModal = false"><i class="fa-solid fa-xmark me-2"></i>{{ $t('cancel') }}</button>
-            <button class="btn-outline-pro" :disabled="isAILoading || !aiForm.theme || !aiForm.sousTheme" @click="previewAI">
+            <button class="btn-qv-cancel" @click="showAIModal = false">
+              <i class="fa-solid fa-xmark me-2"></i>{{ $t('cancel') }}
+            </button>
+            <button class="btn-outline-pro"
+              :disabled="isAILoading || aiForm.n < 5"
+              @click="previewAI">
               <i class="fa-solid fa-eye me-2"></i>{{ $t('view') }}
             </button>
-            <button class="btn-enigma-primary" :disabled="isAILoading || !aiForm.theme || !aiForm.sousTheme" @click="handleAIGeneration">
+            <button class="btn-enigma-primary"
+              :disabled="isAILoading || aiForm.n < 5"
+              @click="handleAIGeneration">
               <div class="btn-content">
                 <i v-if="isAILoading" class="fa-solid fa-circle-notch fa-spin me-2"></i>
                 <i v-else class="fa-solid fa-wand-magic-sparkles me-2"></i>
@@ -522,7 +642,9 @@
                 <i class="fa-solid fa-sitemap"></i>
               </div>
               <div>
-                <h5 class="fw-900 m-0">{{ $t('create') }} <em class="text-amber">{{ $t('campaigns.studio.step1.theme') }}</em></h5>
+                <h5 class="fw-900 m-0">
+                  {{ $t('create') }} <em class="text-amber">{{ $t('campaigns.studio.step1.theme') }}</em>
+                </h5>
                 <p class="small text-muted m-0">Thèmes &amp; sous-thèmes du référentiel</p>
               </div>
             </div>
@@ -535,7 +657,8 @@
             <div class="d-flex gap-2 mb-4">
               <div class="search-inline-box flex-grow-1">
                 <i class="fa-solid fa-folder-plus"></i>
-                <input v-model="newCatName" @keyup.enter="addCategory" placeholder="Nom de la nouvelle catégorie..." class="search-inline-input">
+                <input v-model="newCatName" @keyup.enter="addCategory"
+                  placeholder="Nom de la nouvelle catégorie..." class="search-inline-input">
               </div>
               <button class="btn-enigma-primary" @click="addCategory">
                 <div class="btn-content"><i class="fa-solid fa-plus me-2"></i>{{ $t('create') }}</div>
@@ -550,7 +673,9 @@
                     <div class="d-flex align-items-center gap-2">
                       <i class="fa-solid fa-folder-open text-amber"></i>
                       <strong class="fw-800 small">{{ cat.nom }}</strong>
-                      <span class="slot-badge" style="font-size:9px">{{ cat.sousCategories?.length || 0 }}</span>
+                      <span class="slot-badge" style="font-size:9px">
+                        {{ cat.sousCategories?.length || 0 }}
+                      </span>
                     </div>
                     <button class="btn-icon-sm danger" @click="removeCategory(cat.id)">
                       <i class="fa-solid fa-trash-can"></i>
@@ -566,8 +691,11 @@
                     </div>
                   </div>
                   <div class="sub-add-row">
-                    <input v-model="subCatInputs[cat.id]" @keyup.enter="handleSubAdd(cat.id)" placeholder="Ajouter un sous-thème..." class="sub-input">
-                    <button class="sub-add-btn" @click="handleSubAdd(cat.id)"><i class="fa-solid fa-plus"></i></button>
+                    <input v-model="subCatInputs[cat.id]" @keyup.enter="handleSubAdd(cat.id)"
+                      placeholder="Ajouter un sous-thème..." class="sub-input">
+                    <button class="sub-add-btn" @click="handleSubAdd(cat.id)">
+                      <i class="fa-solid fa-plus"></i>
+                    </button>
                   </div>
                 </div>
               </transition-group>
@@ -595,7 +723,9 @@
                 <h5 class="fw-900 m-0">
                   {{ isEdit ? $t('edit') : $t('create') }} <em class="text-amber">Question</em>
                 </h5>
-                <p class="small text-muted m-0">{{ isEdit ? 'Mise à jour du référentiel' : 'Nouvelle entrée dans la banque' }}</p>
+                <p class="small text-muted m-0">
+                  {{ isEdit ? 'Mise à jour du référentiel' : 'Nouvelle entrée dans la banque' }}
+                </p>
               </div>
             </div>
             <button class="btn-modal-close" @click="showModal = false">
@@ -608,13 +738,10 @@
             <div class="enigma-input-wrap mb-4">
               <label>{{ $t('campaigns.studio.quickAdd.type').toUpperCase() }}</label>
               <div class="type-tiles-grid">
-                <div
-                  v-for="t in typeDefinitions"
-                  :key="t.val"
+                <div v-for="t in typeDefinitions" :key="t.val"
                   :class="['type-tile', { 'type-tile-active': form.type === t.val }]"
                   :style="form.type === t.val ? { '--tile-c': t.color } : {}"
-                  @click="handleTypeChange(t.val)"
-                >
+                  @click="handleTypeChange(t.val)">
                   <div class="tile-icon-wrap" :style="{ color: t.color }">
                     <i :class="t.icon"></i>
                   </div>
@@ -628,11 +755,13 @@
             <div class="enigma-input-wrap mb-4">
               <label>{{ $t('lang.switch').toUpperCase() }}</label>
               <div class="d-flex gap-2">
-                <button :class="['lang-toggle-btn flex-grow-1', { active: form.langue === 'fr' }]" @click="form.langue = 'fr'">
-                  🇫🇷 {{ $t('lang.fr') }}
+                <button :class="['lang-toggle-btn', 'flex-grow-1', { active: form.langue === 'fr' }]"
+                  @click="form.langue = 'fr'">
+                  🇫🇷 Français
                 </button>
-                <button :class="['lang-toggle-btn flex-grow-1', { active: form.langue === 'en' }]" @click="form.langue = 'en'">
-                  🇬🇧 {{ $t('lang.en') }}
+                <button :class="['lang-toggle-btn', 'flex-grow-1', { active: form.langue === 'en' }]"
+                  @click="form.langue = 'en'">
+                  🇬🇧 English
                 </button>
               </div>
             </div>
@@ -641,12 +770,9 @@
             <div class="enigma-input-wrap mb-4">
               <label>{{ $t('campaigns.studio.quickAdd.enonce') }}</label>
               <div style="position:relative">
-                <textarea
-                  v-model="form.enonce"
-                  class="enigma-field"
-                  rows="3"
-                  :placeholder="form.langue === 'en' ? $t('campaigns.studio.quickAdd.enocePlaceholder') : 'Saisir la problématique...'"
-                ></textarea>
+                <textarea v-model="form.enonce" class="enigma-field" rows="3"
+                  :placeholder="form.langue === 'en' ? 'Enter the question...' : 'Saisir la problématique...'">
+                </textarea>
                 <span class="char-counter">{{ form.enonce.length }}</span>
               </div>
             </div>
@@ -658,9 +784,12 @@
                   <label>{{ $t('campaigns.studio.step1.theme') }}</label>
                   <div class="theme-select-wrapper">
                     <i class="fa-solid fa-folder theme-select-icon"></i>
-                    <select v-model="form.theme" class="enigma-field theme-select">
+                    <select v-model="form.theme" class="enigma-field theme-select"
+                      @change="form.sousTheme = ''">
                       <option value="">{{ $t('optional') }}...</option>
-                      <option v-for="cat in categoriesList" :key="cat.id" :value="cat.nom">{{ cat.nom }}</option>
+                      <option v-for="cat in categoriesList" :key="cat.id" :value="cat.nom">
+                        {{ cat.nom }}
+                      </option>
                     </select>
                   </div>
                 </div>
@@ -670,9 +799,12 @@
                   <label>{{ $t('campaigns.studio.step1.subTheme') }}</label>
                   <div class="theme-select-wrapper" :class="{ 'disabled-wrapper': !form.theme }">
                     <i class="fa-solid fa-tags theme-select-icon"></i>
-                    <select v-model="form.sousTheme" class="enigma-field theme-select" :disabled="!form.theme">
+                    <select v-model="form.sousTheme" class="enigma-field theme-select"
+                      :disabled="!form.theme">
                       <option value="">{{ $t('optional') }}</option>
-                      <option v-for="sub in dynamicSubCategories" :key="sub.id" :value="sub.nom">{{ sub.nom }}</option>
+                      <option v-for="sub in dynamicSubCategories" :key="sub.id" :value="sub.nom">
+                        {{ sub.nom }}
+                      </option>
                     </select>
                   </div>
                 </div>
@@ -683,11 +815,14 @@
             <div class="enigma-input-wrap mb-4">
               <label class="d-flex justify-content-between">
                 <span>{{ $t('campaigns.studio.quickAdd.difficulty').toUpperCase() }}</span>
-                <span :style="{ color: getLevelColor(form.points) }"><i class="fa-solid fa-signal me-1"></i>{{ form.points }} / 5</span>
+                <span :style="{ color: getLevelColor(form.points) }">
+                  <i class="fa-solid fa-signal me-1"></i>{{ form.points }} / 5
+                </span>
               </label>
               <div class="admissibility-dashboard">
-                <input type="range" min="1" max="5" step="1" v-model.number="form.points" class="enigma-range"
-                  :style="{ '--rng-c': getLevelColor(form.points), '--rng-pct': ((form.points-1)/4*100) + '%' }">
+                <input type="range" min="1" max="5" step="1" v-model.number="form.points"
+                  class="enigma-range"
+                  :style="{ '--rng-c': getLevelColor(form.points), '--rng-pct': ((form.points - 1) / 4 * 100) + '%' }">
                 <div class="d-flex justify-content-between mt-2">
                   <span class="score-tier tier-low">{{ $t('campaigns.studio.step1.tiers.low') }}</span>
                   <span class="score-tier tier-mid">{{ $t('campaigns.studio.step1.tiers.mid') }}</span>
@@ -696,12 +831,14 @@
               </div>
             </div>
 
-            <!-- OPTIONS -->
-            <div class="enigma-input-wrap mb-4" v-if="[0,1,2].includes(form.type)">
-              <div class="d-flex justify-content-between align-items-center mb-3 pb-2" style="border-bottom:1px solid var(--bdr)">
+            <!-- OPTIONS QCU / QCM / VRAI-FAUX -->
+            <div class="enigma-input-wrap mb-4" v-if="[0, 1, 2].includes(form.type)">
+              <div class="d-flex justify-content-between align-items-center mb-3 pb-2"
+                style="border-bottom:1px solid var(--bdr)">
                 <label class="m-0">
-                  <i :class="getTypeInfo(form.type).icon + ' me-2'" :style="{ color: getTypeInfo(form.type).color }"></i>
-                  {{ form.langue === 'en' ? $t('rolesView.permissions.candidates').toUpperCase() : 'OPTIONS DE RÉPONSE' }}
+                  <i :class="getTypeInfo(form.type).icon + ' me-2'"
+                    :style="{ color: getTypeInfo(form.type).color }"></i>
+                  {{ form.langue === 'en' ? 'ANSWER OPTIONS' : 'OPTIONS DE RÉPONSE' }}
                 </label>
                 <button v-if="form.type !== 2" @click="addResponse" class="btn-bank-action-v2">
                   <i class="fa-solid fa-plus me-1"></i>{{ $t('create') }}
@@ -710,10 +847,13 @@
               <div class="d-flex flex-column gap-2">
                 <div v-for="(rep, idx) in form.reponses" :key="idx" class="asset-card-v8">
                   <div class="drag-node-handle opt-check-area">
-                    <input v-if="form.type === 1" type="checkbox" v-model="rep.estCorrecte" class="asset-checkbox" style="accent-color:#f59e0b">
-                    <input v-else type="radio" :name="`r-${form.id||'new'}`" :value="idx" v-model="correctRadioIndex" class="asset-checkbox" style="accent-color:#f59e0b">
+                    <input v-if="form.type === 1" type="checkbox" v-model="rep.estCorrecte"
+                      class="asset-checkbox" style="accent-color:#f59e0b">
+                    <input v-else type="radio" :name="`r-${form.id || 'new'}`" :value="idx"
+                      v-model="correctRadioIndex" class="asset-checkbox" style="accent-color:#f59e0b">
                   </div>
-                  <input v-model="rep.texte" class="opt-input" :placeholder="`Option ${idx+1}...`">
+                  <input v-model="rep.texte" class="opt-input"
+                    :placeholder="`${form.langue === 'en' ? 'Option' : 'Option'} ${idx + 1}...`">
                   <button v-if="form.type !== 2" class="btn-remove-v8" @click="removeResponse(idx)">
                     <i class="fa-solid fa-xmark"></i>
                   </button>
@@ -725,21 +865,32 @@
               </p>
             </div>
 
-            <!-- CODE / TEXTE LIBRE -->
-            <div class="enigma-input-wrap mb-4" v-if="[4,5,6].includes(form.type)">
+            <!-- CODE / TEXTE LIBRE / PROJET -->
+            <div class="enigma-input-wrap mb-4" v-if="[4, 5, 6].includes(form.type)">
               <label>
-                <i :class="(form.type === 5 ? 'fa-solid fa-terminal' : 'fa-solid fa-pen-to-square') + ' me-2'" :style="{ color: getTypeInfo(form.type).color }"></i>
-                {{ form.type === 5 ? $t('campaigns.studio.quickAdd.explanation').toUpperCase() : (form.langue === 'en' ? 'EXPECTED ANSWER' : 'RÉPONSE ATTENDUE') }}
+                <i :class="(form.type === 5 ? 'fa-solid fa-terminal' : 'fa-solid fa-pen-to-square') + ' me-2'"
+                  :style="{ color: getTypeInfo(form.type).color }"></i>
+                {{ form.type === 5
+                  ? 'CODE DE RÉFÉRENCE'
+                  : form.langue === 'en' ? 'EXPECTED ANSWER' : 'RÉPONSE ATTENDUE' }}
               </label>
               <div class="code-box">
                 <div class="code-titlebar">
-                  <div class="code-dots"><span class="cd-red"></span><span class="cd-amber"></span><span class="cd-green"></span></div>
+                  <div class="code-dots">
+                    <span class="cd-red"></span>
+                    <span class="cd-amber"></span>
+                    <span class="cd-green"></span>
+                  </div>
                   <span class="code-fname">
-                    <i :class="getTypeInfo(form.type).icon + ' me-1'" :style="{ color: getTypeInfo(form.type).color }"></i>
+                    <i :class="getTypeInfo(form.type).icon + ' me-1'"
+                      :style="{ color: getTypeInfo(form.type).color }"></i>
                     {{ form.type === 5 ? 'solution.js' : 'answer.txt' }}
                   </span>
                 </div>
-                <textarea v-model="form.bonneReponse" class="code-area" :rows="form.type === 5 ? 10 : 5" :placeholder="getPlaceholder(form.type, form.langue)"></textarea>
+                <textarea v-model="form.bonneReponse" class="code-area"
+                  :rows="form.type === 5 ? 10 : 5"
+                  :placeholder="getPlaceholder(form.type, form.langue)">
+                </textarea>
               </div>
             </div>
           </div>
@@ -748,7 +899,7 @@
             <button class="btn-qv-cancel" @click="showModal = false">
               <i class="fa-solid fa-xmark me-2"></i>{{ $t('close') }}
             </button>
-            <button class="btn-enigma-primary" :disabled="isSaving" @click="save">
+            <button class="btn-enigma-primary" :disabled="isSaving || !form.enonce.trim()" @click="save">
               <div class="btn-content">
                 <i v-if="isSaving" class="fa-solid fa-circle-notch fa-spin me-2"></i>
                 <i v-else class="fa-solid fa-floppy-disk me-2"></i>
@@ -766,10 +917,15 @@
       <div v-if="toast.active" :class="['enigma-toast', `t-${toast.type}`]">
         <div class="t-ico"><i :class="toast.icon"></i></div>
         <div class="t-body">
-          <strong>{{ toast.type === 'success' ? $t('success').toUpperCase() : toast.type === 'error' ? $t('error').toUpperCase() : 'INFO' }}</strong>
+          <strong>{{
+            toast.type === 'success' ? 'SUCCÈS' :
+            toast.type === 'error'   ? 'ERREUR' : 'INFO'
+          }}</strong>
           <p class="m-0 small">{{ toast.message }}</p>
         </div>
-        <button class="btn-clear-search ms-2" @click="toast.active = false"><i class="fa-solid fa-xmark"></i></button>
+        <button class="btn-clear-search ms-2" @click="toast.active = false">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
       </div>
     </transition>
 
@@ -785,11 +941,13 @@ import Swal from 'sweetalert2';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
-const { t } = useI18n();
+const { t }  = useI18n();
 
 const AI_BASE = 'http://127.0.0.1:8000';
 
-/* ═══ TYPES ═══ */
+// ══════════════════════════════════════════════════════════════
+// CONSTANTES
+// ══════════════════════════════════════════════════════════════
 const typeDefinitions = [
   { val: 0, label: 'Choix unique',   icon: 'fa-solid fa-circle-dot',   color: '#3b82f6' },
   { val: 1, label: 'Choix multiple', icon: 'fa-solid fa-square-check', color: '#8b5cf6' },
@@ -807,11 +965,13 @@ const difficultyLevels = [
 
 const langOptions = [
   { val: 'fr',   flag: '🇫🇷', name: 'Français', desc: 'Questions en français' },
-  { val: 'en',   flag: '🇬🇧', name: 'English',  desc: 'Questions in English' },
-  { val: 'both', flag: '🌐', name: 'Bilingue',  desc: 'FR + EN simultanément' },
+  { val: 'en',   flag: '🇬🇧', name: 'English',  desc: 'Questions in English'  },
+  { val: 'both', flag: '🌐',  name: 'Bilingue',  desc: 'FR + EN simultanément' },
 ];
 
-/* ═══ STATE ═══ */
+// ══════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════
 const questions      = ref([]);
 const categoriesList = ref([]);
 const loading        = ref(true);
@@ -821,7 +981,6 @@ const showModal      = ref(false);
 const showCatManager = ref(false);
 const showAIModal    = ref(false);
 const isEdit         = ref(false);
-const isDark         = ref(false);
 const searchQuery    = ref('');
 const searchFocused  = ref(false);
 const activeFilter   = ref(-1);
@@ -834,6 +993,11 @@ const aiProgress     = ref(0);
 const aiStatusText   = ref('Initialisation...');
 const mousePos       = reactive({ x: 0, y: 0 });
 const subCatInputs   = reactive({});
+const aiAttempted    = ref(false); // ✅ tracks if user tried to generate without theme
+
+//  MULTI-SELECT STATE
+const selectMode  = ref(false);
+const selectedIds = ref(new Set());
 
 const toast  = reactive({ active: false, message: '', type: 'success', icon: '' });
 const aiForm = reactive({ theme: '', sousTheme: '', n: 5, langue: 'fr', type: 0, difficulty: 2 });
@@ -842,216 +1006,504 @@ const form   = reactive({
   theme: '', sousTheme: '', reponses: [], bonneReponse: '', langue: 'fr'
 });
 
-/* ═══ LANGUAGE ═══ */
+// ══════════════════════════════════════════════════════════════
+//  MULTI-SELECT ACTIONS
+// ══════════════════════════════════════════════════════════════
+const toggleSelectMode = () => {
+  selectMode.value = !selectMode.value;
+  if (!selectMode.value) selectedIds.value = new Set();
+};
+
+const toggleSelect = (id) => {
+  const set = new Set(selectedIds.value);
+  if (set.has(id)) set.delete(id);
+  else set.add(id);
+  selectedIds.value = set;
+};
+
+const selectAll = () => {
+  selectedIds.value = new Set(filteredQuestions.value.map(q => q.id));
+};
+
+const deselectAll = () => {
+  selectedIds.value = new Set();
+};
+
+const bulkDelete = async () => {
+  if (selectedIds.value.size === 0) return;
+  const result = await Swal.fire({
+    title: `Supprimer ${selectedIds.value.size} question${selectedIds.value.size > 1 ? 's' : ''} ?`,
+    text: 'Cette action est irréversible.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Supprimer',
+    cancelButtonText: t('cancel'),
+    confirmButtonColor: '#ef4444',
+    background: 'var(--surface, #fff)',
+  });
+  if (!result.isConfirmed) return;
+
+  let successCount = 0;
+  let errorCount = 0;
+  for (const id of selectedIds.value) {
+    try {
+      await api.delete(`/Questions/${id}`);
+      successCount++;
+    } catch {
+      errorCount++;
+    }
+  }
+  await fetchData();
+  selectedIds.value = new Set();
+  selectMode.value = false;
+  showToast(`${successCount} question${successCount > 1 ? 's' : ''} supprimée${successCount > 1 ? 's' : ''}${errorCount ? ` (${errorCount} erreur${errorCount > 1 ? 's' : ''})` : ''}`, successCount > 0 ? 'success' : 'error');
+};
+
+// ✅ Export CSV
+const exportSelectedCSV = () => {
+  const selected = questions.value.filter(q => selectedIds.value.has(q.id));
+  if (!selected.length) return;
+
+  const headers = ['ID', 'Enoncé', 'Type', 'Langue', 'Thème', 'Sous-thème', 'Points', 'Choix', 'Bonne réponse'];
+  const rows = selected.map(q => [
+    q.id,
+    `"${(q.enonce || '').replace(/"/g, '""')}"`,
+    getTypeInfo(q.type).label,
+    resolveQuestionLang(q).toUpperCase(),
+    q.theme || 'Non classé',
+    q.sousTheme || '',
+    q.points || 1,
+    `"${(q.choix || []).join(' | ')}"`,
+    `"${(q.bonneReponse || '').replace(/"/g, '""')}"`
+  ]);
+
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `questions_export_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(`${selected.length} question${selected.length > 1 ? 's' : ''} exportée${selected.length > 1 ? 's' : ''} en CSV`, 'success');
+};
+
+// Export JSON
+const exportSelectedJSON = () => {
+  const selected = questions.value.filter(q => selectedIds.value.has(q.id));
+  if (!selected.length) return;
+
+  const blob = new Blob([JSON.stringify(selected, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `questions_export_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(`${selected.length} question${selected.length > 1 ? 's' : ''} exportée${selected.length > 1 ? 's' : ''} en JSON`, 'success');
+};
+
+// ══════════════════════════════════════════════════════════════
+// RÉSOLUTION LANGUE
+// ══════════════════════════════════════════════════════════════
 const resolveQuestionLang = (q) => {
   if (q.langue === 'en' || q.langue === 'fr') return q.langue;
-  if (q.lang === 'en' || q.lang === 'fr') return q.lang;
+  if (q.lang   === 'en' || q.lang   === 'fr') return q.lang;
   const tx = (q.enonce || '').toLowerCase();
-  const en = ['what','which','how','when','where','why','is ','are ','the ','this ','that '].filter(k => tx.includes(k)).length;
-  const fr = ['quel','comment','pourquoi','les ','des ','est ','sont '].filter(k => tx.includes(k)).length;
-  return en > fr ? 'en' : 'fr';
+  const enScore = ['what','which','how','when','where','why',' is ',' are ',' the '].filter(k => tx.includes(k)).length;
+  const frScore = ['quel','quelle','comment','pourquoi',' les ',' des ',' est ',' sont '].filter(k => tx.includes(k)).length;
+  return enScore > frScore ? 'en' : 'fr';
 };
+
 const resolvePreviewLang = (pq) => {
   if (pq.langue === 'en' || pq.langue === 'fr') return pq.langue;
-  if (pq.lang === 'en' || pq.lang === 'fr') return pq.lang;
+  if (pq.lang   === 'en' || pq.lang   === 'fr') return pq.lang;
   return 'fr';
 };
 
-/* ═══ COMPUTED ═══ */
+// ══════════════════════════════════════════════════════════════
+// AFFICHAGE THÈME
+// ══════════════════════════════════════════════════════════════
+const getDisplayTheme = (q) => {
+  const theme     = (q.theme     || '').trim();
+  const sousTheme = (q.sousTheme || '').trim();
+  if (theme && sousTheme) return `${theme} › ${sousTheme}`;
+  if (theme)              return theme;
+  if (sousTheme)          return sousTheme;
+  return 'Non classé';
+};
+
+// ══════════════════════════════════════════════════════════════
+// COMPUTED
+// ══════════════════════════════════════════════════════════════
 const dynamicSubCategories = computed(() => {
   const cat = categoriesList.value.find(c => c.nom === form.theme);
-  return cat ? cat.sousCategories : [];
+  return cat?.sousCategories ?? [];
 });
+
 const aiDynamicSubCategories = computed(() => {
   const cat = categoriesList.value.find(c => c.nom === aiForm.theme);
-  return cat ? cat.sousCategories : [];
+  return cat?.sousCategories ?? [];
 });
+
 const correctRadioIndex = computed({
-  get: () => form.reponses.findIndex(r => r.estCorrecte),
+  get: () => {
+    const idx = form.reponses.findIndex(r => r.estCorrecte);
+    return idx >= 0 ? idx : 0;
+  },
   set: (idx) => form.reponses.forEach((r, i) => { r.estCorrecte = (i === idx); })
 });
+
 const filteredQuestions = computed(() =>
   questions.value.filter(q => {
-    const ms = !searchQuery.value || q.enonce?.toLowerCase().includes(searchQuery.value.toLowerCase());
+    const ms = !searchQuery.value ||
+      q.enonce?.toLowerCase().includes(searchQuery.value.toLowerCase());
     const mt = activeFilter.value === -1 || q.type === activeFilter.value;
-    const mc = selectedCat.value === 'All' || q.theme === selectedCat.value;
+    const mc = selectedCat.value === 'All' ||
+      (q.theme || '').toLowerCase() === selectedCat.value.toLowerCase();
     const ml = filterLang.value === 'all' || resolveQuestionLang(q) === filterLang.value;
     return ms && mt && mc && ml;
   })
 );
+
 const countByLang = (lang) => questions.value.filter(q => resolveQuestionLang(q) === lang).length;
 const countByType = (val)  => questions.value.filter(q => q.type === val).length;
 
 const kpiStats = computed(() => [
-  { label: t('dashboard.kpis.totalTests'),    value: questions.value.length,                           icon: 'fa-solid fa-database',      color: '#f59e0b', bg: '#fffbeb', trend: 8 },
-  { label: t('dashboard.kpis.campaigns'),     value: categoriesList.value.length,                      icon: 'fa-solid fa-sitemap',        color: '#6366f1', bg: '#eef2ff' },
-  { label: t('campaigns.studio.step1.tiers.high'), value: questions.value.filter(x => x.points >= 4).length, icon: 'fa-solid fa-bolt-lightning', color: '#ef4444', bg: '#fff1f2' },
-  { label: t('lang.fr'),                      value: countByLang('fr'),                                icon: 'fa-solid fa-flag',           color: '#10b981', bg: '#ecfdf5' },
-  { label: t('lang.en'),                      value: countByLang('en'),                                icon: 'fa-solid fa-earth-americas', color: '#8b5cf6', bg: '#f5f3ff' },
+  {
+    label: t('dashboard.kpis.totalTests'),
+    value: questions.value.length,
+    icon: 'fa-solid fa-database', color: '#f59e0b', bg: '#fffbeb', trend: 8
+  },
+  {
+    label: t('dashboard.kpis.campaigns'),
+    value: categoriesList.value.length,
+    icon: 'fa-solid fa-sitemap', color: '#6366f1', bg: '#eef2ff'
+  },
+  {
+    label: 'Difficiles (≥4)',
+    value: questions.value.filter(x => x.points >= 4).length,
+    icon: 'fa-solid fa-bolt-lightning', color: '#ef4444', bg: '#fff1f2'
+  },
+  {
+    label: 'Français',
+    value: countByLang('fr'),
+    icon: 'fa-solid fa-flag', color: '#10b981', bg: '#ecfdf5'
+  },
+  {
+    label: 'English',
+    value: countByLang('en'),
+    icon: 'fa-solid fa-earth-americas', color: '#8b5cf6', bg: '#f5f3ff'
+  },
 ]);
 
-/* ═══ API ═══ */
+// ══════════════════════════════════════════════════════════════
+// API — FETCH
+// ══════════════════════════════════════════════════════════════
 const fetchData = async () => {
   loading.value = true;
   try {
-    const [resQ, resC] = await Promise.all([api.get('/Questions'), api.get('/Categories')]);
-    questions.value     = resQ.data;
+    const [resQ, resC] = await Promise.all([
+      api.get('/Questions'),
+      api.get('/Categories')
+    ]);
+    questions.value      = resQ.data;
     categoriesList.value = resC.data;
-  } catch { showToast(t('error'), 'error'); }
-  finally { loading.value = false; }
+  } catch (err) {
+    console.error('[fetchData]', err);
+    showToast(t('error'), 'error');
+  } finally {
+    loading.value = false;
+  }
 };
 
-/* ═══ IA GÉNÉRATION ═══ */
+// ══════════════════════════════════════════════════════════════
+// IA — PROGRESS SIMULÉ
+// ══════════════════════════════════════════════════════════════
 const simulateProgress = () => {
   aiProgress.value = 0;
-  const steps = [[15,'Connexion Gemini...'],[35,'Analyse thématique...'],[55,'Génération...'],[75,'Structuration...'],[92,'Sauvegarde...'],[100,'Terminé !']];
+  const steps = [
+    [15,  'Connexion Gemini...'],
+    [35,  'Analyse thématique...'],
+    [55,  'Génération des questions...'],
+    [75,  'Structuration...'],
+    [92,  'Sauvegarde...'],
+    [100, 'Terminé !']
+  ];
   let i = 0;
   const timer = setInterval(() => {
-    if (i < steps.length) { aiProgress.value = steps[i][0]; aiStatusText.value = steps[i][1]; i++; }
-    else clearInterval(timer);
+    if (i < steps.length) {
+      aiProgress.value   = steps[i][0];
+      aiStatusText.value = steps[i][1];
+      i++;
+    } else {
+      clearInterval(timer);
+    }
   }, 400);
   return timer;
 };
 
+// ══════════════════════════════════════════════════════════════
+//  IA — APPEL API — THÈME GARANTI DANS CHAQUE QUESTION
+// ══════════════════════════════════════════════════════════════
 const callAIAPI = async (lang) => {
+  //  Snapshot immédiat des valeurs du formulaire
+  const snapshotTheme     = (aiForm.theme     || '').trim();
+  const snapshotSousTheme = (aiForm.sousTheme || '').trim();
+
+  //  Validation préalable
+  if (!snapshotTheme) {
+    throw new Error('theme_required');
+  }
+
   const fd = new FormData();
-  fd.append('theme', aiForm.theme); fd.append('sousTheme', aiForm.sousTheme);
-  fd.append('type', aiForm.type);   fd.append('n', aiForm.n); fd.append('langue', lang);
+  fd.append('theme',     snapshotTheme);
+  fd.append('sousTheme', snapshotSousTheme);
+  fd.append('type',      aiForm.type);
+  fd.append('n',         aiForm.n);
+  fd.append('langue',    lang);
+
+  const processQuestions = (rawList) => {
+    return (rawList || []).map(q => ({
+      ...q,
+      langue:    lang,
+      lang:      lang,
+      // ✅ FIX PRINCIPAL : theme et sousTheme garantis depuis le snapshot
+      theme:     snapshotTheme,
+      sousTheme: snapshotSousTheme,
+    }));
+  };
+
   try {
     const r = await axios.post(`${AI_BASE}/ia/generate-bilingual`, fd);
-    return (r.data.questions || []).map(q => ({ ...q, lang, langue: lang }));
+    return processQuestions(r.data.questions);
   } catch {
+    // Fallback
     const fd2 = new FormData();
-    fd2.append('theme', aiForm.theme); fd2.append('sousTheme', aiForm.sousTheme);
-    fd2.append('n', aiForm.n); fd2.append('langue', lang);
+    fd2.append('theme',     snapshotTheme);
+    fd2.append('sousTheme', snapshotSousTheme);
+    fd2.append('n',         aiForm.n);
+    fd2.append('langue',    lang);
     const r2 = await axios.post(`${AI_BASE}/ia/generate-ultra`, fd2);
-    return (r2.data.questions || []).map(q => ({ ...q, lang, langue: lang }));
+    return processQuestions(r2.data.questions);
   }
 };
 
-const previewAI = async () => {
-  if (!aiForm.theme || !aiForm.sousTheme) { showToast(t('required'), 'error'); return; }
-  if (aiForm.n < 5 || aiForm.n > 100) { showToast("Le nombre de questions doit être entre 5 et 100", 'error'); return; }
-  isAILoading.value = true; aiPreview.value = [];
-  const timer = simulateProgress();
-  try {
-    let res = aiForm.langue === 'both'
-      ? [...await callAIAPI('fr'), ...await callAIAPI('en')]
-      : await callAIAPI(aiForm.langue);
-    aiPreview.value = res;
-    showToast(`${res.length} questions générées en aperçu`, 'success');
-  } catch { showToast(t('error'), 'error'); }
-  finally { clearInterval(timer); isAILoading.value = false; aiProgress.value = 0; }
+// ══════════════════════════════════════════════════════════════
+// ✅ IA — VALIDATION THÈME / SOUS-THÈME
+// ══════════════════════════════════════════════════════════════
+const validateAIForm = () => {
+  aiAttempted.value = true;
+
+  if (!aiForm.theme) {
+    showToast('⚠️ Veuillez sélectionner un thème', 'error');
+    return false;
+  }
+  if (!aiForm.sousTheme) {
+    // ✅ Si pas de sous-thème disponible, on accepte avec le thème seul
+    if (aiDynamicSubCategories.value.length === 0) {
+      // Auto-set sousTheme to theme value when no sub-categories exist
+      aiForm.sousTheme = aiForm.theme;
+      showToast(`ℹ️ Sous-thème auto-défini sur "${aiForm.theme}"`, 'info');
+    } else {
+      showToast('⚠️ Veuillez sélectionner un sous-thème', 'error');
+      return false;
+    }
+  }
+  if (aiForm.n < 5 || aiForm.n > 100) {
+    showToast('Le nombre de questions doit être entre 5 et 100', 'error');
+    return false;
+  }
+  return true;
 };
 
-const handleAIGeneration = async () => {
-  if (!aiForm.theme || !aiForm.sousTheme) { showToast(t('required'), 'error'); return; }
-  if (aiForm.n < 5 || aiForm.n > 100) { showToast("Le nombre de questions doit être entre 5 et 100", 'error'); return; }
+// ══════════════════════════════════════════════════════════════
+// IA — APERÇU
+// ══════════════════════════════════════════════════════════════
+const previewAI = async () => {
+  if (!validateAIForm()) return;
 
-  // 🛡️ VÉRIFICATION QUOTA (Limite de 2/jour)
+  isAILoading.value = true;
+  aiPreview.value   = [];
+  const timer = simulateProgress();
+
+  try {
+    const res = aiForm.langue === 'both'
+      ? [...await callAIAPI('fr'), ...await callAIAPI('en')]
+      : await callAIAPI(aiForm.langue);
+
+    aiPreview.value = res;
+    showToast(`${res.length} questions générées en aperçu (${aiForm.theme} › ${aiForm.sousTheme})`, 'success');
+  } catch (err) {
+    if (err.message === 'theme_required') {
+      showToast('⚠️ Thème requis avant de générer', 'error');
+    } else {
+      console.error('[previewAI]', err);
+      showToast(t('error'), 'error');
+    }
+  } finally {
+    clearInterval(timer);
+    isAILoading.value = false;
+    aiProgress.value  = 0;
+  }
+};
+
+// ══════════════════════════════════════════════════════════════
+// ✅ IA — GÉNÉRATION + SAUVEGARDE — THÈME GARANTI
+// ══════════════════════════════════════════════════════════════
+const handleAIGeneration = async () => {
+  if (!validateAIForm()) return;
+
+  // ✅ Snapshot des valeurs AVANT tout appel async
+  const snapshotTheme      = (aiForm.theme     || '').trim();
+  const snapshotSousTheme  = (aiForm.sousTheme || '').trim();
+  const snapshotType       = aiForm.type;
+  const snapshotDifficulty = aiForm.difficulty;
+
+  // Vérification quota
   try {
     await api.post(`/Usage/validate-action?questionCount=${aiForm.n}`);
   } catch (err) {
-    if (err.response && err.response.status === 403) {
-      if (err.response.data.error === "MAX_QUESTIONS_EXCEEDED") {
-        showToast("Limite de 100 questions dépassée", 'error');
+    if (err.response?.status === 403) {
+      if (err.response.data?.error === 'MAX_QUESTIONS_EXCEEDED') {
+        showToast('Limite de 100 questions dépassée', 'error');
         return;
       }
       showAIModal.value = false;
-      const secondsLeft = err.response.data.retryAfterSeconds || 0;
+      const secondsLeft = err.response.data?.retryAfterSeconds || 0;
       const h = Math.floor(secondsLeft / 3600);
       const m = Math.floor((secondsLeft % 3600) / 60);
       const s = secondsLeft % 60;
       const timeStr = h > 0 ? `${h}h ${m}m ${s}s` : `${m}m ${s}s`;
 
       Swal.fire({
-        title: '<h2 style="font-size: 2.2rem; font-weight: 500; color: #1e293b; margin-top: 1.5rem;">Limite de génération atteinte</h2>',
+        title: '<h2 style="font-size:2rem;font-weight:600;color:#1e293b;margin-top:1rem">Limite atteinte</h2>',
         html: `
-          <div style="padding: 1rem 2rem;">
-            <p style="color: #64748b; font-size: 1.1rem; margin-bottom: 2rem;">Le plan Starter est limité à <b>3 générations</b> par 24h.</p>
-            <div style="background-color: #fff1f2; border: 1px solid #fecaca; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; display: flex; align-items: center; justify-content: center; gap: 15px;">
-              <i class="fa-solid fa-rotate-left" style="color: #ef4444; font-size: 1.5rem;"></i>
-              <span style="color: #be123c; font-size: 1.2rem; font-weight: 500;">Réessayez dans :</span>
-              <span style="background-color: #ef4444; color: white; padding: 4px 12px; border-radius: 6px; font-weight: bold; font-size: 1.1rem;">${timeStr}</span>
+          <div style="padding:1rem 2rem">
+            <p style="color:#64748b;font-size:1.05rem;margin-bottom:1.5rem">
+              Le plan Starter est limité à <b>3 générations</b> par 24h.
+            </p>
+            <div style="background:#fff1f2;border:1px solid #fecaca;border-radius:8px;
+                        padding:1.2rem;margin-bottom:1.5rem;display:flex;
+                        align-items:center;justify-content:center;gap:12px">
+              <i class="fa-solid fa-rotate-left" style="color:#ef4444;font-size:1.3rem"></i>
+              <span style="color:#be123c;font-size:1.1rem;font-weight:500">Réessayez dans :</span>
+              <span style="background:#ef4444;color:white;padding:4px 12px;
+                           border-radius:6px;font-weight:700">${timeStr}</span>
             </div>
-            <div style="background-color: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
-              <p style="color: #92400e; font-size: 1.05rem; margin: 0; line-height: 1.6;">
-                Passez à <b style="color: #92400e;">EvaluaTech Go</b> pour supprimer ce délai et créer des questions illimitées.
+            <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:1.2rem">
+              <p style="color:#92400e;margin:0;line-height:1.6">
+                Passez à <b>EvaluaTech Go</b> pour des questions illimitées.
               </p>
             </div>
-          </div>
-        `,
+          </div>`,
         showCancelButton: true,
         confirmButtonText: 'Passer à EvaluaTech Go',
-        cancelButtonText: t('cancel'),
+        cancelButtonText:  t('cancel'),
         confirmButtonColor: '#eab308',
-        cancelButtonColor: '#f1f5f9',
+        cancelButtonColor:  '#f1f5f9',
         background: '#fff',
-        width: '600px',
+        width: '580px',
         customClass: { popup: 'rounded-4 border-0 shadow-lg' },
         didOpen: () => {
-          const confirmBtn = Swal.getConfirmButton();
-          const cancelBtn = Swal.getCancelButton();
-          if (confirmBtn) {
-            confirmBtn.style.color = '#000'; confirmBtn.style.fontWeight = 'bold';
-            confirmBtn.style.padding = '12px 30px'; confirmBtn.style.borderRadius = '8px';
-            confirmBtn.style.fontSize = '1.1rem';
-          }
-          if (cancelBtn) {
-            cancelBtn.style.color = '#475569'; cancelBtn.style.fontWeight = '500';
-            cancelBtn.style.padding = '12px 30px'; cancelBtn.style.borderRadius = '8px';
-            cancelBtn.style.fontSize = '1.1rem'; cancelBtn.style.backgroundColor = '#f1f5f9';
-            cancelBtn.style.border = 'none';
-          }
+          const c = Swal.getConfirmButton();
+          const x = Swal.getCancelButton();
+          if (c) Object.assign(c.style, { color:'#000', fontWeight:'700', padding:'12px 28px', borderRadius:'8px', fontSize:'1rem' });
+          if (x) Object.assign(x.style, { color:'#475569', fontWeight:'500', padding:'12px 28px', borderRadius:'8px', fontSize:'1rem', backgroundColor:'#f1f5f9', border:'none' });
         }
-      }).then(res => { if (res.isConfirmed) router.push('/pricing'); });
+      }).then(r => { if (r.isConfirmed) router.push('/pricing'); });
       return;
     }
   }
 
   isAILoading.value = true;
   const timer = simulateProgress();
-  const token = localStorage.getItem('token');
+
   try {
-    let all = aiForm.langue === 'both'
+    const all = aiForm.langue === 'both'
       ? [...await callAIAPI('fr'), ...await callAIAPI('en')]
       : await callAIAPI(aiForm.langue);
+
+    // ✅ SAUVEGARDE : chaque question porte déjà theme + sousTheme depuis callAIAPI
+    // On utilise le snapshot en fallback ultime de sécurité
+    let savedCount = 0;
     for (const q of all) {
-      await api.post('/Questions', {
-        enonce: q.question, type: aiForm.type, points: aiForm.difficulty,
-        theme: aiForm.theme, sousTheme: aiForm.sousTheme, langue: q.langue,
-        choix: q.options || [], bonneReponse: q.options && q.answer !== undefined ? q.options[q.answer] : ''
-      }, { headers: { Authorization: `Bearer ${token}` } });
+      // ✅ Triple fallback pour garantir que theme/sousTheme ne soient JAMAIS vides
+      const themeToSave     = (q.theme     && q.theme.trim())     ? q.theme.trim()     : snapshotTheme;
+      const sousThemeToSave = (q.sousTheme && q.sousTheme.trim()) ? q.sousTheme.trim() : snapshotSousTheme || snapshotTheme;
+
+      try {
+        await api.post('/Questions', {
+          enonce:       q.question,
+          type:         snapshotType,
+          points:       snapshotDifficulty,
+          theme:        themeToSave,        // ✅ JAMAIS vide
+          sousTheme:    sousThemeToSave,    // ✅ JAMAIS vide
+          langue:       q.langue,           // ✅ 'fr' ou 'en' forcé par callAIAPI
+          choix:        q.options || [],
+          bonneReponse: Array.isArray(q.options) && q.answer != null
+            ? (q.options[q.answer] ?? '')
+            : ''
+        });
+        savedCount++;
+      } catch (saveErr) {
+        console.error('[save question error]', saveErr, { themeToSave, sousThemeToSave });
+      }
     }
-    showAIModal.value = false; aiPreview.value = [];
+
+    showAIModal.value = false;
+    aiPreview.value   = [];
+    aiAttempted.value = false;
     await fetchData();
+
     const fr = all.filter(q => q.langue === 'fr').length;
     const en = all.filter(q => q.langue === 'en').length;
-    showToast(`${all.length} questions sauvegardées (${fr} 🇫🇷 / ${en} 🇬🇧)`, 'success');
-  } catch { showToast(t('error'), 'error'); }
-  finally { clearInterval(timer); isAILoading.value = false; aiProgress.value = 0; }
+    showToast(
+      `✅ ${savedCount} questions sauvegardées sous "${snapshotTheme} › ${snapshotSousTheme}" (${fr} 🇫🇷 / ${en} 🇬🇧)`,
+      'success'
+    );
+  } catch (err) {
+    console.error('[handleAIGeneration]', err);
+    if (err.message === 'theme_required') {
+      showToast('⚠️ Thème requis avant de générer', 'error');
+    } else {
+      showToast(t('error'), 'error');
+    }
+  } finally {
+    clearInterval(timer);
+    isAILoading.value = false;
+    aiProgress.value  = 0;
+  }
 };
 
-/* ═══ CATÉGORIES ═══ */
+// ══════════════════════════════════════════════════════════════
+// CATÉGORIES
+// ══════════════════════════════════════════════════════════════
 const addCategory = async () => {
   if (!newCatName.value.trim()) return;
   try {
-    const res = await api.post('/Categories', { nom: newCatName.value });
-    categoriesList.value.push(res.data); newCatName.value = '';
+    const res = await api.post('/Categories', { nom: newCatName.value.trim() });
+    categoriesList.value.push(res.data);
+    newCatName.value = '';
     showToast(t('success'), 'success');
   } catch { showToast(t('error'), 'error'); }
 };
+
 const handleSubAdd = async (catId) => {
   const val = subCatInputs[catId];
   if (!val?.trim()) return;
   try {
     const res = await api.post(`/Categories/${catId}/sub`, { nom: val.trim() });
     const cat = categoriesList.value.find(c => c.id === catId);
-    cat?.sousCategories?.push(res.data);
+    if (cat) {
+      if (!cat.sousCategories) cat.sousCategories = [];
+      cat.sousCategories.push(res.data);
+    }
     subCatInputs[catId] = '';
     showToast(t('success'), 'success');
   } catch { showToast(t('error'), 'error'); }
 };
+
 const removeCategory = async (id) => {
   if (!confirm(t('confirm') + ' ?')) return;
   try {
@@ -1060,108 +1512,188 @@ const removeCategory = async (id) => {
     showToast(t('delete'), 'info');
   } catch { showToast(t('error'), 'error'); }
 };
+
 const removeSubCategory = async (subId) => {
   if (!confirm(t('confirm') + ' ?')) return;
-  try { await api.delete(`/Categories/sub/${subId}`); await fetchData(); showToast(t('delete'), 'info'); }
-  catch { showToast(t('error'), 'error'); }
+  try {
+    await api.delete(`/Categories/sub/${subId}`);
+    await fetchData();
+    showToast(t('delete'), 'info');
+  } catch { showToast(t('error'), 'error'); }
 };
 
-/* ═══ FORM ═══ */
+// ══════════════════════════════════════════════════════════════
+// FORM — MODAL ÉDITION / CRÉATION
+// ══════════════════════════════════════════════════════════════
 const handleTypeChange = (newType) => {
   form.type = newType;
-  if (newType === 2) form.reponses = [{ texte: form.langue === 'en' ? 'True' : 'Vrai', estCorrecte: true }, { texte: form.langue === 'en' ? 'False' : 'Faux', estCorrecte: false }];
-  else if ([0,1].includes(newType)) { if (form.reponses.length < 2) form.reponses = [{ texte: '', estCorrecte: true }, { texte: '', estCorrecte: false }]; }
-  else form.reponses = [];
+  if (newType === 2) {
+    form.reponses = [
+      { texte: form.langue === 'en' ? 'True'  : 'Vrai', estCorrecte: true  },
+      { texte: form.langue === 'en' ? 'False' : 'Faux', estCorrecte: false }
+    ];
+  } else if ([0, 1].includes(newType)) {
+    if (form.reponses.length < 2) {
+      form.reponses = [
+        { texte: '', estCorrecte: true  },
+        { texte: '', estCorrecte: false }
+      ];
+    }
+  } else {
+    form.reponses = [];
+  }
 };
+
 const addResponse    = () => form.reponses.push({ texte: '', estCorrecte: false });
 const removeResponse = (i) => form.reponses.splice(i, 1);
 
 const openModal = (q = null) => {
   isEdit.value = !!q;
+
   if (q) {
-    const clone = JSON.parse(JSON.stringify(q));
-    Object.assign(form, clone);
-    form.reponses = (q.choix || []).map(opt => ({ texte: opt, estCorrecte: (q.bonneReponse || '').split('|').includes(opt) }));
-    form.langue   = resolveQuestionLang(q);
+    Object.assign(form, {
+      id:           q.id,
+      enonce:       q.enonce       || '',
+      type:         q.type         ?? 0,
+      points:       q.points       ?? 1,
+      theme:        q.theme        || '',
+      sousTheme:    q.sousTheme    || '',
+      bonneReponse: q.bonneReponse || '',
+      langue:       resolveQuestionLang(q),
+      reponses:     (q.choix || []).map(opt => ({
+        texte:       opt,
+        estCorrecte: (q.bonneReponse || '').split('|').includes(opt)
+      }))
+    });
   } else {
-    Object.assign(form, { id: '', enonce: '', type: 0, points: 1, theme: '', sousTheme: '', bonneReponse: '', langue: 'fr', reponses: [{ texte: '', estCorrecte: true }, { texte: '', estCorrecte: false }] });
+    Object.assign(form, {
+      id: '', enonce: '', type: 0, points: 1,
+      theme: '', sousTheme: '', bonneReponse: '',
+      langue: 'fr',
+      reponses: [
+        { texte: '', estCorrecte: true  },
+        { texte: '', estCorrecte: false }
+      ]
+    });
   }
+
   showModal.value = true;
 };
 
 const save = async () => {
   if (!form.enonce.trim()) return;
   isSaving.value = true;
+
   try {
     let finalBR = '';
-    if (form.type === 0 || form.type === 2) finalBR = form.reponses[correctRadioIndex.value]?.texte || '';
-    else if (form.type === 1) finalBR = form.reponses.filter(r => r.estCorrecte).map(r => r.texte).join('|');
-    else finalBR = form.bonneReponse;
+    if (form.type === 0 || form.type === 2) {
+      finalBR = form.reponses[correctRadioIndex.value]?.texte || '';
+    } else if (form.type === 1) {
+      finalBR = form.reponses.filter(r => r.estCorrecte).map(r => r.texte).join('|');
+    } else {
+      finalBR = form.bonneReponse;
+    }
+
     const payload = {
-      enonce: form.enonce, type: form.type, points: form.points || 1,
-      theme: form.theme, sousTheme: form.sousTheme, langue: form.langue,
-      choix: form.reponses.map(r => r.texte).filter(tx => tx?.trim()),
+      enonce:       form.enonce.trim(),
+      type:         form.type,
+      points:       form.points || 1,
+      theme:        form.theme     || '',
+      sousTheme:    form.sousTheme || '',
+      langue:       form.langue,
+      choix:        form.reponses.map(r => r.texte).filter(tx => tx?.trim()),
       bonneReponse: finalBR
     };
-    if (isEdit.value) await api.put(`/Questions/${form.id}`, payload);
-    else              await api.post('/Questions', payload);
+
+    if (isEdit.value) {
+      await api.put(`/Questions/${form.id}`, payload);
+    } else {
+      await api.post('/Questions', payload);
+    }
+
     showModal.value = false;
     await fetchData();
     showToast(t('success'), 'success');
-  } catch { showToast(t('error'), 'error'); }
-  finally { isSaving.value = false; }
+  } catch (err) {
+    console.error('[save]', err);
+    showToast(t('error'), 'error');
+  } finally {
+    isSaving.value = false;
+  }
 };
 
 const handleDelete = async (id) => {
   if (!confirm(t('confirm') + ' ?')) return;
-  try { await api.delete(`/Questions/${id}`); await fetchData(); showToast(t('delete'), 'info'); }
-  catch { showToast(t('error'), 'error'); }
+  try {
+    await api.delete(`/Questions/${id}`);
+    await fetchData();
+    showToast(t('delete'), 'info');
+  } catch { showToast(t('error'), 'error'); }
 };
 
-/* ═══ UTILS ═══ */
-const getTypeInfo    = (val) => typeDefinitions.find(t => t.val === val) || typeDefinitions[0];
-const getLevelColor  = (p)   => p >= 4 ? '#ef4444' : p >= 3 ? '#f59e0b' : p >= 2 ? '#10b981' : '#3b82f6';
+// ══════════════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════════════
+const getTypeInfo = (val) =>
+  typeDefinitions.find(t => t.val === val) ?? typeDefinitions[0];
+
+const getLevelColor = (p) =>
+  p >= 4 ? '#ef4444' : p >= 3 ? '#f59e0b' : p >= 2 ? '#10b981' : '#3b82f6';
+
 const getPlaceholder = (tp, lang) => {
   if (tp === 5) return lang === 'en' ? '// Enter reference code...' : '// Code de référence...';
   if (tp === 4) return lang === 'en' ? 'Expected answer...' : 'Réponse attendue...';
   return lang === 'en' ? 'Answer...' : 'Réponse...';
 };
-const resetFilters = () => { searchQuery.value = ''; activeFilter.value = -1; selectedCat.value = 'All'; filterLang.value = 'all'; };
+
+const resetFilters = () => {
+  searchQuery.value  = '';
+  activeFilter.value = -1;
+  selectedCat.value  = 'All';
+  filterLang.value   = 'all';
+};
 
 let _toastT = null;
 const showToast = (message, type = 'success') => {
   clearTimeout(_toastT);
-  toast.message = message; toast.type = type;
-  toast.icon = type === 'success' ? 'fa-solid fa-circle-check' : type === 'error' ? 'fa-solid fa-circle-xmark' : 'fa-solid fa-circle-info';
-  toast.active = true;
+  toast.message = message;
+  toast.type    = type;
+  toast.icon    = type === 'success' ? 'fa-solid fa-circle-check'
+                : type === 'error'   ? 'fa-solid fa-circle-xmark'
+                :                      'fa-solid fa-circle-info';
+  toast.active  = true;
   _toastT = setTimeout(() => { toast.active = false; }, 3500);
 };
 
-const orbStyle       = (f) => ({ transform: `translate(${mousePos.x * f * 10}px, ${mousePos.y * f * 10}px)` });
+const orbStyle = (f) => ({
+  transform: `translate(${mousePos.x * f * 10}px, ${mousePos.y * f * 10}px)`
+});
+
 const handleParallax = (e) => {
-  mousePos.x = (e.clientX - window.innerWidth / 2) / 20;
+  mousePos.x = (e.clientX - window.innerWidth  / 2) / 20;
   mousePos.y = (e.clientY - window.innerHeight / 2) / 20;
 };
 
-const isGlobalDark = ref(document.documentElement.getAttribute('data-theme') === 'dark');
+const isGlobalDark = ref(
+  document.documentElement.getAttribute('data-theme') === 'dark'
+);
 
 const toggleGlobalTheme = () => {
-  const newTheme = isGlobalDark.value ? 'light' : 'dark';
+  const next = isGlobalDark.value ? 'light' : 'dark';
   isGlobalDark.value = !isGlobalDark.value;
-  document.documentElement.setAttribute('data-theme', newTheme);
-  localStorage.setItem('theme_preferé_evalua', newTheme);
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme_preferé_evalua', next);
 };
 
 onMounted(() => fetchData());
 </script>
 
-
 <style scoped>
+/* ════════════════════════════════════════
+   CSS CUSTOM PROPERTIES — Light Mode
+════════════════════════════════════════ */
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,700&display=swap');
 
-/* ══════════════════════════════════════════
-   CSS CUSTOM PROPERTIES — Light Mode
-══════════════════════════════════════════ */
 .bq-root {
   --bg:          #f8fafc;
   --surface:     #ffffff;
@@ -1190,12 +1722,11 @@ onMounted(() => fetchData());
   color: var(--text);
   transition: background 0.3s ease, color 0.3s ease;
 }
-
 *, *::before, *::after { box-sizing: border-box; }
 
-/* ══════════════════════════════════════════
-   DARK MODE (GLOBAL SYNC)
-══════════════════════════════════════════ */
+/* ════════════════════════════════════════
+   DARK MODE
+════════════════════════════════════════ */
 [data-theme="dark"] .bq-root {
   --bg:          #0d1117;
   --surface:     #161b22;
@@ -1213,16 +1744,17 @@ onMounted(() => fetchData());
   --shadow-lg:   0 24px 60px rgba(0,0,0,0.5);
 }
 
-/* ── BACKGROUND ── */
+/* ════════════════════════════════════════
+   BACKGROUND
+════════════════════════════════════════ */
 .cyber-engine-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
 .quantum-grid {
   position: absolute; inset: 0;
   background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
   background-size: 40px 40px;
-  opacity: 0.18;
-  transition: opacity 0.3s;
+  opacity: 0.18; transition: opacity 0.3s;
 }
-.dark-mode .quantum-grid { opacity: 0.07; }
+[data-theme="dark"] .quantum-grid { opacity: 0.06; }
 .glow-orb {
   position: absolute; width: 600px; height: 600px;
   filter: blur(120px); opacity: 0.12; border-radius: 50%;
@@ -1230,17 +1762,19 @@ onMounted(() => fetchData());
 }
 .orb-amber { background: #f59e0b; top: -200px; right: -100px; }
 .orb-slate { background: #6366f1; bottom: -200px; left: -100px; }
-.dark-mode .glow-orb { opacity: 0.08; }
+[data-theme="dark"] .glow-orb { opacity: 0.07; }
 
 .main-orchestrator { z-index: 5; }
 .canvas-engine { height: calc(100vh - 64px); }
 
-/* ══════════════════════════════════════════
-   HEADER AMÉLIORÉ
-══════════════════════════════════════════ */
+/* ════════════════════════════════════════
+   HEADER
+════════════════════════════════════════ */
 .bq-header { animation: slideDown 0.6s var(--ease-out) backwards; }
-@keyframes slideDown { from { opacity: 0; transform: translateY(-24px); } to { opacity: 1; transform: none; } }
-
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-24px); }
+  to   { opacity: 1; transform: none; }
+}
 .breadcrumb-pro {
   font-size: 0.72rem; font-weight: 700; color: var(--text3);
   display: flex; align-items: center;
@@ -1252,7 +1786,6 @@ onMounted(() => fetchData());
 .breadcrumb-pro .root:hover { color: var(--amber); }
 .breadcrumb-pro .separator { font-size: 0.55rem; opacity: 0.5; }
 .breadcrumb-pro .current { color: var(--amber); font-weight: 800; }
-
 .premium-title {
   font-weight: 900; font-size: 2.4rem; letter-spacing: -1.5px;
   color: var(--text); margin: 0; line-height: 1.05;
@@ -1263,27 +1796,17 @@ onMounted(() => fetchData());
   font-style: italic;
 }
 .brand-subtitle-v2 { font-size: 0.8rem; font-weight: 600; color: var(--text3); margin-top: 8px; }
-
-/* LIVE DOT */
 .live-dot-wrap { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; }
-.live-dot { width: 8px; height: 8px; background: var(--amber); border-radius: 50%; }
+.live-dot  { width: 8px; height: 8px; background: var(--amber); border-radius: 50%; }
 .live-ring { position: absolute; inset: 0; border: 2px solid rgba(245,158,11,0.4); border-radius: 50%; animation: livePulse 2.2s ease-out infinite; }
 @keyframes livePulse { 0% { transform: scale(0.5); opacity: 0.8; } 100% { transform: scale(1.6); opacity: 0; } }
 
-/* ══════════════════════════════════════════
-   BUTTONS AMÉLIORÉS
-══════════════════════════════════════════ */
-.header-actions-group {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  flex-wrap: wrap;
-}
-.action-buttons-wrap {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
+/* ════════════════════════════════════════
+   BUTTONS
+════════════════════════════════════════ */
+.header-actions-group  { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+.action-buttons-wrap   { display: flex; align-items: center; gap: 10px; }
+
 .btn-refresh-pro {
   width: 44px; height: 44px; background: var(--surface);
   border: 1.5px solid var(--bdr); border-radius: 14px;
@@ -1297,8 +1820,7 @@ onMounted(() => fetchData());
   display: flex; align-items: center; gap: 10px;
   background: var(--surface); border: 1.5px solid var(--bdr);
   border-radius: 14px; padding: 10px 14px;
-  box-shadow: var(--shadow-sm); transition: all 0.25s;
-  color: var(--text3);
+  box-shadow: var(--shadow-sm); transition: all 0.25s; color: var(--text3);
 }
 .search-inline-box.focused { border-color: var(--amber); box-shadow: 0 0 0 4px rgba(245,158,11,0.1); color: var(--amber); }
 .search-inline-input { border: none; background: none; outline: none; width: 170px; font-size: 13px; font-weight: 700; color: var(--text); font-family: inherit; }
@@ -1317,7 +1839,6 @@ onMounted(() => fetchData());
 .btn-outline-pro:hover { background: var(--text); color: var(--surface); transform: translateY(-2px); box-shadow: var(--shadow-md); }
 .btn-outline-pro:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
-/* AI BUTTON */
 .btn-ai-glow {
   position: relative; overflow: hidden;
   display: flex; align-items: center;
@@ -1326,10 +1847,9 @@ onMounted(() => fetchData());
   color: #fff; cursor: pointer; font-family: inherit;
   box-shadow: 0 4px 20px rgba(15,23,42,0.2); transition: all 0.3s;
 }
-.btn-ai-glow:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(245,158,11,0.35); }
+.btn-ai-glow:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(245,158,11,0.35); color: #0f172a; }
 .btn-shine-layer { position: absolute; inset: 0; background: linear-gradient(135deg, var(--amber), #fbbf24); opacity: 0; transition: opacity 0.3s; z-index: 1; }
 .btn-ai-glow:hover .btn-shine-layer { opacity: 1; }
-.btn-ai-glow:hover { color: #0f172a; }
 .btn-ai-glow > *:not(.btn-shine-layer) { position: relative; z-index: 2; }
 .lang-badge-pill { background: rgba(255,255,255,0.18); font-size: 9px; font-weight: 900; padding: 2px 8px; border-radius: 20px; letter-spacing: 0.5px; }
 
@@ -1348,15 +1868,147 @@ onMounted(() => fetchData());
 .btn-enigma-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 .shadow-premium { box-shadow: 0 20px 60px rgba(0,0,0,0.12) !important; }
 
-/* ══════════════════════════════════════════
-   STAT CARDS AMÉLIORÉES
-══════════════════════════════════════════ */
+/* ✅ SELECT MODE BUTTON */
+.btn-select-mode {
+  display: flex; align-items: center;
+  background: var(--surface); border: 1.5px solid var(--bdr);
+  border-radius: 14px; padding: 10px 14px;
+  font-size: 13px; font-weight: 800; color: var(--text2);
+  cursor: pointer; transition: all 0.22s; font-family: inherit;
+  box-shadow: var(--shadow-sm);
+}
+.btn-select-mode:hover { border-color: var(--amber-bdr); color: var(--amber-dark); background: var(--amber-light); }
+.btn-select-mode.active { background: #0f172a; color: white; border-color: #0f172a; }
+[data-theme="dark"] .btn-select-mode.active { background: var(--amber); color: #0f172a; border-color: var(--amber); }
+
+/* ════════════════════════════════════════
+   ✅ BULK ACTION BAR
+════════════════════════════════════════ */
+.bulk-action-bar {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  background: var(--surface); border: 2px solid var(--amber-bdr);
+  border-radius: 20px; padding: 14px 20px;
+  box-shadow: 0 4px 20px rgba(245,158,11,0.12);
+  animation: slideDown 0.3s var(--ease-out) backwards;
+}
+.bulk-info { display: flex; align-items: center; gap: 10px; }
+.bulk-count-badge {
+  background: var(--amber); color: #0f172a;
+  padding: 6px 14px; border-radius: 50px;
+  font-size: 12px; font-weight: 900; letter-spacing: 0.3px;
+}
+.bulk-label { font-size: 12px; font-weight: 600; color: var(--text3); }
+.bulk-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+.bulk-separator { width: 1px; height: 24px; background: var(--bdr); }
+.bulk-btn {
+  display: flex; align-items: center;
+  padding: 7px 14px; border-radius: 10px;
+  font-size: 12px; font-weight: 800; cursor: pointer;
+  border: 1.5px solid var(--bdr); background: var(--surface2);
+  color: var(--text2); transition: all 0.2s; font-family: inherit;
+}
+.bulk-btn:hover { transform: translateY(-1px); }
+.bulk-select-all:hover { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+.bulk-deselect:hover { background: var(--surface); color: var(--text); }
+.bulk-export:hover { background: #ecfdf5; color: #059669; border-color: #a7f3d0; }
+.bulk-delete { color: #ef4444; border-color: #fecaca; }
+.bulk-delete:hover { background: #fff1f2; border-color: #fca5a5; color: #dc2626; }
+
+.select-hint-bar {
+  background: var(--amber-light); border: 1px dashed var(--amber-bdr);
+  border-radius: 14px; padding: 10px 16px;
+  font-size: 12px; font-weight: 700; color: var(--amber-dark);
+  display: flex; align-items: center; flex-wrap: wrap;
+}
+.select-hint-btn {
+  background: var(--amber); color: #0f172a; border: none;
+  padding: 4px 12px; border-radius: 8px; font-size: 11px;
+  font-weight: 800; cursor: pointer; font-family: inherit;
+  transition: all 0.2s;
+}
+.select-hint-btn:hover { transform: scale(1.05); }
+
+/* ════════════════════════════════════════
+   ✅ CARD SELECTION STYLES
+════════════════════════════════════════ */
+.card-select-mode { cursor: pointer !important; }
+.card-select-mode:hover { border-color: var(--amber-bdr) !important; }
+
+.card-selected {
+  border-color: var(--amber) !important;
+  box-shadow: 0 0 0 3px rgba(245,158,11,0.2), var(--shadow-md) !important;
+  transform: translateY(-4px) scale(1.005) !important;
+}
+
+.select-overlay {
+  position: absolute; top: 12px; right: 52px; z-index: 10;
+}
+.select-checkbox {
+  width: 24px; height: 24px; border-radius: 8px;
+  border: 2px solid var(--bdr2); background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.2s var(--ease-spring);
+  font-size: 11px; color: white;
+}
+.select-checkbox:hover { border-color: var(--amber); }
+.select-checkbox.checked { background: var(--amber); border-color: var(--amber); color: #0f172a; font-weight: 900; }
+
+.select-checkbox-sm {
+  width: 20px; height: 20px; border-radius: 6px;
+  border: 2px solid var(--bdr2); background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.2s; font-size: 10px; color: white;
+}
+.select-checkbox-sm:hover { border-color: var(--amber); }
+.select-checkbox-sm.checked { background: var(--amber); border-color: var(--amber); color: #0f172a; font-weight: 900; }
+
+.row-selected { background: var(--amber-light) !important; border-color: var(--amber-bdr) !important; }
+
+/* ✅ Non classé visual indicator */
+.cat-pill-unclassified {
+  background: var(--surface2) !important;
+  border-color: var(--bdr2) !important;
+  color: var(--text3) !important;
+  opacity: 0.7;
+  font-style: italic;
+}
+.chip-unclassified { color: var(--text3) !important; font-style: italic; }
+
+/* ✅ Required badge */
+.required-badge {
+  font-size: 9px; font-weight: 900; color: #ef4444;
+  background: #fee2e2; padding: 2px 8px; border-radius: 20px;
+}
+
+/* ✅ Field required glow */
+.field-required-glow .enigma-field {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 3px rgba(239,68,68,0.1) !important;
+}
+
+/* ✅ Theme preview badge */
+.theme-preview-badge {
+  display: flex; align-items: center;
+  background: linear-gradient(135deg, var(--amber-light), rgba(245,158,11,0.05));
+  border: 1.5px solid var(--amber-bdr); border-radius: 14px;
+  padding: 10px 16px; font-size: 13px;
+}
+.theme-preview-path { font-weight: 800; color: var(--amber-dark); }
+.theme-preview-sub { font-weight: 700; color: var(--text2); }
+.theme-preview-tick {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #10b981; color: white; font-size: 9px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ════════════════════════════════════════
+   STAT CARDS
+════════════════════════════════════════ */
 .stat-card-premium {
   background: var(--surface); border-radius: 24px; padding: 22px;
   display: flex; align-items: center; gap: 14px;
   border: 1.5px solid var(--bdr); transition: all 0.3s var(--ease-out);
-  box-shadow: var(--shadow-sm);
-  animation: slideUp 0.5s var(--ease-out) backwards;
+  box-shadow: var(--shadow-sm); animation: slideUp 0.5s var(--ease-out) backwards;
   position: relative; overflow: hidden;
 }
 .stat-card-premium::before {
@@ -1370,22 +2022,18 @@ onMounted(() => fetchData());
 .stat-icon-wrapper {
   width: 52px; height: 52px; border-radius: 16px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.3rem; flex-shrink: 0;
-  transition: transform 0.3s var(--ease-spring);
+  font-size: 1.3rem; flex-shrink: 0; transition: transform 0.3s var(--ease-spring);
 }
 .stat-card-premium:hover .stat-icon-wrapper { transform: scale(1.12) rotate(-6deg); }
 .stat-value { font-size: 1.9rem; font-weight: 900; color: var(--text); display: block; line-height: 1; letter-spacing: -1.5px; }
 .stat-label { font-size: 0.62rem; font-weight: 700; color: var(--text3); margin-top: 4px; display: block; text-transform: uppercase; letter-spacing: 0.8px; }
-.stat-trend { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 0.6rem; font-weight: 800; padding: 6px 10px; border-radius: 10px; white-space: nowrap; }
+.stat-trend { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 0.6rem; font-weight: 800; padding: 6px 10px; border-radius: 10px; }
 .trend-up { color: #10b981; background: #ecfdf5; }
 
-/* ══════════════════════════════════════════
+/* ════════════════════════════════════════
    TOOLBAR
-══════════════════════════════════════════ */
-.tabs-pill-wrap {
-  background: var(--surface) !important;
-  border-color: var(--bdr) !important;
-}
+════════════════════════════════════════ */
+.tabs-pill-wrap { background: var(--surface) !important; border-color: var(--bdr) !important; }
 .nav-tab-btn-modern {
   padding: 8px 14px; border-radius: 12px; border: none;
   background: transparent; font-weight: 800; font-size: 0.78rem;
@@ -1394,7 +2042,7 @@ onMounted(() => fetchData());
 }
 .nav-tab-btn-modern:hover { background: var(--amber-light); color: var(--amber-dark); }
 .nav-tab-btn-modern.active { background: #0f172a; color: white; }
-.dark-mode .nav-tab-btn-modern.active { background: var(--amber); color: #0f172a; }
+[data-theme="dark"] .nav-tab-btn-modern.active { background: var(--amber); color: #0f172a; }
 .tab-count { background: rgba(255,255,255,0.15); padding: 2px 7px; border-radius: 8px; font-size: 0.62rem; margin-left: 2px; }
 .nav-tab-btn-modern:not(.active) .tab-count { background: var(--surface2); color: var(--text3); }
 
@@ -1404,7 +2052,7 @@ onMounted(() => fetchData());
   border-radius: 12px; padding: 9px 12px; transition: all 0.2s;
 }
 .sort-select-wrap:focus-within { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(245,158,11,0.1); }
-.sort-ico { color: var(--text3); font-size: 11px; }
+.sort-ico   { color: var(--text3); font-size: 11px; }
 .sort-arrow { font-size: 9px; color: var(--text3); }
 .sort-select-pro { border: none; background: none; outline: none; font-size: 11px; font-weight: 700; color: var(--text); font-family: inherit; cursor: pointer; }
 
@@ -1417,47 +2065,41 @@ onMounted(() => fetchData());
 .btn-view-toggle { width: 38px; height: 36px; background: transparent; border: none; cursor: pointer; color: var(--text3); font-size: 13px; transition: all 0.2s; display: flex; align-items: center; justify-content: center; border-radius: 8px; }
 .btn-view-toggle:hover { background: var(--surface2); color: var(--text); }
 .btn-view-toggle.active { background: #0f172a; color: var(--amber); box-shadow: 0 4px 12px rgba(15,23,42,0.2); }
-.dark-mode .btn-view-toggle.active { background: var(--amber); color: #0f172a; }
+[data-theme="dark"] .btn-view-toggle.active { background: var(--amber); color: #0f172a; }
 
-/* ══════════════════════════════════════════
+/* ════════════════════════════════════════
    STATES
-══════════════════════════════════════════ */
+════════════════════════════════════════ */
 .state-label { font-size: 11px; font-weight: 800; color: var(--text3); letter-spacing: 2px; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .spinner-pro-premium { width: 50px; height: 50px; border: 4px solid var(--bdr); border-top: 4px solid var(--amber); border-radius: 50%; animation: spin 1s linear infinite; margin: 40px auto 0; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .empty-state-pro { background: var(--surface); border-radius: 30px; padding: 40px; border: 1.5px dashed var(--bdr2); }
-
 .empty-graphic { position: relative; width: 90px; height: 90px; margin: 0 auto; display: flex; align-items: center; justify-content: center; }
 .empty-ring { position: absolute; inset: 0; border-radius: 50%; border: 1px solid var(--bdr); animation: haloSpin linear infinite; }
 .r1 { animation-duration: 5s; } .r2 { inset: 12px; animation-duration: 8s; } .r3 { inset: 24px; animation-duration: 11s; }
 @keyframes haloSpin { to { transform: rotate(360deg); } }
 .empty-core { font-size: 30px; color: var(--amber); position: relative; z-index: 1; }
 
-/* ══════════════════════════════════════════
-   QUESTION GRID AMÉLIORÉE
-══════════════════════════════════════════ */
+/* ════════════════════════════════════════
+   GRID VIEW
+════════════════════════════════════════ */
 .questions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
-
 .q-card.campaign-card-modern {
   background: var(--surface); border: 1.5px solid var(--bdr);
-  border-radius: 28px; overflow: hidden;
-  display: flex; flex-direction: column;
+  border-radius: 28px; overflow: hidden; display: flex; flex-direction: column;
   box-shadow: var(--shadow-sm); position: relative;
   transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   animation: cardAppear 0.5s var(--ease-out) backwards;
-  animation-delay: var(--card-delay, 0s);
-  padding: 0;
+  animation-delay: var(--card-delay, 0s); padding: 0;
 }
 .q-card.campaign-card-modern::after {
-  content: '';
-  position: absolute; inset: 0; border-radius: 28px;
+  content: ''; position: absolute; inset: 0; border-radius: 28px;
   background: linear-gradient(135deg, rgba(245,158,11,0.04), transparent 60%);
   opacity: 0; transition: opacity 0.3s; pointer-events: none;
 }
 .q-card.campaign-card-modern:hover::after { opacity: 1; }
 .q-card.campaign-card-modern:hover {
-  transform: translateY(-10px) scale(1.01);
-  border-color: var(--amber-bdr);
+  transform: translateY(-10px) scale(1.01); border-color: var(--amber-bdr);
   box-shadow: 0 25px 50px -12px rgba(0,0,0,0.08), 0 8px 30px rgba(245,158,11,0.15);
 }
 @keyframes cardAppear { from { opacity: 0; transform: translateY(20px) scale(0.97); } to { opacity: 1; transform: none; } }
@@ -1472,8 +2114,8 @@ onMounted(() => fetchData());
 }
 .lang-fr { background: linear-gradient(90deg, rgba(254,226,226,0.8), transparent); color: #dc2626; border-bottom: 1px solid rgba(254,202,202,0.5); }
 .lang-en { background: linear-gradient(90deg, rgba(239,246,255,0.8), transparent); color: #2563eb; border-bottom: 1px solid rgba(191,219,254,0.5); }
-.dark-mode .lang-fr { background: linear-gradient(90deg, rgba(127,29,29,0.25), transparent); color: #fca5a5; border-bottom-color: rgba(127,29,29,0.3); }
-.dark-mode .lang-en { background: linear-gradient(90deg, rgba(29,78,216,0.2), transparent); color: #93c5fd; border-bottom-color: rgba(29,78,216,0.25); }
+[data-theme="dark"] .lang-fr { background: linear-gradient(90deg, rgba(127,29,29,0.25), transparent); color: #fca5a5; border-bottom-color: rgba(127,29,29,0.3); }
+[data-theme="dark"] .lang-en { background: linear-gradient(90deg, rgba(29,78,216,0.2), transparent); color: #93c5fd; border-bottom-color: rgba(29,78,216,0.25); }
 .lang-banner-name { opacity: 0.8; }
 
 .card-header-modern { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px 0; }
@@ -1482,7 +2124,7 @@ onMounted(() => fetchData());
   background: var(--surface2); border: 1px solid var(--bdr);
   border-radius: 50px; padding: 5px 12px;
   font-size: 10px; font-weight: 700; color: var(--text2);
-  max-width: 160px; overflow: hidden; transition: all 0.2s;
+  max-width: 180px; overflow: hidden; transition: all 0.2s;
 }
 .card-cat-pill:hover { border-color: var(--amber-bdr); background: var(--amber-light); color: var(--amber-dark); }
 .card-cat-pill span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1499,7 +2141,7 @@ onMounted(() => fetchData());
 
 .type-badge-row {
   display: inline-flex; align-items: center; gap: 8px;
-  padding: 6px 12px 6px 8px; margin: 10px 16px 10px;
+  padding: 6px 12px 6px 8px; margin: 10px 16px;
   border: 1.5px solid var(--badge-c, var(--amber));
   border-left-width: 3px; border-radius: 10px;
   background: color-mix(in srgb, var(--badge-c, var(--amber)) 6%, var(--surface));
@@ -1515,8 +2157,7 @@ onMounted(() => fetchData());
   flex: 1; padding: 0 18px 14px;
   font-size: 14px; font-weight: 700; color: var(--text);
   line-height: 1.65; margin: 0;
-  display: -webkit-box; -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
 
 .card-options-preview { padding: 0 18px 14px; }
@@ -1545,14 +2186,11 @@ onMounted(() => fetchData());
 .level-val { font-size: 12px; font-weight: 800; }
 .slot-badge { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 800; display: flex; align-items: center; }
 
-/* ══════════════════════════════════════════
-   LIST VIEW AMÉLIORÉE
-══════════════════════════════════════════ */
+/* ════════════════════════════════════════
+   LIST VIEW
+════════════════════════════════════════ */
 .list-view-pro { display: flex; flex-direction: column; }
-.list-header-row {
-  background: var(--surface2); border-radius: 14px;
-  border: 1px solid var(--bdr);
-}
+.list-header-row { background: var(--surface2); border-radius: 14px; border: 1px solid var(--bdr); }
 .list-col-label { font-size: 0.6rem; font-weight: 900; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; }
 .list-row-item {
   background: var(--surface); border-radius: 16px;
@@ -1570,19 +2208,20 @@ onMounted(() => fetchData());
 .row-lang-chip { padding: 3px 9px; border-radius: 20px; font-size: 10px; font-weight: 800; }
 .lc-fr { background: rgba(254,226,226,0.7); color: #dc2626; border: 1px solid rgba(254,202,202,0.7); }
 .lc-en { background: rgba(239,246,255,0.7); color: #2563eb; border: 1px solid rgba(191,219,254,0.7); }
-.dark-mode .lc-fr { background: rgba(127,29,29,0.3); color: #fca5a5; border-color: rgba(127,29,29,0.4); }
-.dark-mode .lc-en { background: rgba(29,78,216,0.2); color: #93c5fd; border-color: rgba(29,78,216,0.3); }
+[data-theme="dark"] .lc-fr { background: rgba(127,29,29,0.3); color: #fca5a5; border-color: rgba(127,29,29,0.4); }
+[data-theme="dark"] .lc-en { background: rgba(29,78,216,0.2); color: #93c5fd; border-color: rgba(29,78,216,0.3); }
 
 .meta-chip {
   font-size: 10px; font-weight: 600; color: var(--text3);
   background: var(--surface2); padding: 2px 8px;
   border-radius: 50px; border: 1px solid var(--bdr);
   display: inline-flex; align-items: center;
+  max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
-/* ══════════════════════════════════════════
-   MODALS AMÉLIORÉES
-══════════════════════════════════════════ */
+/* ════════════════════════════════════════
+   MODALS
+════════════════════════════════════════ */
 .quantum-vault-overlay {
   position: fixed; inset: 0; z-index: 1000;
   background: rgba(15,23,42,0.7);
@@ -1596,8 +2235,6 @@ onMounted(() => fetchData());
   display: flex; flex-direction: column; max-height: 90vh;
 }
 .modal-md { max-width: 760px; }
-
-/* Corner decorators */
 .modal-corner { position: absolute; width: 16px; height: 16px; pointer-events: none; z-index: 2; }
 .tl { top: 10px; left: 10px;  border-top: 2.5px solid var(--amber); border-left: 2.5px solid var(--amber); border-radius: 5px 0 0 0; }
 .tr { top: 10px; right: 10px; border-top: 2.5px solid var(--amber); border-right: 2.5px solid var(--amber); border-radius: 0 5px 0 0; }
@@ -1606,8 +2243,7 @@ onMounted(() => fetchData());
 
 .qv-header {
   display: flex; align-items: center; gap: 16px;
-  padding: 22px 28px; border-bottom: 1.5px solid var(--bdr);
-  flex-shrink: 0;
+  padding: 22px 28px; border-bottom: 1.5px solid var(--bdr); flex-shrink: 0;
   background: linear-gradient(135deg, var(--surface), var(--surface2));
 }
 .icon-box-v2 {
@@ -1632,34 +2268,27 @@ onMounted(() => fetchData());
   padding: 16px 28px;
   background: linear-gradient(to top, var(--surface2), var(--surface));
   border-top: 1.5px solid var(--bdr);
-  display: flex; justify-content: flex-end; gap: 10px;
-  flex-shrink: 0;
+  display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0;
 }
 
-/* ══════════════════════════════════════════
-   FORM ELEMENTS AMÉLIORÉS
-══════════════════════════════════════════ */
+/* ════════════════════════════════════════
+   FORM ELEMENTS
+════════════════════════════════════════ */
 .enigma-input-wrap label {
   display: flex; align-items: center; justify-content: space-between;
   font-size: 0.6rem; font-weight: 900; color: var(--text3);
   letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 10px;
 }
-
 .enigma-field {
   width: 100%; padding: 12px 16px;
   background: var(--surface2); border: 1.5px solid var(--bdr);
   border-radius: 14px; font-weight: 600; outline: none;
   font-family: inherit; transition: all 0.25s; font-size: 13px; color: var(--text);
 }
-.enigma-field:focus {
-  border-color: var(--amber); background: var(--surface);
-  box-shadow: 0 0 0 4px rgba(245,158,11,0.1);
-}
+.enigma-field:focus { border-color: var(--amber); background: var(--surface); box-shadow: 0 0 0 4px rgba(245,158,11,0.1); }
 .enigma-field:disabled { opacity: 0.4; cursor: not-allowed; }
-
 .char-counter { position: absolute; bottom: 10px; right: 12px; font-size: 10px; color: var(--text3); font-weight: 600; pointer-events: none; }
 
-/* LANG CARDS */
 .lang-cards-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
 .lang-card {
   background: var(--surface2); border: 2px solid var(--bdr);
@@ -1680,7 +2309,6 @@ onMounted(() => fetchData());
 }
 .lang-card-active .lc-check { opacity: 1; transform: scale(1); }
 
-/* TYPE TILES */
 .type-tiles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
 .type-tile {
   background: var(--surface2); border: 1.5px solid var(--bdr);
@@ -1709,14 +2337,12 @@ onMounted(() => fetchData());
 }
 .type-tile-active .tile-check { opacity: 1; transform: scale(1); }
 
-/* SELECT WRAPPERS */
 .theme-select-wrapper { position: relative; }
 .theme-select-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--amber); font-size: 12px; z-index: 2; pointer-events: none; }
 .theme-select { padding-left: 38px !important; appearance: none; -webkit-appearance: none; cursor: pointer; }
 .disabled-wrapper .theme-select-icon { color: var(--text3); }
 .disabled-wrapper { opacity: 0.5; pointer-events: none; }
 
-/* LANG TOGGLE */
 .lang-toggle-btn {
   padding: 10px; border-radius: 12px;
   background: var(--surface2); border: 1.5px solid var(--bdr);
@@ -1725,17 +2351,14 @@ onMounted(() => fetchData());
 }
 .lang-toggle-btn.active { background: var(--amber); color: #0f172a; border-color: var(--amber); font-weight: 800; transform: translateY(-1px); }
 
-/* RANGE SLIDER AMÉLIORÉ */
 .admissibility-dashboard { background: var(--surface2); border-radius: 18px; padding: 20px; border: 1px solid var(--bdr); }
 .enigma-range {
   width: 100%; height: 6px; appearance: none; cursor: pointer; outline: none;
   border-radius: 6px;
-  background: linear-gradient(
-    to right,
+  background: linear-gradient(to right,
     var(--rng-c, var(--amber)) 0%,
     var(--rng-c, var(--amber)) var(--rng-pct, 0%),
-    var(--bdr) var(--rng-pct, 0%)
-  );
+    var(--bdr) var(--rng-pct, 0%));
   transition: background 0.3s;
 }
 .enigma-range::-webkit-slider-thumb {
@@ -1747,11 +2370,9 @@ onMounted(() => fetchData());
 .score-tier { font-size: 0.6rem; font-weight: 800; opacity: 0.5; }
 .tier-low { color: #10b981; } .tier-mid { color: var(--amber); } .tier-high { color: #ef4444; }
 
-/* STEPPER */
 .number-stepper {
   display: flex; align-items: center;
-  background: var(--surface2); border: 1.5px solid var(--bdr);
-  border-radius: 14px; overflow: hidden;
+  background: var(--surface2); border: 1.5px solid var(--bdr); border-radius: 14px; overflow: hidden;
 }
 .step-btn {
   width: 44px; height: 46px; background: none; border: none;
@@ -1763,7 +2384,6 @@ onMounted(() => fetchData());
 .step-btn:hover { background: var(--amber); color: #0f172a; }
 .step-input { flex: 1; border: none; background: none; outline: none; text-align: center; font-size: 16px; font-weight: 800; color: var(--text); font-family: inherit; }
 
-/* DIFF BUTTONS */
 .diff-btn {
   padding: 9px 6px; background: var(--surface2);
   border: 1.5px solid var(--bdr); border-radius: 12px;
@@ -1773,7 +2393,6 @@ onMounted(() => fetchData());
 }
 .diff-btn:hover { transform: translateY(-1px); }
 
-/* OPTIONS LIST */
 .asset-card-v8 {
   background: var(--surface2); border: 1.5px solid var(--bdr);
   border-radius: 12px; padding: 10px 14px;
@@ -1801,21 +2420,19 @@ onMounted(() => fetchData());
   border-radius: 10px; padding: 8px 12px; margin-top: 8px;
 }
 
-/* CODE BOX AMÉLIORÉE */
 .code-box { border-radius: 16px; overflow: hidden; border: 1.5px solid var(--bdr); box-shadow: var(--shadow-sm); }
 .code-titlebar { background: #0f172a; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; }
 .code-dots { display: flex; gap: 5px; }
-.cd-red   { width: 10px; height: 10px; border-radius: 50%; background: #ef4444; cursor: pointer; transition: opacity 0.2s; }
+.cd-red   { width: 10px; height: 10px; border-radius: 50%; background: #ef4444; cursor: pointer; }
 .cd-amber { width: 10px; height: 10px; border-radius: 50%; background: var(--amber); }
 .cd-green { width: 10px; height: 10px; border-radius: 50%; background: #22c55e; }
-.cd-red:hover { opacity: 0.8; }
 .code-fname { font-size: 10px; color: #4a6090; font-family: monospace; display: flex; align-items: center; gap: 7px; }
-.code-area { width: 100%; background: #0d1829; border: none; padding: 16px 18px; color: #7dd3fc; font-family: 'Fira Code', 'Cascadia Code', monospace; font-size: 12.5px; resize: vertical; outline: none; line-height: 1.7; }
+.code-area { width: 100%; background: #0d1829; border: none; padding: 16px 18px; color: #7dd3fc; font-family: 'Fira Code', monospace; font-size: 12.5px; resize: vertical; outline: none; line-height: 1.7; }
 .code-area::placeholder { color: #2d4a6e; }
 
-/* ══════════════════════════════════════════
-   CATÉGORIES MODAL
-══════════════════════════════════════════ */
+/* ════════════════════════════════════════
+   CATÉGORIES
+════════════════════════════════════════ */
 .cats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .cat-block { background: var(--surface2); border: 1.5px solid var(--bdr); border-radius: 16px; padding: 16px; transition: all 0.25s; }
 .cat-block:hover { border-color: var(--amber-bdr); transform: translateY(-2px); box-shadow: var(--shadow-sm); }
@@ -1835,23 +2452,20 @@ onMounted(() => fetchData());
 .sub-add-btn { width: 32px; height: 32px; border-radius: 9px; background: var(--amber); color: #0f172a; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; transition: all 0.2s var(--ease-spring); }
 .sub-add-btn:hover { transform: scale(1.12) rotate(10deg); }
 
-/* ══════════════════════════════════════════
+/* ════════════════════════════════════════
    AI PROGRESS
-══════════════════════════════════════════ */
-.ai-progress-box {
-  background: var(--amber-light); border: 1.5px solid var(--amber-bdr);
-  border-radius: 16px; padding: 18px; text-align: center;
-}
+════════════════════════════════════════ */
+.ai-progress-box { background: var(--amber-light); border: 1.5px solid var(--amber-bdr); border-radius: 16px; padding: 18px; text-align: center; }
 .ai-prog-track { height: 5px; background: rgba(245,158,11,0.2); border-radius: 5px; overflow: hidden; }
 .ai-prog-fill { height: 100%; background: linear-gradient(90deg, var(--amber), #fbbf24, #f97316); border-radius: 5px; transition: width 0.4s var(--ease-out); min-width: 8px; background-size: 200% 100%; animation: shimmer 1.5s infinite; }
 @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 .ai-prog-text { font-size: 11px; font-weight: 800; color: var(--amber-dark); display: flex; align-items: center; justify-content: center; gap: 8px; }
 
-/* ══════════════════════════════════════════
+/* ════════════════════════════════════════
    AI PREVIEW
-══════════════════════════════════════════ */
+════════════════════════════════════════ */
 .ai-preview-box { background: var(--surface2); border: 1.5px solid var(--bdr); border-radius: 16px; overflow: hidden; }
-.preview-header { display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: var(--surface); border-bottom: 1px solid var(--bdr); font-size: 10px; font-weight: 800; color: var(--text3); letter-spacing: 1px; }
+.preview-header { display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: var(--surface); border-bottom: 1px solid var(--bdr); font-size: 10px; font-weight: 800; color: var(--text3); letter-spacing: 1px; flex-wrap: wrap; }
 .preview-list { padding: 10px; display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
 .preview-item { display: flex; align-items: flex-start; gap: 10px; background: var(--surface); border: 1px solid var(--bdr); border-radius: 10px; padding: 10px; transition: border-color 0.2s; }
 .preview-item:hover { border-color: var(--amber-bdr); }
@@ -1859,9 +2473,9 @@ onMounted(() => fetchData());
 .preview-content { flex: 1; min-width: 0; }
 .preview-q { font-size: 13px; font-weight: 700; color: var(--text); margin: 0 0 4px; }
 
-/* ══════════════════════════════════════════
+/* ════════════════════════════════════════
    MODAL BUTTONS
-══════════════════════════════════════════ */
+════════════════════════════════════════ */
 .btn-qv-cancel {
   background: var(--surface); color: var(--text2);
   border: 1.5px solid var(--bdr); border-radius: 12px;
@@ -1871,33 +2485,29 @@ onMounted(() => fetchData());
 }
 .btn-qv-cancel:hover { background: var(--surface2); transform: translateY(-1px); }
 
-/* ══════════════════════════════════════════
-   TOAST AMÉLIORÉ
-══════════════════════════════════════════ */
+/* ════════════════════════════════════════
+   TOAST
+════════════════════════════════════════ */
 .enigma-toast {
   position: fixed; bottom: 28px; right: 28px;
   background: #0f172a; border-radius: 20px;
   padding: 16px 20px; display: flex; align-items: center; gap: 12px;
   z-index: 9999; box-shadow: 0 20px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.05);
-  min-width: 280px; max-width: 380px; overflow: hidden;
+  min-width: 280px; max-width: 420px; overflow: hidden;
   border-left: 4px solid var(--amber);
 }
-.enigma-toast::before {
-  content: ''; position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(245,158,11,0.08), transparent);
-  pointer-events: none;
-}
+.enigma-toast::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(245,158,11,0.08), transparent); pointer-events: none; }
 .t-success { border-left-color: var(--amber); }
 .t-error   { border-left-color: #ef4444; }
 .t-info    { border-left-color: #6366f1; }
 .t-ico { font-size: 20px; color: white; flex-shrink: 0; position: relative; z-index: 1; }
-.t-body { position: relative; z-index: 1; }
+.t-body { position: relative; z-index: 1; flex: 1; }
 .t-body strong { font-size: 9px; font-weight: 900; color: #94a3b8; letter-spacing: 1.2px; display: block; margin-bottom: 2px; }
-.t-body p { font-size: 13px; font-weight: 700; color: white; }
+.t-body p { font-size: 12px; font-weight: 700; color: white; word-break: break-word; }
 
-/* ══════════════════════════════════════════
+/* ════════════════════════════════════════
    SCROLLBARS
-══════════════════════════════════════════ */
+════════════════════════════════════════ */
 .fancy-scroll::-webkit-scrollbar { width: 4px; }
 .fancy-scroll::-webkit-scrollbar-track { background: var(--surface2); border-radius: 4px; }
 .fancy-scroll::-webkit-scrollbar-thumb { background: var(--amber-bdr); border-radius: 4px; }
@@ -1905,9 +2515,9 @@ onMounted(() => fetchData());
 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--bdr); border-radius: 4px; }
 
-/* ══════════════════════════════════════════
+/* ════════════════════════════════════════
    TRANSITIONS
-══════════════════════════════════════════ */
+════════════════════════════════════════ */
 .modal-quantum-enter-active { animation: zoomModalIn 0.35s var(--ease-spring); }
 .modal-quantum-leave-active { animation: zoomModalIn 0.2s ease-in reverse; }
 @keyframes zoomModalIn { from { opacity: 0; transform: scale(0.88) translateY(24px); } to { opacity: 1; transform: none; } }
@@ -1929,20 +2539,24 @@ onMounted(() => fetchData());
 .fade-up-enter-from   { opacity: 0; transform: translateY(12px); }
 .fade-up-leave-to     { opacity: 0; transform: translateY(-6px); }
 
+.bulk-bar-anim-enter-active { animation: slideDown 0.35s var(--ease-spring); }
+.bulk-bar-anim-leave-active { animation: slideDown 0.2s ease reverse; }
+
 .toast-slide-enter-active { animation: toastIn 0.4s var(--ease-spring); }
 .toast-slide-leave-active { animation: toastIn 0.25s ease reverse; }
 @keyframes toastIn { from { transform: translateX(60px); opacity: 0; } to { transform: none; opacity: 1; } }
 
-/* ══════════════════════════════════════════
-   TEXT UTILITY
-══════════════════════════════════════════ */
+/* ════════════════════════════════════════
+   UTILITIES
+════════════════════════════════════════ */
 .text-amber { color: var(--amber) !important; }
 .fw-800 { font-weight: 800 !important; }
 .fw-900 { font-weight: 900 !important; }
+.text-warning { color: #f59e0b !important; }
 
-/* ══════════════════════════════════════════
+/* ════════════════════════════════════════
    RESPONSIVE
-══════════════════════════════════════════ */
+════════════════════════════════════════ */
 @media (max-width: 1024px) { .bq-workspace { padding: 20px !important; } .premium-title { font-size: 1.8rem; } }
 @media (max-width: 768px) {
   .bq-header { flex-direction: column !important; gap: 16px !important; align-items: flex-start !important; }
@@ -1952,6 +2566,8 @@ onMounted(() => fetchData());
   .cats-grid { grid-template-columns: 1fr; }
   .premium-title { font-size: 1.6rem; }
   .search-inline-input { width: 130px; }
+  .bulk-action-bar { flex-direction: column; align-items: flex-start; }
+  .bulk-actions { margin-left: 0; }
 }
 @media (max-width: 480px) {
   .modal-footer-actions { flex-direction: column; }

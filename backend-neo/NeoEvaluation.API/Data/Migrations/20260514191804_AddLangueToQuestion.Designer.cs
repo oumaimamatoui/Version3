@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NeoEvaluation.API.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NeoEvaluation.API.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260514191804_AddLangueToQuestion")]
+    partial class AddLangueToQuestion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -131,62 +134,6 @@ namespace NeoEvaluation.API.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Categories");
-                });
-
-            modelBuilder.Entity("NeoEvaluation.API.Models.CvAnalysis", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<Guid?>("CandidatId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Conseils")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedByUserId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Decision")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsCv")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("JobDescription")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Lang")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("PointsFaibles")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("PointsForts")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Score")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("CvAnalyses");
                 });
 
             modelBuilder.Entity("NeoEvaluation.API.Models.DocumentCandidat", b =>

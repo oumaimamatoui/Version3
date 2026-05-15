@@ -1,5 +1,10 @@
 <template>
-  <div id="app-container" :class="['app-root', isDark ? 'theme-dark' : 'theme-light']" :dir="isRTL ? 'rtl' : 'ltr'">
+  <!--
+    ✅ FIX 1 — CHATBOT RTL : le :dir="isRTL" a été SUPPRIMÉ de #app-container
+    Le dashboard reste toujours en LTR.
+    Le RTL s'applique UNIQUEMENT sur .chat-window via :dir="chatDir"
+  -->
+  <div id="app-container" :class="['app-root', isDark ? 'theme-dark' : 'theme-light']">
     <router-view v-slot="{ Component }">
       <transition name="page-fade" mode="out-in">
         <component :is="Component" />
@@ -20,7 +25,12 @@
       </transition>
 
       <transition name="chat-slide">
-        <div v-if="isChatOpen" class="chat-window">
+        <!--
+          ✅ FIX 1 — :dir="chatDir" appliqué ICI uniquement sur la fenêtre chat
+          chatDir = 'rtl' si langue arabe, sinon 'ltr'
+          Le reste du dashboard n'est PAS affecté
+        -->
+        <div v-if="isChatOpen" class="chat-window" :dir="chatDir">
 
           <div class="chat-header">
             <div class="header-left">
@@ -148,64 +158,53 @@ import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useNotificationStore } from '@/stores/notification';
 
-const route          = useRoute();
-const authStore      = useAuthStore();
-const notifStore     = useNotificationStore();
+const route      = useRoute();
+const authStore  = useAuthStore();
+const notifStore = useNotificationStore();
 
 // ══════════════════════════════════════════════════════════
-// SIGNALR — CONNEXION NOTIFICATIONS TEMPS RÉEL
-// Se connecte dès que l'utilisateur est authentifié,
-// se déconnecte au logout ou à la destruction du composant.
+// SIGNALR
 // ══════════════════════════════════════════════════════════
-
 onMounted(async () => {
   applyPageTheme();
   applyLangToDocument();
-
-  // Connexion SignalR si déjà authentifié au montage
   if (authStore.isAuthenticated) {
     await notifStore.connect();
   }
 });
 
-// Reconnexion automatique après login / déconnexion après logout
 watch(
   () => authStore.isAuthenticated,
   async (isAuth) => {
-    if (isAuth) {
-      await notifStore.connect();
-    } else {
-      await notifStore.disconnect();
-    }
+    if (isAuth) await notifStore.connect();
+    else await notifStore.disconnect();
   }
 );
 
-// Nettoyage propre à la destruction du composant racine
 onUnmounted(async () => {
   await notifStore.disconnect();
 });
 
 // ══════════════════════════════════════════════════════════
-// I18N — SYSTÈME DE TRADUCTIONS GLOBAL (3 LANGUES)
+// I18N
 // ══════════════════════════════════════════════════════════
-
 const TRANSLATIONS = {
   fr: {
     'theme.dark'  : 'Mode Sombre',
     'theme.light' : 'Mode Clair',
     'lang.switch' : 'Changer de langue',
-    'chatbot.online'     : 'En ligne · Répond en temps réel',
-    'chatbot.placeholder': 'Posez votre question...',
-    'chatbot.welcome'    : '👋 Bonjour ! Je suis **NeoBot**, votre assistant IA NeoStage.\nJe peux vous aider à créer des tests, analyser des CVs, générer des rapports et bien plus.',
-    'chatbot.error'      : '⚠️ Serveur indisponible. Veuillez réessayer.',
+    'chatbot.online'      : 'En ligne · Répond en temps réel',
+    'chatbot.placeholder' : 'Posez votre question...',
+    'chatbot.welcome'     : '👋 Bonjour ! Je suis **NeoBot**, votre assistant IA NeoStage.\nJe peux vous aider à créer des tests, analyser des CVs, générer des rapports et bien plus.',
+    'chatbot.error'       : '⚠️ Serveur indisponible. Veuillez réessayer.',
     'chatbot.suggestLabel': 'Questions fréquentes :',
-    'chatbot.listening'  : 'Je vous écoute...',
-    'chatbot.voice'      : 'Commande vocale',
-    'chatbot.copy'       : 'Copier',
-    'chatbot.speak'      : 'Lire à voix haute',
-    'chatbot.clear'      : 'Effacer la conversation',
-    'chatbot.poweredBy'  : 'Propulsé par Gemini IA',
-    'chatbot.copied'     : '✅ Copié !',
+    'chatbot.listening'   : 'Je vous écoute...',
+    'chatbot.voice'       : 'Commande vocale',
+    'chatbot.copy'        : 'Copier',
+    'chatbot.speak'       : 'Lire à voix haute',
+    'chatbot.clear'       : 'Effacer la conversation',
+    'chatbot.poweredBy'   : 'Propulsé par Gemini IA',
+    'chatbot.copied'      : '✅ Copié !',
     'nav.dashboard'  : 'Tableau de bord',
     'nav.tests'      : 'Tests',
     'nav.candidates' : 'Candidats',
@@ -279,23 +278,22 @@ const TRANSLATIONS = {
     'settings.security'      : 'Sécurité',
     'settings.notifications' : 'Notifications',
   },
-
   en: {
     'theme.dark'  : 'Dark Mode',
     'theme.light' : 'Light Mode',
     'lang.switch' : 'Switch language',
-    'chatbot.online'     : 'Online · Real-time responses',
-    'chatbot.placeholder': 'Ask your question...',
-    'chatbot.welcome'    : "👋 Hello! I'm **NeoBot**, your NeoStage AI assistant.\nI can help you create tests, analyze CVs, generate reports and more.",
-    'chatbot.error'      : '⚠️ Server unavailable. Please try again.',
+    'chatbot.online'      : 'Online · Real-time responses',
+    'chatbot.placeholder' : 'Ask your question...',
+    'chatbot.welcome'     : "👋 Hello! I'm **NeoBot**, your NeoStage AI assistant.\nI can help you create tests, analyze CVs, generate reports and more.",
+    'chatbot.error'       : '⚠️ Server unavailable. Please try again.',
     'chatbot.suggestLabel': 'Frequent questions:',
-    'chatbot.listening'  : 'Listening...',
-    'chatbot.voice'      : 'Voice command',
-    'chatbot.copy'       : 'Copy',
-    'chatbot.speak'      : 'Read aloud',
-    'chatbot.clear'      : 'Clear conversation',
-    'chatbot.poweredBy'  : 'Powered by Gemini AI',
-    'chatbot.copied'     : '✅ Copied!',
+    'chatbot.listening'   : 'Listening...',
+    'chatbot.voice'       : 'Voice command',
+    'chatbot.copy'        : 'Copy',
+    'chatbot.speak'       : 'Read aloud',
+    'chatbot.clear'       : 'Clear conversation',
+    'chatbot.poweredBy'   : 'Powered by Gemini AI',
+    'chatbot.copied'      : '✅ Copied!',
     'nav.dashboard'  : 'Dashboard',
     'nav.tests'      : 'Tests',
     'nav.candidates' : 'Candidates',
@@ -369,23 +367,22 @@ const TRANSLATIONS = {
     'settings.security'      : 'Security',
     'settings.notifications' : 'Notifications',
   },
-
   ar: {
     'theme.dark'  : 'الوضع الداكن',
     'theme.light' : 'الوضع الفاتح',
     'lang.switch' : 'تغيير اللغة',
-    'chatbot.online'     : 'متصل · ردود فورية',
-    'chatbot.placeholder': 'اطرح سؤالك...',
-    'chatbot.welcome'    : '👋 مرحباً! أنا **NeoBot**، مساعدك الذكي في NeoStage.\nيمكنني مساعدتك في إنشاء الاختبارات وتحليل السير الذاتية وإنشاء التقارير والمزيد.',
-    'chatbot.error'      : '⚠️ الخادم غير متاح. حاول مجدداً.',
+    'chatbot.online'      : 'متصل · ردود فورية',
+    'chatbot.placeholder' : 'اطرح سؤالك...',
+    'chatbot.welcome'     : '👋 مرحباً! أنا **NeoBot**، مساعدك الذكي في NeoStage.\nيمكنني مساعدتك في إنشاء الاختبارات وتحليل السير الذاتية وإنشاء التقارير والمزيد.',
+    'chatbot.error'       : '⚠️ الخادم غير متاح. حاول مجدداً.',
     'chatbot.suggestLabel': 'أسئلة شائعة:',
-    'chatbot.listening'  : 'أستمع إليك...',
-    'chatbot.voice'      : 'أمر صوتي',
-    'chatbot.copy'       : 'نسخ',
-    'chatbot.speak'      : 'قراءة بصوت عالٍ',
-    'chatbot.clear'      : 'مسح المحادثة',
-    'chatbot.poweredBy'  : 'مدعوم من Gemini AI',
-    'chatbot.copied'     : '✅ تم النسخ!',
+    'chatbot.listening'   : 'أستمع إليك...',
+    'chatbot.voice'       : 'أمر صوتي',
+    'chatbot.copy'        : 'نسخ',
+    'chatbot.speak'       : 'قراءة بصوت عالٍ',
+    'chatbot.clear'       : 'مسح المحادثة',
+    'chatbot.poweredBy'   : 'مدعوم من Gemini AI',
+    'chatbot.copied'      : '✅ تم النسخ!',
     'nav.dashboard'  : 'لوحة التحكم',
     'nav.tests'      : 'الاختبارات',
     'nav.candidates' : 'المرشحون',
@@ -461,14 +458,17 @@ const TRANSLATIONS = {
   }
 };
 
-// ── Drapeaux & voix ──
 const langFlags  = { fr: '🇫🇷', en: '🇬🇧', ar: '🇸🇦' };
 const langVoice  = { fr: 'fr-FR', en: 'en-US', ar: 'ar-SA' };
 const langLocale = { fr: 'fr-FR', en: 'en-US', ar: 'ar-SA' };
 
-// ── État réactif langue ──
 const currentLang = ref(localStorage.getItem('app_lang') || 'fr');
-const isRTL       = computed(() => currentLang.value === 'ar');
+
+// ✅ FIX 1 — isRTL utilisé UNIQUEMENT pour le chatbot, pas pour le dashboard
+const isRTL   = computed(() => currentLang.value === 'ar');
+
+// chatDir : direction appliquée UNIQUEMENT sur .chat-window
+const chatDir = computed(() => currentLang.value === 'ar' ? 'rtl' : 'ltr');
 
 const t = (key) =>
   TRANSLATIONS[currentLang.value]?.[key]
@@ -476,7 +476,7 @@ const t = (key) =>
   ?? key;
 
 const cycleLang = () => {
-  const langs   = ['fr', 'en', 'ar'];
+  const langs = ['fr', 'en', 'ar'];
   currentLang.value = langs[(langs.indexOf(currentLang.value) + 1) % langs.length];
   localStorage.setItem('app_lang', currentLang.value);
   applyLangToDocument();
@@ -487,14 +487,17 @@ const cycleLang = () => {
 };
 
 const applyLangToDocument = () => {
+  // ✅ FIX 1 — On met à jour l'attribut lang sur <html> pour l'accessibilité
+  // mais on NE change PAS le dir global du document
+  // Le dir reste toujours 'ltr' pour le dashboard
   document.documentElement.setAttribute('lang', currentLang.value);
-  document.documentElement.setAttribute('dir', isRTL.value ? 'rtl' : 'ltr');
+  // ❌ SUPPRIMÉ : document.documentElement.setAttribute('dir', ...)
+  // Le RTL est géré localement sur .chat-window via :dir="chatDir"
 };
 
 // ══════════════════════════════════════════════════════════
-// THÈME DARK / LIGHT
+// THÈME
 // ══════════════════════════════════════════════════════════
-
 const isDark = ref(localStorage.getItem('app_theme') === 'dark');
 
 const applyTheme = (dark) => {
@@ -534,9 +537,8 @@ provide('t',            t);
 provide('isRTL',        isRTL);
 
 // ══════════════════════════════════════════════════════════
-// CHATBOT — ÉTAT & LOGIQUE
+// CHATBOT
 // ══════════════════════════════════════════════════════════
-
 const isChatOpen     = ref(false);
 const chatInput      = ref('');
 const isChatLoading  = ref(false);
@@ -608,13 +610,15 @@ const handleChat = async (isVocal = false) => {
   if (!chatInput.value.trim() || isChatLoading.value) return;
   const userText = chatInput.value.trim();
   chatMessages.value.push({ role: 'user', text: userText, time: now() });
-  chatInput.value    = '';
+  chatInput.value     = '';
   isChatLoading.value = true;
   await scrollToBottom();
   try {
     const fd = new FormData();
     fd.append('message',    userText);
     fd.append('role',       authStore.user?.role || 'Recruteur');
+    // ✅ chatbot envoie 'auto' pour détecter la langue du message tapé
+    // La langue du chatbot est indépendante de la langue du formulaire lettre
     fd.append('lang',       'auto');
     fd.append('session_id', sessionId.value);
     const response = await fetch(`${API_BASE}/ia/chat`, { method: 'POST', body: fd });
@@ -678,16 +682,14 @@ const toggleVoiceRecognition = () => {
 };
 
 // ══════════════════════════════════════════════════════════
-// WATCHERS THÈME & LANGUE
+// WATCHERS
 // ══════════════════════════════════════════════════════════
-
 watch(() => route.path, applyPageTheme);
 
 watch(() => authStore.user?.themePreference, (val) => {
   if (val) { isDark.value = val === 'dark'; applyTheme(isDark.value); }
 });
 
-// Synchroniser thème et langue entre onglets
 window.addEventListener('storage', (e) => {
   if (e.key === 'app_theme') {
     isDark.value = e.newValue === 'dark';
@@ -802,6 +804,8 @@ body {
   min-height:             100vh;
   -webkit-font-smoothing: antialiased;
   transition:             background-color 0.35s ease, color 0.35s ease;
+  /* ✅ FIX 1 — direction LTR forcée sur body, jamais changée */
+  direction:              ltr !important;
 }
 
 #app-container, .app-root {
@@ -809,18 +813,57 @@ body {
   color:            var(--text-main);
   min-height:       100vh;
   transition:       background-color 0.35s ease, color 0.35s ease;
+  /* ✅ FIX 1 — direction LTR forcée sur le container app, jamais changée */
+  direction:        ltr !important;
 }
 
 /* ════════════════════════════════════════════════════════════
-   SUPPORT RTL — Arabe
+   ✅ FIX 1 — CHATBOT RTL ISOLÉ
+   Le RTL s'applique UNIQUEMENT dans .chat-window[dir="rtl"]
+   Le dashboard, sidebar, navbar restent toujours en LTR
    ════════════════════════════════════════════════════════════ */
 
-[dir="rtl"] .chatbot-wrapper { right: auto; left: 28px; }
-[dir="rtl"] .chat-window     { right: auto; left: 0; }
-[dir="rtl"] .chat-msg.user   { flex-direction: row; }
-[dir="rtl"] .chat-msg.ai     { flex-direction: row-reverse; }
-[dir="rtl"] .msg-bubble      { align-items: flex-end; }
-[dir="rtl"] .header-actions  { flex-direction: row-reverse; }
+/* Chatbot wrapper : toujours positionné en bas à droite (LTR) */
+.chatbot-wrapper {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;       /* ← toujours à droite, jamais changé */
+  left: auto !important;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  direction: ltr;    /* ← forcer LTR sur le wrapper */
+}
+
+/* Fenêtre chat : RTL appliqué en interne via :dir="chatDir" */
+.chat-window {
+  position: absolute;
+  bottom: 80px;
+  right: 0;          /* ← toujours à droite */
+  left: auto !important;
+  width: 370px;
+  max-height: 585px;
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* RTL interne au chat : alignement texte et bulles */
+.chat-window[dir="rtl"] .chat-msg.user { flex-direction: row;         }
+.chat-window[dir="rtl"] .chat-msg.ai   { flex-direction: row-reverse; }
+.chat-window[dir="rtl"] .msg-bubble    { align-items: flex-end;       }
+.chat-window[dir="rtl"] .header-actions { flex-direction: row-reverse; }
+.chat-window[dir="rtl"] .chat-input    { text-align: right;           }
+.chat-window[dir="rtl"] .footer-note   { flex-direction: row-reverse; }
+.chat-window[dir="rtl"] .suggestions-label { text-align: right;       }
+.chat-window[dir="rtl"] .suggestion-chips  { justify-content: flex-end; }
+.chat-window[dir="rtl"] .follow-suggestions { justify-content: flex-end; }
 
 /* ════════════════════════════════════════════════════════════
    CARDS & SURFACES
@@ -1010,14 +1053,10 @@ input:focus, select:focus, textarea:focus,
 .alert-danger  { background: var(--danger-bg) !important;  color: var(--danger) !important; }
 
 /* ════════════════════════════════════════════════════════════
-   PROGRESS
+   PROGRESS / PAGINATION / UTILITAIRES
    ════════════════════════════════════════════════════════════ */
 
 .progress { background-color: var(--bg-hover) !important; border-radius: var(--radius-full) !important; }
-
-/* ════════════════════════════════════════════════════════════
-   PAGINATION
-   ════════════════════════════════════════════════════════════ */
 
 .page-link {
   background-color: var(--bg-card) !important;
@@ -1027,10 +1066,6 @@ input:focus, select:focus, textarea:focus,
 .page-link:hover              { background-color: var(--bg-hover) !important; }
 .page-item.active .page-link  { background-color: var(--primary) !important; border-color: var(--primary) !important; color: #fff !important; }
 .page-item.disabled .page-link { opacity: 0.45; }
-
-/* ════════════════════════════════════════════════════════════
-   UTILITAIRES GLOBAUX
-   ════════════════════════════════════════════════════════════ */
 
 hr, .divider           { border-color: var(--border-color) !important; opacity: 1; }
 .bg-success-soft       { background-color: var(--success-bg) !important; }
@@ -1050,7 +1085,7 @@ hr, .divider           { border-color: var(--border-color) !important; opacity: 
 :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
 /* ════════════════════════════════════════════════════════════
-   SCROLLBARS GLOBALES
+   SCROLLBARS
    ════════════════════════════════════════════════════════════ */
 
 * { scrollbar-width: thin; scrollbar-color: var(--border-color) transparent; }
@@ -1067,14 +1102,8 @@ hr, .divider           { border-color: var(--border-color) !important; opacity: 
 .page-fade-enter-from, .page-fade-leave-to       { opacity: 0; transform: translateY(6px); }
 
 /* ════════════════════════════════════════════════════════════
-   CHATBOT — WRAPPER & BULLE
+   CHATBOT — BULLE
    ════════════════════════════════════════════════════════════ */
-
-.chatbot-wrapper {
-  position: fixed; bottom: 28px; right: 28px;
-  z-index: 99999;
-  display: flex; flex-direction: column; align-items: flex-end;
-}
 
 .chat-bubble {
   width: 62px; height: 62px;
@@ -1104,19 +1133,8 @@ hr, .divider           { border-color: var(--border-color) !important; opacity: 
 }
 
 /* ════════════════════════════════════════════════════════════
-   CHATBOT — FENÊTRE
+   CHATBOT — HEADER
    ════════════════════════════════════════════════════════════ */
-
-.chat-window {
-  position: absolute; bottom: 80px; right: 0;
-  width: 370px; max-height: 585px;
-  background: var(--bg-card);
-  border-radius: var(--radius-xl);
-  display: flex; flex-direction: column;
-  border: 1px solid var(--border-color);
-  overflow: hidden; box-shadow: var(--shadow-lg);
-  transition: background-color 0.3s ease, border-color 0.3s ease;
-}
 
 .chat-header {
   background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
@@ -1157,6 +1175,10 @@ hr, .divider           { border-color: var(--border-color) !important; opacity: 
 .btn-lang             { font-size: 1rem; }
 .btn-close-chat:hover { background: rgba(239,68,68,0.35) !important; }
 
+/* ════════════════════════════════════════════════════════════
+   CHATBOT — LOADING BAR
+   ════════════════════════════════════════════════════════════ */
+
 .loading-bar      { height: 2px; background: var(--border-color); flex-shrink: 0; overflow: hidden; }
 .loading-bar-fill {
   height: 100%;
@@ -1164,6 +1186,10 @@ hr, .divider           { border-color: var(--border-color) !important; opacity: 
   background-size: 200% 100%;
   animation: loading-slide 1.2s linear infinite;
 }
+
+/* ════════════════════════════════════════════════════════════
+   CHATBOT — BODY / MESSAGES
+   ════════════════════════════════════════════════════════════ */
 
 .chat-body {
   flex: 1; overflow-y: auto; padding: 16px 14px;
@@ -1235,6 +1261,10 @@ hr, .divider           { border-color: var(--border-color) !important; opacity: 
 .typing-dots span { width: 7px; height: 7px; background: var(--text-muted); border-radius: 50%; animation: typing-bounce 1.4s ease infinite; }
 .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
 .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+/* ════════════════════════════════════════════════════════════
+   CHATBOT — FOOTER / INPUT
+   ════════════════════════════════════════════════════════════ */
 
 .chat-footer {
   border-top: 1px solid var(--border-color); padding: 10px 12px 8px;
@@ -1321,12 +1351,13 @@ hr, .divider           { border-color: var(--border-color) !important; opacity: 
 @keyframes bubbleOut     { from { transform: scale(1); opacity: 1; } to { transform: scale(0); opacity: 0; } }
 
 /* ════════════════════════════════════════════════════════════
-   RESPONSIVE — MOBILE FIRST
+   RESPONSIVE
    ════════════════════════════════════════════════════════════ */
 
 @media (max-width: 768px) {
   .chat-window {
-    width: calc(100vw - 20px); right: -14px;
+    width: calc(100vw - 20px);
+    right: -14px; left: auto !important;
     height: 78vh; bottom: 78px; border-radius: var(--radius-lg);
   }
   .chatbot-wrapper { bottom: 16px; right: 16px; }
@@ -1334,7 +1365,8 @@ hr, .divider           { border-color: var(--border-color) !important; opacity: 
 
 @media (max-width: 480px) {
   .chat-window {
-    width: 100vw; right: -14px;
+    width: 100vw;
+    right: -14px; left: auto !important;
     height: 85vh; bottom: 70px;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   }

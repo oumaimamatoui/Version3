@@ -254,7 +254,31 @@ const fetchCandidates = async () => {
   loading.value = true;
   try {
     const res = await api.get('/Candidates');
-    candidates.value = Array.isArray(res.data) ? res.data : [];
+    const allCandidates = Array.isArray(res.data) ? res.data : [];
+
+    // ── FILTRAGE : exclure les admins / responsables / entreprises ──
+    // On exclut tout utilisateur dont le rôle indique admin/responsable/entreprise
+    // OU dont le nom commence par des mots-clés typiques d'un compte admin
+    const adminKeywords = ['responsable', 'admin', 'administrateur', 'manager', 'rh ', 'drh', 'entreprise'];
+    const adminRoles    = ['admin', 'administrator', 'manager', 'responsable', 'hr', 'recruiter', 'entreprise'];
+
+    candidates.value = allCandidates.filter(c => {
+      const name  = (c.name  || c.fullName || c.nom  || '').toLowerCase();
+      const role  = (c.role  || c.Role     || c.type || c.userType || '').toLowerCase();
+      const email = (c.email || c.Email    || '').toLowerCase();
+
+      // Exclure si le rôle est explicitement non-candidat
+      if (adminRoles.some(r => role.includes(r))) return false;
+
+      // Exclure si le nom contient un mot-clé admin
+      if (adminKeywords.some(kw => name.startsWith(kw) || name.includes(' ' + kw))) return false;
+
+      // Exclure si isAdmin / isEnterprise flag est true
+      if (c.isAdmin || c.IsAdmin || c.isEntreprise || c.IsEntreprise) return false;
+
+      return true;
+    });
+
   } catch (e) {
     console.error('Erreur chargement candidats:', e);
     candidates.value = [];
@@ -337,7 +361,7 @@ const handleParallax = (e) => {
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
 
 /* ════════════════════════════════════════
-   BASE — identique à Campagnes.vue
+   BASE
 ════════════════════════════════════════ */
 .enigma-master-root {
   min-height: 100vh;
@@ -390,7 +414,7 @@ const handleParallax = (e) => {
 .breadcrumb-pro .current { color: #0f172a; font-weight: 800; }
 
 /* ════════════════════════════════════════
-   BUTTONS — copie exacte Campagnes.vue
+   BUTTONS
 ════════════════════════════════════════ */
 .btn-enigma-primary {
   background: #0f172a; color: white; border: none;
@@ -439,7 +463,7 @@ const handleParallax = (e) => {
 .btn-view-cand:hover { background: #0f172a; color: #f59e0b; border-color: #0f172a; }
 
 /* ════════════════════════════════════════
-   STAT CARDS — copie exacte Campagnes.vue
+   STAT CARDS
 ════════════════════════════════════════ */
 .stat-card-premium {
   background: white; border-radius: 24px; padding: 24px;
@@ -452,6 +476,7 @@ const handleParallax = (e) => {
   display: flex; align-items: center; justify-content: center;
   font-size: 1.4rem; flex-shrink: 0;
 }
+.stat-details { margin-left: 16px; }
 .stat-value { font-size: 1.6rem; font-weight: 800; line-height: 1; }
 .stat-label { font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-top: 4px; }
 .stat-trend { display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; font-weight: 800; }
@@ -503,7 +528,7 @@ const handleParallax = (e) => {
 .results-count { font-size: 0.72rem; font-weight: 700; color: #94a3b8; }
 
 /* ════════════════════════════════════════
-   LIST — même pattern que Campagnes list view
+   LIST
 ════════════════════════════════════════ */
 .list-header-row {
   background: #f8fafc;
@@ -547,7 +572,7 @@ const handleParallax = (e) => {
   display: inline-flex; align-items: center;
 }
 
-/* ── Status badges — même pattern status-0 / status-1 / status-2 de Campagnes ── */
+/* ── Status badges ── */
 .status-badge {
   padding: 5px 12px; border-radius: 10px;
   font-size: 0.62rem; font-weight: 800;
@@ -560,10 +585,10 @@ const handleParallax = (e) => {
 }
 @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
 
-.status-0        { background: #eef2ff; color: #6366f1; }   /* Invité */
-.status-2        { background: #ecfdf5; color: #10b981; }   /* Terminé */
-.status-applied  { background: #fffbeb; color: #d97706; }   /* Postulé */
-.status-progress { background: #fff7ed; color: #f97316; }   /* En cours */
+.status-0        { background: #eef2ff; color: #6366f1; }
+.status-2        { background: #ecfdf5; color: #10b981; }
+.status-applied  { background: #fffbeb; color: #d97706; }
+.status-progress { background: #fff7ed; color: #f97316; }
 
 /* ── TABLE FOOTER ── */
 .table-footer-bar {
@@ -612,7 +637,7 @@ const handleParallax = (e) => {
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
 /* ════════════════════════════════════════
-   DARK MODE — même pattern Campagnes.vue
+   DARK MODE
 ════════════════════════════════════════ */
 [data-theme="dark"] .enigma-master-root { background: #0d1117; color: #f0f6fc; }
 [data-theme="dark"] .canvas-engine      { background: #0d1117; }
@@ -620,12 +645,10 @@ const handleParallax = (e) => {
 [data-theme="dark"] .brand-subtitle     { color: #8b949e; }
 [data-theme="dark"] .breadcrumb-pro .current { color: #f0f6fc; }
 
-/* Stat cards */
 [data-theme="dark"] .stat-card-premium { background: rgba(22,27,34,0.7); border-color: rgba(255,255,255,0.05); }
 [data-theme="dark"] .stat-value        { color: #f0f6fc; }
 [data-theme="dark"] .stat-label        { color: #8b949e; }
 
-/* Buttons */
 [data-theme="dark"] .btn-outline-pro {
   background: rgba(255,255,255,0.05);
   border-color: rgba(255,255,255,0.1); color: #f0f6fc;
@@ -644,10 +667,8 @@ const handleParallax = (e) => {
 [data-theme="dark"] .btn-view-cand { background: rgba(245,158,11,0.1); color: #fbbf24; border-color: rgba(245,158,11,0.2); }
 [data-theme="dark"] .btn-view-cand:hover { background: #f59e0b; color: #0d1117; border-color: #f59e0b; }
 
-/* Enigma card */
 [data-theme="dark"] .enigma-card { background: #161b22; border-color: rgba(255,255,255,0.08); }
 
-/* Filter bar */
 [data-theme="dark"] .search-inline-box {
   background: rgba(255,255,255,0.04);
   border-color: rgba(255,255,255,0.08);
@@ -660,27 +681,22 @@ const handleParallax = (e) => {
 }
 [data-theme="dark"] .enigma-field:focus { border-color: #d97706; background: rgba(255,255,255,0.06); }
 
-/* List */
 [data-theme="dark"] .list-header-row { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.06); }
 [data-theme="dark"] .list-col-label   { color: #8b949e; }
 [data-theme="dark"] .list-row-item    { border-color: rgba(255,255,255,0.05); }
 [data-theme="dark"] .list-row-item:hover { background: rgba(245,158,11,0.04); }
 
-/* Candidate info */
 [data-theme="dark"] .candidate-name { color: #f0f6fc; }
 [data-theme="dark"] .candidate-meta { color: #8b949e; }
 [data-theme="dark"] .email-text     { color: #8b949e; }
 
-/* Group tag */
 [data-theme="dark"] .group-tag { background: rgba(255,255,255,0.05); color: #8b949e; border-color: rgba(255,255,255,0.08); }
 
-/* Status badges */
 [data-theme="dark"] .status-0        { background: rgba(99,102,241,0.12);  color: #a5b4fc; }
 [data-theme="dark"] .status-2        { background: rgba(16,185,129,0.12);  color: #34d399; }
 [data-theme="dark"] .status-applied  { background: rgba(217,119,6,0.12);   color: #fbbf24; }
 [data-theme="dark"] .status-progress { background: rgba(249,115,22,0.12);  color: #fb923c; }
 
-/* Table footer */
 [data-theme="dark"] .table-footer-bar { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.05); }
 [data-theme="dark"] .footer-text      { color: #8b949e; }
 [data-theme="dark"] .btn-page {
@@ -690,6 +706,5 @@ const handleParallax = (e) => {
 [data-theme="dark"] .btn-page.active { background: #f59e0b; color: #0d1117; border-color: #f59e0b; }
 [data-theme="dark"] .btn-page:not(:disabled):not(.active):hover { background: rgba(255,255,255,0.08); color: #f0f6fc; }
 
-/* Empty state */
 [data-theme="dark"] .empty-state-pro { border-color: rgba(255,255,255,0.08); }
 </style>

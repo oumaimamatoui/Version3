@@ -45,7 +45,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantService, TenantService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
+builder.Services.AddHttpClient<AiService>(); // AJOUTER CETTE LIGNE
 // OPTIMISATION : Compression des réponses pour réduire la taille des transferts
 builder.Services.AddResponseCompression(options => {
     options.EnableForHttps = true;

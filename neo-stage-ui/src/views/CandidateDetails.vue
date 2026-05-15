@@ -16,7 +16,7 @@
       <!-- ══ LOADER ══ -->
       <div v-if="isLoading" class="loader-portal">
         <div class="robot-ring"></div>
-        <p class="loading-text mt-3">DÉCRYPTAGE DU PROFIL CANDIDAT...</p>
+        <p class="loading-text mt-3">CHARGEMENT DU PROFIL CANDIDAT...</p>
       </div>
 
       <!-- ══ ERREUR ══ -->
@@ -31,8 +31,8 @@
       </div>
 
       <!-- ══ CONTENU ══ -->
-      <main v-else class="canvas-engine flex-grow-1 overflow-auto custom-scrollbar">
-        <div class="p-4 p-lg-5 animate__animated animate__fadeIn">
+      <main v-else class="canvas-engine flex-grow-1 overflow-auto custom-scrollbar" ref="mainScrollRef">
+        <div class="p-4 p-lg-5 animate__fadeIn">
 
           <!-- HEADER -->
           <header class="d-flex justify-content-between align-items-end mb-5 flex-wrap gap-3">
@@ -40,9 +40,7 @@
               <div class="breadcrumb-pro mb-2">
                 <span class="root" @click="$router.push('/dashboard')" style="cursor:pointer">Accueil</span>
                 <i class="fa-solid fa-chevron-right mx-2 separator"></i>
-                <span class="root" @click="$router.push('/analyse-comportementale')" style="cursor:pointer">
-                  Analyses IA
-                </span>
+                <span class="root" @click="$router.push('/analyse-comportementale')" style="cursor:pointer">Analyses IA</span>
                 <i class="fa-solid fa-chevron-right mx-2 separator"></i>
                 <span class="current">{{ candidat.fullName }}</span>
               </div>
@@ -51,17 +49,34 @@
               </h2>
               <p class="text-muted-sm mt-1">
                 <span class="session-id-badge me-2">
-                  ID : {{ String(candidateId).substring(0,13).toUpperCase() }}
+                  ID : {{ String(candidateId).substring(0, 13).toUpperCase() }}
                 </span>
                 <span class="fw-800" style="font-size:0.75rem;text-transform:uppercase;">
-                  {{ candidat.campaignName }}
+                  {{ historiqueList.length }} session(s) enregistrée(s)
                 </span>
               </p>
             </div>
-            <div class="d-flex gap-3">
+
+            <!-- ✅ BOUTONS HEADER : Retour / Correction / Rapport PDF -->
+            <div class="d-flex gap-3 flex-wrap">
               <button class="btn-refresh-pro" @click="$router.back()" title="Retour">
                 <i class="fa-solid fa-arrow-left-long"></i>
               </button>
+
+              <!-- ✅ Bouton Correction : révèle la section et scrolle vers elle -->
+              <button
+                class="btn-correction-scroll"
+                :class="{ 'btn-correction-active': correctionVisible }"
+                @click="toggleCorrection"
+                title="Afficher / masquer la correction détaillée"
+              >
+                <div class="btn-content">
+                  <i class="fa-solid fa-list-check me-2"></i>
+                  {{ correctionVisible ? 'MASQUER LA CORRECTION' : 'VOIR LA CORRECTION' }}
+                </div>
+                <div class="btn-glow"></div>
+              </button>
+
               <button class="btn-enigma-primary" @click="printPage">
                 <div class="btn-content">
                   <i class="fa-solid fa-file-pdf me-2"></i>GÉNÉRER LE RAPPORT
@@ -70,6 +85,31 @@
               </button>
             </div>
           </header>
+
+          <!-- ══ HISTORIQUE DES SESSIONS ══ -->
+          <div v-if="historiqueList.length > 1" class="enigma-card p-4 mb-5">
+            <h6 class="fw-900 mb-3 text-muted-sm" style="font-size:0.62rem;letter-spacing:2px;">
+              TOUTES LES SESSIONS ({{ historiqueList.length }})
+            </h6>
+            <div class="d-flex gap-2 flex-wrap">
+              <button
+                v-for="(h, idx) in historiqueList"
+                :key="h.id"
+                class="session-btn"
+                :class="{ 'session-btn-active': selectedEvalId === h.id }"
+                @click="loadSession(h.id)"
+              >
+                <span class="session-btn-num">Session {{ idx + 1 }}</span>
+                <span
+                  class="session-btn-score"
+                  :class="h.score >= (h.scoreReussite || 70) ? 'score-pass' : 'score-fail'"
+                >
+                  {{ h.score }}%
+                </span>
+                <span class="session-btn-date">{{ formatDateShort(h.date) }}</span>
+              </button>
+            </div>
+          </div>
 
           <!-- KPI -->
           <div class="row g-4 mb-5">
@@ -92,14 +132,13 @@
             <div class="col-xl-4">
               <div class="enigma-card p-5 h-100 d-flex flex-column align-items-center text-center">
 
-                <!-- Avatar -->
                 <div class="avatar-squircle mb-3">
                   {{ initials(candidat.fullName) }}
                 </div>
                 <h3 class="fw-900 mb-0" style="font-size:1.3rem;">{{ candidat.fullName }}</h3>
                 <p class="text-muted-sm small mb-4">{{ candidat.email }}</p>
 
-                <!-- Ring -->
+                <!-- Ring SVG -->
                 <div class="score-ring-container mb-3">
                   <svg viewBox="0 0 140 140" width="180" height="180">
                     <circle cx="70" cy="70" r="56" class="ring-bg"/>
@@ -118,7 +157,6 @@
                   </svg>
                 </div>
 
-                <!-- Status pill -->
                 <div class="result-status-pill mb-2" :class="isPassed ? 'pill-pass' : 'pill-fail'">
                   <i :class="isPassed ? 'fa-solid fa-medal me-2' : 'fa-solid fa-rotate me-2'"></i>
                   {{ isPassed ? 'CANDIDAT CERTIFIABLE' : 'BESOIN DE FORMATION' }}
@@ -151,8 +189,8 @@
                   <div class="info-item">
                     <div class="i-icon"><i class="fa-solid fa-stopwatch"></i></div>
                     <div class="i-data">
-                      <label>Temps de réalisation</label>
-                      <span>{{ candidat.timeTaken || 'N/A' }}</span>
+                      <label>Session sélectionnée</label>
+                      <span>{{ currentSessionTitle || 'N/A' }}</span>
                     </div>
                   </div>
                   <div class="info-item">
@@ -162,8 +200,7 @@
                     <div class="i-data">
                       <label>Intégrité Anti-Cheat</label>
                       <span class="fw-800">
-                        {{ integrityScore }}% —
-                        {{ integrityScore >= 80 ? 'Fiable' : 'À surveiller' }}
+                        {{ integrityScore }}% — {{ integrityScore >= 80 ? 'Fiable' : 'À surveiller' }}
                       </span>
                     </div>
                   </div>
@@ -207,8 +244,10 @@
                 </div>
 
                 <!-- Anti-cheat -->
-                <div class="anticheat-result-box mt-3"
-                  :class="integrityScore >= 70 ? 'ac-result-ok' : 'ac-result-warn'">
+                <div
+                  class="anticheat-result-box mt-3"
+                  :class="integrityScore >= 70 ? 'ac-result-ok' : 'ac-result-warn'"
+                >
                   <i class="fa-solid fa-shield-halved fa-lg me-3"></i>
                   <div>
                     <strong class="d-block" style="font-size:0.82rem;">Anti-Cheat v2.0</strong>
@@ -226,16 +265,26 @@
                   <div v-for="th in themeBreakdown" :key="th.name" class="mb-3">
                     <div class="d-flex justify-content-between mb-1">
                       <span class="small fw-800">{{ th.name }}</span>
-                      <span class="small fw-800" :class="th.pct >= 70 ? 'text-success' : 'text-danger'">
+                      <span
+                        class="small fw-800"
+                        :class="th.pct >= 70 ? 'text-success' : 'text-danger'"
+                      >
                         {{ th.correct }}/{{ th.total }} · {{ th.pct }}%
                       </span>
                     </div>
                     <div class="progress-slim">
-                      <div class="progress-fill"
-                        :style="{ width: th.pct + '%', background: th.pct >= 70 ? '#10b981' : '#f43f5e' }">
-                      </div>
+                      <div
+                        class="progress-fill"
+                        :style="{ width: th.pct + '%', background: th.pct >= 70 ? '#10b981' : '#f43f5e' }"
+                      ></div>
                     </div>
                   </div>
+                </div>
+
+                <div v-else-if="!isSessionLoading" class="mt-4 text-center py-3">
+                  <p class="text-muted-sm small fw-700">
+                    <i class="fa-solid fa-chart-pie me-2"></i>Aucune donnée de thème disponible.
+                  </p>
                 </div>
               </div>
             </div>
@@ -282,8 +331,10 @@
                 </div>
               </div>
               <div class="col-lg-5 p-5 roadmap-column">
-                <h6 class="fw-900 mb-4 text-white"
-                  style="font-size:0.62rem;letter-spacing:2px;opacity:0.5;">
+                <h6
+                  class="fw-900 mb-4 text-white"
+                  style="font-size:0.62rem;letter-spacing:2px;opacity:0.5;"
+                >
                   ROADMAP DE PROGRESSION
                 </h6>
                 <div class="roadmap-step mb-5">
@@ -291,8 +342,10 @@
                     <i class="fa-solid fa-crosshairs"></i>
                   </div>
                   <div>
-                    <label class="d-block text-muted mb-1"
-                      style="font-size:0.6rem;font-weight:900;letter-spacing:1px;">
+                    <label
+                      class="d-block text-muted mb-1"
+                      style="font-size:0.6rem;font-weight:900;letter-spacing:1px;"
+                    >
                       OBJECTIF IMMÉDIAT
                     </label>
                     <p class="text-white fw-700 m-0" style="font-size:0.95rem;">
@@ -305,8 +358,10 @@
                     <i class="fa-solid fa-award"></i>
                   </div>
                   <div>
-                    <label class="d-block text-muted mb-1"
-                      style="font-size:0.6rem;font-weight:900;letter-spacing:1px;">
+                    <label
+                      class="d-block text-muted mb-1"
+                      style="font-size:0.6rem;font-weight:900;letter-spacing:1px;"
+                    >
                       DÉCISION RH CONSEILLÉE
                     </label>
                     <p class="text-white fw-700 m-0" style="font-size:0.95rem;">
@@ -321,115 +376,210 @@
             </div>
           </div>
 
-          <!-- CORRECTION DÉTAILLÉE -->
-          <div class="enigma-card p-5">
-            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-              <h6 class="fw-900 m-0 text-muted-sm" style="font-size:0.65rem;letter-spacing:2px;">
-                CORRECTION DÉTAILLÉE
-              </h6>
-              <div class="d-flex gap-2 flex-wrap">
-                <button v-for="f in filterDefs" :key="f.val"
-                  class="rf-btn" :class="{ 'rf-active': reviewFilter === f.val }"
-                  @click="reviewFilter = f.val">
-                  <span class="rf-dot" :class="'rfd-' + f.val"></span>
-                  {{ f.label }} ({{ f.count }})
-                </button>
-              </div>
-            </div>
-
-            <!-- Pas de données -->
-            <div v-if="detailedCorrection.length === 0" class="text-center py-5">
-              <i class="fa-solid fa-inbox fa-3x mb-3" style="color:#e2e8f0;"></i>
-              <p class="text-muted-sm fw-700">Aucune correction disponible pour ce candidat.</p>
-            </div>
-
-            <div v-else class="d-flex flex-column gap-3">
-              <div v-for="(item, idx) in filteredCorrection" :key="idx"
-                class="correction-card"
-                :class="item.isCorrect ? 'cc-correct' : (item.userAnswer ? 'cc-incorrect' : 'cc-skipped')">
-
-                <div class="cc-header d-flex justify-content-between align-items-center px-4 py-3">
-                  <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <span class="cc-num">QUESTION {{ item.originalIndex + 1 }}</span>
-                    <span v-if="item.theme" class="cc-theme">{{ item.theme }}</span>
-                    <span v-if="item.points" class="cc-pts">{{ item.points }} pts</span>
+          <!-- ══════════════════════════════════════════
+               ✅ SECTION CORRECTION — CACHÉE PAR DÉFAUT
+               Affichée seulement après clic sur "VOIR LA CORRECTION"
+          ══════════════════════════════════════════ -->
+          <Transition name="correction-reveal">
+            <div
+              v-if="correctionVisible"
+              class="enigma-card p-5"
+              ref="correctionSectionRef"
+            >
+              <!-- En-tête correction -->
+              <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="correction-title-icon">
+                    <i class="fa-solid fa-list-check"></i>
                   </div>
-                  <span class="cc-status"
-                    :class="item.isCorrect ? 'cc-s-correct' : (item.userAnswer ? 'cc-s-incorrect' : 'cc-s-skipped')">
-                    <i :class="item.isCorrect
-                      ? 'fa-solid fa-check me-1'
-                      : (item.userAnswer ? 'fa-solid fa-xmark me-1' : 'fa-solid fa-minus me-1')">
-                    </i>
-                    {{ item.isCorrect ? 'CORRECT' : (item.userAnswer ? 'INCORRECT' : 'IGNORÉ') }}
-                  </span>
-                </div>
-
-                <div class="px-4 py-3">
-                  <h5 class="fw-800 mb-3" style="font-size:1rem;">
-                    {{ item.enonce || item.question || item.questionText }}
-                  </h5>
-
-                  <!-- OPTIONS QCU/QCM -->
-                  <div v-if="item.options && item.options.length > 0" class="d-flex flex-column gap-2 mb-3">
-                    <div v-for="(opt, oi) in item.options" :key="oi"
-                      class="cc-opt d-flex align-items-center gap-3 p-3"
-                      :class="{
-                        'cco-correct':      item.correctIndexes?.includes(oi),
-                        'cco-user':         item.userIndexes?.includes(oi) && !item.correctIndexes?.includes(oi),
-                        'cco-user-correct': item.userIndexes?.includes(oi) && item.correctIndexes?.includes(oi)
-                      }">
-                      <div class="cco-letter">{{ String.fromCharCode(65 + oi) }}</div>
-                      <div class="flex-grow-1 fw-700" style="font-size:0.88rem;">{{ opt }}</div>
-                      <i v-if="item.correctIndexes?.includes(oi)" class="fa-solid fa-check"
-                        style="color:#10b981;"></i>
-                      <i v-else-if="item.userIndexes?.includes(oi)" class="fa-solid fa-xmark"
-                        style="color:#f43f5e;"></i>
-                    </div>
-                  </div>
-
-                  <!-- TEXTE LIBRE -->
-                  <div v-else class="row g-3 mb-3">
-                    <div class="col-md-6">
-                      <div class="cctc-block p-3" :class="item.isCorrect ? 'cctc-ok' : 'cctc-user'">
-                        <label class="d-block mb-2"
-                          style="font-size:0.55rem;font-weight:900;letter-spacing:1.5px;">
-                          RÉPONSE DU CANDIDAT
-                        </label>
-                        <p class="m-0 fw-700" style="font-size:0.85rem;">
-                          {{ item.userAnswer || 'AUCUNE RÉPONSE' }}
-                        </p>
-                      </div>
-                    </div>
-                    <div v-if="!item.isCorrect" class="col-md-6">
-                      <div class="cctc-block cctc-ok p-3">
-                        <label class="d-block mb-2"
-                          style="font-size:0.55rem;font-weight:900;letter-spacing:1.5px;">
-                          RÉPONSE CORRECTE
-                        </label>
-                        <p class="m-0 fw-700" style="font-size:0.85rem;">
-                          {{ item.correctAnswer || item.bonneReponse }}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- EXPLICATION -->
-                  <div v-if="item.explication || item.explanation" class="cc-explication p-3">
-                    <div class="d-flex align-items-center mb-2"
-                      style="font-size:0.62rem;font-weight:900;letter-spacing:1px;">
-                      <i class="fa-solid fa-lightbulb me-2" style="color:#f59e0b;"></i>EXPLICATION
-                    </div>
-                    <p class="m-0" style="font-size:0.85rem;font-weight:600;line-height:1.6;">
-                      {{ item.explication || item.explanation }}
+                  <div>
+                    <h6 class="fw-900 m-0 correction-section-title">CORRECTION DÉTAILLÉE</h6>
+                    <p
+                      v-if="currentSessionTitle"
+                      class="m-0 mt-1"
+                      style="font-size:0.72rem;font-weight:700;color:#94a3b8;"
+                    >
+                      {{ currentSessionTitle }}
                     </p>
                   </div>
                 </div>
+                <div class="d-flex gap-2 flex-wrap align-items-center">
+                  <!-- Filtres -->
+                  <button
+                    v-for="f in filterDefs"
+                    :key="f.val"
+                    class="rf-btn"
+                    :class="{ 'rf-active': reviewFilter === f.val }"
+                    @click="reviewFilter = f.val"
+                  >
+                    <span class="rf-dot" :class="'rfd-' + f.val"></span>
+                    {{ f.label }} ({{ f.count }})
+                  </button>
+                  <!-- Bouton fermer -->
+                  <button class="btn-close-correction ms-2" @click="correctionVisible = false" title="Masquer la correction">
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
               </div>
 
-              <div v-if="filteredCorrection.length === 0" class="text-center py-5 text-muted-sm">
-                <i class="fa-solid fa-check-double fa-2x mb-3 text-success"></i>
-                <p class="fw-700 small">Aucune question dans cette catégorie.</p>
+              <!-- Loader correction -->
+              <div v-if="isSessionLoading" class="text-center py-5">
+                <div class="robot-ring mx-auto mb-3"></div>
+                <p class="fw-800 text-muted" style="font-size:0.72rem;letter-spacing:1px;">
+                  CHARGEMENT DE LA CORRECTION...
+                </p>
               </div>
+
+              <!-- Pas de données -->
+              <div v-else-if="detailedCorrection.length === 0" class="text-center py-5">
+                <i class="fa-solid fa-inbox fa-3x mb-3" style="color:#e2e8f0;"></i>
+                <p class="text-muted-sm fw-700">Aucune correction disponible pour ce candidat.</p>
+              </div>
+
+              <!-- ✅ Liste des corrections -->
+              <div v-else class="d-flex flex-column gap-3">
+                <div
+                  v-for="(item, idx) in filteredCorrection"
+                  :key="idx"
+                  class="correction-card"
+                  :class="item.isCorrect
+                    ? 'cc-correct'
+                    : (item.userAnswer ? 'cc-incorrect' : 'cc-skipped')"
+                >
+                  <div class="cc-header d-flex justify-content-between align-items-center px-4 py-3">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                      <span class="cc-num">QUESTION {{ item.originalIndex + 1 }}</span>
+                      <span v-if="item.theme" class="cc-theme">{{ item.theme }}</span>
+                      <span v-if="item.points" class="cc-pts">{{ item.points }} pts</span>
+                    </div>
+                    <span
+                      class="cc-status"
+                      :class="item.isCorrect
+                        ? 'cc-s-correct'
+                        : (item.userAnswer ? 'cc-s-incorrect' : 'cc-s-skipped')"
+                    >
+                      <i
+                        :class="item.isCorrect
+                          ? 'fa-solid fa-check me-1'
+                          : (item.userAnswer ? 'fa-solid fa-xmark me-1' : 'fa-solid fa-minus me-1')"
+                      ></i>
+                      {{ item.isCorrect ? 'CORRECT' : (item.userAnswer ? 'INCORRECT' : 'IGNORÉ') }}
+                    </span>
+                  </div>
+
+                  <div class="px-4 py-3">
+                    <h5 class="fw-800 mb-3" style="font-size:1rem;">
+                      {{ item.enonce }}
+                    </h5>
+
+                    <!-- OPTIONS QCU / QCM -->
+                    <div
+                      v-if="item.options && item.options.length > 0"
+                      class="d-flex flex-column gap-2 mb-3"
+                    >
+                      <div
+                        v-for="(opt, oi) in item.options"
+                        :key="oi"
+                        class="cc-opt d-flex align-items-center gap-3 p-3"
+                        :class="{
+                          'cco-correct':      isOptionCorrect(item, oi),
+                          'cco-user':         isOptionUser(item, oi) && !isOptionCorrect(item, oi),
+                          'cco-user-correct': isOptionUser(item, oi) &&  isOptionCorrect(item, oi),
+                        }"
+                      >
+                        <div class="cco-letter">{{ String.fromCharCode(65 + oi) }}</div>
+                        <div class="flex-grow-1 fw-700" style="font-size:0.88rem;">{{ opt }}</div>
+                        <i
+                          v-if="isOptionCorrect(item, oi)"
+                          class="fa-solid fa-check"
+                          style="color:#10b981;"
+                        ></i>
+                        <i
+                          v-else-if="isOptionUser(item, oi)"
+                          class="fa-solid fa-xmark"
+                          style="color:#f43f5e;"
+                        ></i>
+                      </div>
+                    </div>
+
+                    <!-- TEXTE LIBRE -->
+                    <div v-else class="row g-3 mb-3">
+                      <div class="col-md-6">
+                        <div
+                          class="cctc-block p-3"
+                          :class="item.isCorrect ? 'cctc-ok' : 'cctc-user'"
+                        >
+                          <label
+                            class="d-block mb-2"
+                            style="font-size:0.55rem;font-weight:900;letter-spacing:1.5px;"
+                          >
+                            RÉPONSE DU CANDIDAT
+                          </label>
+                          <p class="m-0 fw-700" style="font-size:0.85rem;">
+                            {{ item.userAnswer || 'AUCUNE RÉPONSE' }}
+                          </p>
+                        </div>
+                      </div>
+                      <div v-if="!item.isCorrect" class="col-md-6">
+                        <div class="cctc-block cctc-ok p-3">
+                          <label
+                            class="d-block mb-2"
+                            style="font-size:0.55rem;font-weight:900;letter-spacing:1.5px;"
+                          >
+                            RÉPONSE CORRECTE
+                          </label>
+                          <p class="m-0 fw-700" style="font-size:0.85rem;">
+                            {{ item.correctAnswer }}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- EXPLICATION -->
+                    <div v-if="item.explication" class="cc-explication p-3">
+                      <div
+                        class="d-flex align-items-center mb-2"
+                        style="font-size:0.62rem;font-weight:900;letter-spacing:1px;"
+                      >
+                        <i class="fa-solid fa-lightbulb me-2" style="color:#f59e0b;"></i>EXPLICATION
+                      </div>
+                      <p class="m-0" style="font-size:0.85rem;font-weight:600;line-height:1.6;">
+                        {{ item.explication }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Filtre vide -->
+                <div
+                  v-if="filteredCorrection.length === 0"
+                  class="text-center py-5 text-muted-sm"
+                >
+                  <i class="fa-solid fa-check-double fa-2x mb-3 text-success"></i>
+                  <p class="fw-700 small">Aucune question dans cette catégorie.</p>
+                </div>
+              </div>
+            </div>
+          </Transition>
+
+          <!-- ✅ Invite à afficher la correction (visible quand elle est masquée) -->
+          <div v-if="!correctionVisible && !isLoading" class="correction-invite-card enigma-card p-4 text-center">
+            <div class="d-flex align-items-center justify-content-center gap-3 flex-wrap">
+              <div class="correction-invite-icon">
+                <i class="fa-solid fa-lock"></i>
+              </div>
+              <div class="text-start">
+                <p class="fw-800 m-0" style="font-size:0.9rem;">Correction détaillée disponible</p>
+                <p class="text-muted-sm m-0" style="font-size:0.72rem;">
+                  {{ detailedCorrection.length > 0 ? detailedCorrection.length + ' question(s) à revoir' : 'Chargement en cours…' }}
+                </p>
+              </div>
+              <button class="btn-enigma-primary ms-auto" @click="toggleCorrection">
+                <div class="btn-content">
+                  <i class="fa-solid fa-list-check me-2"></i>AFFICHER LA CORRECTION
+                </div>
+                <div class="btn-glow"></div>
+              </button>
             </div>
           </div>
 
@@ -440,23 +590,34 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import api from '@/services/api';
+import { ref, computed, onMounted, nextTick } from 'vue';
+import { useRoute, useRouter }      from 'vue-router';
+import api        from '@/services/api';
 import AppSidebar from '../components/AppSidebar.vue';
 import AppNavbar  from '../components/AppNavbar.vue';
 
-// ─── ROUTE ────────────────────────────────────────────────────────
+// ── ROUTE ────────────────────────────────────────────────────────
 const route  = useRoute();
 const router = useRouter();
 
-// ─── STATE ────────────────────────────────────────────────────────
-const isLoading   = ref(true);
-const isAiLoading = ref(true);
-const errorMsg    = ref('');
-const reviewFilter = ref('all');
+// ── REFS DOM ─────────────────────────────────────────────────────
+const mainScrollRef        = ref(null);
+const correctionSectionRef = ref(null);
 
-// Données candidat
+// ── STATE ────────────────────────────────────────────────────────
+const isLoading        = ref(true);
+const isSessionLoading = ref(false);
+const isAiLoading      = ref(true);
+const errorMsg         = ref('');
+const reviewFilter     = ref('all');
+
+// ✅ Correction masquée par défaut
+const correctionVisible = ref(false);
+
+const historiqueList      = ref([]);
+const selectedEvalId      = ref(null);
+const currentSessionTitle = ref('');
+
 const candidat = ref({
   fullName:     '',
   email:        '',
@@ -465,14 +626,12 @@ const candidat = ref({
   passedAt:     null,
 });
 
-// Données examen
 const globalScore        = ref(0);
 const scorePoints        = ref(0);
 const infractions        = ref(0);
 const detailedCorrection = ref([]);
 const examMeta           = ref({ scoreReussite: 70 });
 
-// IA
 const aiInsights = ref({
   synthese: '',
   forces:   [],
@@ -480,7 +639,20 @@ const aiInsights = ref({
   roadmap:  { objectif: '', certification: '' },
 });
 
-// ─── COMPUTED ──────────────────────────────────────────────────────
+// ── TOGGLE CORRECTION ─────────────────────────────────────────────
+/**
+ * ✅ Affiche ou masque la section correction.
+ * Si on l'affiche, on scrolle automatiquement vers elle.
+ */
+const toggleCorrection = async () => {
+  correctionVisible.value = !correctionVisible.value;
+  if (correctionVisible.value) {
+    await nextTick();
+    scrollToCorrection();
+  }
+};
+
+// ── COMPUTED ─────────────────────────────────────────────────────
 const candidateId = computed(() => route.params.id || '');
 
 const isPassed = computed(() =>
@@ -506,7 +678,7 @@ const ringStyle = computed(() => {
 });
 
 const correctCount   = computed(() => detailedCorrection.value.filter(q => q.isCorrect).length);
-const incorrectCount = computed(() => detailedCorrection.value.filter(q => !q.isCorrect && q.userAnswer).length);
+const incorrectCount = computed(() => detailedCorrection.value.filter(q => !q.isCorrect && !!q.userAnswer).length);
 const skippedCount   = computed(() => detailedCorrection.value.filter(q => !q.userAnswer).length);
 
 const kpiStats = computed(() => [
@@ -532,8 +704,8 @@ const kpiStats = computed(() => [
     bg:    'rgba(99,102,241,0.1)',
   },
   {
-    label: 'Points obtenus',
-    value: scorePoints.value,
+    label: 'Sessions totales',
+    value: historiqueList.value.length,
     icon:  'fa-solid fa-trophy',
     color: '#f59e0b',
     bg:    'rgba(245,158,11,0.1)',
@@ -602,143 +774,346 @@ const filterDefs = computed(() => [
 const filteredCorrection = computed(() => {
   const list = detailedCorrection.value.map((item, i) => ({ ...item, originalIndex: i }));
   if (reviewFilter.value === 'correct')   return list.filter(q => q.isCorrect);
-  if (reviewFilter.value === 'incorrect') return list.filter(q => !q.isCorrect && q.userAnswer);
+  if (reviewFilter.value === 'incorrect') return list.filter(q => !q.isCorrect && !!q.userAnswer);
   if (reviewFilter.value === 'skipped')   return list.filter(q => !q.userAnswer);
   return list;
 });
 
-// ─── FETCH ────────────────────────────────────────────────────────
-// Stratégie :
-//   1. Récupérer les données du candidat via /Candidates/:id
-//   2. Trouver le dernier résultat d'examen via plusieurs endpoints
-//   3. Parser la correction détaillée exactement comme ResultsView.vue
-// ─────────────────────────────────────────────────────────────────
+// ── SCROLL VERS CORRECTION ────────────────────────────────────────
+const scrollToCorrection = () => {
+  if (!correctionSectionRef.value || !mainScrollRef.value) return;
+  const top = correctionSectionRef.value.offsetTop - 24;
+  mainScrollRef.value.scrollTo({ top, behavior: 'smooth' });
+};
+
+// ── OPTIONS HELPERS ───────────────────────────────────────────────
+const isOptionCorrect = (item, optionIndex) => {
+  if (!item.options?.length) return false;
+  if (Array.isArray(item.correctIndexes)) {
+    return item.correctIndexes.includes(optionIndex);
+  }
+  const raw = String(item.correctAnswer ?? '').trim();
+  if (!raw) return false;
+  const byIndex = raw.split(/[;|,]/).map(s => s.trim()).filter(Boolean);
+  if (byIndex.every(p => /^\d+$/.test(p))) {
+    return byIndex.map(Number).includes(optionIndex);
+  }
+  const letters = byIndex.map(s => s.toUpperCase());
+  const letter  = String.fromCharCode(65 + optionIndex);
+  if (letters.some(l => /^[A-Z]$/.test(l))) {
+    return letters.includes(letter);
+  }
+  const optText = (item.options[optionIndex] ?? '').trim().toLowerCase();
+  return byIndex.some(p => p.toLowerCase() === optText);
+};
+
+const isOptionUser = (item, optionIndex) => {
+  if (!item.options?.length) return false;
+  if (Array.isArray(item.userIndexes)) {
+    return item.userIndexes.includes(optionIndex);
+  }
+  const raw = String(item.userAnswer ?? '').trim();
+  if (!raw) return false;
+  const byIndex = raw.split(/[;|,]/).map(s => s.trim()).filter(Boolean);
+  if (byIndex.every(p => /^\d+$/.test(p))) {
+    return byIndex.map(Number).includes(optionIndex);
+  }
+  const letters = byIndex.map(s => s.toUpperCase());
+  const letter  = String.fromCharCode(65 + optionIndex);
+  if (letters.some(l => /^[A-Z]$/.test(l))) {
+    return letters.includes(letter);
+  }
+  const optText = (item.options[optionIndex] ?? '').trim().toLowerCase();
+  return byIndex.some(p => p.toLowerCase() === optText);
+};
+
+// ── FETCH PRINCIPAL ───────────────────────────────────────────────
 onMounted(async () => {
   const id = route.params.id;
-  if (!id) { errorMsg.value = 'ID candidat manquant.'; isLoading.value = false; return; }
-
+  if (!id) {
+    errorMsg.value  = 'ID candidat manquant.';
+    isLoading.value = false;
+    return;
+  }
   try {
-    // ── 1. Candidat ────────────────────────────────────────────────
-    let c = null;
-    try {
-      const { data } = await api.get(`/Candidates/${id}`);
-      c = data;
-    } catch {
-      try {
-        const { data: list } = await api.get('/Candidates');
-        c = list.find(x => String(x.id || x.Id) === String(id));
-      } catch (_) {}
+    await Promise.all([
+      fetchCandidatInfo(id),
+      fetchHistorique(id),
+    ]);
+    if (historiqueList.value.length > 0) {
+      await loadSession(historiqueList.value[0].id);
     }
-
-    if (c) {
-      candidat.value = {
-        fullName:     c.name     || c.fullName     || c.nom  || 'Candidat',
-        email:        c.email    || c.Email         || '—',
-        campaignName: c.group    || c.campaignName  || c.poste || 'N/A',
-        timeTaken:    c.timeTaken|| c.duree          || null,
-        passedAt:     c.passedAt || c.completedAt   || c.createdAt || null,
-      };
-    }
-
-    // ── 2. Résultats — même endpoints que ResultsView.vue ──────────
-    // On tente les mêmes routes que ResultsView pour rester cohérent
-    let raw = null;
-    const endpointsToTry = [
-      `/Examen/results/${id}`,
-      `/Examen/resultats/${id}`,
-      `/Examen/historique/${id}`,
-      `/Examen/candidate-report/${id}`,
-      `/Results/${id}`,
-    ];
-
-    for (const ep of endpointsToTry) {
-      try {
-        const { data } = await api.get(ep);
-        if (data) { raw = data; break; }
-      } catch (_) {}
-    }
-
-    // ── 3. Fallback : dernier résultat via l'historique global ─────
-    if (!raw) {
-      try {
-        const { data: hist } = await api.get('/Examen/historique');
-        const candidatResults = (Array.isArray(hist) ? hist : [])
-          .filter(r =>
-            String(r.candidatId || r.CandidatId || r.userId || '') === String(id)
-          )
-          .sort((a, b) =>
-            new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0)
-          );
-        if (candidatResults.length > 0) raw = candidatResults[0];
-      } catch (_) {}
-    }
-
-    // ── 4. Parser raw → même logique que ResultsView.vue ──────────
-    if (raw) {
-      globalScore.value  = Math.round(raw.pourcentage || raw.scorePourcentage || raw.scoreGlobal || 0);
-      scorePoints.value  = raw.scoreTotal || raw.scorePoints || 0;
-      infractions.value  = raw.infractions || 0;
-
-      if (raw.campaignName || raw.nomCampagne) {
-        candidat.value.campaignName = raw.campaignName || raw.nomCampagne;
-      }
-      if (raw.timeTaken || raw.duree) {
-        candidat.value.timeTaken = raw.timeTaken || raw.duree;
-      }
-
-      examMeta.value = {
-        scoreReussite: raw.scoreReussite || 70,
-        titre:         raw.titre || '',
-      };
-
-      const questions = raw.questions || [];
-      const rawCorrection = raw.detailedCorrection || raw.corrections || raw.details || [];
-
-      detailedCorrection.value = rawCorrection.map((item, idx) => {
-        const q        = questions[idx];
-        const choix    = q?.choix || item.options || [];
-        const userRaw  = item.userAnswer  || item.reponse        || '';
-        const corrRaw  = item.correctAnswer || item.bonneReponse || '';
-
-        let userIndexes = [];
-        const parts = userRaw.split(';').map(s => s.trim()).filter(Boolean);
-        if (parts.every(p => !isNaN(p)) && parts.length > 0)
-          userIndexes = parts.map(Number).filter(n => n >= 0 && n < choix.length);
-
-        let correctIndexes = [];
-        if (choix.length > 0 && corrRaw) {
-          const corrTexts = corrRaw.split('|').map(s => s.trim().toLowerCase());
-          correctIndexes = choix
-            .map((c2, i) => corrTexts.includes(c2.trim().toLowerCase()) ? i : -1)
-            .filter(i => i !== -1);
-        }
-
-        return {
-          ...item,
-          enonce:         item.enonce    || item.question     || item.questionText || 'N/A',
-          userAnswer:     userRaw,
-          correctAnswer:  corrRaw,
-          isCorrect:      Boolean(item.isCorrect ?? item.estCorrect ?? item.correct ?? false),
-          options:        choix,
-          userIndexes,
-          correctIndexes,
-          theme:          item.theme       || q?.theme       || 'Général',
-          points:         item.points      || q?.points      || 1,
-          explication:    item.explication || q?.explication || item.explanation || '',
-        };
-      });
-    }
-
   } catch (err) {
-    console.error('CandidateDetails fetch error:', err);
+    console.error('DetailsCandidat mount error:', err);
     errorMsg.value = 'Impossible de charger les données de ce candidat.';
   } finally {
     isLoading.value = false;
-    generateAiInsights();
   }
 });
 
-// ─── GÉNÉRATION IA LOCALE ─────────────────────────────────────────
+// ── FETCH INFOS CANDIDAT ──────────────────────────────────────────
+const fetchCandidatInfo = async (id) => {
+  try {
+    const { data } = await api.get(`/Candidates/${id}`);
+    if (data) { applyCandidatData(data); return; }
+  } catch (_) {}
+  try {
+    const { data: list } = await api.get('/Candidates');
+    const found = (Array.isArray(list) ? list : []).find(
+      x => String(x.id ?? x.Id) === String(id)
+    );
+    if (found) applyCandidatData(found);
+  } catch (_) {}
+};
+
+const applyCandidatData = (d) => {
+  candidat.value = {
+    fullName:     d.name      ?? d.fullName ?? d.nom     ?? d.Nom      ?? 'Candidat',
+    email:        d.email     ?? d.Email    ?? '—',
+    campaignName: d.group     ?? d.campaignName ?? d.poste ?? 'N/A',
+    timeTaken:    d.timeTaken ?? d.duree    ?? null,
+    passedAt:     d.passedAt  ?? d.completedAt ?? d.createdAt ?? null,
+  };
+};
+
+// ── FETCH HISTORIQUE ──────────────────────────────────────────────
+const fetchHistorique = async (candidateId) => {
+  try {
+    const { data } = await api.get(`/Examen/historique-candidat/${candidateId}`);
+    if (Array.isArray(data) && data.length > 0) {
+      historiqueList.value = normalizeHistorique(data, candidateId);
+      return;
+    }
+  } catch (_) {}
+  try {
+    const { data } = await api.get(`/Examen/resultats/${candidateId}`);
+    const arr = Array.isArray(data) ? data : (data ? [data] : []);
+    if (arr.length > 0) {
+      historiqueList.value = normalizeHistorique(arr, candidateId);
+      return;
+    }
+  } catch (_) {}
+  try {
+    const { data } = await api.get('/Examen/historique');
+    const filtered = (Array.isArray(data) ? data : []).filter(r =>
+      String(r.candidatId ?? r.CandidatId ?? r.userId ?? r.UserId ?? r.id ?? '') === String(candidateId)
+    );
+    if (filtered.length > 0) {
+      historiqueList.value = normalizeHistorique(filtered, candidateId);
+      return;
+    }
+  } catch (_) {}
+  try {
+    const { data } = await api.get(`/Examen/candidate-report/${candidateId}`);
+    const arr = data?.history ?? data?.sessions ?? (Array.isArray(data) ? data : []);
+    if (arr.length > 0) {
+      historiqueList.value = normalizeHistorique(arr, candidateId);
+    }
+  } catch (_) {}
+};
+
+const normalizeHistorique = (arr, candidateId) =>
+  arr
+    .map(h => ({
+      id:         h.id         ?? h.Id         ?? h.evalId    ?? h.EvalId    ?? h.resultId ?? h.ResultId,
+      evalId:     h.evalId     ?? h.EvalId     ?? h.id        ?? h.Id,
+      examenId:   h.examenId   ?? h.ExamenId   ?? h.testId    ?? h.TestId    ?? null,
+      resultId:   h.resultId   ?? h.ResultId   ?? h.id        ?? h.Id,
+      candidatId: candidateId,
+      titreExamen:   h.titreExamen ?? h.TitreExamen ?? h.titre     ?? h.Titre    ?? h.nomExamen ?? 'Examen',
+      date:          h.date        ?? h.Date        ?? h.createdAt ?? h.passedAt ?? null,
+      score:         Math.round(Number(h.score ?? h.Score ?? h.pourcentage ?? h.Pourcentage ?? h.scoreGlobal ?? 0)),
+      scoreReussite: Number(h.scoreReussite ?? h.ScoreReussite ?? 70),
+      infractions:   Number(h.infractions   ?? h.Infractions   ?? 0),
+      _raw: h,
+    }))
+    .sort((a, b) => new Date(b.date ?? 0) - new Date(a.date ?? 0));
+
+// ── LOAD SESSION ──────────────────────────────────────────────────
+const loadSession = async (sessionId) => {
+  if (!sessionId) return;
+
+  isSessionLoading.value   = true;
+  isAiLoading.value        = true;
+  selectedEvalId.value     = sessionId;
+  reviewFilter.value       = 'all';
+  detailedCorrection.value = [];
+  // ✅ Masquer la correction lors du changement de session
+  correctionVisible.value  = false;
+
+  const sessionInfo = historiqueList.value.find(h => h.id === sessionId);
+
+  if (sessionInfo) {
+    currentSessionTitle.value = `${sessionInfo.titreExamen} — ${formatDate(sessionInfo.date)}`;
+    candidat.value.passedAt   = sessionInfo.date;
+    infractions.value         = sessionInfo.infractions ?? 0;
+  }
+
+  if (sessionInfo?._raw) {
+    const embedded = extractEmbeddedCorrection(sessionInfo._raw);
+    if (embedded) {
+      parseSessionData(embedded, sessionInfo);
+      isSessionLoading.value = false;
+      generateAiInsights();
+      return;
+    }
+  }
+
+  const idsToTry = [
+    ...new Set([
+      sessionInfo?.evalId,
+      sessionInfo?.resultId,
+      sessionInfo?.id,
+      sessionInfo?.examenId,
+      sessionInfo?.candidatId,
+    ].filter(Boolean).map(String))
+  ];
+
+  const cId = route.params.id;
+  const attempts = [];
+  for (const id of idsToTry) {
+    attempts.push(
+      `/Examen/results/${id}`,
+      `/Examen/resultats/${id}`,
+      `/Examen/correction/${id}`,
+      `/Examen/result/${id}`,
+      `/Examen/details/${id}`,
+    );
+  }
+  if (sessionInfo?.examenId) {
+    attempts.push(`/Examen/results/candidat/${cId}/examen/${sessionInfo.examenId}`);
+    attempts.push(`/Examen/correction/candidat/${cId}/test/${sessionInfo.examenId}`);
+  }
+
+  let raw = null;
+  for (const ep of attempts) {
+    try {
+      const { data } = await api.get(ep);
+      if (data && hasCorrection(data)) { raw = data; break; }
+    } catch (_) {}
+  }
+
+  if (raw) {
+    parseSessionData(raw, sessionInfo);
+  } else {
+    globalScore.value        = sessionInfo?.score ?? 0;
+    scorePoints.value        = 0;
+    detailedCorrection.value = [];
+    examMeta.value           = { scoreReussite: sessionInfo?.scoreReussite ?? 70 };
+  }
+
+  isSessionLoading.value = false;
+  generateAiInsights();
+};
+
+const hasCorrection = (data) => {
+  if (!data || typeof data !== 'object') return false;
+  const correction =
+    data.detailedCorrection ?? data.DetailedCorrection ??
+    data.corrections        ?? data.Corrections        ??
+    data.details            ?? data.Details            ??
+    data.questions          ?? data.Questions          ??
+    null;
+  return Array.isArray(correction) && correction.length > 0;
+};
+
+const extractEmbeddedCorrection = (raw) => {
+  if (!raw || typeof raw !== 'object') return null;
+  if (hasCorrection(raw)) return raw;
+  if (raw.result && hasCorrection(raw.result)) return raw.result;
+  if (raw.data   && hasCorrection(raw.data))   return raw.data;
+  return null;
+};
+
+const parseSessionData = (data, sessionInfo) => {
+  globalScore.value = Math.round(
+    Number(
+      data.pourcentage      ?? data.Pourcentage      ??
+      data.scorePourcentage ?? data.ScorePourcentage ??
+      data.scoreGlobal      ?? data.ScoreGlobal      ??
+      sessionInfo?.score    ?? 0
+    )
+  );
+  scorePoints.value = Number(data.scoreTotal ?? data.ScoreTotal ?? data.points ?? 0);
+  infractions.value = Number(data.infractions ?? data.Infractions ?? infractions.value ?? 0);
+  examMeta.value    = {
+    scoreReussite: Number(data.scoreReussite ?? data.ScoreReussite ?? sessionInfo?.scoreReussite ?? 70),
+  };
+
+  const rawItems =
+    data.detailedCorrection ?? data.DetailedCorrection ??
+    data.corrections        ?? data.Corrections        ??
+    data.details            ?? data.Details            ??
+    data.questions          ?? data.Questions          ??
+    [];
+
+  detailedCorrection.value = rawItems.map(item => {
+    const options = normalizeOptions(item);
+    const enonce  =
+      item.enonce        ?? item.Enonce        ??
+      item.question      ?? item.Question      ??
+      item.questionText  ?? item.QuestionText  ??
+      item.libelle       ?? item.Libelle       ?? 'N/A';
+
+    const userAnswer =
+      item.userAnswer    ?? item.UserAnswer    ??
+      item.reponse       ?? item.Reponse       ??
+      item.candidateAnswer ?? item.CandidateAnswer ?? '';
+
+    const correctAnswer =
+      item.correctAnswer ?? item.CorrectAnswer ??
+      item.bonneReponse  ?? item.BonneReponse  ??
+      item.expectedAnswer ?? item.ExpectedAnswer ?? '';
+
+    const isCorrect = Boolean(
+      item.isCorrect   ?? item.IsCorrect   ??
+      item.estCorrect  ?? item.EstCorrect  ??
+      item.correct     ?? item.Correct     ?? false
+    );
+
+    const explication =
+      item.explication ?? item.Explication ??
+      item.explanation ?? item.Explanation ?? '';
+
+    const correctIndexes = resolveIndexes(correctAnswer, options);
+    const userIndexes    = resolveIndexes(userAnswer, options);
+
+    return {
+      enonce, userAnswer, correctAnswer, isCorrect, options,
+      correctIndexes, userIndexes,
+      theme:      item.theme  ?? item.Theme  ?? item.categorie ?? 'Général',
+      points:     Number(item.points ?? item.Points ?? 1),
+      explication,
+    };
+  });
+};
+
+const normalizeOptions = (item) => {
+  const raw = item.options ?? item.Options ?? item.choix ?? item.Choix ?? item.answers ?? item.Answers ?? [];
+  if (Array.isArray(raw)) {
+    return raw.map(o =>
+      typeof o === 'string' ? o :
+      (o.text ?? o.Text ?? o.label ?? o.Label ?? o.valeur ?? o.Valeur ?? String(o))
+    );
+  }
+  if (raw && typeof raw === 'object') return Object.values(raw).map(String);
+  return [];
+};
+
+const resolveIndexes = (rawAnswer, options) => {
+  const str = String(rawAnswer ?? '').trim();
+  if (!str || !options.length) return [];
+  const parts = str.split(/[;|,]/).map(s => s.trim()).filter(Boolean);
+  if (parts.every(p => /^\d+$/.test(p))) {
+    return parts.map(Number).filter(n => n >= 0 && n < options.length);
+  }
+  if (parts.every(p => /^[A-Za-z]$/.test(p))) {
+    return parts.map(l => l.toUpperCase().charCodeAt(0) - 65).filter(n => n >= 0 && n < options.length);
+  }
+  return parts.map(p => options.findIndex(o => o.trim().toLowerCase() === p.toLowerCase())).filter(n => n >= 0);
+};
+
+// ── IA LOCALE ─────────────────────────────────────────────────────
 const generateAiInsights = () => {
   const best  = [...themeBreakdown.value].sort((a, b) => b.pct - a.pct)[0];
   const worst = [...themeBreakdown.value].sort((a, b) => a.pct - b.pct)[0];
@@ -749,29 +1124,55 @@ const generateAiInsights = () => {
       ? `Avec un score de ${pct}%, ${candidat.value.fullName} démontre une maîtrise solide${best ? ` en ${best.name}` : ''}. Profil certifiable pour ce niveau.`
       : `Avec ${pct}%, des axes d'amélioration sont identifiés${worst ? ` notamment en ${worst.name}` : ''}. Une formation ciblée est recommandée avant intégration.`,
     forces: [
-      best ? `Expertise en ${best.name} (${best.pct}%)` : 'Rigueur de raisonnement',
-      correctCount.value > 0 ? `${correctCount.value} réponse(s) correcte(s)` : 'Engagement complet',
+      best && best.pct >= 70
+        ? `Expertise validée en ${best.name} (${best.pct}%)`
+        : 'Rigueur dans l\'approche des exercices',
+      correctCount.value > 0
+        ? `${correctCount.value} réponse(s) correcte(s) sur ${detailedCorrection.value.length}`
+        : 'Engagement complet dans l\'évaluation',
     ],
     axes: [
-      worst && worst.pct < 70 ? `Approfondir ${worst.name} (${worst.pct}%)` : 'Optimiser les temps de réponse',
-      skippedCount.value > 0  ? `Répondre aux ${skippedCount.value} questions ignorées` : 'Maintenir la précision',
+      worst && worst.pct < 70
+        ? `Approfondir ${worst.name} (${worst.pct}%)`
+        : 'Optimiser les temps de réponse sous pression',
+      skippedCount.value > 0
+        ? `Traiter les ${skippedCount.value} question(s) ignorée(s)`
+        : 'Maintenir la précision en condition réelle',
     ],
     roadmap: {
-      objectif:      worst ? `Renforcer ${worst.name} avec des exercices pratiques` : 'Consolider les acquis actuels',
+      objectif: worst
+        ? `Renforcer ${worst.name} avec des exercices pratiques ciblés`
+        : 'Consolider et approfondir les acquis actuels',
       certification: pct >= 85
         ? 'Intégration immédiate recommandée — Profil Senior'
         : pct >= 70
           ? 'Intégration avec accompagnement — Profil Confirmé'
-          : 'Plan de formation 30j avant reconsidération',
+          : 'Plan de formation 30 jours avant reconsidération',
     },
   };
+
   isAiLoading.value = false;
 };
 
-// ─── HELPERS ──────────────────────────────────────────────────────
-const initials   = (name) => (name || '?').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-const formatDate = (d) => d ? new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }) : '—';
-const printPage  = () => window.print();
+// ── HELPERS ───────────────────────────────────────────────────────
+const initials = (name) =>
+  (name || '?').split(' ').map(n => n[0] ?? '').join('').toUpperCase().slice(0, 2);
+
+const formatDate = (d) =>
+  d
+    ? new Date(d).toLocaleDateString('fr-FR', {
+        day: '2-digit', month: 'long', year: 'numeric',
+      })
+    : '—';
+
+const formatDateShort = (d) =>
+  d
+    ? new Date(d).toLocaleDateString('fr-FR', {
+        day: '2-digit', month: '2-digit', year: '2-digit',
+      })
+    : '—';
+
+const printPage = () => window.print();
 </script>
 
 <style scoped>
@@ -823,7 +1224,8 @@ const printPage  = () => window.print();
   background: linear-gradient(135deg, #f59e0b, #fbbf24);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
-.breadcrumb-pro { font-size: 0.72rem; font-weight: 700; color: #94a3b8; }
+.breadcrumb-pro { font-size: 0.72rem; font-weight: 700; color: #94a3b8; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+.breadcrumb-pro .root { cursor: pointer; transition: color 0.2s; }
 .breadcrumb-pro .root:hover { color: #f59e0b; }
 .breadcrumb-pro .separator { font-size: 0.55rem; opacity: 0.5; }
 .breadcrumb-pro .current { color: #0f172a; font-weight: 800; }
@@ -833,20 +1235,106 @@ const printPage  = () => window.print();
 }
 .text-muted-sm { color: #94a3b8; }
 
+/* ══════════════════════════════════════════════
+   ✅ BOUTON CORRECTION — états normal / actif
+══════════════════════════════════════════════ */
+.btn-correction-scroll {
+  background: white; color: #6366f1; border: 1.5px solid #c7d2fe;
+  padding: 14px 22px; border-radius: 18px; font-weight: 800; font-size: 0.78rem;
+  position: relative; overflow: hidden; cursor: pointer; font-family: inherit;
+  transition: box-shadow 0.3s, border-color 0.3s, background 0.3s; letter-spacing: 0.5px;
+}
+.btn-correction-scroll .btn-glow {
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, #6366f1, #818cf8);
+  opacity: 0; transition: opacity 0.3s; z-index: 1;
+}
+.btn-correction-scroll:hover .btn-glow { opacity: 1; }
+.btn-correction-scroll .btn-content { position: relative; z-index: 2; display: flex; align-items: center; }
+.btn-correction-scroll:hover .btn-content { color: white; }
+.btn-correction-scroll:hover { border-color: #6366f1; box-shadow: 0 8px 24px rgba(99,102,241,0.25); }
+
+/* État actif : correction visible */
+.btn-correction-active {
+  background: #6366f1 !important;
+  color: white !important;
+  border-color: #6366f1 !important;
+  box-shadow: 0 8px 24px rgba(99,102,241,0.3) !important;
+}
+.btn-correction-active .btn-content { color: white !important; }
+
+/* ✅ Bouton fermer dans l'en-tête de correction */
+.btn-close-correction {
+  width: 36px; height: 36px; border-radius: 10px;
+  border: 1.5px solid #eef2f6; background: white;
+  color: #64748b; cursor: pointer; transition: 0.2s;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.9rem;
+}
+.btn-close-correction:hover { background: #fff1f2; color: #f43f5e; border-color: #fca5a5; }
+
+/* ✅ Invite correction (quand masquée) */
+.correction-invite-card {
+  border: 2px dashed #c7d2fe !important;
+  background: linear-gradient(135deg, rgba(99,102,241,0.03), rgba(129,140,248,0.03)) !important;
+}
+.correction-invite-icon {
+  width: 48px; height: 48px; border-radius: 14px;
+  background: #eef2ff; color: #6366f1;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════════════
+   ✅ ANIMATION D'APPARITION DE LA CORRECTION
+══════════════════════════════════════════════ */
+.correction-reveal-enter-active {
+  animation: correctionIn 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.correction-reveal-leave-active {
+  animation: correctionOut 0.3s ease-in;
+}
+@keyframes correctionIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes correctionOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(10px); }
+}
+
+/* ── SESSION SWITCHER ── */
+.session-btn {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  padding: 10px 16px; border-radius: 14px; border: 1.5px solid #eef2f6;
+  background: white; cursor: pointer; transition: all 0.2s; font-family: inherit; min-width: 110px;
+}
+.session-btn:hover:not(.session-btn-active) { border-color: #f59e0b; background: #fffbeb; }
+.session-btn-active { border-color: #0f172a; background: #0f172a; }
+.session-btn-active .session-btn-num,
+.session-btn-active .session-btn-date { color: #64748b !important; }
+.session-btn-num   { font-size: 0.6rem; font-weight: 900; letter-spacing: 1px; color: #94a3b8; }
+.session-btn-score { font-size: 1rem; font-weight: 900; color: #0f172a; line-height: 1.2; }
+.session-btn-active .session-btn-score { color: #fbbf24 !important; }
+.session-btn-date  { font-size: 0.6rem; font-weight: 700; color: #94a3b8; }
+.score-pass { color: #10b981 !important; }
+.score-fail { color: #f43f5e !important; }
+
 /* ── BUTTONS ── */
 .btn-back-elite {
   background: white; border: 1.5px solid #e2e8f0; padding: 11px 22px;
   border-radius: 18px; font-weight: 800; font-size: 11px; color: #475569;
   display: inline-flex; align-items: center; cursor: pointer; transition: 0.3s;
 }
-.btn-back-elite:hover { background: #0f172a; color: white; }
+.btn-back-elite:hover { background: #0f172a; color: white; border-color: #0f172a; }
+
 .btn-refresh-pro {
-  width: 44px; height: 44px; background: white;
-  border: 1.5px solid #e2e8f0; border-radius: 14px;
-  color: #64748b; cursor: pointer; transition: 0.3s;
-  display: flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; background: white; border: 1.5px solid #e2e8f0;
+  border-radius: 14px; color: #64748b; cursor: pointer; transition: 0.3s;
+  display: flex; align-items: center; justify-content: center; font-size: 15px;
 }
 .btn-refresh-pro:hover { border-color: #f59e0b; color: #f59e0b; }
+
 .btn-enigma-primary {
   background: #0f172a; color: white; border: none;
   padding: 14px 28px; border-radius: 18px; font-weight: 800;
@@ -855,7 +1343,7 @@ const printPage  = () => window.print();
 .btn-enigma-primary .btn-glow {
   position: absolute; inset: 0;
   background: linear-gradient(135deg, #f59e0b, #fbbf24);
-  opacity: 0; transition: 0.3s; z-index: 1;
+  opacity: 0; transition: opacity 0.3s; z-index: 1;
 }
 .btn-enigma-primary:hover .btn-glow { opacity: 1; }
 .btn-enigma-primary .btn-content { position: relative; z-index: 2; display: flex; align-items: center; }
@@ -865,7 +1353,8 @@ const printPage  = () => window.print();
 .stat-card-premium {
   background: white; border-radius: 24px; padding: 24px;
   display: flex; align-items: center; border: 1px solid #eef2f6;
-  transition: 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
 }
 .stat-card-premium:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,0.06); }
 .stat-icon-wrapper {
@@ -877,7 +1366,7 @@ const printPage  = () => window.print();
 .stat-label { font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-top: 4px; }
 
 /* ── CARD ── */
-.enigma-card { background: white; border-radius: 32px; border: 1px solid #eef2f6; }
+.enigma-card { background: white; border-radius: 32px; border: 1px solid #eef2f6; box-shadow: 0 2px 12px rgba(0,0,0,0.03); }
 
 /* ── AVATAR ── */
 .avatar-squircle {
@@ -889,10 +1378,10 @@ const printPage  = () => window.print();
 }
 
 /* ── SCORE RING ── */
-.ring-bg   { fill: none; stroke: #eef2f6; stroke-width: 10; }
+.ring-bg  { fill: none; stroke: #eef2f6; stroke-width: 10; }
 .ring-fill { fill: none; stroke-width: 10; stroke-linecap: round; }
 .ring-pct-text { font-size: 22px; font-weight: 900; fill: #0f172a; }
-.ring-sub-text { font-size: 9px; fill: #94a3b8; font-weight: 700; }
+.ring-sub-text { font-size: 9px;  fill: #94a3b8;  font-weight: 700; }
 
 .result-status-pill {
   padding: 10px 28px; border-radius: 14px;
@@ -907,14 +1396,13 @@ const printPage  = () => window.print();
 .rep-correct      { background: #ecfdf5; }
 .rep-incorrect    { background: #fff1f2; }
 .rep-skipped      { background: #f8fafc; border: 1px solid #eef2f6; }
-.rep-correct .rep-icon  { color: #10b981; font-size: 1rem; }
+.rep-correct  .rep-icon { color: #10b981; font-size: 1rem; }
 .rep-incorrect .rep-icon { color: #f43f5e; font-size: 1rem; }
-.rep-skipped .rep-icon   { color: #94a3b8; font-size: 1rem; }
+.rep-skipped  .rep-icon  { color: #94a3b8; font-size: 1rem; }
 .rep-val { font-size: 1.4rem; font-weight: 900; color: #0f172a; line-height: 1; }
 .rep-lbl { font-size: 0.58rem; font-weight: 900; color: #94a3b8; letter-spacing: 0.5px; }
 
 /* ── INFO LIST ── */
-.info-list { }
 .info-item { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 18px; }
 .i-icon {
   width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px;
@@ -932,11 +1420,11 @@ const printPage  = () => window.print();
 }
 
 /* ── METRICS ── */
-.metric-bar  { height: 6px; background: #f1f5f9; border-radius: 10px; overflow: hidden; }
-.mbar-fill   { height: 100%; border-radius: 10px; transition: width 1.2s ease; }
-.live-tag    { display: inline-flex; align-items: center; font-size: 0.6rem; font-weight: 900; color: #94a3b8; letter-spacing: 1px; }
-.dot-pulse   { width: 6px; height: 6px; background: #f59e0b; border-radius: 50%; display: inline-block; animation: pulse 2s infinite; }
-@keyframes pulse { 0%,100%{opacity:1;}50%{opacity:0.3;} }
+.metric-bar { height: 6px; background: #f1f5f9; border-radius: 10px; overflow: hidden; }
+.mbar-fill  { height: 100%; border-radius: 10px; transition: width 1.2s ease; }
+.live-tag   { display: inline-flex; align-items: center; font-size: 0.6rem; font-weight: 900; color: #94a3b8; letter-spacing: 1px; }
+.dot-pulse  { width: 6px; height: 6px; background: #f59e0b; border-radius: 50%; display: inline-block; animation: dotpulse 2s infinite; }
+@keyframes dotpulse { 0%,100%{opacity:1;}50%{opacity:0.3;} }
 
 .anticheat-result-box {
   display: flex; align-items: center; gap: 16px;
@@ -945,24 +1433,24 @@ const printPage  = () => window.print();
 .ac-result-ok   { background: #ecfdf5; color: #10b981; border: 1px solid #6ee7b7; }
 .ac-result-warn { background: #fff1f2; color: #f43f5e; border: 1px solid #fca5a5; }
 
-.progress-slim  { height: 4px; background: #f1f5f9; border-radius: 10px; overflow: hidden; }
-.progress-fill  { height: 100%; border-radius: 10px; transition: width 0.8s ease; }
+.progress-slim { height: 4px; background: #f1f5f9; border-radius: 10px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 10px; transition: width 0.8s ease; }
 
 /* ── IA BENTO ── */
-.ai-master-bento  { background: #0f172a; border-radius: 32px; overflow: hidden; }
-.ai-main-column   { border-right: 1px solid rgba(255,255,255,0.06); }
-.ai-avatar-glow {
+.ai-master-bento { background: #0f172a; border-radius: 32px; overflow: hidden; }
+.ai-main-column  { border-right: 1px solid rgba(255,255,255,0.06); }
+.ai-avatar-glow  {
   width: 55px; height: 55px; background: rgba(245,158,11,0.15); color: #f59e0b;
   border-radius: 18px; display: flex; align-items: center; justify-content: center;
   font-size: 1.4rem; flex-shrink: 0;
 }
-.ai-bubble  { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; padding: 20px; }
+.ai-bubble     { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; padding: 20px; }
 .ai-text-block { font-size: 1rem; color: #f1f5f9; line-height: 1.6; font-style: italic; }
-.insight-box  { border-radius: 18px; }
-.force-box    { background: rgba(16,185,129,0.08);  border: 1px solid rgba(16,185,129,0.2); }
-.warn-box     { background: rgba(245,158,11,0.08);  border: 1px solid rgba(245,158,11,0.2); }
+.insight-box   { border-radius: 18px; }
+.force-box     { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); }
+.warn-box      { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); }
 .insight-label { font-size: 0.6rem; font-weight: 900; letter-spacing: 1.5px; }
-.point-list   { list-style: none; color: #cbd5e1; font-size: 0.88rem; }
+.point-list    { list-style: none; color: #cbd5e1; font-size: 0.88rem; }
 .point-list li::before { content: "›"; color: #f59e0b; font-weight: 800; margin-right: 8px; }
 .roadmap-column { background: rgba(255,255,255,0.02); }
 .roadmap-step   { display: flex; align-items: flex-start; }
@@ -975,7 +1463,16 @@ const printPage  = () => window.print();
 .result-tags { display: flex; flex-wrap: wrap; gap: 8px; }
 .result-tag  { background: rgba(245,158,11,0.15); color: #f59e0b; font-size: 0.65rem; font-weight: 900; padding: 5px 12px; border-radius: 8px; }
 
-/* ── CORRECTION ── */
+/* ── CORRECTION TITLE ── */
+.correction-title-icon {
+  width: 44px; height: 44px; border-radius: 14px;
+  background: #eef2ff; color: #6366f1;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; flex-shrink: 0;
+}
+.correction-section-title { font-size: 0.75rem; letter-spacing: 2px; color: #0f172a; text-transform: uppercase; }
+
+/* ── CORRECTION CARDS ── */
 .correction-card  { background: white; border-radius: 22px; border: 2px solid #eef2f6; overflow: hidden; }
 .cc-correct   { border-color: #6ee7b7; }
 .cc-incorrect { border-color: #fca5a5; }
@@ -989,7 +1486,7 @@ const printPage  = () => window.print();
 .cc-s-incorrect { background: #fff1f2; color: #f43f5e; }
 .cc-s-skipped   { background: #fffbeb; color: #f59e0b; }
 
-.cc-opt     { border-radius: 14px; border: 1.5px solid #eef2f6; background: #f8fafc; }
+.cc-opt           { border-radius: 14px; border: 1.5px solid #eef2f6; background: #f8fafc; }
 .cco-correct      { border-color: #6ee7b7; background: #f0fdf4; }
 .cco-user         { border-color: #fca5a5; background: #fff1f2; }
 .cco-user-correct { border-color: #6ee7b7; background: #ecfdf5; }
@@ -999,8 +1496,9 @@ const printPage  = () => window.print();
   display: flex; align-items: center; justify-content: center;
   font-weight: 900; font-size: 0.72rem; color: #94a3b8;
 }
-.cco-correct .cco-letter { background: #10b981; border-color: #10b981; color: white; }
-.cco-user    .cco-letter { background: #f43f5e; border-color: #f43f5e; color: white; }
+.cco-correct .cco-letter,
+.cco-user-correct .cco-letter { background: #10b981; border-color: #10b981; color: white; }
+.cco-user    .cco-letter      { background: #f43f5e; border-color: #f43f5e; color: white; }
 
 .cctc-block { border-radius: 14px; border: 1.5px solid #eef2f6; }
 .cctc-ok    { background: #f0fdf4; border-color: #6ee7b7; }
@@ -1008,16 +1506,16 @@ const printPage  = () => window.print();
 .cc-explication { background: #fffbeb; border: 1px solid #fde68a; border-radius: 14px; }
 .cc-explication p { color: #78350f; }
 
-/* ── FILTRES ── */
+/* ── FILTRES CORRECTION ── */
 .rf-btn {
   display: flex; align-items: center; gap: 8px; padding: 7px 16px;
   border-radius: 10px; border: 1.5px solid #eef2f6; background: white;
   font-size: 0.72rem; font-weight: 800; cursor: pointer; font-family: inherit;
-  transition: 0.2s; color: #64748b;
+  transition: all 0.2s; color: #64748b;
 }
-.rf-btn:hover   { border-color: #0f172a; color: #0f172a; }
+.rf-btn:hover     { border-color: #0f172a; color: #0f172a; }
 .rf-btn.rf-active { background: #0f172a; color: white; border-color: #0f172a; }
-.rf-dot        { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.rf-dot        { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
 .rfd-all       { background: #94a3b8; }
 .rfd-correct   { background: #10b981; }
 .rfd-incorrect { background: #f43f5e; }
@@ -1029,12 +1527,23 @@ const printPage  = () => window.print();
 .fw-900 { font-weight: 900 !important; }
 .text-success { color: #10b981 !important; }
 .text-danger  { color: #f43f5e !important; }
-.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+
+.custom-scrollbar::-webkit-scrollbar       { width: 6px; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
 
+.animate__fadeIn {
+  animation: fadeIn 0.45s ease both;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
 @media (max-width: 768px) {
-  .premium-title { font-size: 1.6rem; }
-  .repartition-row { flex-direction: column; gap: 8px; }
-  .ai-main-column { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .premium-title        { font-size: 1.6rem; }
+  .repartition-row      { flex-direction: column; gap: 8px; }
+  .ai-main-column       { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .btn-correction-scroll { font-size: 0.7rem; padding: 11px 16px; }
+  .btn-enigma-primary   { font-size: 0.78rem; padding: 11px 18px; }
 }
 </style>
