@@ -23,7 +23,10 @@ namespace NeoEvaluation.API.Models
         public Guid CandidatureId { get; set; }
         public Candidature Candidature { get; set; } = null!;
 
-        // Relations
+        // AI Correction
+        public string? CorrectionIA { get; set; }
+        public string? RapportFinalIA { get; set; }
+
         public ICollection<Reponse> Reponses { get; set; } = new List<Reponse>();
         public Rapport? Rapport { get; set; }
         public int InfractionsCount { get; set; } = 0;

@@ -29,7 +29,7 @@ namespace NeoEvaluation.API.Controllers
         //      bilingues FR/EN. On retourne TOUTES les questions.
         // ══════════════════════════════════════════════════════════════
         [HttpGet]
-        public async Task<IActionResult> GetQuestions()
+        public async Task<IActionResult> GetQuestions([FromQuery] int? page = null, [FromQuery] int? pageSize = null)
         {
             try
             {
@@ -40,11 +40,32 @@ namespace NeoEvaluation.API.Controllers
                 if (!entId.HasValue || entId == Guid.Empty)
                     return Unauthorized(new { message = "ID d'entreprise manquant dans votre session." });
 
-                var questions = await _context.Questions
+                var query = _context.Questions
                     .Where(q => q.EntrepriseId == entId.Value)
-                    .OrderByDescending(q => q.CreeLe)
-                    .ToListAsync();
+                    .OrderByDescending(q => q.CreeLe);
 
+                if (page.HasValue && pageSize.HasValue)
+                {
+                    if (page.Value <= 0 || pageSize.Value <= 0)
+                        return BadRequest(new { message = "Les paramètres page et pageSize doivent être supérieurs à 0." });
+
+                    var totalCount = await query.CountAsync();
+                    var pagedQuestions = await query
+                        .Skip((page.Value - 1) * pageSize.Value)
+                        .Take(pageSize.Value)
+                        .ToListAsync();
+
+                    return Ok(new
+                    {
+                        totalCount,
+                        page = page.Value,
+                        pageSize = pageSize.Value,
+                        totalPages = (int)Math.Ceiling((double)totalCount / pageSize.Value),
+                        data = pagedQuestions
+                    });
+                }
+
+                var questions = await query.ToListAsync();
                 return Ok(questions);
             }
             catch (Exception ex)
@@ -141,6 +162,45 @@ namespace NeoEvaluation.API.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "Erreur", detail = ex.Message });
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        // GET /api/Questions/ByQuestionnaire/{questionnaireId}
+        // Récupère les questions associées à un questionnaire
+        // ══════════════════════════════════════════════════════════════
+        [HttpGet("ByQuestionnaire/{questionnaireId}")]
+        public async Task<IActionResult> GetByQuestionnaire(Guid questionnaireId)
+        {
+            try
+            {
+                var entId = _tenantService.GetTenantId();
+                if (!entId.HasValue)
+                    return Unauthorized(new { message = "Session invalide." });
+
+                var questionnaireQuestions = await _context.QuestionnaireQuestions
+                    .IgnoreQueryFilters()
+                    .Where(qq => qq.QuestionnaireId == questionnaireId)
+                    .OrderBy(qq => qq.Ordre)
+                    .ToListAsync();
+
+                var questionIds = questionnaireQuestions.Select(qq => qq.QuestionId).ToList();
+
+                var dbQuestions = await _context.Questions
+                    .IgnoreQueryFilters()
+                    .Where(q => questionIds.Contains(q.Id))
+                    .ToListAsync();
+
+                var questions = questionnaireQuestions
+                    .Select(qq => dbQuestions.FirstOrDefault(q => q.Id == qq.QuestionId))
+                    .Where(q => q != null)
+                    .ToList();
+
+                return Ok(questions);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erreur de récupération des questions", detail = ex.Message });
             }
         }
 
@@ -256,20 +316,13 @@ namespace NeoEvaluation.API.Controllers
                 var entId = _tenantService.GetTenantId();
 
                 var q = await _context.Questions
-                    .Include(x => x.QuestionnaireQuestions)
                     .FirstOrDefaultAsync(x => x.Id == id && x.EntrepriseId == entId);
 
                 if (q == null)
                     return NotFound(new { message = "Question non trouvée." });
 
-                _context.QuestionnaireQuestions.RemoveRange(q.QuestionnaireQuestions);
-
-                var reponses = await _context.Reponses
-                    .Where(r => r.QuestionId == id)
-                    .ToListAsync();
-                _context.Reponses.RemoveRange(reponses);
-
-                _context.Questions.Remove(q);
+                // Soft Delete
+                q.IsDeleted = true;
                 await _context.SaveChangesAsync();
 
                 return Ok(new { message = "Question supprimée avec succès." });

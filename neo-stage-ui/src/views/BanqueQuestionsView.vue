@@ -227,7 +227,7 @@
 
           <!-- ══════════════════════ GRID VIEW ══════════════════════ -->
           <transition-group v-else-if="viewMode === 'grid'" name="card-anim" tag="div" class="questions-grid">
-            <div v-for="(q, i) in filteredQuestions" :key="q.id"
+            <div v-for="(q, i) in paginatedQuestions" :key="q.id"
               class="q-card campaign-card-modern"
               :class="{
                 'card-selected': selectMode && selectedIds.has(q.id),
@@ -328,7 +328,7 @@
               <span style="width:80px" class="list-col-label text-center">{{ $t('actions') }}</span>
             </div>
             <transition-group name="row-anim" tag="div">
-              <div v-for="(q, i) in filteredQuestions" :key="q.id"
+              <div v-for="(q, i) in paginatedQuestions" :key="q.id"
                 class="list-row-item d-flex align-items-center px-4 py-3 mb-2"
                 :class="{ 'row-selected': selectMode && selectedIds.has(q.id) }"
                 :style="{ '--row-delay': i * 0.02 + 's' }"
@@ -390,6 +390,70 @@
                 </div>
               </div>
             </transition-group>
+          </div>
+
+          <!-- ══════════════════════ PAGINATION ══════════════════════ -->
+          <div v-if="totalPages > 1" class="bq-pagination-wrap mt-5 mb-4 animate__animated animate__fadeIn">
+            
+            <div class="pagination-controls d-flex align-items-center gap-1 justify-content-center" style="flex: 2;">
+              <button 
+                class="btn-pagination" 
+                :disabled="currentPage === 1" 
+                @click="setPage(1)"
+                title="Première page"
+              >
+                <i class="fa-solid fa-angles-left"></i>
+              </button>
+              
+              <button 
+                class="btn-pagination" 
+                :disabled="currentPage === 1" 
+                @click="setPage(currentPage - 1)"
+                title="Page précédente"
+              >
+                <i class="fa-solid fa-angle-left"></i>
+              </button>
+              
+              <button 
+                v-for="page in pageNumbers" 
+                :key="page" 
+                :class="['btn-pagination-num', { active: currentPage === page }]" 
+                @click="setPage(page)"
+              >
+                {{ page }}
+              </button>
+              
+              <button 
+                class="btn-pagination" 
+                :disabled="currentPage === totalPages" 
+                @click="setPage(currentPage + 1)"
+                title="Page suivante"
+              >
+                <i class="fa-solid fa-angle-right"></i>
+              </button>
+              
+              <button 
+                class="btn-pagination" 
+                :disabled="currentPage === totalPages" 
+                @click="setPage(totalPages)"
+                title="Dernière page"
+              >
+                <i class="fa-solid fa-angles-right"></i>
+              </button>
+            </div>
+            
+            <div class="pagination-size-selector d-flex align-items-center gap-2 justify-content-end" style="flex: 1;">
+              <span class="text-muted small">Par page :</span>
+              <div class="sort-select-wrap pagination-size-select">
+                <select v-model.number="itemsPerPage" class="sort-select-pro">
+                  <option :value="12">12</option>
+                  <option :value="24">24</option>
+                  <option :value="48">48</option>
+                  <option :value="96">96</option>
+                </select>
+                <i class="fa-solid fa-chevron-down sort-arrow"></i>
+              </div>
+            </div>
           </div>
 
         </div>
@@ -933,7 +997,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import api from '@/services/api';
 import axios from 'axios';
@@ -1684,6 +1748,53 @@ const toggleGlobalTheme = () => {
   document.documentElement.setAttribute('data-theme', next);
   localStorage.setItem('theme_preferé_evalua', next);
 };
+
+// ══════════════════════════════════════════════════════════════
+// PAGINATION LOGIC
+// ══════════════════════════════════════════════════════════════
+const currentPage = ref(1);
+const itemsPerPage = ref(12);
+
+const paginatedQuestions = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value;
+  const end = start + itemsPerPage.value;
+  return filteredQuestions.value.slice(start, end);
+});
+
+const totalPages = computed(() => {
+  return Math.ceil(filteredQuestions.value.length / itemsPerPage.value);
+});
+
+const pageNumbers = computed(() => {
+  const pages = [];
+  const maxVisiblePages = 5;
+  let start = Math.max(1, currentPage.value - Math.floor(maxVisiblePages / 2));
+  let end = Math.min(totalPages.value, start + maxVisiblePages - 1);
+
+  if (end - start + 1 < maxVisiblePages) {
+    start = Math.max(1, end - maxVisiblePages + 1);
+  }
+
+  for (let i = start; i <= end; i++) {
+    pages.push(i);
+  }
+  return pages;
+});
+
+const setPage = (page) => {
+  if (page < 1 || page > totalPages.value) return;
+  currentPage.value = page;
+  
+  // Smooth scroll back to top of container on page change
+  const container = document.querySelector('.canvas-engine');
+  if (container) {
+    container.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+};
+
+watch([searchQuery, activeFilter, selectedCat, filterLang, itemsPerPage], () => {
+  currentPage.value = 1;
+});
 
 onMounted(() => fetchData());
 </script>
@@ -2572,5 +2683,76 @@ onMounted(() => fetchData());
 @media (max-width: 480px) {
   .modal-footer-actions { flex-direction: column; }
   .modal-footer-actions button { width: 100%; justify-content: center; }
+}
+
+/* ════════════════════════════════════════
+   PAGINATION
+════════════════════════════════════════ */
+.bq-pagination-wrap {
+  background: var(--surface);
+  border: 1px solid var(--bdr);
+  border-radius: 20px;
+  padding: 16px 24px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+.btn-pagination {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid var(--bdr);
+  background: var(--surface2);
+  color: var(--text2);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  transition: all 0.2s var(--ease-spring);
+}
+.btn-pagination:hover:not(:disabled) {
+  border-color: var(--amber);
+  color: var(--amber-dark);
+  background: var(--amber-light);
+  transform: translateY(-2px);
+}
+.btn-pagination:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.btn-pagination-num {
+  height: 38px;
+  min-width: 38px;
+  padding: 0 8px;
+  border-radius: 12px;
+  border: 1px solid var(--bdr);
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s var(--ease-spring);
+}
+.btn-pagination-num:hover {
+  border-color: var(--amber);
+  color: var(--amber-dark);
+  background: var(--amber-light);
+  transform: translateY(-2px);
+}
+.btn-pagination-num.active {
+  background: var(--amber);
+  color: #0f172a;
+  border-color: var(--amber);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+.pagination-size-select {
+  width: 90px;
 }
 </style>

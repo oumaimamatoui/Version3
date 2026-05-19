@@ -50,18 +50,6 @@
                   @click="viewMode = 'grid'"
                   :title="t('view')"
                 ><i class="fa-solid fa-table-cells-large"></i></button>
-                <button
-                  class="btn-view-toggle"
-                  :class="{ active: themeLocal === 'light' }"
-                  @click="themeLocal = 'light'"
-                  :title="t('theme.light')"
-                ><i class="fa-solid fa-sun"></i></button>
-                <button
-                  class="btn-view-toggle"
-                  :class="{ active: themeLocal === 'dark' }"
-                  @click="themeLocal = 'dark'"
-                  :title="t('theme.dark')"
-                ><i class="fa-solid fa-moon"></i></button>
               </div>
               <div class="search-inline-box">
                 <i class="fa-solid fa-magnifying-glass"></i>
@@ -304,7 +292,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, reactive } from 'vue';
+import { ref, computed, onMounted, reactive, inject } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import api from '@/services/api';
@@ -315,12 +303,8 @@ const { t } = useI18n();
 const router = useRouter();
 
 /* ─── THEME ─────────────────────────────────────────────────────── */
-const themeLocal = ref(localStorage.getItem('app-theme') || 'light');
-const theme = computed(() => themeLocal.value);
-const toggleTheme = () => {
-  themeLocal.value = themeLocal.value === 'light' ? 'dark' : 'light';
-  localStorage.setItem('app-theme', themeLocal.value);
-};
+const isDark = inject('isDark', ref(false));
+const theme = computed(() => isDark.value ? 'dark' : 'light');
 
 /* ─── ÉTAT ─────────────────────────────────────────────────────── */
 const historyData  = ref([]);

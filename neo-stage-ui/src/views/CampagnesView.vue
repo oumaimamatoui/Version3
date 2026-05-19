@@ -405,7 +405,7 @@
                             <i class="fa-solid fa-tag theme-select-icon"></i>
                             <select v-model="studio.questionnaire.theme" class="enigma-field theme-select" @change="studio.questionnaire.sousTheme = ''">
                               <option value="">— Choisir —</option>
-                              <option v-for="cat in categoriesList" :key="cat.id" :value="cat.nom">{{ cat.nom }}</option>
+                              <option v-for="cat in (categoriesList.length > 0 ? categoriesList : themesData)" :key="cat.id || cat.nom" :value="cat.nom">{{ cat.nom }}</option>
                             </select>
                           </div>
                         </div>
@@ -414,23 +414,37 @@
                       <div class="col-md-6">
                         <div class="enigma-input-wrap">
                           <label>{{ t('campaigns.studio.step1.subTheme') }}</label>
-                          <div class="theme-select-wrapper" :class="{ 'disabled-wrapper': !studio.questionnaire.theme }">
-                            <i class="fa-solid fa-sitemap theme-select-icon"></i>
-                            <select v-model="studio.questionnaire.sousTheme" class="enigma-field theme-select" :disabled="!studio.questionnaire.theme">
-                              <option value="">— Sélectionner —</option>
-                              <option v-for="sub in dynamicSubCategories" :key="sub.id" :value="sub.nom">{{ sub.nom }}</option>
-                            </select>
+                          <div v-if="!studio.questionnaire.theme" class="subthemes-placeholder-card p-3 text-center rounded-4 border-dashed">
+                            <i class="fa-solid fa-circle-info text-muted mb-2"></i>
+                            <p class="small text-muted m-0">Veuillez d'abord choisir un thème pour charger les spécialités disponibles.</p>
+                          </div>
+                          <div v-else class="subthemes-grid mt-2">
+                            <div v-for="sub in dynamicSubCategories" :key="sub.id" 
+                                 :class="['subtheme-badge-card', { active: selectedSubThemes.includes(sub.nom) }]"
+                                 @click="toggleSubTheme(sub.nom)">
+                              <div class="subtheme-card-indicator">
+                                <i :class="selectedSubThemes.includes(sub.nom) ? 'fa-solid fa-square-check' : 'fa-regular fa-square'"></i>
+                              </div>
+                              <span class="subtheme-card-label">{{ sub.nom }}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
 
                       <div class="col-12" v-if="studio.questionnaire.theme">
-                        <div class="theme-breadcrumb-display">
+                        <div class="theme-breadcrumb-display d-flex align-items-center flex-wrap gap-2">
                           <i class="fa-solid fa-folder-open text-amber me-2"></i>
                           <span class="theme-bc-item">{{ studio.questionnaire.theme }}</span>
-                          <template v-if="studio.questionnaire.sousTheme">
+                          <template v-if="selectedSubThemes.length > 0">
                             <i class="fa-solid fa-chevron-right mx-2 opacity-40"></i>
-                            <span class="theme-bc-item active">{{ studio.questionnaire.sousTheme }}</span>
+                            <div class="d-flex flex-wrap gap-2">
+                              <span v-for="sub in selectedSubThemes" :key="sub" class="theme-bc-item active sub-badge-pill">
+                                {{ sub }}
+                                <button @click.stop="toggleSubTheme(sub)" class="sub-badge-remove">
+                                  <i class="fa-solid fa-xmark"></i>
+                                </button>
+                              </span>
+                            </div>
                           </template>
                         </div>
                       </div>
@@ -1104,6 +1118,21 @@ const dynamicSubCategories = computed(() => {
   return found ? found.sousTh.map((s, i) => ({ id: i, nom: s })) : [];
 });
 
+const selectedSubThemes = computed(() => {
+  if (!studio.questionnaire.sousTheme) return [];
+  return studio.questionnaire.sousTheme.split(',').map(s => s.trim()).filter(Boolean);
+});
+
+const toggleSubTheme = (subName) => {
+  let current = [...selectedSubThemes.value];
+  if (current.includes(subName)) {
+    current = current.filter(s => s !== subName);
+  } else {
+    current.push(subName);
+  }
+  studio.questionnaire.sousTheme = current.join(', ');
+};
+
 const questionsWithTimer = computed(() =>
   studio.questions.filter(q => q.duree && q.duree > 0).length
 );
@@ -1437,6 +1466,7 @@ const confirmStudioSync = () => {
       type: q.type ?? 0, theme: q.theme || q.categorie || '',
       sousTheme: q.sousTheme || '', duree: q.duree || 0,
       id: `temp-${Math.random()}`, _showTimer: false, reponses,
+      originalId: q.id,
     };
   });
   studio.questions.push(...added);
@@ -1473,15 +1503,30 @@ const publishToProduction = async () => {
   if (!isReadyToPublish.value) return;
   isPublishing.value = true;
   try {
+    const existingQuestionIds = studio.questions
+      .map(q => {
+        if (q.originalId && q.originalId.length === 36) return q.originalId;
+        if (q.id && q.id.length === 36 && !q.id.startsWith('temp-') && !q.id.startsWith('custom-')) return q.id;
+        return null;
+      })
+      .filter(Boolean);
+
     const qResp = await api.post(`/Questionnaires`, {
       Titre: studio.questionnaire.titre, Description: studio.questionnaire.description || "",
       DureeMinutes: studio.questionnaire.duree || 60, ScoreReussite: studio.questionnaire.scoreReussite || 70,
       Theme: studio.questionnaire.theme || "", SousTheme: studio.questionnaire.sousTheme || "",
+      QuestionIds: existingQuestionIds
     });
     const qId = qResp.data.id;
 
+    const newQuestions = studio.questions.filter(q => {
+      const isExisting = (q.originalId && q.originalId.length === 36) ||
+                         (q.id && q.id.length === 36 && !q.id.startsWith('temp-') && !q.id.startsWith('custom-'));
+      return !isExisting;
+    });
+
     await Promise.all(
-      studio.questions.map(q => {
+      newQuestions.map(q => {
         const hasReponses = q.reponses && q.reponses.length > 0;
         const choixFinal = hasReponses
           ? q.reponses.map(r => r.texte || r.Texte).filter(Boolean)
@@ -2436,4 +2481,123 @@ kbd { background: #0f172a; color: white; padding: 4px 10px; border-radius: 8px; 
 [data-theme="dark"] .btn-qv-cancel { background: rgba(255,255,255,0.08); color: #94a3b8; }
 [data-theme="dark"] .inspector-stat-box { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.08); }
 [data-theme="dark"] .inspector-stat-box .v { color: #f0f6fc; }
+
+/* ═══════════════════════════════════════
+   PREMIUM SUBTHEMES GRID & BADGES
+═══════════════════════════════════════ */
+.subthemes-placeholder-card {
+  border: 2px dashed rgba(0,0,0,0.06);
+  background: #f8fafc;
+  color: #64748b;
+  transition: all 0.3s ease;
+}
+.subthemes-placeholder-card i {
+  font-size: 1.5rem;
+}
+.subthemes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+}
+.subtheme-badge-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.subtheme-badge-card:hover {
+  border-color: #f59e0b;
+  background: #fffbeb;
+  transform: translateY(-2px);
+}
+.subtheme-badge-card.active {
+  border-color: #f59e0b;
+  background: #f59e0b;
+  color: #0f172a;
+  box-shadow: 0 4px 12px rgba(245,158,11,0.2);
+}
+.subtheme-card-indicator {
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.subtheme-badge-card.active .subtheme-card-indicator {
+  color: #0f172a;
+}
+.subtheme-badge-card:not(.active) .subtheme-card-indicator {
+  color: #94a3b8;
+}
+.subtheme-card-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.sub-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fffbeb !important;
+  color: #b45309 !important;
+  border: 1px solid #fde68a !important;
+  padding: 4px 10px !important;
+  border-radius: 8px;
+  font-size: 0.7rem !important;
+  font-weight: 800;
+}
+.sub-badge-remove {
+  border: none;
+  background: transparent;
+  color: #b45309;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.8rem;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+.sub-badge-remove:hover {
+  opacity: 1;
+}
+
+/* Dark Mode support */
+[data-theme="dark"] .subthemes-placeholder-card {
+  border-color: rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.02);
+  color: #8b949e;
+}
+[data-theme="dark"] .subtheme-badge-card {
+  background: rgba(255,255,255,0.03);
+  border-color: rgba(255,255,255,0.08);
+  color: #f0f6fc;
+}
+[data-theme="dark"] .subtheme-badge-card:hover {
+  background: rgba(245,158,11,0.1);
+  border-color: #f59e0b;
+}
+[data-theme="dark"] .subtheme-badge-card.active {
+  background: #f59e0b;
+  color: #0f172a;
+  border-color: #f59e0b;
+}
+[data-theme="dark"] .subtheme-badge-card.active .subtheme-card-indicator {
+  color: #0f172a;
+}
+[data-theme="dark"] .sub-badge-pill {
+  background: rgba(245,158,11,0.1) !important;
+  color: #f59e0b !important;
+  border-color: rgba(245,158,11,0.2) !important;
+}
+[data-theme="dark"] .sub-badge-remove {
+  color: #f59e0b;
+}
 </style>

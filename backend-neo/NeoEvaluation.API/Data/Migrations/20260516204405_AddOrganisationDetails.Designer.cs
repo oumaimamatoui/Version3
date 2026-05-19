@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NeoEvaluation.API.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NeoEvaluation.API.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260516204405_AddOrganisationDetails")]
+    partial class AddOrganisationDetails
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -309,9 +312,6 @@ namespace NeoEvaluation.API.Data.Migrations
                     b.Property<Guid>("CandidatureId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("CorrectionIA")
-                        .HasColumnType("text");
-
                     b.Property<int>("CurrentQuestionIndex")
                         .HasColumnType("integer");
 
@@ -326,9 +326,6 @@ namespace NeoEvaluation.API.Data.Migrations
 
                     b.Property<int>("NbReprises")
                         .HasColumnType("integer");
-
-                    b.Property<string>("RapportFinalIA")
-                        .HasColumnType("text");
 
                     b.Property<float>("ScorePourcentage")
                         .HasColumnType("real");
@@ -448,9 +445,6 @@ namespace NeoEvaluation.API.Data.Migrations
 
                     b.Property<string>("Explication")
                         .HasColumnType("text");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
 
                     b.Property<string>("Langue")
                         .IsRequired()

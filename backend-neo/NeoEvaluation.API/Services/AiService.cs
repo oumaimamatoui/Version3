@@ -77,5 +77,41 @@ namespace NeoEvaluation.API.Services
             var json = await resp.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<CvAnalysisResult>(json, _jsonOpts) ?? new();
         }
+
+        public async Task<AiEvaluationResponse> EvaluateExamAsync(object payload)
+        {
+            var content = new StringContent(JsonSerializer.Serialize(payload), System.Text.Encoding.UTF8, "application/json");
+            var resp = await _http.PostAsync("/ia/evaluate-exam", content);
+            if (!resp.IsSuccessStatusCode) throw new Exception("AI Engine unreachable");
+
+            var json = await resp.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<AiEvaluationResponse>(json, _jsonOpts) ?? new AiEvaluationResponse();
+        }
+
+        public async Task<string> GetRecommendationsAsync(object payload)
+        {
+            var content = new StringContent(JsonSerializer.Serialize(payload), System.Text.Encoding.UTF8, "application/json");
+            var resp = await _http.PostAsync("/ia/recommendations", content);
+            if (!resp.IsSuccessStatusCode) throw new Exception("AI Engine unreachable");
+
+            return await resp.Content.ReadAsStringAsync();
+        }
+    }
+
+    public class AiEvaluationResponse {
+        public string Status { get; set; } = string.Empty;
+        public AiEvaluationData? Evaluation { get; set; }
+    }
+    public class AiEvaluationData {
+        public float ScorePourcentage { get; set; }
+        public string RapportFinal { get; set; } = string.Empty;
+        public List<AiCorrectionItem> Corrections { get; set; } = new();
+    }
+    public class AiCorrectionItem {
+        public string QuestionId { get; set; } = string.Empty;
+        public bool IsCorrect { get; set; }
+        public string CandidateAnswer { get; set; } = string.Empty;
+        public string CorrectAnswer { get; set; } = string.Empty;
+        public string Explication { get; set; } = string.Empty;
     }
 }

@@ -16,6 +16,16 @@ public class InscriptionsEntreprise
     
     public string? MatriculeFiscale { get; set; }
 
+    // Nouveaux champs d'organisation récupérés lors de l'inscription
+    public string? Domaine { get; set; }
+    public string? Secteur { get; set; }
+    public string? SiteWeb { get; set; }
+    public string? Ville { get; set; }
+    public string? Pays { get; set; }
+    public string? CodePostal { get; set; }
+    public string? Adresse { get; set; }
+    public string? Description { get; set; }
+
     public int Statut { get; set; } = 0;
     public DateTime CreeLe { get; set; } = DateTime.UtcNow;
 }

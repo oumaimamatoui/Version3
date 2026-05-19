@@ -198,7 +198,7 @@ modelBuilder.Entity<CvAnalysis>(entity =>
                 .HasQueryFilter(e => IsSuperAdmin || e.EntrepriseId == CurrentTenantId);
 
             modelBuilder.Entity<Question>()
-                .HasQueryFilter(e => IsSuperAdmin || e.EntrepriseId == CurrentTenantId);
+                .HasQueryFilter(e => (IsSuperAdmin || e.EntrepriseId == CurrentTenantId) && !e.IsDeleted);
 
             modelBuilder.Entity<Candidature>()
                 .HasQueryFilter(e => IsSuperAdmin || e.Campagne.EntrepriseId == CurrentTenantId);

@@ -28,5 +28,22 @@ namespace NeoEvaluation.API.Controllers
             var history = await _aiService.GetCvHistoryAsync(candidatId);
             return Ok(history);
         }
+
+        [HttpPost("recommendations")]
+        public async Task<IActionResult> GetRecommendations([FromBody] AiRecommendationsRequest req)
+        {
+            var payload = new {
+                role = req.Role,
+                lang = req.Lang
+            };
+            var result = await _aiService.GetRecommendationsAsync(payload);
+            return Content(result, "application/json");
+        }
+    }
+
+    public class AiRecommendationsRequest
+    {
+        public string Role { get; set; } = "Candidat";
+        public string Lang { get; set; } = "fr";
     }
 }

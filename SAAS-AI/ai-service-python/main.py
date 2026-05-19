@@ -26,6 +26,7 @@ from collections import deque, OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional, AsyncGenerator, List, Dict, Any
 from datetime import datetime, timedelta
+from pydantic import BaseModel
 
 from fastapi import FastAPI, Form, File, UploadFile, HTTPException, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -63,7 +64,13 @@ except ImportError:
 logging.basicConfig(level=logging.WARNING, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("evaluatech")
 
-API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyDvNazWuxyoFAA9tiq497E_LojbyM9eyeU")
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
+API_KEY = os.getenv("GEMINI_API_KEY", "")
 WORKING_MODEL = "gemini-1.5-flash"
 _START_TIME = time.time()
 _gemini_client = None
@@ -297,18 +304,38 @@ def track_usage(start_time: float, response, module_name: str):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global WORKING_MODEL, _gemini_client
+    gemini_status = "[OFFLINE] Non connecte"
+    
     if _gemini_client:
         try:
             loop = asyncio.get_event_loop()
             models_resp = await loop.run_in_executor(_gemini_executor, _gemini_client.models.list)
             names = [m.name for m in models_resp]
-            for c in ["models/gemini-2.0-flash", "models/gemini-1.5-flash"]:
-                if c in names: WORKING_MODEL = c.replace("models/", ""); break
+            for c in ["models/gemini-2.5-flash", "models/gemini-2.0-flash", "models/gemini-1.5-flash"]:
+                if c in names: 
+                    WORKING_MODEL = c.replace("models/", "")
+                    break
+            gemini_status = f"[ONLINE] Connecte ({WORKING_MODEL})"
         except Exception as e:
             logger.warning(f"Gemini check failed: {e}")
             _gemini_client = None
-    log_activity("Système", "Moteur IA v10.1 démarré", "#10b981", "Système")
-    await _prewarm_chat_cache()
+            gemini_status = f"[ERROR] Echec de connexion (Erreur: {str(e)[:50]})"
+    else:
+        gemini_status = "[DISABLED] Cle GEMINI_API_KEY absente ou invalide"
+
+    log_activity("Systeme", "Moteur IA v10.1 demarre", "#10b981", "Systeme")
+    cache_count = await _prewarm_chat_cache()
+    
+    # Beautiful visual dashboard on terminal startup (ASCII safe for Windows console)
+    print("\n" + "="*60)
+    print(" >>> EVALUATECH AI ENGINE v10.1 - DEMARRAGE REUSSI <<<")
+    print("="*60)
+    print(f" [STATUS]   : Actif & En cours d'execution")
+    print(f" [ENGINE]   : {gemini_status}")
+    print(f" [CACHE]    : Pre-charge ({cache_count} entrees)")
+    print(f" [ADDRESS]  : http://localhost:8000")
+    print("="*60 + "\n")
+    
     yield
     _gemini_executor.shutdown(wait=False)
 
@@ -327,7 +354,7 @@ async def _prewarm_chat_cache():
         if reply:
             _chat_cache.set(ck, {"response": reply, "suggestions": _get_suggestions(msg, lang, role)})
             count += 1
-    logger.warning(f"Chat cache pré-chargé ({count} entrées)")
+    return count
 
 # ─────────────────────────────────────────────────
 # APP
@@ -1300,34 +1327,34 @@ def _build_reco_prompt(role: str, context_data: dict = None) -> str:
 def _get_fallback_recommendations(role: str) -> list:
     fallbacks = {
         "Candidat": [
-            {"title": "Complétez vos tests en attente", "description": "2 tests en attente. Les compléter augmentera votre profil de 15 points.", "actionLabel": "Voir mes tests", "icon": RECO_ICONS["test"], "color": "#3b82f6", "priority": "🔴 Urgent", "priorityBg": "#fee2e2", "priorityColor": "#dc2626"},
-            {"title": "Préparez votre entretien IA", "description": "Entraînez-vous sur des questions comportementales et techniques.", "actionLabel": "Commencer préparation", "icon": RECO_ICONS["interview"], "color": "#8b5cf6", "priority": "🟡 Priorité", "priorityBg": "#fef9ec", "priorityColor": "#d97706"},
-            {"title": "Analysez votre CV avec Gemini", "description": "Obtenez des conseils personnalisés pour augmenter votre score de matching.", "actionLabel": "Analyser mon CV", "icon": RECO_ICONS["cv"], "color": "#10b981", "priority": "🟢 Standard", "priorityBg": "#ecfdf5", "priorityColor": "#059669"},
+            {"title": "Complétez vos tests en attente", "description": "2 tests en attente. Les compléter augmentera votre profil de 15 points.", "actionLabel": "Voir mes tests", "icon": RECO_ICONS["test"], "color": "#3b82f6", "priority": "🔴 Urgent", "priorityBg": "#fee2e2", "priorityColor": "#dc2626", "route": "/my-tests", "scrollTo": None},
+            {"title": "Préparez votre entretien IA", "description": "Entraînez-vous sur des questions comportementales et techniques.", "actionLabel": "Commencer préparation", "icon": RECO_ICONS["interview"], "color": "#8b5cf6", "priority": "🟡 Priorité", "priorityBg": "#fef9ec", "priorityColor": "#d97706", "route": "/my-tests", "scrollTo": None},
+            {"title": "Analysez votre CV avec Gemini", "description": "Obtenez des conseils personnalisés pour augmenter votre score de matching.", "actionLabel": "Analyser mon CV", "icon": RECO_ICONS["cv"], "color": "#10b981", "priority": "🟢 Standard", "priorityBg": "#ecfdf5", "priorityColor": "#059669", "route": None, "scrollTo": "cv-scan-section"},
         ],
         "Evaluateur": [
-            {"title": "5 évaluations urgentes en attente", "description": "Sara Ben Ali (26h) est prioritaire.", "actionLabel": "Voir la file", "icon": RECO_ICONS["alert"], "color": "#ef4444", "priority": "🔴 Urgent", "priorityBg": "#fee2e2", "priorityColor": "#dc2626"},
-            {"title": "Session demain à 10h00", "description": "Session Q2 avec 12 candidats. Préparez vos grilles.", "actionLabel": "Voir la session", "icon": RECO_ICONS["calendar"], "color": "#f59e0b", "priority": "🟡 Priorité", "priorityBg": "#fef9ec", "priorityColor": "#d97706"},
-            {"title": "Rapport hebdomadaire disponible", "description": "Consultez votre rapport de performance de la semaine.", "actionLabel": "Voir le rapport", "icon": RECO_ICONS["report"], "color": "#10b981", "priority": "🟢 Standard", "priorityBg": "#ecfdf5", "priorityColor": "#059669"},
+            {"title": "5 évaluations urgentes en attente", "description": "Sara Ben Ali (26h) est prioritaire.", "actionLabel": "Voir la file", "icon": RECO_ICONS["alert"], "color": "#ef4444", "priority": "🔴 Urgent", "priorityBg": "#fee2e2", "priorityColor": "#dc2626", "route": "/analyse-comportementale", "scrollTo": None},
+            {"title": "Session demain à 10h00", "description": "Session Q2 avec 12 candidats. Préparez vos grilles.", "actionLabel": "Voir la session", "icon": RECO_ICONS["calendar"], "color": "#f59e0b", "priority": "🟡 Priorité", "priorityBg": "#fef9ec", "priorityColor": "#d97706", "route": "/sessions", "scrollTo": None},
+            {"title": "Rapport hebdomadaire disponible", "description": "Consultez votre rapport de performance de la semaine.", "actionLabel": "Voir le rapport", "icon": RECO_ICONS["report"], "color": "#10b981", "priority": "🟢 Standard", "priorityBg": "#ecfdf5", "priorityColor": "#059669", "route": "/reporting", "scrollTo": None},
         ],
         "RH": [
-            {"title": "Lancer une campagne de recrutement", "description": "Taux candidatures en baisse de 12%. Créez une campagne ciblée.", "actionLabel": "Créer campagne", "icon": RECO_ICONS["campaign"], "color": "#8b5cf6", "priority": "🟡 Priorité", "priorityBg": "#fef9ec", "priorityColor": "#d97706"},
-            {"title": "Analyser les soft skills", "description": "18 candidats ont terminé. Lancez l'analyse comportementale.", "actionLabel": "Analyser profils", "icon": RECO_ICONS["skill"], "color": "#10b981", "priority": "🟢 Standard", "priorityBg": "#ecfdf5", "priorityColor": "#059669"},
-            {"title": "Rapport mensuel RH", "description": "Générez le rapport RH mensuel pour votre direction.", "actionLabel": "Générer rapport", "icon": RECO_ICONS["report"], "color": "#3b82f6", "priority": "🔵 Info", "priorityBg": "#eff6ff", "priorityColor": "#2563eb"},
+            {"title": "Lancer une campagne de recrutement", "description": "Taux candidatures en baisse de 12%. Créez une campagne ciblée.", "actionLabel": "Créer campagne", "icon": RECO_ICONS["campaign"], "color": "#8b5cf6", "priority": "🟡 Priorité", "priorityBg": "#fef9ec", "priorityColor": "#d97706", "route": "/campaigns", "scrollTo": None},
+            {"title": "Analyser les soft skills", "description": "18 candidats ont terminé. Lancez l'analyse comportementale.", "actionLabel": "Analyser profils", "icon": RECO_ICONS["skill"], "color": "#10b981", "priority": "🟢 Standard", "priorityBg": "#ecfdf5", "priorityColor": "#059669", "route": "/analyse-comportementale", "scrollTo": None},
+            {"title": "Rapport mensuel RH", "description": "Générez le rapport RH mensuel pour votre direction.", "actionLabel": "Générer rapport", "icon": RECO_ICONS["report"], "color": "#3b82f6", "priority": "🔵 Info", "priorityBg": "#eff6ff", "priorityColor": "#2563eb", "route": "/reporting", "scrollTo": None},
         ],
         "Recruteur": [
-            {"title": "7 candidats sans réponse", "description": "Relancez-les pour maximiser le pipeline.", "actionLabel": "Relancer invitations", "icon": RECO_ICONS["mail"], "color": "#ef4444", "priority": "🔴 Urgent", "priorityBg": "#fee2e2", "priorityColor": "#dc2626"},
-            {"title": "3 profils React Senior à 85%+", "description": "Mariam Khelifi (95%), Youssef Chaabane (89%) et Fatima Zouari (92%).", "actionLabel": "Voir profils", "icon": RECO_ICONS["star"], "color": "#10b981", "priority": "🟡 Priorité", "priorityBg": "#fef9ec", "priorityColor": "#d97706"},
-            {"title": "Créer un test DevOps", "description": "Pas de test DevOps actif. Élargissez votre pipeline.", "actionLabel": "Créer test", "icon": RECO_ICONS["test"], "color": "#6366f1", "priority": "🟢 Standard", "priorityBg": "#ecfdf5", "priorityColor": "#059669"},
+            {"title": "7 candidats sans réponse", "description": "Relancez-les pour maximiser le pipeline.", "actionLabel": "Relancer invitations", "icon": RECO_ICONS["mail"], "color": "#ef4444", "priority": "🔴 Urgent", "priorityBg": "#fee2e2", "priorityColor": "#dc2626", "route": "/candidates-list", "scrollTo": None},
+            {"title": "3 profils React Senior à 85%+", "description": "Mariam Khelifi (95%), Youssef Chaabane (89%) et Fatima Zouari (92%).", "actionLabel": "Voir profils", "icon": RECO_ICONS["star"], "color": "#10b981", "priority": "🟡 Priorité", "priorityBg": "#fef9ec", "priorityColor": "#d97706", "route": "/candidates-list", "scrollTo": None},
+            {"title": "Créer un test DevOps", "description": "Pas de test DevOps actif. Élargissez votre pipeline.", "actionLabel": "Créer test", "icon": RECO_ICONS["test"], "color": "#6366f1", "priority": "🟢 Standard", "priorityBg": "#ecfdf5", "priorityColor": "#059669", "route": "/campaigns", "scrollTo": None},
         ],
         "AdminEntreprise": [
-            {"title": "8 candidats sans analyse depuis 48h", "description": "Traitez-les avant expiration des liens.", "actionLabel": "Voir le pipeline", "icon": RECO_ICONS["alert"], "color": "#ef4444", "priority": "🔴 Urgent", "priorityBg": "#fee2e2", "priorityColor": "#dc2626"},
-            {"title": "Générer le rapport mensuel", "description": "Le rapport de ce mois n'a pas encore été généré.", "actionLabel": "Générer rapport", "icon": RECO_ICONS["report"], "color": "#f59e0b", "priority": "🟡 Priorité", "priorityBg": "#fef9ec", "priorityColor": "#d97706"},
-            {"title": "Inviter de nouveaux membres RH", "description": "Équipe en sous-effectif. Invitez 2 membres supplémentaires.", "actionLabel": "Inviter membres", "icon": RECO_ICONS["team"], "color": "#6366f1", "priority": "🟢 Standard", "priorityBg": "#ecfdf5", "priorityColor": "#059669"},
+            {"title": "8 candidats sans analyse depuis 48h", "description": "Traitez-les avant expiration des liens.", "actionLabel": "Voir le pipeline", "icon": RECO_ICONS["alert"], "color": "#ef4444", "priority": "🔴 Urgent", "priorityBg": "#fee2e2", "priorityColor": "#dc2626", "route": "/analyse-comportementale", "scrollTo": None},
+            {"title": "Générer le rapport mensuel", "description": "Le rapport de ce mois n'a pas encore été généré.", "actionLabel": "Générer rapport", "icon": RECO_ICONS["report"], "color": "#f59e0b", "priority": "🟡 Priorité", "priorityBg": "#fef9ec", "priorityColor": "#d97706", "route": "/reporting", "scrollTo": None},
+            {"title": "Inviter de nouveaux membres RH", "description": "Équipe en sous-effectif. Invitez 2 membres supplémentaires.", "actionLabel": "Inviter membres", "icon": RECO_ICONS["team"], "color": "#6366f1", "priority": "🟢 Standard", "priorityBg": "#ecfdf5", "priorityColor": "#059669", "route": "/invite", "scrollTo": None},
         ],
         "SuperAdmin": [
-            {"title": "Service Mailer en panne — CRITIQUE", "description": "DOWN depuis 2h. 47 invitations bloquées. Intervention immédiate.", "actionLabel": "Diagnostiquer", "icon": RECO_ICONS["system"], "color": "#ef4444", "priority": "🔴 Urgent", "priorityBg": "#fee2e2", "priorityColor": "#dc2626"},
-            {"title": "3 abonnements expirant dans 7 jours", "description": "Contactez les entreprises pour le renouvellement.", "actionLabel": "Voir abonnements", "icon": RECO_ICONS["money"], "color": "#f59e0b", "priority": "🟡 Priorité", "priorityBg": "#fef9ec", "priorityColor": "#d97706"},
-            {"title": "Audit de sécurité recommandé", "description": "Aucun audit depuis 30 jours. Planifiez une vérification.", "actionLabel": "Lancer audit", "icon": RECO_ICONS["security"], "color": "#6366f1", "priority": "🟢 Standard", "priorityBg": "#ecfdf5", "priorityColor": "#059669"},
+            {"title": "Service Mailer en panne — CRITIQUE", "description": "DOWN depuis 2h. 47 invitations bloquées. Intervention immédiate.", "actionLabel": "Diagnostiquer", "icon": RECO_ICONS["system"], "color": "#ef4444", "priority": "🔴 Urgent", "priorityBg": "#fee2e2", "priorityColor": "#dc2626", "route": "/super-admin", "scrollTo": None},
+            {"title": "3 abonnements expirant dans 7 jours", "description": "Contactez les entreprises pour le renouvellement.", "actionLabel": "Voir abonnements", "icon": RECO_ICONS["money"], "color": "#f59e0b", "priority": "🟡 Priorité", "priorityBg": "#fef9ec", "priorityColor": "#d97706", "route": "/gestion-abonnements", "scrollTo": None},
+            {"title": "Audit de sécurité recommandé", "description": "Aucun audit depuis 30 jours. Planifiez une vérification.", "actionLabel": "Lancer audit", "icon": RECO_ICONS["security"], "color": "#6366f1", "priority": "🟢 Standard", "priorityBg": "#ecfdf5", "priorityColor": "#059669", "route": "/super-admin-analytics", "scrollTo": None},
         ],
     }
     return fallbacks.get(role, fallbacks["AdminEntreprise"])
@@ -1357,13 +1384,19 @@ def _parse_gemini_recommendations(raw_text: str, role: str) -> list:
         return []
 
 
+class RecommendationRequest(BaseModel):
+    role: str = "AdminEntreprise"
+    lang: str = "fr"
+    context: str = "{}"
+    force_refresh: bool = False
+
 @app.post("/ia/recommendations")
-async def get_recommendations(
-    role: str = Form("AdminEntreprise"),
-    lang: str = Form("fr"),
-    context: str = Form("{}"),
-    force_refresh: bool = Form(False)
-):
+async def get_recommendations(req: RecommendationRequest):
+    role = req.role
+    lang = req.lang
+    context = req.context
+    force_refresh = req.force_refresh
+    
     ck = make_cache_key("reco-v10", role, lang)
     if not force_refresh:
         cached = _reco_cache.get(ck)
@@ -1829,11 +1862,11 @@ def _get_chart_data(role: str, period: str = "week") -> dict:
 def _get_widget_config(role: str) -> dict:
     configs = {
         "Candidat":        {"theme_color":"#3b82f6","accent":"#60a5fa","hero_icon":"fa-user-graduate","sections":["kpis","tests_en_cours","progression","cv","lettre","resultats","chart","recommendations"],"quick_actions":[{"label":"Passer un test","icon":"fa-play","route":"/my-tests","color":"#3b82f6"},{"label":"Analyser CV","icon":"fa-file-pdf","route":"/dashboard#cv","color":"#f59e0b"},{"label":"Générer lettre","icon":"fa-envelope","route":"/dashboard#lettre","color":"#8b5cf6"},{"label":"Préparer entretien","icon":"fa-microphone","route":"/dashboard#interview","color":"#10b981"}]},
-        "Evaluateur":      {"theme_color":"#f59e0b","accent":"#fbbf24","hero_icon":"fa-clipboard-check","sections":["kpis","eval_queue","sessions","scan_cv","top_skills","chart","activity","recommendations"],"quick_actions":[{"label":"Ma file","icon":"fa-users-gear","route":"/evaluations","color":"#f59e0b"},{"label":"Planifier","icon":"fa-calendar-plus","route":"/sessions","color":"#6366f1"},{"label":"Analyse comportementale","icon":"fa-brain","route":"/analyse-comportementale","color":"#10b981"},{"label":"Rapport","icon":"fa-chart-bar","route":"/reporting","color":"#8b5cf6"}]},
+        "Evaluateur":      {"theme_color":"#f59e0b","accent":"#fbbf24","hero_icon":"fa-clipboard-check","sections":["kpis","eval_queue","sessions","scan_cv","top_skills","chart","activity","recommendations"],"quick_actions":[{"label":"Ma file","icon":"fa-users-gear","route":"/analyse-comportementale","color":"#f59e0b"},{"label":"Planifier","icon":"fa-calendar-plus","route":"/sessions","color":"#6366f1"},{"label":"Analyse comportementale","icon":"fa-brain","route":"/analyse-comportementale","color":"#10b981"},{"label":"Rapport","icon":"fa-chart-bar","route":"/reporting","color":"#8b5cf6"}]},
         "RH":              {"theme_color":"#8b5cf6","accent":"#a78bfa","hero_icon":"fa-people-arrows","sections":["kpis","eval_queue","sessions","scan_cv","top_skills","chart","activity","recommendations"],"quick_actions":[{"label":"Créer campagne","icon":"fa-bullhorn","route":"/campaigns","color":"#8b5cf6"},{"label":"Inviter","icon":"fa-user-plus","route":"/invite","color":"#10b981"},{"label":"Rapport mensuel","icon":"fa-chart-bar","route":"/reporting","color":"#f59e0b"},{"label":"Soft skills","icon":"fa-brain","route":"/analyse-comportementale","color":"#3b82f6"}]},
         "Recruteur":       {"theme_color":"#10b981","accent":"#34d399","hero_icon":"fa-handshake","sections":["kpis","pipeline","scan_cv","chart","activity","recommendations"],"quick_actions":[{"label":"Nouvelle campagne","icon":"fa-plus","route":"/campaigns","color":"#10b981"},{"label":"Pipeline","icon":"fa-kanban","route":"/campaigns","color":"#6366f1"},{"label":"Analyser CV","icon":"fa-file-pdf","route":"/analyse-comportementale","color":"#f59e0b"},{"label":"QCM IA","icon":"fa-wand-sparkles","route":"/ai-generator","color":"#8b5cf6"}]},
         "AdminEntreprise": {"theme_color":"#f59e0b","accent":"#fbbf24","hero_icon":"fa-building-user","sections":["kpis","activity","team","scan_cv","recent_candidates","top_skills","chart","recommendations"],"quick_actions":[{"label":"Pipeline","icon":"fa-kanban","route":"/campaigns","color":"#f59e0b"},{"label":"Équipe","icon":"fa-people-group","route":"/staff-members","color":"#6366f1"},{"label":"Analyser CV","icon":"fa-file-pdf","route":"/analyse-comportementale","color":"#10b981"},{"label":"Rapport","icon":"fa-chart-bar","route":"/reporting","color":"#8b5cf6"}]},
-        "SuperAdmin":      {"theme_color":"#6366f1","accent":"#818cf8","hero_icon":"fa-shield-halved","sections":["kpis","services","companies","subscriptions","scan_cv","chart","activity","recommendations"],"quick_actions":[{"label":"Organisations","icon":"fa-building","route":"/gestion-entreprises","color":"#6366f1"},{"label":"Santé","icon":"fa-server","route":"/super-admin","color":"#10b981"},{"label":"Abonnements","icon":"fa-coins","route":"/gestion-abonnements","color":"#f59e0b"},{"label":"Analytics","icon":"fa-chart-mixed","route":"/super-admin-analytics","color":"#8b5cf6"}]},
+        "SuperAdmin":      {"theme_color":"#6366f1","accent":"#818cf8","hero_icon":"fa-shield-halved","sections":["kpis","services","companies","subscriptions","scan_cv","chart","activity","recommendations"],"quick_actions":[{"label":"Organisations","icon":"fa-building","route":"/super-admin","color":"#6366f1"},{"label":"Santé","icon":"fa-server","route":"/super-admin","color":"#10b981"},{"label":"Abonnements","icon":"fa-coins","route":"/gestion-abonnements","color":"#f59e0b"},{"label":"Analytics","icon":"fa-chart-mixed","route":"/super-admin-analytics","color":"#8b5cf6"}]},
     }
     return configs.get(role, configs["AdminEntreprise"])
 
@@ -1841,11 +1874,11 @@ def _get_widget_config(role: str) -> dict:
 def _get_role_navigation(role: str) -> list:
     navs = {
         "Candidat":        [{"label":"Dashboard","icon":"fa-grid-2","route":"/dashboard","active":True},{"label":"Mes Tests","icon":"fa-clipboard-list","route":"/my-tests"},{"label":"Résultats","icon":"fa-chart-bar","route":"/results"},{"label":"Historique","icon":"fa-clock-rotate-left","route":"/history"},{"label":"Profil","icon":"fa-user","route":"/profile"}],
-        "Evaluateur":      [{"label":"Dashboard","icon":"fa-grid-2","route":"/dashboard","active":True},{"label":"Évaluations","icon":"fa-clipboard-check","route":"/evaluations"},{"label":"Sessions","icon":"fa-calendar","route":"/sessions"},{"label":"Analyse","icon":"fa-brain","route":"/analyse-comportementale"},{"label":"Stats","icon":"fa-chart-pie","route":"/stats"}],
-        "RH":              [{"label":"Dashboard","icon":"fa-grid-2","route":"/dashboard","active":True},{"label":"Campagnes","icon":"fa-bullhorn","route":"/campaigns"},{"label":"Candidats","icon":"fa-users","route":"/candidates-list"},{"label":"Évaluations","icon":"fa-clipboard-check","route":"/evaluations"},{"label":"Rapports","icon":"fa-chart-bar","route":"/reporting"}],
+        "Evaluateur":      [{"label":"Dashboard","icon":"fa-grid-2","route":"/dashboard","active":True},{"label":"Évaluations","icon":"fa-clipboard-check","route":"/analyse-comportementale"},{"label":"Sessions","icon":"fa-calendar","route":"/sessions"},{"label":"Analyse","icon":"fa-brain","route":"/analyse-comportementale"},{"label":"Stats","icon":"fa-chart-pie","route":"/stats"}],
+        "RH":              [{"label":"Dashboard","icon":"fa-grid-2","route":"/dashboard","active":True},{"label":"Campagnes","icon":"fa-bullhorn","route":"/campaigns"},{"label":"Candidats","icon":"fa-users","route":"/candidates-list"},{"label":"Évaluations","icon":"fa-clipboard-check","route":"/analyse-comportementale"},{"label":"Rapports","icon":"fa-chart-bar","route":"/reporting"}],
         "Recruteur":       [{"label":"Dashboard","icon":"fa-grid-2","route":"/dashboard","active":True},{"label":"Campagnes","icon":"fa-bullhorn","route":"/campaigns"},{"label":"Candidats","icon":"fa-users","route":"/candidates-list"},{"label":"Banque Q.","icon":"fa-database","route":"/questions"},{"label":"IA Gen.","icon":"fa-wand-sparkles","route":"/ai-generator"},{"label":"Rapports","icon":"fa-chart-bar","route":"/reporting"}],
         "AdminEntreprise": [{"label":"Dashboard","icon":"fa-grid-2","route":"/dashboard","active":True},{"label":"Campagnes","icon":"fa-bullhorn","route":"/campaigns"},{"label":"Candidats","icon":"fa-users","route":"/candidates-list"},{"label":"Équipe","icon":"fa-people-group","route":"/staff-members"},{"label":"Rapports","icon":"fa-chart-bar","route":"/reporting"},{"label":"Rôles","icon":"fa-shield-halved","route":"/roles"}],
-        "SuperAdmin":      [{"label":"Dashboard","icon":"fa-grid-2","route":"/dashboard","active":True},{"label":"Organisations","icon":"fa-building","route":"/gestion-entreprises"},{"label":"Utilisateurs","icon":"fa-users","route":"/platform-users"},{"label":"Abonnements","icon":"fa-coins","route":"/gestion-abonnements"},{"label":"Analytics","icon":"fa-chart-mixed","route":"/super-admin-analytics"},{"label":"Supervision","icon":"fa-shield-halved","route":"/super-admin"}],
+        "SuperAdmin":      [{"label":"Dashboard","icon":"fa-grid-2","route":"/dashboard","active":True},{"label":"Organisations","icon":"fa-building","route":"/super-admin"},{"label":"Utilisateurs","icon":"fa-users","route":"/platform-users"},{"label":"Abonnements","icon":"fa-coins","route":"/gestion-abonnements"},{"label":"Analytics","icon":"fa-chart-mixed","route":"/super-admin-analytics"},{"label":"Supervision","icon":"fa-shield-halved","route":"/super-admin"}],
     }
     return navs.get(role, navs["AdminEntreprise"])
 
@@ -2298,39 +2331,194 @@ async def process_voice_command(text: str = Form(...), session_id: str = Form("d
 # ██   QCM — FIX: theme + sousTheme injectés   ██
 # ════════════════════════════════════════════════════════════
 
-def _fallback_qcm(theme, sousTheme, n, langue="fr"):
+def _fallback_qcm(theme, sousTheme, n, langue="fr", type: int = 0):
     t = theme.strip() or "Développement"
     s = sousTheme.strip() or t
+    
+    if type == 2:
+        # Vrai / Faux
+        if langue == "en":
+            options = ["True", "False"]
+            raw_bank = [
+                {"question": f"The use of {s} in {t} is generally considered a secure and recommended practice when configured properly.", "answer": 0},
+                {"question": f"Storing sensitive credentials and API keys in plain text inside {s} files is a major security hazard.", "answer": 0},
+                {"question": f"In {t}, it is possible to deploy {s} without performing any unit tests or validations.", "answer": 1},
+                {"question": f"For {t} projects, using {s} always reduces performance and makes the application slower.", "answer": 1},
+                {"question": f"Proper input validation in {s} protects modern applications against injection and database attacks.", "answer": 0},
+                {"question": f"It is recommended to ignore linter warnings when writing modular structures for {s}.", "answer": 1},
+                {"question": f"Standard CI/CD pipelines automate testing for {s} to catch compilation issues early.", "answer": 0},
+                {"question": f"Using outdated third-party scripts is a secure way to support {s} inside {t}.", "answer": 1},
+                {"question": f"A decoupled architecture using {s} generally facilitates seamless long-term maintenance.", "answer": 0},
+                {"question": f"Horizontal scaling with load balancers is ineffective for distributed {s} architectures.", "answer": 1},
+                {"question": f"Applying the DRY (Don't Repeat Yourself) principle during refactoring of {s} helps reduce technical debt.", "answer": 0},
+                {"question": f"Secure environment variables are preferred over hardcoding settings inside {s} files.", "answer": 0},
+                {"question": f"Unit tests and integration tests can be safely disabled when releasing {s} in production.", "answer": 1},
+                {"question": f"Linters and strict style guides help developers standardize {s} development within a team.", "answer": 0},
+                {"question": f"Integration efficiency of {s} inside {t} can be monitored via test coverage and latencies.", "answer": 0},
+                {"question": f"GraphQL, REST, or gRPC are modern protocols perfectly suitable for communication with {s}.", "answer": 0},
+                {"question": f"React Hooks inside React can be called conditionally or inside nested loops.", "answer": 1},
+                {"question": f"A solid understanding of core concepts in {t} is optional for mastering advanced features of {s}.", "answer": 1},
+                {"question": f"Micro-frontend architectures using {s} increase code coupling and decrease deployment flexibility.", "answer": 1},
+                {"question": f"Automating dependency updates ensures that {s} uses secure, patched library versions.", "answer": 0}
+            ]
+        elif langue == "ar":
+            options = ["صواب", "خطأ"]
+            raw_bank = [
+                {"question": f"يعتبر استخدام {s} في {t} ممارسة آمنة وموصى بها بشكل عام عند تكوينها بشكل صحيح.", "answer": 0},
+                {"question": f"تخزين بيانات الاعتماد الحساسة ومفاتيح API في نص واضح داخل ملفات {s} هو خطر أمني كبير.", "answer": 0},
+                {"question": f"في {t}، يمكن نشر {s} دون إجراء أي اختبارات وحدة أو تحققات.", "answer": 1},
+                {"question": f"بالنسبة لمشاريع {t}، فإن استخدام {s} يقلل دائماً من الأداء ويجعل التطبيق أبطأ.", "answer": 1},
+                {"question": f"التحقق المناسب من المدخلات في {s} يحمي التطبيقات الحديثة من هجمات الحقن.", "answer": 0},
+                {"question": f"يوصى بتجاهل تحذيرات linter عند كتابة هياكل برمجية لـ {s}.", "answer": 1},
+                {"question": f"تقوم خطوط أنابيب CI/CD القياسية بأتمتة اختبارات {s} لاكتشاف مشكلات الترجمة مبكراً.", "answer": 0},
+                {"question": f"استخدام برمجيات طرف ثالث غير موثوقة هو طريقة آمنة لدعم {s} في {t}.", "answer": 1},
+                {"question": f"البنية البرمجية مفككة الارتباط باستخدام {s} تسهل بشكل عام الصيانة طويلة المدى.", "answer": 0},
+                {"question": f"التوسع الأفقي مع موزعي الأحمال غير فعال بالنسبة لهياكل {s} الموزعة.", "answer": 1},
+                {"question": f"يساعد تطبيق مبدأ DRY أثناء إعادة هيكلة {s} في تقليل الديون التقنية.", "answer": 0},
+                {"question": f"تُفضل متغيرات البيئة الآمنة على تضمين الإعدادات مباشرة داخل ملفات {s}.", "answer": 0},
+                {"question": f"يمكن تعطيل اختبارات الوحدة واختبارات التكامل بأمان عند إطلاق {s} في بيئة الإنتاج.", "answer": 1},
+                {"question": f"تساعد أدوات التنسيق وأدلة الأسلوب الصارمة المطورين على توحيد معايير تطوير {s}.", "answer": 0},
+                {"question": f"يمكن قياس كفاءة دمج {s} داخل {t} من خلال تغطية الاختبارات ووقت استجابة النظام.", "answer": 0},
+                {"question": f"تعتبر بروتوكولات REST أو GraphQL أو gRPC مناسبة تماماً للاتصال مع {s}.", "answer": 0},
+                {"question": f"يمكن استدعاء React Hooks داخل React بشكل مشروط أو داخل حلقات التكرار.", "answer": 1},
+                {"question": f"الفهم المتين للمفاهيم الأساسية لـ {t} هو أمر اختياري لإتقان الميزات المتقدمة لـ {s}.", "answer": 1},
+                {"question": f"تزيد بنية الواجهات الأمامية المصغرة باستخدام {s} من الارتباط الوثيق وتقلل من مرونة النشر.", "answer": 1},
+                {"question": f"تضمن أتمتة تحديثات التبعيات استخدام {s} لإصدارات برمجية آمنة ومحدثة.", "answer": 0}
+            ]
+        else:
+            options = ["Vrai", "Faux"]
+            raw_bank = [
+                {"question": f"L'utilisation de {s} en {t} est généralement considérée comme une pratique sûre et recommandée.", "answer": 0},
+                {"question": f"Le stockage de clés de sécurité en clair dans les fichiers source de {s} est un anti-pattern majeur.", "answer": 0},
+                {"question": f"Dans {t}, il est possible de déployer {s} en production sans effectuer aucun test unitaire.", "answer": 1},
+                {"question": f"Pour les projets {t}, l'utilisation de {s} réduit systématiquement les performances globales.", "answer": 1},
+                {"question": f"Une validation stricte des entrées pour {s} protège l'application moderne contre les injections.", "answer": 0},
+                {"question": f"Il est recommandé de masquer ou d'ignorer les avertissements du linter lors du développement de {s}.", "answer": 1},
+                {"question": f"Les pipelines CI/CD automatisent les tests de {s} afin de détecter les bugs avant le déploiement.", "answer": 0},
+                {"question": f"L'intégration de scripts tiers non vérifiés est idéale pour assurer la sécurité de {s}.", "answer": 1},
+                {"question": f"Une architecture modulaire et découplée facilite grandement la maintenance de {s}.", "answer": 0},
+                {"question": f"La mise à l'échelle horizontale (scaling) est inutile pour les applications utilisant {s}.", "answer": 1},
+                {"question": f"Appliquer le principe DRY lors de la refactorisation de {s} permet de réduire la dette technique.", "answer": 0},
+                {"question": f"L'usage de variables d'environnement est préférable au fait de hardcoder la configuration dans {s}.", "answer": 0},
+                {"question": f"Les tests unitaires peuvent être désactivés sans risque lors du passage de {s} en production.", "answer": 1},
+                {"question": f"Les linters et guides de style stricts aident les équipes à standardiser le code de {s}.", "answer": 0},
+                {"question": f"L'efficacité d'intégration de {s} se mesure par la couverture de code et les temps de réponse.", "answer": 0},
+                {"question": f"REST, GraphQL et gRPC sont des protocoles de communication modernes adaptés pour {s}.", "answer": 0},
+                {"question": f"Les React Hooks dans React peuvent être appelés de manière conditionnelle ou dans des boucles.", "answer": 1},
+                {"question": f"Comprendre l'architecture de {t} est facultatif pour exploiter les capacités avancées de {s}.", "answer": 1},
+                {"question": f"L'architecture micro-frontend augmente le couplage et réduit la flexibilité de déploiement.", "answer": 1},
+                {"question": f"L'automatisation des mises à jour des dépendances garantit la sécurité de la structure {s}.", "answer": 0}
+            ]
+
+        questions_list = []
+        for i in range(n):
+            q_tpl = raw_bank[i % len(raw_bank)]
+            questions_list.append({
+                "question": q_tpl["question"],
+                "options": list(options),
+                "answer": q_tpl["answer"],
+                "langue": langue,
+                "theme": t,
+                "sousTheme": s
+            })
+
+        return {
+            "questions": questions_list,
+            "_source": "fallback_tf",
+            "_langue": langue
+        }
+    
     if langue == "en":
-        bank = [
-            {"question":f"Best practice for {s} in {t}?","options":[f"Follow {t} conventions","Ignore docs","Copy from Stack","No rules"],"answer":0},
-            {"question":f"Which pattern suits {s}?","options":["Modular testable","Monolith","Shell scripts","No pattern"],"answer":0},
-            {"question":f"Error handling in {s}?","options":["Try/catch + logging","Ignore","Console only","Restart"],"answer":0},
-            {"question":f"Strong typing advantage in {t}?","options":["Compile-time bugs","Slower code","Less flexibility","No advantage"],"answer":0},
-            {"question":f"Maintainability in {s}?","options":["Unit tests + docs","Comments only","No tests","Monthly refactor"],"answer":0},
+        raw_bank = [
+            {"question": f"What is the primary best practice for implementing {s} in {t}?", "options": [f"Adhering to standard style guides and conventions of {t}", f"Avoiding any code documentation in {s}", f"Copying code directly without verification", f"Omitting unit tests for {s} entirely"]},
+            {"question": f"Which design pattern is best suited for structuring a project using {s}?", "options": [f"A modular, decoupled architecture", f"A highly coupled monolith using {s}", f"Linear and sequential shell scripts", f"No structural patterns whatsoever"]},
+            {"question": f"How should you handle errors and exceptions effectively in {s}?", "options": [f"Using try-catch blocks with structured logging", f"Silently ignoring all exceptions in {s}", f"Displaying raw error traces to end users", f"Systematically restarting the server on any error"]},
+            {"question": f"What is the major advantage of strong typing or strict validation in {t}?", "options": [f"Catching bugs early during compilation or build", f"Slowing down overall execution speed of {s}", f"Reducing general code flexibility", f"No tangible advantages in production"]},
+            {"question": f"How can you ensure excellent long-term maintainability of {s}?", "options": [f"Writing unit tests and providing clear API documentation", f"Adding only basic inline comments to {s}", f"Avoiding any form of refactoring", f"Frequently changing frameworks and libraries"]},
+            {"question": f"What is the recommended approach for testing {s} in a CI/CD pipeline?", "options": [f"Automating unit and integration tests", f"Manually testing features directly in production", f"Testing only cosmetic front-end changes", f"Disabling tests to speed up deployment"]},
+            {"question": f"In {t}, how do you optimize performance when utilizing {s}?", "options": [f"Caching queries and optimizing resource allocation", f"Indefinitely upgrading server hardware", f"Avoiding asynchronous programming with {s}", f"Minimizing the number of active variables"]},
+            {"question": f"Which tool or library is standard for supporting {s} in {t}?", "options": [f"Official tools recommended by the {t} ecosystem", f"Unverified third-party scripts for {s}", f"An in-house custom solution without support", f"No additional tools whatsoever"]},
+            {"question": f"What is the most common pitfall or anti-pattern associated with {s}?", "options": [f"Tight coupling and lack of separation of concerns", f"Excessive use of pure functions in {s}", f"Over-modularizing simple {t} features", f"Configuring options via environment variables only"]},
+            {"question": f"How do you secure the implementation of {s} in a modern application?", "options": [f"Validating all inputs and encrypting sensitive data", f"Relying solely on client-side validation for {s}", f"Disabling HTTPS protocols in development", f"Hardcoding secret keys in source files"]},
+            {"question": f"What is the ideal method for documenting the architecture of {s}?", "options": [f"Generating interactive API docs and UML diagrams", f"Letting the code explain itself without docs", f"Creating an empty placeholder text file", f"Writing short handwritten notes"]},
+            {"question": f"In a team environment, how can you standardize the development of {s}?", "options": [f"Utilizing linters and enforcing strict formatting rules", f"Allowing each developer to write in their own style", f"Banning the use of comments in {s}", f"Merging pull requests without code reviews"]},
+            {"question": f"Which scaling strategy (scalability) is best suited for {s}?", "options": [f"Horizontal scaling with load balancing", f"Upgrading only the server's RAM", f"Limiting the number of active users for {s}", f"Removing secondary features entirely"]},
+            {"question": f"What is the impact of using {s} on the lifecycle of a {t} application?", "options": [f"It facilitates seamless updates and reduces technical debt", f"It complicates deployment pipelines unnecessarily", f"It makes the codebase dependent on a single developer", f"No impact on the application lifecycle"]},
+            {"question": f"How do you reduce technical debt when refactoring {s}?", "options": [f"Applying the DRY principle and reducing complexity", f"Rewriting the entire codebase without writing tests", f"Ignoring all warnings from the linter", f"Adding new features while refactoring {s}"]},
+            {"question": f"What is the best approach to manage the configuration of {s}?", "options": [f"Using secure, read-only environment variables", f"Hardcoding configuration values in {s} source files", f"Storing active credentials in public repositories", f"Prompting the user for settings on every startup"]},
+            {"question": f"In {t}, what is the main role of {s}?", "options": [f"Structuring data flows and streamlining key processes", f"Replacing the entire database engine of {t}", f"Serving only as a cosmetic interface element", f"Speeding up only the initial server boot time"]},
+            {"question": f"How do you measure the integration efficiency of {s} in {t}?", "options": [f"Analyzing test coverage and system response latency", f"Counting the absolute number of written code lines", f"Checking only the final compiled bundle size", f"Integration efficiency cannot be measured"]},
+            {"question": f"Which communication standard or protocol is ideal for {s}?", "options": [f"Modern standards like REST, GraphQL, or gRPC", f"Shared plain text files transferred via FTP", f"Raw, unencrypted socket connections", f"No communication protocols whatsoever"]},
+            {"question": f"Which skill is essential for mastering {s} in {t}?", "options": [f"A solid understanding of core concepts and architecture in {t}", f"Memorizing every single {s} function signature by heart", f"Using AI exclusively without understanding the code", f"No specific skills are required for {t}"]}
         ]
     elif langue == "ar":
-        bank = [
-            {"question":f"أفضل ممارسة لـ {s} في {t}؟","options":["اتباع الاتفاقيات","تجاهل الوثائق","النسخ من الإنترنت","لا قواعد"],"answer":0},
-            {"question":f"النمط المناسب لـ {s}؟","options":["هندسة معيارية","مونوليث","سكريبتات","لا نمط"],"answer":0},
-            {"question":f"معالجة الأخطاء في {s}؟","options":["Try/catch + تسجيل","تجاهل","وحدة التحكم","إعادة التشغيل"],"answer":0},
-            {"question":f"ميزة الكتابة القوية في {t}؟","options":["اكتشاف الأخطاء وقت الترجمة","أبطأ","أقل مرونة","لا ميزة"],"answer":0},
-            {"question":f"ضمان صيانة {s}؟","options":["اختبارات + توثيق","تعليقات","بدون اختبارات","إعادة هيكلة"],"answer":0},
+        raw_bank = [
+            {"question": f"ما هي الممارسة الفضلى الأساسية عند تطبيق {s} في {t}؟", "options": [f"اتباع أدلة الأسلوب والمعايير القياسية لـ {t}", f"تجنب كتابة أي توثيق للكود الخاص بـ {s}", f"نسخ الأكواد مباشرة دون التحقق منها", f"إغفال اختبارات الوحدة لـ {s} بالكامل"]},
+            {"question": f"أي نمط تصميم (Design Pattern) هو الأنسب لهيكلة مشروع يستخدم {s}؟", "options": [f"بنية برمجية نمطية ومفككة الارتباط", f"بنية أحادية متماسكة للغاية ومقيدة باستخدام {s}", f"مجموعة من برامج شل الخطية المتتالية", f"لا توجد أنماط هيكلية محددة"]},
+            {"question": f"كيف يمكنك التعامل مع الأخطاء والاستثناءات بفعالية في {s}؟", "options": [f"استخدام كتل try-catch مع نظام تسجيل منظم", f"تجاهل جميع الاستثناءات في {s} بصمت", f"عرض تفاصيل الخطأ الخام للمستخدمين النهائيين", f"إعادة تشغيل الخادم تلقائياً وبشكل مستمر عند حدوث خطأ"]},
+            {"question": f"ما هي الميزة الرئيسية للكتابة القوية أو التحقق الصارم في {t}؟", "options": [f"اكتشاف الأخطاء مبكراً أثناء مرحلة الترجمة أو البناء", f"إبطاء سرعة التنفيذ الإجمالية للتطبيق باستخدام {s}", f"تقليل المرونة العامة للكتابة البرمجية", f"لا توجد مزايا ملموسة قياساً بالأداء في بيئة الإنتاج"]},
+            {"question": f"كيف يمكنك ضمان صيانة ممتازة طويلة المدى لـ {s}؟", "options": [f"كتابة اختبارات الوحدة وتوفير توثيق واضح لواجهات البرمجة", f"إضافة تعليقات توضيحية بسيطة وموجزة لـ {s} فقط", f"تجنب أي شكل من أشكال إعادة هيكلة الكود", f"تغيير إطارات العمل والبرمجيات المستخدمة بشكل متكرر"]},
+            {"question": f"ما هو النهص الموصى به لاختبار {s} في بيئة التطوير والتشغيل المستمر (CI/CD)؟", "options": [f"أتمتة اختبارات الوحدة واختبارات التكامل", f"إجراء الاختبارات يدوياً مباشرة في بيئة الإنتاج", f"اختبار التغييرات التجميلية للواجهة الأمامية فقط", f"تعطيل الاختبارات لتسريع عملية النشر"]},
+            {"question": f"في {t}، كيف يمكنك تحسين الأداء عند استخدام {s}؟", "options": [f"تخزين الاستعلامات مؤقتاً وتحسين تخصيص الموارد لـ {s}", f"ترقية عتاد الخادم بشكل مستمر ودون حدود", f"تجنب البرمجة غير المتزامنة تماماً مع {s}", f"تقليل عدد المتغيرات النشطة في النظام"]},
+            {"question": f"ما هي الأداة أو المكتبة القياسية لدعم {s} في {t}؟", "options": [f"الأدوات الرسمية الموصى بها من قبل النظام البيئي لـ {t}", f"برمجيات طرف ثالث غير موثوقة أو مصادق عليها لـ {s}", f"حل داخلي مخصص ومطور بدون دعم فني", f"لا توجد أدوات إضافية مطلوبة بالكامل"]},
+            {"question": f"ما هو الفخ أو النمط المضاد (Anti-Pattern) الأكثر شيوعاً المرتبط بـ {s}؟", "options": [f"الارتباط الوثيق وغياب الفصل بين المسؤوليات", f"الاستخدام المفرط للدوال النقية في {s}", f"التقسيم النمطي المبالغ فيه لميزات {t} البسيطة", f"تكوين الخيارات عبر متغيرات البيئة فقط"]},
+            {"question": f"كيف يمكنك تأمين تطبيق {s} في البرمجيات الحديثة؟", "options": [f"التحقق من صحة المدخلات وتشفير البيانات الحساسة", f"الاعتماد الكلي على التحقق من جانب العميل فقط لـ {s}", f"تعطيل بروتوكولات HTTPS في بيئة التطوير", f"تضمين مفاتيح التشفير والسرية مباشرة في الملفات المصدرية"]},
+            {"question": f"ما هي الطريقة المثلى لتوثيق بنية {s}؟", "options": [f"توليد مستندات تفاعلية ومخططات UML واضحة لـ {s}", f"ترك الكود ليشرح نفسه دون أي توثيق خارجي", f"إنشاء ملف نصي فارغ كعلامة موجهة", f"كتابة ملاحظات ورقية قصيرة بخط اليد"]},
+            {"question": f"في بيئة عمل الفريق، كيف يمكنك توحيد معايير تطوير {s}؟", "options": [f"استخدام أدوات الفحص وتطبيق قواعد تنسيق صارمة", f"السماح لكل مطور بالكتابة بأسلوبه الخاص في {s}", f"حظر استخدام التعليقات التوضيحية تماماً في {s}", f"دمج طلبات السحب دون مراجعة الأكواد"]},
+            {"question": f"أي استراتيجية توسع (Scalability) هي الأنسب لـ {s}؟", "options": [f"التوسع الأفقي مع توزيع الأحمال بكفاءة", f"زيادة ذاكرة الوصول العشوائي (RAM) للخادم فقط", f"تحديد عدد المستخدمين النشطين في نفس الوقت لـ {s}", f"إزالة الميزات الثانوية لتقليل العبء بالكامل"]},
+            {"question": f"ما هو تأثير استخدام {s} على دورة حياة تطبيق {t}؟", "options": [f"يسهل التحديثات السلسة ويقلل من الديون التقنية لـ {s}", f"يعقد مسارات النشر والتطوير دون داعٍ", f"يجعل المشروع معتمداً بالكامل على مطور واحد", f"لا يوجد أي تأثير يذكر على دورة حياة التطبيق"]},
+            {"question": f"كيف يمكنك تقليل الديون التقنية عند إعادة هيكلة {s}؟", "options": [f"تطبيق مبدأ DRY وتقليل التعقيد الحسابي لكود {s}", f"إعادة كتابة المشروع بالكامل دون كتابة أي اختبارات", f"تجاهل جميع تحذيرات أدوات فحص وتنسيق الأكواد لـ {s}", f"إضافة ميزات جديدة أثناء عملية إعادة الهيكلة لـ {s}"]},
+            {"question": f"ما هو أفضل نهج لإدارة إعدادات وتكوين {s}؟", "options": [f"استخدام متغيرات بيئة آمنة ومحمية من القراءة الخارجية", f"تضمين قيم الإعدادات الثابتة في ملفات {s} المصدرية", f"تخزين بيانات الاعتماد النشطة في مستودعات عامة", f"مطالبة المستخدم بالإعدادات يدوياً عند كل تشغيل"]},
+            {"question": f"في {t}، ما هو الدور الرئيسي لـ {s}؟", "options": [f"هيكلة تدفقات البيانات وتبسيط العمليات الأساسية", f"استبدال محرك قاعدة البيانات بالكامل لـ {t}", f"العمل كعنصر تجميلي للواجهة الرسومية فقط", f"تسريع وقت إقلاع الخادم الأولي فقط"]},
+            {"question": f"كيف تقيس كفاءة دمج {s} في {t}؟", "options": [f"تحليل تغطية الاختبارات ووقت استجابة النظام الفعلي", f"حساب العدد الإجمالي لأسطر الأكواد المكتوبة لـ {s}", f"التحقق من الحجم النهائي للملفات المجمعة فقط", f"كفاءة الدمج هي أمر لا يمكن قياسه عملياً"]},
+            {"question": f"أي معيار أو بروتوكول اتصال هو الأفضل للاستخدام مع {s}؟", "options": [f"المعايير الحديثة مثل REST أو GraphQL أو gRPC", f"الملفات النصية المشتركة المنقولة عبر بروتوكول FTP", f"اتصالات المقابس الخام غير المشفرة أو الآمنة", f"لا توجد بروتوكولات اتصال مفضلة"]},
+            {"question": f"ما هي المهارة الأساسية اللازمة لإتقان {s} في {t}؟", "options": [f"فهم متين للمفاهيم الأساسية والبنية الهيكلية لـ {t}", f"حفظ توقيع جميع دوال {s} البرمجية عن ظهر قلب", f"الاعتماد الكلي على الذكاء الاصطناعي دون فهم الكود", f"لا توجد مهارات محددة مطلوبة للبدء"]}
         ]
     else:
-        bank = [
-            {"question":f"Bonne pratique pour {s} en {t} ?","options":[f"Conventions de {t}","Ignorer la doc","Copier","Aucune règle"],"answer":0},
-            {"question":f"Pattern pour {s} ?","options":["Architecture modulaire","Monolithe","Scripts shell","Pas de pattern"],"answer":0},
-            {"question":f"Gestion erreurs dans {s} ?","options":["Try/catch + logging","Ignorer","Console","Redémarrer"],"answer":0},
-            {"question":f"Avantage typage fort en {t} ?","options":["Détection compilation","Code lent","Moins flexible","Aucun"],"answer":0},
-            {"question":f"Maintenabilité de {s} ?","options":["Tests unitaires + docs","Commentaires","Aucun test","Refactoring mensuel"],"answer":0},
+        raw_bank = [
+            {"question": f"Quelle est la principale bonne pratique pour implémenter {s} en {t} ?", "options": [f"Respecter les conventions et normes standards de {t}", f"Éviter toute documentation dans {s}", f"Copier le code directement sans vérification", f"Ne pas faire de tests unitaires pour {s}"]},
+            {"question": f"Quel design pattern est le plus adapté pour structurer un projet utilisant {s} ?", "options": [f"Une architecture modulaire et découplée", f"Un monolithe rigide et couplé avec {s}", f"Des scripts shell linéaires et séquentiels", f"Aucun modèle particulier de structure"]},
+            {"question": f"Comment gérer efficacement les erreurs et exceptions dans {s} ?", "options": [f"Utiliser try-catch et des logs structurés", f"Ignorer silencieusement les erreurs dans {s}", f"Afficher l'erreur brute à l'utilisateur final", f"Redémarrer systématiquement l'application"]},
+            {"question": f"Quel est l'avantage majeur du typage fort ou de la validation stricte dans {t} ?", "options": [f"Détecter les bugs dès la phase de compilation ou build", f"Ralentir l'exécution globale avec {s}", f"Réduire la flexibilité générale du code", f"Aucun avantage mesurable en production"]},
+            {"question": f"Comment assurer une excellente maintenabilité à long terme de {s} ?", "options": [f"Écrire des tests unitaires et documenter l'API", f"Ajouter uniquement des commentaires simples à {s}", f"Éviter tout refactoring du code", f"Changer de framework et de librairies régulièrement"]},
+            {"question": f"Quelle est l'approche recommandée pour tester {s} en environnement CI/CD ?", "options": [f"Automatiser les tests unitaires et d'intégration", f"Tester manuellement les fonctionnalités en production", f"Ne tester que les changements cosmétiques", f"Désactiver les tests lors du déploiement"]},
+            {"question": f"Dans {t}, comment optimiser les performances lors de l'utilisation de {s} ?", "options": [f"Mettre en cache les requêtes et optimiser les ressources", f"Augmenter indéfiniment la puissance du serveur", f"Éviter tout asynchronisme avec {s}", f"Minimiser le nombre de variables actives"]},
+            {"question": f"Quel outil ou bibliothèque est standard pour accompagner {s} dans {t} ?", "options": [f"Les outils officiels recommandés par l'écosystème de {t}", f"Des scripts tiers non vérifiés pour {s}", f"Une solution développée en interne sans support", f"Aucun outil complémentaire dans l'écosystème"]},
+            {"question": f"Quel est le piège ou l'anti-pattern le plus courant avec {s} ?", "options": [f"Le couplage fort et l'absence de séparation des responsabilités", f"L'utilisation excessive de fonctions pures dans {s}", f"Une modularité trop poussée pour des fonctionnalités simples de {t}", f"La configuration par variables d'environnement uniquement"]},
+            {"question": f"Comment sécuriser l'implémentation de {s} dans une application moderne ?", "options": [f"Valider toutes les entrées et chiffrer les données sensibles", f"Faire confiance aux validations du client uniquement pour {s}", f"Désactiver le protocole HTTPS en développement", f"Stocker les clés de sécurité en clair dans le code"]},
+            {"question": f"Quelle est la méthode idéale pour documenter l'architecture de {s} ?", "options": [f"Générer une documentation interactive et des schémas UML", f"Laisser le code s'expliquer de lui-même sans docs", f"Créer un fichier texte vide", f"Rédiger des notes manuscrites rapides"]},
+            {"question": f"Dans un contexte d'équipe, comment standardiser le développement de {s} ?", "options": [f"Utiliser des linters et des guides de style stricts", f"Laisser chaque développeur choisir son style pour {s}", f"Interdire l'usage de commentaires explicatifs", f"Fusionner directement sans code review"]},
+            {"question": f"Quelle stratégie de mise à l'échelle (scalability) convient le mieux à {s} ?", "options": [f"Une architecture horizontale avec répartition de charge", f"Augmenter uniquement la mémoire RAM du serveur", f"Réduire le nombre d'utilisateurs actifs de {s}", f"Supprimer les fonctionnalités secondaires"]},
+            {"question": f"Quel est l'impact de l'utilisation de {s} sur le cycle de vie de l'application {t} ?", "options": [f"Elle facilite les mises à jour et réduit la dette technique", f"Elle complique le déploiement de manière injustifiée", f"Elle rend l'application dépendante d'un seul développeur", f"Aucun impact sur le cycle de vie de l'application"]},
+            {"question": f"Comment réduire la dette technique lors de la refactorisation de {s} ?", "options": [f"Appliquer le principe DRY et simplifier la complexité", f"Réécrire l'intégralité du code sans tests", f"Ignorer les avertissements du linter de {s}", f"Ajouter de nouvelles fonctionnalités lors de la refactorisation"]},
+            {"question": f"Quelle est la meilleure approche pour gérer la configuration de {s} ?", "options": [f"Utiliser des variables d'environnement sécurisées", f"Hardcoder les valeurs dans les fichiers sources de {s}", f"Stocker les configurations sur un serveur public", f"Demander la configuration à l'utilisateur à chaque démarrage"]},
+            {"question": f"Dans {t}, quel est le rôle principal de {s} ?", "options": [f"Structurer les flux de données et rationaliser les processus clés", f"Remplacer l'intégralité de la base de données", f"Servir uniquement d'élément esthétique d'interface", f"Accélérer uniquement le démarrage du serveur"]},
+            {"question": f"Comment mesurer l'efficacité de l'intégration de {s} dans {t} ?", "options": [f"En analysant la couverture de code et les temps de réponse", f"En comptant le nombre de lignes de code de {s}", f"En observant uniquement la taille du fichier final", f"Il est impossible de mesurer cette efficacité"]},
+            {"question": f"Quel protocole ou standard de communication est idéal avec {s} ?", "options": [f"Les standards modernes comme REST, GraphQL ou gRPC", f"Des fichiers texte partagés via FTP", f"Des connexions sockets brutes non sécurisées", f"Aucun protocole de communication"]},
+            {"question": f"Quelle compétence est indispensable pour maîtriser {s} en {t} ?", "options": [f"Une excellente compréhension des concepts et de l'architecture de {t}", f"La mémorisation par cœur de toutes les fonctions de {s}", f"L'utilisation exclusive de l'IA sans comprendre le code", f"Aucune compétence spécifique n'est requise"]}
         ]
-    # ── FIX: injecter theme + sousTheme dans chaque question ──
+
+    # Dynamically select questions from the pool and randomize/shuffle option ordering
+    questions_list = []
+    for i in range(n):
+        q_tpl = raw_bank[i % len(raw_bank)]
+        # Make a copy of options so we do not mutate the template pool
+        options = list(q_tpl["options"])
+        correct_option = options[0]  # First option in our raw bank is always correct
+        random.shuffle(options)
+        correct_index = options.index(correct_option)
+        
+        questions_list.append({
+            "question": q_tpl["question"],
+            "options": options,
+            "answer": correct_index,
+            "langue": langue,
+            "theme": t,
+            "sousTheme": s
+        })
+
     return {
-        "questions": [
-            {**bank[i % len(bank)], "langue": langue, "theme": t, "sousTheme": s}
-            for i in range(n)
-        ],
+        "questions": questions_list,
         "_source": "fallback",
         "_langue": langue
     }
@@ -2344,15 +2532,32 @@ async def generate_bilingual(
     langue: str = Form("fr"),
     type: int = Form(0)
 ):
-    ck = make_cache_key("bilingual-v10", theme, sousTheme, n, langue)
+    ck = make_cache_key("bilingual-v10", theme, sousTheme, n, langue, type)
     if hit := _cache.get(ck): return hit
 
-    lang_instr = {
-        "fr": f"Génère {n} questions QCM expertes en FRANÇAIS sur '{theme}' sous-thème '{sousTheme}'.",
-        "en": f"Generate {n} expert QCM questions in ENGLISH about '{theme}' sub-theme '{sousTheme}'.",
-        "ar": f"أنشئ {n} أسئلة متخصصة باللغة العربية حول '{theme}' الموضوع '{sousTheme}'.",
-    }
-    prompt = f"""{lang_instr.get(langue, lang_instr['fr'])}
+    if type == 2:
+        # Vrai / Faux
+        opt_instr = {
+            "fr": '["Vrai", "Faux"]',
+            "en": '["True", "False"]',
+            "ar": '["صواب", "خطأ"]'
+        }.get(langue, '["Vrai", "Faux"]')
+        
+        lang_instr = {
+            "fr": f"Génère {n} questions Vrai/Faux expertes en FRANÇAIS sur '{theme}' sous-thème '{sousTheme}'.",
+            "en": f"Generate {n} expert True/False questions in ENGLISH about '{theme}' sub-theme '{sousTheme}'.",
+            "ar": f"أنشئ {n} أسئلة صح أم خطأ متخصصة باللغة العربية حول '{theme}' الموضوع '{sousTheme}'.",
+        }
+        prompt = f"""{lang_instr.get(langue, lang_instr['fr'])}
+Chaque question doit obligatoirement avoir exactement ces 2 options dans l'ordre : {opt_instr}, answer=index de la bonne réponse (0 ou 1). Langue: {langue.upper()} UNIQUEMENT.
+JSON: {{"questions":[{{"question":"...","options":{opt_instr},"answer":0}}]}}"""
+    else:
+        lang_instr = {
+            "fr": f"Génère {n} questions QCM expertes en FRANÇAIS sur '{theme}' sous-thème '{sousTheme}'.",
+            "en": f"Generate {n} expert QCM questions in ENGLISH about '{theme}' sub-theme '{sousTheme}'.",
+            "ar": f"أنشئ {n} أسئلة متخصصة باللغة العربية حول '{theme}' الموضوع '{sousTheme}'.",
+        }
+        prompt = f"""{lang_instr.get(langue, lang_instr['fr'])}
 4 options par question, answer=index(0-3). Langue: {langue.upper()} UNIQUEMENT.
 JSON: {{"questions":[{{"question":"...","options":["...","...","...","..."],"answer":0}}]}}"""
 
@@ -2367,7 +2572,7 @@ JSON: {{"questions":[{{"question":"...","options":["...","...","...","..."],"ans
         _cache.set(ck, result)
         return result
     except (QuotaExceeded, Exception):
-        return _fallback_qcm(theme, sousTheme, n, langue)
+        return _fallback_qcm(theme, sousTheme, n, langue, type)
 
 
 @app.post("/ia/generate-ultra")
@@ -2375,9 +2580,10 @@ async def generate_ultra(
     theme: str = Form(...),
     sousTheme: str = Form(...),
     n: int = Form(5),
-    langue: str = Form("fr")
+    langue: str = Form("fr"),
+    type: int = Form(0)
 ):
-    return await generate_bilingual(theme=theme, sousTheme=sousTheme, n=n, langue=langue)
+    return await generate_bilingual(theme=theme, sousTheme=sousTheme, n=n, langue=langue, type=type)
 
 
 @app.post("/ia/generate-pro")
@@ -2489,6 +2695,146 @@ async def radar_analysis_standalone(file: UploadFile = File(...)):
 
 
 # ─────────────────────────────────────────────────
+@app.post("/ia/evaluate-exam")
+async def evaluate_exam(request: Request):
+    try:
+        data = await request.json()
+        questions = data.get("questions", [])
+        reponses = data.get("reponses", {})
+        candidat_nom = data.get("candidatNom", "Candidat")
+        examen_nom = data.get("examenNom", "Examen")
+        
+        # Prepare the context for Gemini
+        exam_context = []
+        for q in questions:
+            qid = q.get("id")
+            enonce = q.get("enonce", "")
+            type_q = q.get("type", "")
+            choix = q.get("choix", [])
+            bonne_rep = q.get("bonneReponse", "")
+            user_rep = reponses.get(str(qid), "")
+            
+            exam_context.append({
+                "id": qid,
+                "question": enonce,
+                "type": type_q,
+                "options": choix,
+                "correct_answer_from_db": bonne_rep,
+                "candidate_answer": user_rep
+            })
+            
+        prompt = f"""Tu es un expert formateur et évaluateur pour EvaluaTech.
+Tu dois corriger un examen passé par {candidat_nom} sur le sujet "{examen_nom}".
+Voici les questions, la réponse attendue et la réponse du candidat.
+
+Évalue chaque réponse. Pour les questions à choix multiples (QCM/QCU) ou Vrai/Faux, base-toi strictement sur la "correct_answer_from_db" fournie. Pour les questions ouvertes, évalue la pertinence de la "candidate_answer".
+Calcule le score total (en pourcentage) et rédige un rapport final personnalisé.
+
+DONNÉES DE L'EXAMEN :
+{json.dumps(exam_context, ensure_ascii=False, indent=2)}
+
+Tu dois répondre UNIQUEMENT avec un objet JSON structuré comme suit :
+{{
+  "scorePourcentage": 85,
+  "rapportFinal": "Un résumé global des performances du candidat...",
+  "corrections": [
+    {{
+      "questionId": "l'ID de la question",
+      "isCorrect": true/false,
+      "candidateAnswer": "la réponse du candidat interprétée en texte",
+      "correctAnswer": "la bonne réponse interprétée en texte",
+      "explication": "Explication détaillée de pourquoi c'est correct ou incorrect (très important !)"
+    }}
+  ]
+}}
+
+Ne renvoie AUCUN texte en dehors du JSON."""
+
+        response = await call_gemini_async(prompt, module="Evaluation", sem=_sem_rpts, retries=1)
+        text = response.text.strip()
+        cleaned = clean_json(text)
+        
+        try:
+            parsed = json.loads(cleaned)
+            log_activity("IA", f"Évaluation IA terminée ({examen_nom})", "#10b981", "Evaluation")
+            return {"status": "SUCCESS", "evaluation": parsed}
+        except Exception as e:
+            logger.error(f"Failed to parse Gemini evaluation JSON: {e}\n{cleaned}")
+            return {"status": "ERROR", "message": "Format de réponse invalide de l'IA."}
+
+    except Exception as e:
+        return {"status": "ERROR", "message": str(e)}
+class RecommendationsRequest(BaseModel):
+    role: str
+    lang: str = "fr"
+
+@app.post("/ia/recommendations")
+async def generate_recommendations(req: RecommendationsRequest):
+    try:
+        lang_prompt = "Réponds en français." if req.lang == "fr" else ("Respond in English." if req.lang == "en" else "أجب باللغة العربية.")
+        
+        prompt = f"""Tu es un assistant IA expert en gestion des talents et SaaS (EvaluaTech).
+L'utilisateur connecté a le rôle : {req.role}.
+Génère EXACTEMENT 3 recommandations personnalisées et hautement stratégiques basées sur ce rôle.
+
+{lang_prompt}
+
+Tu devez associer à chaque recommandation une action concrète et opérationnelle sur notre plateforme. Pour cela, tu devez STRICTEMENT choisir l'un des chemins d'accès (route) réels suivants dans ton JSON :
+1. '/questions' : Banque de questions (pour créer ou éditer des QCM)
+2. '/campaigns' : Campagnes d'évaluation (pour lancer, suivre ou configurer des tests)
+3. '/ai-generator' : Générateur de QCM IA (pour créer des questions via IA)
+4. '/analyse-comportementale' : Analyse comportementale & Soft Skills des candidats
+5. '/suivi-performance' : Suivi de l'activité en temps réel
+6. '/sessions' : Sessions et planning d'évaluation
+7. '/invite' : Inviter de nouveaux candidats ou collaborateurs RH
+8. '/candidates-list' : Liste de tous les candidats et talents
+9. '/reporting' : Génération de rapports RH mensuels ou de performance
+10. '/staff-members' : Gestion des collaborateurs de l'entreprise
+11. '/my-tests' : Espace candidat pour passer les tests en attente
+12. '/history' : Historique des résultats et scores des candidats
+13. '/super-admin' : Panel de contrôle global (uniquement pour le rôle 'SuperAdmin')
+14. '/gestion-abonnements' : Gestion des formules et abonnements (uniquement pour le rôle 'SuperAdmin')
+15. '/super-admin-analytics' : Métriques système globales (uniquement pour le rôle 'SuperAdmin')
+
+RÈGLES CRITIQUES :
+- Le champ 'route' doit STRICTEMENT faire partie de cette liste de 15 routes. N'invente JAMAIS d'autres routes (comme '/some-route' ou '/dashboard'). Si aucune ne correspond, mets null.
+- Chaque recommandation doit être rédigée dans la langue demandée par l'utilisateur (langue demandée: {req.lang.upper()}).
+- Chaque recommandation doit avoir une priorité unique parmi : 'Urgent' (couleur #ef4444), 'Priorité' (couleur #f59e0b), 'Standard' (couleur #10b981).
+- Assure-toi que les titres et descriptions soient engageants, professionnels et rédigés de manière percutante.
+
+Retourne STRICTEMENT le résultat en JSON sous cette forme exacte :
+{{
+  "recommendations": [
+    {{
+      "priority": "Urgent",
+      "priorityBg": "rgba(239,68,68,0.12)",
+      "priorityColor": "#ef4444",
+      "color": "#ef4444",
+      "icon": "fa-solid fa-bolt",
+      "title": "Titre en {req.lang}",
+      "description": "Description détaillée en {req.lang}...",
+      "actionLabel": "Texte du bouton d'action",
+      "route": "/route-choisie-dans-la-liste",
+      "scrollTo": null
+    }}
+  ]
+}}
+"""
+        response = await call_gemini_async(prompt, module="Recommandations", sem=_sem_reco, retries=1)
+        text_response = response.text.replace("```json", "").replace("```", "").strip()
+        data = json.loads(text_response)
+        
+        return {
+            "status": "SUCCESS",
+            "recommendations": data.get("recommendations", [])
+        }
+    except Exception as e:
+        print(f"Error generating recommendations: {e}")
+        return {
+            "status": "ERROR",
+            "message": str(e)
+        }
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False, workers=1, log_level="warning", access_log=False)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

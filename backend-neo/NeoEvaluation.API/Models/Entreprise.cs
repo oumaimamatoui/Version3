@@ -13,7 +13,16 @@ namespace NeoEvaluation.API.Models
         [Required]
         public string Nom { get; set; } = string.Empty;
 
+        // Champs Organisation
+        public string? Domaine { get; set; }
         public string? Secteur { get; set; }
+        public string? SiteWeb { get; set; }
+        public string? Ville { get; set; }
+        public string? Pays { get; set; }
+        public string? CodePostal { get; set; }
+        public string? Adresse { get; set; }
+        public string? Description { get; set; }
+
         public string Plan { get; set; } = "Gratuit";
         public DateTime? AbonnementFin { get; set; }
         public string Langue { get; set; } = "fr";

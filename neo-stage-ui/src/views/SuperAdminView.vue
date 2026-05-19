@@ -716,23 +716,10 @@
                   <input type="text" v-model="newOrg.adminLastName" class="enigma-field" :placeholder="t('settings.labels.lastName')" required>
                 </div>
               </div>
-              <div class="col-md-6">
+              <div class="col-12">
                 <div class="enigma-input-wrap">
                   <label>{{ t('settings.labels.email').toUpperCase() }} <span class="required-star">*</span></label>
                   <input type="email" v-model="newOrg.adminEmail" class="enigma-field" placeholder="admin@entreprise.com" required>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="enigma-input-wrap">
-                  <label>TÉLÉPHONE</label>
-                  <div class="d-flex gap-2">
-                    <select class="enigma-field" style="width:auto;min-width:100px">
-                      <option>🇹🇳 +216</option>
-                      <option>🇫🇷 +33</option>
-                      <option>🇺🇸 +1</option>
-                    </select>
-                    <input type="tel" v-model="newOrg.adminPhone" class="enigma-field" placeholder="55 123 456">
-                  </div>
                 </div>
               </div>
             </div>
@@ -765,7 +752,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted, watch, inject } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppSidebar from '@/components/AppSidebar.vue';
 import AppNavbar  from '@/components/AppNavbar.vue';
@@ -804,7 +791,7 @@ const switchAppLocale = (code) => {
 };
 
 // ─── DARK MODE ─────────────────────────────────────────────────────
-const isDark = ref(false);
+const isDark = inject('isDark', ref(false));
 
 // ─── DATE ──────────────────────────────────────────────────────────
 const today = new Date().toLocaleDateString('fr-FR', {
@@ -822,6 +809,7 @@ const statusFilter = ref('');
 const periodFilter = ref('30');
 const orgSearch    = ref('');
 const mousePos     = reactive({ x: 0, y: 0 });
+const isGoogleConnected = ref(false);
 
 // ─── LANG MANAGER STATE ────────────────────────────────────────────
 const langConfig    = reactive(getLangConfig());
@@ -1014,7 +1002,7 @@ const newOrg = reactive({
   name:'', domain:'', industry:'', website:'',
   city:'', country:'', zipCode:'', address:'',
   description:'', adminFirstName:'', adminLastName:'',
-  adminEmail:'', adminPhone:''
+  adminEmail:''
 });
 
 // ─── TOAST ─────────────────────────────────────────────────────────
@@ -1037,9 +1025,10 @@ const fetchData = async () => {
       const r = await superAdminApi.getStats();
       const d = r.data;
       masterStats.value[0].val = d.totalEntreprises   ?? '—';
-      masterStats.value[1].val = d.sessionsIARecentes  ?? '—';
+      masterStats.value[1].val = d.totalTests          ?? '—';
       masterStats.value[2].val = d.totalUtilisateurs   ?? '—';
       masterStats.value[3].val = d.demandesEnAttente    ?? '—';
+      isGoogleConnected.value = d.isGoogleConnected || false;
     } catch {}
 
     try {
@@ -1076,6 +1065,11 @@ const fetchData = async () => {
 
 // ─── ACTIONS ───────────────────────────────────────────────────────
 const handleApprove = async (id) => {
+  if (!isGoogleConnected.value) {
+    showPulseToast("Allez dans Paramètres > INTÉGRATIONS pour connecter Gmail et pouvoir accepter/refuser les demandes.", "error", "fa-brands fa-google");
+    addTerminalLog('amber', 'Action bloquée: Connexion Gmail requise');
+    return;
+  }
   try {
     await superAdminApi.approveRequest(id);
     showPulseToast(t('success'), 'success', 'fa-solid fa-check');
@@ -1087,6 +1081,11 @@ const handleApprove = async (id) => {
   }
 };
 const handleReject = async (id) => {
+  if (!isGoogleConnected.value) {
+    showPulseToast("Allez dans Paramètres > INTÉGRATIONS pour connecter Gmail et pouvoir accepter/refuser les demandes.", "error", "fa-brands fa-google");
+    addTerminalLog('amber', 'Action bloquée: Connexion Gmail requise');
+    return;
+  }
   if (!confirm(t('campaigns.deleteConfirm'))) return;
   try {
     await superAdminApi.rejectRequest(id);
@@ -1098,6 +1097,11 @@ const handleReject = async (id) => {
   }
 };
 const handleCreateOrg = async () => {
+  if (!isGoogleConnected.value) {
+    showPulseToast("Allez dans Paramètres > INTÉGRATIONS pour connecter Gmail et pouvoir envoyer des invitations.", "error", "fa-brands fa-google");
+    addTerminalLog('amber', 'Action bloquée: Connexion Gmail requise');
+    return;
+  }
   isCreating.value = true;
   try {
     await superAdminApi.createOrg(newOrg);

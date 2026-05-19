@@ -793,8 +793,8 @@ const filteredCorrection = computed(() => {
 
 /* ─── HELPERS TYPE ───────────────────────────────────────────── */
 // ✅ FIX : Helpers centralisés pour éviter les erreurs de comparaison de types
-const isChoixType = (type) => [0, 1, 'QCU', 'QCM'].includes(type);
-const isVFType    = (type) => type === 2 || type === 'VF' || type === 'VRAIFAUX';
+const isChoixType = (type) => [0, 1, '0', '1', 'QCU', 'QCM'].includes(type);
+const isVFType    = (type) => type === 2 || type === '2' || type === 'VF' || type === 'VRAI_FAUX' || type === 'VRAIFAUX';
 
 /* ─── CHARGEMENT LOBBY ───────────────────────────────────────── */
 onMounted(async () => {
@@ -1202,7 +1202,13 @@ const formatTime = (s) => {
 };
 
 const typeLabel = (type) => {
-  const map = { 0: 'QCU', 1: 'QCM', 2: 'VRAI/FAUX', 4: 'TEXTE', 5: 'CODE', QCU: 'QCU', QCM: 'QCM', VF: 'VRAI/FAUX' };
+  const map = { 
+    0: 'QCU', '0': 'QCU', QCU: 'QCU', 
+    1: 'QCM', '1': 'QCM', QCM: 'QCM', 
+    2: 'VRAI/FAUX', '2': 'VRAI/FAUX', VRAI_FAUX: 'VRAI/FAUX', VRAIFAUX: 'VRAI/FAUX', VF: 'VRAI/FAUX', 
+    4: 'TEXTE', '4': 'TEXTE', TEXTE: 'TEXTE', 
+    5: 'CODE', '5': 'CODE', CODE: 'CODE' 
+  };
   return map[type] ?? 'QCU';
 };
 

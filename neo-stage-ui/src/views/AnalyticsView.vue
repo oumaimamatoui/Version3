@@ -12,7 +12,7 @@
       <AppNavbar />
 
       <!-- THEME TOGGLE -->
-      <button class="theme-toggle-btn" @click="isDark = !isDark" :title="isDark ? 'Mode Clair' : 'Mode Sombre'">
+      <button class="theme-toggle-btn" @click="toggleTheme" :title="isDark ? 'Mode Clair' : 'Mode Sombre'">
         <i :class="isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
       </button>
 
@@ -396,12 +396,13 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted, watch, inject } from 'vue';
 import axios from 'axios';
 import AppSidebar from '../components/AppSidebar.vue';
 import AppNavbar from '../components/AppNavbar.vue';
 
-const isDark      = ref(false);
+const isDark      = inject('isDark', ref(false));
+const toggleTheme = inject('toggleTheme', () => {});
 const isLoading   = ref(true);
 const isRefreshing = ref(false);
 const today       = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });

@@ -26,3 +26,13 @@ dist-ssr/
 # OS generated files
 .DS_Store
 Thumbs.db
+
+# Exclusions demandées par l'utilisateur
+rapport/
+README.md
+README.ma
+scratch_pdf.txt
+scratch-pdf
+.env
+**/appsettings.json
+**/appsettings.Development.json

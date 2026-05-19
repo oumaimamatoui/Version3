@@ -385,12 +385,13 @@ const switchLocale = (code) => {
 };
 
 // ── Theme ─────────────────────────────────────────────────────────────────
-const currentTheme = ref(localStorage.getItem('app-theme') || 'light');
+import { inject } from 'vue';
+const isDark = inject('isDark', ref(false));
+const globalToggleTheme = inject('toggleTheme', () => {});
+const currentTheme = computed(() => isDark.value ? 'dark' : 'light');
 
 const toggleTheme = () => {
-  currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light';
-  localStorage.setItem('app-theme', currentTheme.value);
-  document.documentElement.setAttribute('data-theme', currentTheme.value);
+  globalToggleTheme();
 };
 
 // ── State ─────────────────────────────────────────────────────────────────

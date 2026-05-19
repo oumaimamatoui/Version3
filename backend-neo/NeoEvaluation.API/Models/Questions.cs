@@ -37,6 +37,8 @@ namespace NeoEvaluation.API.Models
         public DateTime CreeLe { get; set; } = DateTime.UtcNow;
         public string? Explication { get; set; }
 
+        public bool IsDeleted { get; set; } = false;
+
         [JsonIgnore]
         public ICollection<QuestionnaireQuestion> QuestionnaireQuestions { get; set; } = new List<QuestionnaireQuestion>();
 

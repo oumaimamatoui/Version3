@@ -24,6 +24,72 @@ namespace NeoEvaluation.API.DTOs
 
         [JsonPropertyName("connectedEmail")]
         public string? ConnectedEmail { get; set; }
+
+        [JsonPropertyName("startupCount")]
+        public int StartupCount { get; set; }
+
+        [JsonPropertyName("businessCount")]
+        public int BusinessCount { get; set; }
+
+        [JsonPropertyName("enterpriseCount")]
+        public int EnterpriseCount { get; set; }
+
+        [JsonPropertyName("totalRevenus")]
+        public double TotalRevenus { get; set; }
+
+        [JsonPropertyName("totalEntreprises7Days")]
+        public int TotalEntreprises7Days { get; set; }
+
+        [JsonPropertyName("totalUtilisateurs7Days")]
+        public int TotalUtilisateurs7Days { get; set; }
+
+        [JsonPropertyName("totalTests7Days")]
+        public int TotalTests7Days { get; set; }
+
+        [JsonPropertyName("totalRevenus7Days")]
+        public double TotalRevenus7Days { get; set; }
+
+        [JsonPropertyName("totalEntreprises30Days")]
+        public int TotalEntreprises30Days { get; set; }
+
+        [JsonPropertyName("totalUtilisateurs30Days")]
+        public int TotalUtilisateurs30Days { get; set; }
+
+        [JsonPropertyName("totalTests30Days")]
+        public int TotalTests30Days { get; set; }
+
+        [JsonPropertyName("totalRevenus30Days")]
+        public double TotalRevenus30Days { get; set; }
+
+        [JsonPropertyName("gratuitCount")]
+        public int GratuitCount { get; set; }
+
+        [JsonPropertyName("monthlyRevenues")]
+        public List<double> MonthlyRevenues { get; set; } = new();
+
+        [JsonPropertyName("recentTransactions")]
+        public List<RecentTransactionDto> RecentTransactions { get; set; } = new();
+    }
+
+    public class RecentTransactionDto
+    {
+        [JsonPropertyName("id")]
+        public Guid Id { get; set; }
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; } = string.Empty;
+
+        [JsonPropertyName("plan")]
+        public string Plan { get; set; } = string.Empty;
+
+        [JsonPropertyName("date")]
+        public string Date { get; set; } = string.Empty;
+
+        [JsonPropertyName("price")]
+        public double Price { get; set; }
+
+        [JsonPropertyName("color")]
+        public string Color { get; set; } = "#6366f1";
     }
 
     public class MonthlyGrowthDto
@@ -83,8 +149,5 @@ namespace NeoEvaluation.API.DTOs
 
         [JsonPropertyName("adminLastName")]
         public string AdminLastName { get; set; } = string.Empty;
-
-        [JsonPropertyName("adminPhone")]
-        public string? AdminPhone { get; set; }
     }
 }

@@ -395,7 +395,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, inject } from 'vue';
 import { useI18n } from 'vue-i18n';
 import api from '@/services/api';
 import { useRouter } from 'vue-router';
@@ -418,7 +418,7 @@ const statusMsg          = ref('');
 const statusType         = ref('success');
 const fileInput          = ref(null);
 const isScrolled         = ref(false);
-const isDark             = ref(false);
+const isDark             = inject('isDark', ref(false));
 const mousePos           = { x: 0, y: 0 };
 
 /* ─── PAGINATION EMAILS ─────────────────────────── */
@@ -558,9 +558,9 @@ const deployInvitations = async () => {
 };
 
 /* ─── THEME ─────────────────────────────────────── */
+const globalToggleTheme = inject('toggleTheme', () => {});
 const toggleTheme = () => {
-  isDark.value = !isDark.value;
-  document.documentElement.setAttribute('data-theme', isDark.value ? 'dark' : 'light');
+  globalToggleTheme();
 };
 
 /* ─── PARALLAX ──────────────────────────────────── */
