@@ -1,260 +1,143 @@
 <template>
-  <div class="analyse-root d-flex overflow-hidden" @mousemove="handleParallax">
+  <div class="ac-root" @mousemove="handleParallax">
 
-    <!-- ── BACKGROUND EFFECTS (respecte le thème) ── -->
-    <div class="ac-bg-layer" aria-hidden="true">
-      <div class="ac-orb ac-orb-amber" :style="orbStyle(0.04)"></div>
-      <div class="ac-orb ac-orb-blue"  :style="orbStyle(0.015)"></div>
+    <!-- DÉCOR D'ARRIÈRE-PLAN -->
+    <div class="ac-bg" aria-hidden="true">
+      <div class="ac-orb ac-orb-amber"  :style="orbStyle(0.04)"></div>
+      <div class="ac-orb ac-orb-blue"   :style="orbStyle(0.015)"></div>
+      <div class="ac-orb ac-orb-purple" :style="orbStyle(0.025)"></div>
       <div class="ac-grid-dots"></div>
     </div>
 
     <AppSidebar />
 
-    <div class="ac-main flex-grow-1 d-flex flex-column position-relative">
+    <div class="ac-main flex-grow-1 d-flex flex-column">
       <AppNavbar />
 
-      <main class="ac-canvas flex-grow-1 overflow-auto">
+      <!-- ÉCRAN DE CHARGEMENT -->
+      <div v-if="loading" class="ac-loader-viewport">
+        <div class="ac-spinner-ring">
+          <div></div><div></div><div></div><div></div>
+        </div>
+        <p class="ac-loading-text mt-3">SYNCHRONISATION AVEC L'IA .NET...</p>
+      </div>
+
+      <!-- CONTENU PRINCIPAL -->
+      <main v-else class="ac-canvas flex-grow-1 overflow-auto">
         <div class="ac-inner p-4 p-lg-5">
 
-          <!-- ══ HEADER ══ -->
-          <header class="ac-header mb-5">
-            <div class="ac-breadcrumb mb-2">
-              <span>Administration</span>
-              <i class="fa-solid fa-chevron-right mx-2"></i>
-              <span class="ac-breadcrumb-current">Analyses comportementales</span>
+          <!-- EN-TÊTE -->
+          <header class="ac-page-header mb-5">
+            <div class="ac-header-left">
+              <div class="ac-breadcrumb mb-2">
+                <span class="root" @click="$router.push('/dashboard')">Dashboard</span>
+                <i class="fa-solid fa-chevron-right mx-2 sep"></i>
+                <span class="current">Analyse Comportementale IA</span>
+              </div>
+              <h2 class="ac-page-title">
+                Analyses <span class="ac-title-accent">Prédictives</span>
+              </h2>
+              <p class="ac-subtitle">
+                {{ allAnalyses.length }} profil(s) synchronisé(s)
+                · <span class="ac-ia-badge"><i class="fa-solid fa-brain me-1"></i>IA .NET Active</span>
+              </p>
             </div>
-            <div class="d-flex justify-content-between align-items-end flex-wrap gap-3">
-              <div>
-                <h2 class="ac-page-title">
-                  Analyses <span class="ac-title-accent">&amp; Intelligence</span>
-                </h2>
-                <p class="ac-page-subtitle">
-                  {{ analyses.length }} profil{{ analyses.length > 1 ? 's' : '' }} analysé{{ analyses.length > 1 ? 's' : '' }}
-                  · Score moyen
-                  <strong>{{ avgScore !== null ? avgScore + '%' : '—' }}</strong>
-                </p>
-              </div>
 
-              <div class="d-flex gap-2 align-items-center flex-wrap">
-                <button class="ac-btn-icon" @click="initOrchestrator" :disabled="loading" title="Rafraîchir">
-                  <i class="fa-solid fa-rotate" :class="{ 'fa-spin': loading }"></i>
-                </button>
-                <div class="ac-view-toggle">
-                  <button :class="['ac-toggle-btn', { active: viewMode === 'grid' }]" @click="viewMode = 'grid'" title="Grille">
-                    <i class="fa-solid fa-table-cells-large"></i>
-                  </button>
-                  <button :class="['ac-toggle-btn', { active: viewMode === 'list' }]" @click="viewMode = 'list'" title="Liste">
-                    <i class="fa-solid fa-list-ul"></i>
-                  </button>
-                </div>
-              </div>
+            <div class="ac-header-right">
+              <!-- BOUTON UPLOAD GÉNÉRIQUE -->
+              <label class="ac-btn-upload" title="Analyser un nouveau CV">
+                <i class="fa-solid fa-file-arrow-up me-2"></i>Analyser un CV
+                <input type="file" @change="(e) => onUploadCv(e)" hidden accept=".pdf,.docx" />
+              </label>
+              
+              <button class="ac-btn-icon" @click="initOrchestrator" :disabled="loading">
+                <i class="fa-solid fa-rotate" :class="{ 'fa-spin': loading }"></i>
+              </button>
             </div>
           </header>
 
-          <!-- ══ KPI STATS ══ -->
+          <!-- KPI CARDS -->
           <div class="ac-kpi-grid mb-5">
-            <div v-for="stat in kpiStats" :key="stat.label" class="ac-kpi-card">
-              <div class="ac-kpi-icon" :style="{ background: stat.bg, color: stat.color }">
-                <i :class="stat.icon"></i>
+            <div class="ac-kpi-card" v-for="stat in kpiStats" :key="stat.label">
+              <div class="ac-kpi-icon-wrap" :style="{ background: stat.bg }">
+                <i :class="stat.icon" :style="{ color: stat.color }"></i>
               </div>
               <div class="ac-kpi-body">
                 <div class="ac-kpi-value">{{ stat.value }}</div>
                 <div class="ac-kpi-label">{{ stat.label }}</div>
               </div>
-              <div class="ac-kpi-sparkline" :style="{ background: stat.color + '18' }">
-                <div class="ac-kpi-bar" :style="{ background: stat.color, height: stat.bar + '%' }"></div>
-              </div>
             </div>
           </div>
 
-          <!-- ══ FILTRES & RECHERCHE ══ -->
-          <div class="ac-filters mb-4">
-            <!-- Tabs -->
-            <div class="ac-tabs">
-              <button
-                v-for="tab in filterTabs"
-                :key="tab.value"
+          <!-- BARRE DE RECHERCHE ET FILTRES -->
+          <div class="ac-filters-row mb-4">
+            <div class="ac-tabs-wrap">
+              <button 
+                v-for="tab in filterTabs" :key="tab.value"
                 :class="['ac-tab', { active: activeTab === tab.value }]"
                 @click="activeTab = tab.value"
               >
                 {{ tab.label }}
-                <span class="ac-tab-count">{{ tab.count }}</span>
               </button>
             </div>
-
-            <!-- Droite : tri + recherche -->
-            <div class="d-flex gap-2 align-items-center">
-              <select class="ac-select" v-model="sortBy">
-                <option value="score_desc">Score ↓</option>
-                <option value="score_asc">Score ↑</option>
-                <option value="name">Nom A–Z</option>
-                <option value="date_desc">Plus récent</option>
-              </select>
-              <div class="ac-search-box">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input
-                  type="text"
-                  v-model="searchQuery"
-                  placeholder="Rechercher..."
-                  class="ac-search-input"
-                />
-                <button v-if="searchQuery" class="ac-search-clear" @click="searchQuery = ''">
-                  <i class="fa-solid fa-xmark"></i>
-                </button>
-              </div>
+            <div class="ac-search-box">
+              <i class="fa-solid fa-magnifying-glass ac-search-icon"></i>
+              <input type="text" v-model="searchQuery" placeholder="Rechercher un candidat..." class="ac-search-input" />
             </div>
           </div>
 
-          <!-- ══ LOADING ══ -->
-          <div v-if="loading" class="ac-loading-state">
-            <div class="ac-spinner"></div>
-            <p>Chargement des profils…</p>
+          <!-- ÉTAT VIDE -->
+          <div v-if="filteredAnalyses.length === 0 && !loading" class="ac-empty-state">
+            <i class="fa-solid fa-users-slash fa-3x mb-3"></i>
+            <h5>Aucun candidat trouvé</h5>
+            <p class="text-muted">Modifiez vos filtres ou synchronisez la liste.</p>
           </div>
 
-          <!-- ══ EMPTY ══ -->
-          <div v-else-if="filteredAnalyses.length === 0" class="ac-empty-state">
-            <div class="ac-empty-icon">
-              <i class="fa-solid fa-user-slash"></i>
-            </div>
-            <h5>Aucun profil trouvé</h5>
-            <p>Modifiez vos filtres ou ajoutez des candidats.</p>
-          </div>
-
-          <!-- ══ GRID VIEW ══ -->
-          <div v-else-if="viewMode === 'grid'" class="ac-grid">
+          <!-- GRILLE DES CANDIDATS -->
+          <div v-else class="ac-grid">
             <div
               v-for="(a, idx) in filteredAnalyses"
               :key="a.id"
               class="ac-profile-card"
-              :style="{ animationDelay: (idx * 0.04) + 's' }"
-              @click="goToDetail(a)"
+              :style="{ animationDelay: (idx * 0.05) + 's' }"
+              @click="openDetailModal(a)"
             >
-              <!-- Card top -->
+              <div v-if="a.iaAnalyzed" class="ac-ia-tag-float">
+                <i class="fa-solid fa-robot me-1"></i> IA ANALYSÉ
+              </div>
+
               <div class="ac-card-top">
                 <div class="ac-avatar" :style="{ background: avatarBg(a.candidat_nom) }">
                   {{ initials(a.candidat_nom) }}
                 </div>
-                <div class="ac-card-badges">
-                  <span class="ac-tier-badge" :class="'tier-' + tierKey(a.neural_tier)">
-                    <span class="ac-tier-dot"></span>
-                    {{ a.neural_tier }}
-                  </span>
-                  <button
-                    class="ac-delete-btn"
-                    @click.stop="handleDelete(a.id)"
-                    title="Supprimer"
-                  >
-                    <i class="fa-solid fa-trash-can"></i>
-                  </button>
-                </div>
+                <span class="ac-tier-badge" :class="'tier-' + a.tier_raw">
+                  {{ a.tier_raw }}
+                </span>
               </div>
 
-              <!-- Card body -->
               <div class="ac-card-body">
                 <h5 class="ac-candidate-name">{{ a.candidat_nom }}</h5>
                 <p class="ac-candidate-profile">{{ a.profile_type }}</p>
               </div>
 
-              <!-- Score -->
               <div class="ac-card-score-area">
                 <div class="ac-score-row">
-                  <span class="ac-score-label">Score global</span>
+                  <span class="ac-score-label">MATCH SCORE</span>
                   <span class="ac-score-value" :style="{ color: scoreColor(a.global_score) }">
-                    {{ a.global_score > 0 ? a.global_score + '%' : 'N/A' }}
+                    {{ a.global_score }}%
                   </span>
                 </div>
                 <div class="ac-progress-track">
                   <div
                     class="ac-progress-fill"
-                    :style="{
-                      width: a.global_score + '%',
-                      background: scoreColor(a.global_score)
-                    }"
+                    :style="{ width: a.global_score + '%', background: scoreColor(a.global_score) }"
                   ></div>
                 </div>
               </div>
 
-              <!-- Card footer -->
-              <div class="ac-card-footer">
-                <span class="ac-date-label">
-                  <i class="fa-regular fa-calendar"></i>
-                  {{ formatDate(a.created_at) }}
-                </span>
-                <span class="ac-tests-label">
-                  <i class="fa-solid fa-file-lines"></i>
-                  {{ a.tests_count }} test{{ a.tests_count > 1 ? 's' : '' }}
-                </span>
-              </div>
-
-              <!-- Hover CTA -->
-              <div class="ac-card-cta">
-                <i class="fa-solid fa-arrow-right"></i>
-                Voir le profil
-              </div>
-            </div>
-          </div>
-
-          <!-- ══ LIST VIEW ══ -->
-          <div v-else class="ac-list-container">
-            <!-- List header -->
-            <div class="ac-list-head">
-              <div class="col-name">Candidat</div>
-              <div class="col-profile">Profil</div>
-              <div class="col-tier">Tier</div>
-              <div class="col-score">Score</div>
-              <div class="col-date">Date</div>
-              <div class="col-actions"></div>
-            </div>
-
-            <!-- List rows -->
-            <div
-              v-for="(a, idx) in filteredAnalyses"
-              :key="a.id"
-              class="ac-list-row"
-              :style="{ animationDelay: (idx * 0.03) + 's' }"
-              @click="goToDetail(a)"
-            >
-              <div class="col-name">
-                <div class="ac-list-avatar" :style="{ background: avatarBg(a.candidat_nom) }">
-                  {{ initials(a.candidat_nom) }}
-                </div>
-                <span class="ac-list-name">{{ a.candidat_nom }}</span>
-              </div>
-              <div class="col-profile">
-                <span class="ac-list-profile">{{ a.profile_type }}</span>
-              </div>
-              <div class="col-tier">
-                <span class="ac-tier-badge" :class="'tier-' + tierKey(a.neural_tier)">
-                  <span class="ac-tier-dot"></span>
-                  {{ a.neural_tier }}
-                </span>
-              </div>
-              <div class="col-score">
-                <div class="ac-list-score-wrap">
-                  <div class="ac-list-progress">
-                    <div
-                      class="ac-list-progress-fill"
-                      :style="{
-                        width: a.global_score + '%',
-                        background: scoreColor(a.global_score)
-                      }"
-                    ></div>
-                  </div>
-                  <span class="ac-list-score-val" :style="{ color: scoreColor(a.global_score) }">
-                    {{ a.global_score > 0 ? a.global_score + '%' : '—' }}
-                  </span>
-                </div>
-              </div>
-              <div class="col-date">
-                <span class="ac-date-label">{{ formatDate(a.created_at) }}</span>
-              </div>
-              <div class="col-actions">
-                <button class="ac-btn-icon ac-btn-icon-sm" @click.stop="goToDetail(a)" title="Voir">
-                  <i class="fa-solid fa-eye"></i>
-                </button>
-                <button class="ac-btn-icon ac-btn-icon-sm ac-btn-danger" @click.stop="handleDelete(a.id)" title="Supprimer">
-                  <i class="fa-solid fa-trash-can"></i>
-                </button>
+              <div v-if="a.quick_insight" class="ac-quick-insight">
+                <i class="fa-solid fa-comment-dots me-2"></i>
+                <span>{{ a.quick_insight }}</span>
               </div>
             </div>
           </div>
@@ -263,7 +146,128 @@
       </main>
     </div>
 
-    <!-- ══ TOAST ══ -->
+    <!-- MODAL D'ANALYSE DÉTAILLÉE -->
+    <transition name="ac-modal-anim">
+      <div v-if="detailModal.open" class="ac-modal-overlay" @click.self="closeModal">
+        <div class="ac-modal">
+          
+          <div class="ac-modal-header">
+            <div class="d-flex align-items-center gap-3">
+              <div
+                class="ac-modal-avatar"
+                :style="{ background: avatarBg(detailModal.analysis?.candidat_nom ?? '') }"
+              >
+                {{ initials(detailModal.analysis?.candidat_nom ?? '?') }}
+              </div>
+              <h4 class="m-0">{{ detailModal.analysis?.candidat_nom }}</h4>
+            </div>
+            <button class="ac-modal-close ms-auto" @click="closeModal">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+
+          <div v-if="detailModal.loading" class="ac-modal-loader">
+            <i class="fa-solid fa-circle-notch fa-spin fa-3x text-amber"></i>
+            <p class="mt-3">Analyse IA en cours...</p>
+          </div>
+
+          <div v-else class="ac-modal-body">
+            <!-- CAS 1 : ANALYSE DISPONIBLE -->
+            <div v-if="detailModal.analysis?.ai_details">
+              <div class="text-center mb-5">
+                <div
+                  class="ac-big-score"
+                  :style="{ color: scoreColor(detailModal.analysis.global_score) }"
+                >
+                  {{ detailModal.analysis.global_score }}%
+                </div>
+                <p class="text-muted small uppercase fw-bold letter-spacing-2">
+                  Score de compatibilité globale
+                </p>
+              </div>
+
+              <div class="row g-4">
+                <div class="col-md-6">
+                  <div class="ac-insight-box ac-insight-force">
+                    <div class="ac-insight-title">
+                      <i class="fa-solid fa-thumbs-up me-2"></i>Points Forts
+                    </div>
+                    <ul class="ac-insight-list">
+                      <li
+                        v-for="(f, i) in detailModal.analysis.ai_details.points_forts"
+                        :key="'fort-' + i"
+                      >{{ f }}</li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="ac-insight-box ac-insight-axe">
+                    <div class="ac-insight-title">
+                      <i class="fa-solid fa-triangle-exclamation me-2"></i>Axes d'amélioration
+                    </div>
+                    <ul class="ac-insight-list">
+                      <li
+                        v-for="(p, i) in detailModal.analysis.ai_details.points_faibles"
+                        :key="'faible-' + i"
+                      >{{ p }}</li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="ac-insight-box ac-insight-tips">
+                    <div class="ac-insight-title">
+                      <i class="fa-solid fa-lightbulb me-2"></i>Recommandations Stratégiques
+                    </div>
+                    <ul class="ac-insight-list">
+                      <li
+                        v-for="(c, i) in detailModal.analysis.ai_details.conseils"
+                        :key="'conseil-' + i"
+                      >{{ c }}</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div class="ac-decision-strip mt-4">
+                <i class="fa-solid fa-gavel me-2"></i>
+                <strong>Conclusion IA :</strong> {{ detailModal.analysis.ai_details.decision }}
+              </div>
+
+              <!-- DATE D'ANALYSE -->
+              <div v-if="detailModal.analysis.ai_details.createdAt" class="ac-analysis-date mt-3">
+                <i class="fa-regular fa-clock me-1"></i>
+                Analysé le {{ formatDate(detailModal.analysis.ai_details.createdAt) }}
+              </div>
+            </div>
+
+            <!-- CAS 2 : AUCUNE ANALYSE (SCORE 0%) -->
+            <div v-else class="text-center py-5">
+              <div class="ac-empty-robot mb-4">
+                <i class="fa-solid fa-robot fa-4x"></i>
+              </div>
+              <h5>Aucune analyse IA disponible</h5>
+              <p class="text-muted mb-4">
+                Lancez une analyse comparative pour ce candidat en téléchargeant son CV.
+              </p>
+              
+              <label class="ac-btn-upload-big">
+                <i class="fa-solid fa-wand-magic-sparkles me-2"></i> 
+                Analyser le CV de {{ firstName(detailModal.analysis?.candidat_nom) }}
+                <input
+                  type="file"
+                  @change="(e) => onUploadCv(e, detailModal.analysis?.id)"
+                  hidden
+                  accept=".pdf,.docx"
+                />
+              </label>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </transition>
+
+    <!-- TOAST NOTIFICATIONS -->
     <transition name="ac-toast-anim">
       <div v-if="toast.active" class="ac-toast" :class="'ac-toast-' + toast.type">
         <i :class="toast.icon"></i>
@@ -276,233 +280,223 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
 import api from '@/services/api';
 import AppSidebar from '../components/AppSidebar.vue';
 import AppNavbar  from '../components/AppNavbar.vue';
 
-// ── STATE ──────────────────────────────────────────────────────
-const router      = useRouter();
+// ─────────────────────────────────────────
+// ÉTAT
+// ─────────────────────────────────────────
 const loading     = ref(true);
-const viewMode    = ref('grid');
+const allAnalyses = ref([]);
 const searchQuery = ref('');
 const activeTab   = ref('all');
-const sortBy      = ref('score_desc');
-const analyses    = ref([]);
 const mouse       = reactive({ x: 0, y: 0 });
 const toast       = reactive({ active: false, message: '', type: 'info', icon: '' });
 
-// ── CHARGEMENT ────────────────────────────────────────────────
+const detailModal = reactive({
+  open: false,
+  loading: false,
+  analysis: null
+});
+
+// ─────────────────────────────────────────
+// LOGIQUE API .NET
+// ─────────────────────────────────────────
+
+/** Récupère l'historique IA pour un GUID donné */
+const fetchAiHistory = async (guid) => {
+  try {
+    const { data } = await api.get(`/Ai/cv-history/${guid}`);
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+};
+
+/** Initialise la liste des candidats enrichie par l'IA */
 const initOrchestrator = async () => {
   loading.value = true;
   try {
     const { data: candidats } = await api.get('/Candidates');
-    if (!Array.isArray(candidats) || candidats.length === 0) {
-      analyses.value = [];
-      return;
-    }
-    const results = await Promise.allSettled(candidats.map(enrichCandidat));
-    analyses.value = results
-      .filter(r => r.status === 'fulfilled')
-      .map(r => r.value);
-  } catch (err) {
-    showToast('Erreur de connexion API', 'error');
-    console.error(err);
+
+    const enriched = await Promise.all(candidats.map(async (c) => {
+      const id        = c.id ?? c.Id;
+      const aiHistory = await fetchAiHistory(id);
+      const latestAi  = aiHistory.length > 0 ? aiHistory[0] : null;
+      const score     = latestAi?.score ?? 0;
+
+      return {
+        id,
+        candidat_nom:  c.name ?? c.nom ?? 'Candidat',
+        profile_type:  c.poste ?? 'Développeur',
+        global_score:  score,
+        tier_raw:      score >= 85 ? 'élite' : score >= 70 ? 'standard' : 'basique',
+        iaAnalyzed:    !!latestAi,
+        ai_details:    latestAi,   // contient points_forts, points_faibles, conseils, decision
+        quick_insight: latestAi ? latestAi.decision : 'Analyse requise'
+      };
+    }));
+
+    allAnalyses.value = enriched;
+  } catch {
+    showToast('Erreur de synchronisation avec le serveur .NET', 'error');
   } finally {
     loading.value = false;
   }
 };
 
-const enrichCandidat = async (c) => {
-  const id = c.id || c.Id;
-  let tests = [];
-  const endpoints = [
-    `/Examen/resultats/${id}`,
-    `/Examen/historique/${id}`,
-    `/Examen/candidate-report/${id}`,
-    `/Results/${id}`,
-  ];
-  for (const ep of endpoints) {
-    try {
-      const { data } = await api.get(ep);
-      if (data) {
-        tests = Array.isArray(data) ? data : [data];
-        if (tests.length > 0) break;
-      }
-    } catch (_) {}
+/** Upload de CV — générique ou spécifique à un candidat */
+const onUploadCv = async (event, specificCandidatId = null) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  // Réinitialise l'input pour permettre un re-upload du même fichier
+  event.target.value = '';
+
+  const jobDesc  = detailModal.analysis?.profile_type ?? 'Poste Fullstack';
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('lang', 'fr');
+  formData.append('job_description', jobDesc);
+
+  if (specificCandidatId) {
+    formData.append('candidat_id', specificCandidatId);
+    detailModal.loading = true;
   }
 
-  let globalScore = 0;
-  if (tests.length > 0) {
-    const scores = tests
-      .map(t => Number(t.scoreGlobal ?? t.scoreTotal ?? t.score ?? t.Score ?? t.pourcentage ?? 0))
-      .filter(s => s > 0);
-    if (scores.length > 0)
-      globalScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-  } else {
-    globalScore = Number(c.global_score ?? c.score ?? c.scoreGlobal ?? c.Score ?? 0);
-  }
+  showToast('Traitement IA en cours...', 'info');
 
-  return {
-    id,
-    candidat_nom : c.name || c.fullName || c.nom || c.Name || 'Candidat',
-    profile_type : c.group || c.campaignName || c.poste || detectProfile(globalScore, tests),
-    neural_tier  : globalScore >= 85 ? 'Élite' : globalScore >= 70 ? 'Standard' : 'Basique',
-    global_score : globalScore,
-    created_at   : c.created_at || c.createdAt || c.CreatedAt || new Date().toISOString(),
-    tests_count  : tests.length,
-  };
-};
-
-const detectProfile = (score, tests) => {
-  if (tests.length === 0) return 'À évaluer';
-  const themes = [...new Set(tests.map(t => t.theme || t.Theme || t.categorie).filter(Boolean))];
-  if (themes.length > 0) return themes.slice(0, 2).join(' · ');
-  return score >= 85 ? 'Expert' : score >= 70 ? 'Confirmé' : 'Junior';
-};
-
-// ── NAVIGATION & DELETE ───────────────────────────────────────
-const goToDetail = (a) => {
-  router.push({
-    path: `/analyse-comportementale/${a.id}`,
-    query: { score: a.global_score, nom: a.candidat_nom, tier: a.neural_tier },
-  });
-};
-
-const handleDelete = async (id) => {
-  if (!confirm('Supprimer cette analyse ?')) return;
   try {
-    await api.delete(`/Candidates/${id}`);
-  } catch (_) {}
-  analyses.value = analyses.value.filter(a => a.id !== id);
-  showToast('Analyse supprimée', 'warn');
+    const { data } = await api.post('/Ai/analyze-cv', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+
+    showToast('Analyse terminée avec succès !', 'success');
+
+    // Mise à jour locale si on est dans la modale
+    if (specificCandidatId && detailModal.analysis?.id === specificCandidatId) {
+      detailModal.analysis.ai_details   = data;
+      detailModal.analysis.global_score  = data.score ?? 0;
+      detailModal.analysis.quick_insight = data.decision ?? '';
+      detailModal.analysis.iaAnalyzed    = true;
+    }
+
+    await initOrchestrator();
+  } catch {
+    showToast("Erreur lors de l'analyse du document", 'error');
+  } finally {
+    if (specificCandidatId) detailModal.loading = false;
+  }
 };
 
-// ── COMPUTED ──────────────────────────────────────────────────
+// ─────────────────────────────────────────
+// COMPUTED
+// ─────────────────────────────────────────
+
 const filteredAnalyses = computed(() => {
-  let list = [...analyses.value];
-
-  if (activeTab.value === 'elite')    list = list.filter(a => a.neural_tier === 'Élite');
-  if (activeTab.value === 'standard') list = list.filter(a => a.neural_tier === 'Standard');
-  if (activeTab.value === 'basique')  list = list.filter(a => a.neural_tier === 'Basique');
-  if (activeTab.value === 'noeval')   list = list.filter(a => a.global_score === 0);
-
-  const q = searchQuery.value.toLowerCase().trim();
-  if (q) list = list.filter(a =>
-    a.candidat_nom.toLowerCase().includes(q) ||
-    a.profile_type.toLowerCase().includes(q)
-  );
-
-  if (sortBy.value === 'score_desc') list.sort((a, b) => b.global_score - a.global_score);
-  if (sortBy.value === 'score_asc')  list.sort((a, b) => a.global_score - b.global_score);
-  if (sortBy.value === 'name')       list.sort((a, b) => a.candidat_nom.localeCompare(b.candidat_nom));
-  if (sortBy.value === 'date_desc')  list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
+  let list = allAnalyses.value;
+  if (activeTab.value !== 'all') {
+    list = list.filter(a => a.tier_raw === activeTab.value);
+  }
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase().trim();
+    list = list.filter(a => a.candidat_nom.toLowerCase().includes(q));
+  }
   return list;
 });
 
-const filterTabs = computed(() => [
-  { label: 'Tous',     value: 'all',      count: analyses.value.length },
-  { label: 'Élite',   value: 'elite',    count: analyses.value.filter(a => a.neural_tier === 'Élite').length },
-  { label: 'Standard',value: 'standard', count: analyses.value.filter(a => a.neural_tier === 'Standard').length },
-  { label: 'Basique', value: 'basique',  count: analyses.value.filter(a => a.neural_tier === 'Basique').length },
-  { label: 'Non éval.',value: 'noeval',  count: analyses.value.filter(a => a.global_score === 0).length },
+/** Score moyen calculé dynamiquement sur les candidats analysés */
+const avgScore = computed(() => {
+  const analyzed = allAnalyses.value.filter(a => a.iaAnalyzed);
+  if (!analyzed.length) return 'N/A';
+  const avg = analyzed.reduce((sum, a) => sum + a.global_score, 0) / analyzed.length;
+  return Math.round(avg) + '%';
+});
+
+const kpiStats = computed(() => [
+  {
+    label: 'CANDIDATS',
+    value: allAnalyses.value.length,
+    icon:  'fa-solid fa-users',
+    color: '#f59e0b',
+    bg:    'rgba(245,158,11,0.1)'
+  },
+  {
+    label: 'ANALYSÉS IA',
+    value: allAnalyses.value.filter(a => a.iaAnalyzed).length,
+    icon:  'fa-solid fa-robot',
+    color: '#8b5cf6',
+    bg:    'rgba(139,92,246,0.1)'
+  },
+  {
+    label: 'SCORE MOYEN',
+    value: avgScore.value,
+    icon:  'fa-solid fa-bolt',
+    color: '#10b981',
+    bg:    'rgba(16,185,129,0.1)'
+  }
 ]);
 
-const avgScore = computed(() => {
-  const avecScore = analyses.value.filter(a => a.global_score > 0);
-  if (!avecScore.length) return null;
-  return Math.round(avecScore.reduce((s, a) => s + a.global_score, 0) / avecScore.length);
-});
-
-const kpiStats = computed(() => {
-  const total   = analyses.value.length;
-  const elite   = analyses.value.filter(a => a.neural_tier === 'Élite').length;
-  const noScore = analyses.value.filter(a => a.global_score === 0).length;
-  return [
-    {
-      label: 'Total profils',
-      value: total,
-      icon:  'fa-solid fa-users',
-      color: '#f59e0b',
-      bg:    'rgba(245,158,11,0.12)',
-      bar:   total > 0 ? 60 : 0,
-    },
-    {
-      label: 'Score moyen',
-      value: avgScore.value !== null ? avgScore.value + '%' : '—',
-      icon:  'fa-solid fa-chart-line',
-      color: '#10b981',
-      bg:    'rgba(16,185,129,0.12)',
-      bar:   avgScore.value ?? 0,
-    },
-    {
-      label: 'Tier Élite',
-      value: elite,
-      icon:  'fa-solid fa-crown',
-      color: '#6366f1',
-      bg:    'rgba(99,102,241,0.12)',
-      bar:   total > 0 ? Math.round((elite / total) * 100) : 0,
-    },
-    {
-      label: 'Sans évaluation',
-      value: noScore,
-      icon:  'fa-solid fa-hourglass-half',
-      color: '#f43f5e',
-      bg:    'rgba(244,63,94,0.12)',
-      bar:   total > 0 ? Math.round((noScore / total) * 100) : 0,
-    },
-  ];
-});
-
-// ── HELPERS ───────────────────────────────────────────────────
-const scoreColor = (s) => {
-  if (!s || s === 0) return 'var(--text-light)';
-  return s >= 85 ? '#10b981' : s >= 70 ? '#f59e0b' : '#f43f5e';
-};
-
-const tierKey = (t) =>
-  t === 'Élite' ? 'elite' : t === 'Standard' ? 'standard' : 'basique';
-
-const formatDate = (d) =>
-  d ? new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: '2-digit' }) : '—';
-
-const initials = (name) => {
-  if (!name) return '?';
-  const parts = name.trim().split(/\s+/);
-  return parts.length >= 2
-    ? (parts[0][0] + parts[1][0]).toUpperCase()
-    : name.slice(0, 2).toUpperCase();
-};
-
-// Palette reproductible par initiales
-const AVATAR_PALETTES = [
-  { bg: 'rgba(245,158,11,0.18)', color: '#d97706' },
-  { bg: 'rgba(99,102,241,0.18)', color: '#6366f1' },
-  { bg: 'rgba(16,185,129,0.18)', color: '#059669' },
-  { bg: 'rgba(244,63,94,0.18)',  color: '#e11d48' },
-  { bg: 'rgba(59,130,246,0.18)', color: '#2563eb' },
-  { bg: 'rgba(168,85,247,0.18)', color: '#9333ea' },
+const filterTabs = [
+  { label: 'Tous les profils', value: 'all'      },
+  { label: 'Niveau Élite',     value: 'élite'    },
+  { label: 'Standard',         value: 'standard' },
+  { label: 'Basique',          value: 'basique'  }
 ];
-const avatarBg = (name) => {
-  const idx = (name || '?').charCodeAt(0) % AVATAR_PALETTES.length;
-  return AVATAR_PALETTES[idx].bg;
+
+// ─────────────────────────────────────────
+// HELPERS UI
+// ─────────────────────────────────────────
+
+const openDetailModal = (a) => {
+  detailModal.analysis = a;
+  detailModal.open     = true;
 };
+
+const closeModal = () => {
+  detailModal.open    = false;
+  detailModal.loading = false;
+};
+
+const scoreColor = (s) =>
+  s >= 85 ? '#10b981' : s >= 70 ? '#f59e0b' : '#ef4444';
+
+/** Retourne les initiales d'un nom (2 lettres max) */
+const initials = (n) =>
+  (n || '?').split(' ').map(p => p[0] ?? '').join('').toUpperCase().slice(0, 2);
+
+/** Retourne le prénom (premier mot) */
+const firstName = (n) => (n ?? '').split(' ')[0] || 'ce candidat';
+
+const avatarBg = (name) =>
+  `hsl(${((name ?? '').length * 45) % 360}, 65%, 85%)`;
+
+const orbStyle = (f) => ({
+  transform: `translate(${mouse.x * f}px, ${mouse.y * f}px)`
+});
 
 const handleParallax = (e) => {
-  mouse.x = (e.clientX - window.innerWidth  / 2) / 30;
-  mouse.y = (e.clientY - window.innerHeight / 2) / 30;
+  mouse.x = e.clientX - window.innerWidth  / 2;
+  mouse.y = e.clientY - window.innerHeight / 2;
 };
-const orbStyle = (f) => ({
-  transform: `translate(${mouse.x * f * 10}px, ${mouse.y * f * 10}px)`,
-});
+
+const formatDate = (iso) => {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('fr-FR', {
+    day:   '2-digit',
+    month: 'long',
+    year:  'numeric',
+    hour:  '2-digit',
+    minute:'2-digit'
+  });
+};
 
 const showToast = (message, type) => {
   const icons = {
-    error:   'fa-solid fa-circle-xmark',
-    warn:    'fa-solid fa-triangle-exclamation',
     success: 'fa-solid fa-circle-check',
-    info:    'fa-solid fa-circle-info',
+    error:   'fa-solid fa-triangle-exclamation',
+    info:    'fa-solid fa-circle-info'
   };
   Object.assign(toast, { active: true, message, type, icon: icons[type] ?? icons.info });
   setTimeout(() => { toast.active = false; }, 3500);
@@ -512,414 +506,622 @@ onMounted(initOrchestrator);
 </script>
 
 <style scoped>
-/* ══════════════════════════════════════════════════════════════
-   ROOT — utilise 100 % les variables du thème global App.vue
-   var(--bg-page), var(--bg-card), var(--text-main),
-   var(--text-muted), var(--text-light), var(--border-color),
-   var(--primary), var(--primary-light), var(--shadow-*), etc.
-   ══════════════════════════════════════════════════════════════ */
-
-.analyse-root {
+/* ────────────────────────────────────────
+   ROOT & BACKGROUND
+──────────────────────────────────────── */
+.ac-root {
+  font-family: 'Plus Jakarta Sans', sans-serif;
   min-height: 100vh;
-  background: var(--bg-page);
-  color: var(--text-main);
-  font-family: 'Segoe UI', system-ui, sans-serif;
   position: relative;
-  transition: background 0.35s ease, color 0.35s ease;
+  overflow: hidden;
+  background: #f8fafc;
+  display: flex;
 }
 
-/* ── BACKGROUND ── */
-.ac-bg-layer {
-  position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+.ac-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
 }
-.ac-grid-dots {
-  position: absolute; inset: 0;
-  background-image: radial-gradient(var(--border-color) 1px, transparent 1px);
-  background-size: 36px 36px;
-  opacity: 0.6;
-  transition: opacity 0.35s;
-}
+
 .ac-orb {
-  position: absolute; width: 500px; height: 500px;
-  border-radius: 50%; filter: blur(100px); opacity: 0.08;
-  transition: transform 0.3s ease-out, opacity 0.35s;
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.15;
+  transition: transform 0.3s ease;
 }
-.ac-orb-amber { background: var(--primary); top: -180px; right: -80px; }
-.ac-orb-blue  { background: var(--accent);  bottom: -180px; left: -80px; }
+.ac-orb-amber  { width: 500px; height: 500px; background: #f59e0b; top: -100px; right: -100px; }
+.ac-orb-blue   { width: 400px; height: 400px; background: #3b82f6; bottom: -50px; left: -50px; }
+.ac-orb-purple { width: 300px; height: 300px; background: #a855f7; top: 30%; left: 20%; }
 
-/* ── LAYOUT ── */
-.ac-main  { z-index: 5; background: transparent; }
-.ac-canvas { height: calc(100vh - 64px); }
-.ac-inner  { max-width: 1400px; margin: 0 auto; }
-
-/* ── HEADER ── */
-.ac-breadcrumb {
-  font-size: 0.72rem; font-weight: 700;
-  color: var(--text-light); letter-spacing: 0.04em;
-}
-.ac-breadcrumb i { font-size: 0.5rem; opacity: 0.5; }
-.ac-breadcrumb-current { color: var(--text-main); }
-
-.ac-page-title {
-  font-size: clamp(1.6rem, 3vw, 2.4rem);
-  font-weight: 800; letter-spacing: -1px;
-  color: var(--text-main); margin: 0;
-}
-.ac-title-accent {
-  background: linear-gradient(135deg, var(--primary), #fbbf24);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.ac-page-subtitle {
-  margin: 6px 0 0; font-size: 0.85rem;
-  color: var(--text-muted);
-}
-.ac-page-subtitle strong { color: var(--text-main); }
-
-/* ── BUTTON BASE ── */
-.ac-btn-icon {
-  width: 42px; height: 42px; border-radius: 13px;
-  border: 1.5px solid var(--border-color);
-  background: var(--bg-card);
-  color: var(--text-muted);
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-  font-size: 0.9rem; transition: all 0.2s;
-}
-.ac-btn-icon:hover:not(:disabled) {
-  border-color: var(--primary); color: var(--primary);
-  background: var(--primary-light);
-}
-.ac-btn-icon:disabled { opacity: 0.45; cursor: not-allowed; }
-.ac-btn-icon-sm { width: 34px; height: 34px; font-size: 0.78rem; border-radius: 10px; }
-.ac-btn-danger:hover { border-color: var(--danger) !important; color: var(--danger) !important; background: var(--danger-bg) !important; }
-
-/* ── VIEW TOGGLE ── */
-.ac-view-toggle {
-  display: flex; background: var(--bg-card);
-  border: 1.5px solid var(--border-color); border-radius: 14px;
-  padding: 3px; gap: 3px;
-}
-.ac-toggle-btn {
-  width: 36px; height: 36px; border-radius: 10px;
-  border: none; background: transparent;
-  color: var(--text-muted); cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 0.85rem; transition: all 0.2s;
-}
-.ac-toggle-btn.active {
-  background: var(--secondary); color: var(--primary);
-}
-[data-theme="dark"] .ac-toggle-btn.active {
-  background: var(--primary); color: var(--bg-page);
+.ac-grid-dots {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, #cbd5e1 1px, transparent 1px);
+  background-size: 30px 30px;
+  opacity: 0.4;
 }
 
-/* ── KPI GRID ── */
-.ac-kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-}
-.ac-kpi-card {
-  background: var(--bg-card);
-  border: 1.5px solid var(--border-color);
-  border-radius: 20px; padding: 20px 22px;
-  display: flex; align-items: center; gap: 14px;
-  transition: all 0.25s; cursor: default;
-  box-shadow: var(--shadow-xs);
-}
-.ac-kpi-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--border-color);
-}
-.ac-kpi-icon {
-  width: 48px; height: 48px; border-radius: 14px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.15rem; flex-shrink: 0;
-}
-.ac-kpi-body { flex: 1; }
-.ac-kpi-value { font-size: 1.5rem; font-weight: 800; color: var(--text-main); line-height: 1; }
-.ac-kpi-label { font-size: 0.68rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 4px; }
-.ac-kpi-sparkline {
-  width: 36px; height: 36px; border-radius: 10px;
-  display: flex; align-items: flex-end; justify-content: center;
-  padding: 6px; flex-shrink: 0;
-}
-.ac-kpi-bar { width: 10px; border-radius: 4px; min-height: 4px; transition: height 1s ease; }
+/* ────────────────────────────────────────
+   LAYOUT
+──────────────────────────────────────── */
+.ac-main    { z-index: 10; width: 100%; }
+.ac-canvas  { background: transparent; }
+.ac-inner   { max-width: 1400px; margin: 0 auto; }
 
-/* ── FILTERS ── */
-.ac-filters {
-  display: flex; justify-content: space-between; align-items: center;
-  gap: 12px; flex-wrap: wrap;
+/* ────────────────────────────────────────
+   LOADER
+──────────────────────────────────────── */
+.ac-loader-viewport {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
 }
-.ac-tabs {
-  display: flex; background: var(--bg-card);
-  border: 1.5px solid var(--border-color);
-  border-radius: 16px; padding: 4px; gap: 4px;
+
+.ac-spinner-ring {
+  display: inline-block;
+  position: relative;
+  width: 60px;
+  height: 60px;
+}
+.ac-spinner-ring div {
+  box-sizing: border-box;
+  display: block;
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  margin: 6px;
+  border: 5px solid #f59e0b;
+  border-radius: 50%;
+  animation: ac-spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  border-color: #f59e0b transparent transparent transparent;
+}
+.ac-spinner-ring div:nth-child(1) { animation-delay: -0.45s; }
+.ac-spinner-ring div:nth-child(2) { animation-delay: -0.3s;  }
+.ac-spinner-ring div:nth-child(3) { animation-delay: -0.15s; }
+
+@keyframes ac-spin {
+  0%   { transform: rotate(0deg);   }
+  100% { transform: rotate(360deg); }
+}
+
+.ac-loading-text {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+/* ────────────────────────────────────────
+   PAGE HEADER
+──────────────────────────────────────── */
+.ac-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
   flex-wrap: wrap;
-}
-.ac-tab {
-  padding: 8px 16px; border-radius: 12px; border: none;
-  background: transparent; color: var(--text-muted);
-  font-weight: 700; font-size: 0.8rem; cursor: pointer;
-  transition: all 0.2s; white-space: nowrap;
-  font-family: inherit;
-}
-.ac-tab.active { background: var(--secondary); color: var(--primary); }
-[data-theme="dark"] .ac-tab.active { background: var(--primary); color: var(--bg-page); }
-.ac-tab-count {
-  background: var(--bg-hover); color: var(--text-muted);
-  border-radius: 8px; padding: 1px 7px;
-  font-size: 0.65rem; margin-left: 5px;
-}
-.ac-tab.active .ac-tab-count { background: rgba(255,255,255,0.18); color: inherit; }
-
-.ac-select {
-  height: 42px; padding: 0 14px; border-radius: 13px;
-  border: 1.5px solid var(--border-color);
-  background: var(--bg-card); color: var(--text-main);
-  font-size: 0.82rem; font-weight: 600; cursor: pointer;
-  outline: none; font-family: inherit;
-  transition: border-color 0.2s;
-}
-.ac-select:focus { border-color: var(--primary); }
-
-.ac-search-box {
-  display: flex; align-items: center; gap: 8px;
-  background: var(--bg-card); border: 1.5px solid var(--border-color);
-  border-radius: 13px; padding: 0 14px; height: 42px;
-  color: var(--text-muted); transition: border-color 0.2s;
-}
-.ac-search-box:focus-within { border-color: var(--primary); }
-.ac-search-input {
-  border: none; outline: none; background: transparent;
-  color: var(--text-main); font-size: 0.85rem; font-weight: 600;
-  width: 200px; font-family: inherit;
-}
-.ac-search-input::placeholder { color: var(--text-light); font-weight: 400; }
-.ac-search-clear {
-  border: none; background: none; cursor: pointer;
-  color: var(--text-light); padding: 0; font-size: 0.8rem;
-  transition: color 0.2s;
-}
-.ac-search-clear:hover { color: var(--danger); }
-
-/* ── LOADING ── */
-.ac-loading-state {
-  text-align: center; padding: 80px 20px; color: var(--text-muted);
-}
-.ac-spinner {
-  width: 48px; height: 48px; margin: 0 auto 16px;
-  border: 3px solid var(--border-color);
-  border-top: 3px solid var(--primary);
-  border-radius: 50%; animation: ac-spin 0.9s linear infinite;
-}
-@keyframes ac-spin { to { transform: rotate(360deg); } }
-.ac-loading-state p { font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
-
-/* ── EMPTY STATE ── */
-.ac-empty-state {
-  text-align: center; padding: 80px 20px;
-  color: var(--text-muted);
-}
-.ac-empty-icon {
-  width: 72px; height: 72px; border-radius: 20px;
-  background: var(--bg-hover); display: flex; align-items: center; justify-content: center;
-  font-size: 1.6rem; color: var(--border-color);
-  margin: 0 auto 20px;
-}
-.ac-empty-state h5 { font-weight: 800; color: var(--text-main); margin-bottom: 6px; }
-.ac-empty-state p  { font-size: 0.85rem; }
-
-/* ── GRID ── */
-.ac-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
 }
 
-/* ── PROFILE CARD ── */
+.ac-breadcrumb {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+}
+.ac-breadcrumb .root  { cursor: pointer; }
+.ac-breadcrumb .root:hover { color: #f59e0b; }
+.ac-breadcrumb .sep   { font-size: 0.65rem; }
+.ac-breadcrumb .current { color: #475569; font-weight: 600; }
+
+.ac-page-title {
+  font-size: 2rem;
+  font-weight: 900;
+  color: #0f172a;
+  margin: 0;
+}
+.ac-title-accent { color: #f59e0b; }
+
+.ac-subtitle {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 6px 0 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ac-ia-badge {
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  color: white;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.ac-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ac-btn-upload {
+  background: #0f172a;
+  color: #fbbf24;
+  padding: 10px 20px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.85rem;
+  transition: 0.25s;
+  display: inline-flex;
+  align-items: center;
+}
+.ac-btn-upload:hover { background: #1e293b; transform: translateY(-1px); }
+
+.ac-btn-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #64748b;
+  cursor: pointer;
+  transition: 0.25s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ac-btn-icon:hover:not(:disabled) { border-color: #f59e0b; color: #f59e0b; }
+.ac-btn-icon:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ────────────────────────────────────────
+   KPI CARDS
+──────────────────────────────────────── */
+.ac-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.ac-kpi-card {
+  background: white;
+  padding: 20px;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  transition: 0.25s;
+}
+.ac-kpi-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
+
+.ac-kpi-icon-wrap {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.ac-kpi-value {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #0f172a;
+  line-height: 1;
+}
+.ac-kpi-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #94a3b8;
+  margin-top: 3px;
+}
+
+/* ────────────────────────────────────────
+   FILTERS & SEARCH
+──────────────────────────────────────── */
+.ac-filters-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.ac-tabs-wrap {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ac-tab {
+  padding: 8px 18px;
+  border-radius: 30px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.ac-tab:hover  { border-color: #f59e0b; color: #f59e0b; }
+.ac-tab.active { background: #0f172a; color: #fbbf24; border-color: #0f172a; }
+
+.ac-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.ac-search-icon {
+  position: absolute;
+  left: 14px;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+.ac-search-input {
+  padding: 9px 14px 9px 38px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: white;
+  font-size: 0.85rem;
+  color: #334155;
+  outline: none;
+  width: 250px;
+  transition: 0.2s;
+  font-family: inherit;
+}
+.ac-search-input:focus { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,0.1); }
+
+/* ────────────────────────────────────────
+   EMPTY STATE
+──────────────────────────────────────── */
+.ac-empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #94a3b8;
+}
+
+/* ────────────────────────────────────────
+   CANDIDATE CARDS GRID
+──────────────────────────────────────── */
+.ac-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
 .ac-profile-card {
-  background: var(--bg-card);
-  border: 1.5px solid var(--border-color);
-  border-radius: 24px; padding: 24px;
-  cursor: pointer; position: relative; overflow: hidden;
-  transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: var(--shadow-xs);
-  animation: ac-card-in 0.4s ease both;
-}
-@keyframes ac-card-in {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.ac-profile-card::before {
-  content: ''; position: absolute; inset: 0;
-  border-radius: 24px; opacity: 0; transition: opacity 0.28s;
-  background: linear-gradient(135deg, var(--primary-light) 0%, transparent 60%);
+  background: white;
+  padding: 25px;
+  border-radius: 24px;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+  position: relative;
+  animation: ac-fade-in 0.4s ease both;
 }
 .ac-profile-card:hover {
   transform: translateY(-5px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--primary);
+  border-color: #f59e0b;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.06);
 }
-.ac-profile-card:hover::before { opacity: 1; }
-.ac-profile-card:hover .ac-card-cta { opacity: 1; transform: translateY(0); }
 
-/* Card top */
+@keyframes ac-fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+.ac-ia-tag-float {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: #8b5cf6;
+  color: white;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
 .ac-card-top {
-  display: flex; justify-content: space-between; align-items: flex-start;
-  margin-bottom: 16px; position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
 }
+
 .ac-avatar {
-  width: 52px; height: 52px; border-radius: 16px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 0.9rem; font-weight: 800; color: var(--text-main);
-  letter-spacing: 0.5px; flex-shrink: 0;
-}
-.ac-card-badges { display: flex; align-items: center; gap: 8px; }
-.ac-delete-btn {
-  width: 30px; height: 30px; border-radius: 9px;
-  border: 1.5px solid var(--border-color);
-  background: var(--bg-card); color: var(--text-light);
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-  font-size: 0.72rem; transition: all 0.2s; opacity: 0;
-}
-.ac-profile-card:hover .ac-delete-btn { opacity: 1; }
-.ac-delete-btn:hover { background: var(--danger-bg); color: var(--danger); border-color: var(--danger); }
-
-/* Tier badge */
-.ac-tier-badge {
-  font-size: 0.6rem; font-weight: 800; padding: 4px 10px;
-  border-radius: 8px; text-transform: uppercase; letter-spacing: 0.05em;
-  display: inline-flex; align-items: center; gap: 5px;
-}
-.ac-tier-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
-.tier-elite    { background: rgba(16,185,129,0.12);  color: #059669; }
-.tier-standard { background: rgba(99,102,241,0.12);  color: #6366f1; }
-.tier-basique  { background: var(--bg-hover);        color: var(--text-muted); }
-[data-theme="dark"] .tier-elite    { background: rgba(16,185,129,0.2); color: #34d399; }
-[data-theme="dark"] .tier-standard { background: rgba(99,102,241,0.2); color: #818cf8; }
-
-/* Card body */
-.ac-card-body { margin-bottom: 18px; position: relative; }
-.ac-candidate-name    { font-size: 1rem; font-weight: 800; color: var(--text-main); margin: 0 0 4px; }
-.ac-candidate-profile { font-size: 0.78rem; color: var(--text-muted); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-/* Score area */
-.ac-card-score-area { position: relative; }
-.ac-score-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.ac-score-label { font-size: 0.7rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.06em; }
-.ac-score-value { font-size: 0.95rem; font-weight: 800; }
-.ac-progress-track { height: 6px; background: var(--bg-hover); border-radius: 8px; overflow: hidden; }
-.ac-progress-fill  { height: 100%; border-radius: 8px; transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1); }
-
-/* Card footer */
-.ac-card-footer {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border-color);
-  position: relative;
-}
-.ac-date-label, .ac-tests-label {
-  font-size: 0.7rem; color: var(--text-light); font-weight: 600;
-  display: flex; align-items: center; gap: 5px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1rem;
+  color: #334155;
 }
 
-/* Hover CTA */
-.ac-card-cta {
-  position: absolute; bottom: 0; left: 0; right: 0;
-  height: 44px; background: var(--primary);
-  color: white; font-weight: 800; font-size: 0.8rem;
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  border-radius: 0 0 22px 22px;
-  opacity: 0; transform: translateY(8px); transition: all 0.25s;
-}
-
-/* ── LIST VIEW ── */
-.ac-list-container { display: flex; flex-direction: column; gap: 6px; }
-
-.ac-list-head {
-  display: grid;
-  grid-template-columns: 2fr 2fr 1fr 2fr 1fr 80px;
-  gap: 12px; padding: 10px 18px;
-  background: var(--bg-hover); border-radius: 12px;
-  font-size: 0.68rem; font-weight: 800; color: var(--text-light);
-  text-transform: uppercase; letter-spacing: 0.07em;
-}
-
-.ac-list-row {
-  display: grid;
-  grid-template-columns: 2fr 2fr 1fr 2fr 1fr 80px;
-  gap: 12px; padding: 14px 18px;
-  background: var(--bg-card); border: 1.5px solid var(--border-color);
-  border-radius: 16px; cursor: pointer; align-items: center;
-  transition: all 0.2s; box-shadow: var(--shadow-xs);
-  animation: ac-card-in 0.35s ease both;
-}
-.ac-list-row:hover {
-  border-color: var(--primary);
-  background: var(--primary-light);
-  box-shadow: var(--shadow-sm);
-}
-
-.col-name    { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.col-profile { display: flex; align-items: center; }
-.col-tier    { display: flex; align-items: center; }
-.col-score   { display: flex; align-items: center; }
-.col-date    { display: flex; align-items: center; }
-.col-actions { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
-
-.ac-list-avatar {
-  width: 34px; height: 34px; border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 0.72rem; font-weight: 800; color: var(--text-main);
+.ac-modal-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #334155;
   flex-shrink: 0;
 }
-.ac-list-name    { font-weight: 800; font-size: 0.88rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ac-list-profile { font-size: 0.78rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.ac-list-score-wrap {
-  display: flex; align-items: center; gap: 10px; width: 100%;
+.ac-tier-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 4px 12px;
+  border-radius: 20px;
 }
-.ac-list-progress {
-  flex: 1; height: 5px; background: var(--bg-hover); border-radius: 6px; overflow: hidden;
-}
-.ac-list-progress-fill { height: 100%; border-radius: 6px; transition: width 1s ease; }
-.ac-list-score-val { font-size: 0.82rem; font-weight: 800; min-width: 36px; text-align: right; }
+.tier-élite    { background: #ecfdf5; color: #10b981; border: 1px solid #10b981; }
+.tier-standard { background: #fffbeb; color: #f59e0b; border: 1px solid #f59e0b; }
+.tier-basique  { background: #fff1f2; color: #ef4444; border: 1px solid #ef4444; }
 
-/* ── TOAST ── */
+.ac-candidate-name    { font-size: 1rem; font-weight: 800; color: #0f172a; margin: 0 0 4px; }
+.ac-candidate-profile { font-size: 0.82rem; color: #64748b; margin: 0; }
+
+.ac-card-score-area { margin-top: 18px; }
+.ac-score-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.ac-score-label { font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; }
+.ac-score-value { font-size: 1.1rem; font-weight: 900; }
+
+.ac-progress-track {
+  background: #f1f5f9;
+  border-radius: 99px;
+  height: 6px;
+  overflow: hidden;
+}
+.ac-progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.6s ease;
+}
+
+.ac-quick-insight {
+  margin-top: 14px;
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 0.8rem;
+  color: #64748b;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  line-height: 1.4;
+}
+
+/* ────────────────────────────────────────
+   MODAL
+──────────────────────────────────────── */
+.ac-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(5px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.ac-modal {
+  background: white;
+  border-radius: 30px;
+  width: 100%;
+  max-width: 750px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+}
+
+.ac-modal-header {
+  padding: 22px 25px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 1;
+  border-radius: 30px 30px 0 0;
+}
+
+.ac-modal-close {
+  background: #f1f5f9;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  transition: 0.2s;
+  flex-shrink: 0;
+}
+.ac-modal-close:hover { background: #fee2e2; color: #ef4444; }
+
+.ac-modal-loader {
+  padding: 60px 30px;
+  text-align: center;
+  color: #64748b;
+}
+
+.ac-modal-body { padding: 30px; }
+
+.ac-big-score {
+  font-size: 4.5rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.ac-insight-box {
+  padding: 20px;
+  border-radius: 20px;
+  height: 100%;
+}
+.ac-insight-force { background: #ecfdf5; border: 1px solid #10b981; }
+.ac-insight-axe   { background: #fff1f2; border: 1px solid #f43f5e; }
+.ac-insight-tips  { background: #f5f3ff; border: 1px solid #8b5cf6; }
+
+.ac-insight-title {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 12px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+}
+
+.ac-insight-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.85rem;
+}
+.ac-insight-list li {
+  margin-bottom: 7px;
+  color: #334155;
+  padding-left: 16px;
+  position: relative;
+  line-height: 1.5;
+}
+.ac-insight-list li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  font-weight: bold;
+}
+
+.ac-decision-strip {
+  background: #0f172a;
+  color: #fbbf24;
+  padding: 16px 22px;
+  border-radius: 15px;
+  font-size: 0.9rem;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.ac-analysis-date {
+  text-align: center;
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+.ac-empty-robot {
+  color: #cbd5e1;
+}
+
+.ac-btn-upload-big {
+  background: #8b5cf6;
+  color: white;
+  padding: 14px 28px;
+  border-radius: 15px;
+  cursor: pointer;
+  font-weight: 800;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  transition: 0.25s;
+}
+.ac-btn-upload-big:hover { background: #7c3aed; transform: scale(1.04); }
+
+/* ────────────────────────────────────────
+   TOAST
+──────────────────────────────────────── */
 .ac-toast {
-  position: fixed; bottom: 28px; right: 28px; z-index: 99999;
-  display: flex; align-items: center; gap: 10px;
-  padding: 14px 22px; border-radius: 14px;
-  background: var(--secondary); color: var(--text-inverse);
-  font-weight: 700; font-size: 0.85rem;
-  box-shadow: var(--shadow-lg);
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  padding: 14px 22px;
+  border-radius: 14px;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  z-index: 99999;
+  max-width: 360px;
 }
-[data-theme="dark"] .ac-toast { background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); }
-.ac-toast-error   { border-left: 4px solid var(--danger); }
-.ac-toast-warn    { border-left: 4px solid var(--warning); }
-.ac-toast-success { border-left: 4px solid var(--success); }
-.ac-toast-info    { border-left: 4px solid var(--info); }
+.ac-toast-success { background: #10b981; }
+.ac-toast-error   { background: #f43f5e; }
+.ac-toast-info    { background: #3b82f6; }
 
-.ac-toast-anim-enter-active { animation: ac-toast-in 0.35s ease; }
-.ac-toast-anim-leave-active { animation: ac-toast-in 0.25s ease reverse; }
-@keyframes ac-toast-in {
-  from { transform: translateX(110%); opacity: 0; }
-  to   { transform: translateX(0);    opacity: 1; }
+/* ────────────────────────────────────────
+   ANIMATIONS TRANSITION
+──────────────────────────────────────── */
+.ac-modal-anim-enter-active,
+.ac-modal-anim-leave-active {
+  transition: opacity 0.25s ease;
+}
+.ac-modal-anim-enter-active .ac-modal,
+.ac-modal-anim-leave-active .ac-modal {
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+.ac-modal-anim-enter-from,
+.ac-modal-anim-leave-to {
+  opacity: 0;
+}
+.ac-modal-anim-enter-from .ac-modal,
+.ac-modal-anim-leave-to .ac-modal {
+  transform: scale(0.95) translateY(10px);
+  opacity: 0;
 }
 
-/* ── RESPONSIVE ── */
-@media (max-width: 900px) {
-  .ac-list-head, .ac-list-row {
-    grid-template-columns: 1fr 1fr 80px;
-  }
-  .col-profile, .col-date { display: none; }
-}
-@media (max-width: 600px) {
-  .ac-filters    { flex-direction: column; align-items: stretch; }
-  .ac-search-box { width: 100%; }
-  .ac-search-input { width: 100%; }
-  .ac-grid { grid-template-columns: 1fr; }
-  .ac-kpi-grid { grid-template-columns: 1fr 1fr; }
+.ac-toast-anim-enter-active,
+.ac-toast-anim-leave-active { transition: all 0.3s ease; }
+.ac-toast-anim-enter-from,
+.ac-toast-anim-leave-to { opacity: 0; transform: translateY(15px); }
+
+/* ────────────────────────────────────────
+   RESPONSIVE
+──────────────────────────────────────── */
+@media (max-width: 768px) {
+  .ac-kpi-grid         { grid-template-columns: 1fr; }
+  .ac-page-header      { flex-direction: column; align-items: flex-start; }
+  .ac-filters-row      { flex-direction: column; align-items: flex-start; }
+  .ac-search-input     { width: 100%; }
+  .ac-search-box       { width: 100%; }
+  .ac-grid             { grid-template-columns: 1fr; }
+  .ac-big-score        { font-size: 3rem; }
+  .ac-modal            { border-radius: 20px; }
 }
 </style>

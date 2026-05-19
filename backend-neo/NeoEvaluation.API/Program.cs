@@ -37,14 +37,15 @@ builder.Services.AddSendGrid(options => {
 
 //  MODIFICATION : Utilisation de GmailApiService (Senior Architecture)
 builder.Services.AddScoped<IEmailService, GmailApiService>();
-builder.Services.AddScoped<INotificationService, NotificationService>(); // Service utilisé par vos contrôleurs
+builder.Services.AddScoped<INotificationService, NotificationService>(); 
+builder.Services.AddScoped<IUsageService, UsageService>(); 
 
 builder.Services.AddSingleton<IAuditLogService, AuditLogService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantService, TenantService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
+builder.Services.AddHttpClient<AiService>(); // AJOUTER CETTE LIGNE
 // OPTIMISATION : Compression des réponses pour réduire la taille des transferts
 builder.Services.AddResponseCompression(options => {
     options.EnableForHttps = true;
@@ -68,6 +69,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuer = false,
             ValidateAudience = false,
             ClockSkew = TimeSpan.Zero
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
         };
     });
 

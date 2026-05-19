@@ -64,7 +64,7 @@
 
             <div class="input-group-cyber mb-3">
               <div class="input-icon"><i class="fa fa-lock"></i></div>
-              <input :type="showPass ? 'text' : 'password'" v-model="pass" class="cyber-input" placeholder="Nouveau mot de passe" required>
+              <input :type="showPass ? 'text' : 'password'" v-model="pass" class="cyber-input" placeholder="Nouveau mot de passe" maxlength="20" required>
               <div class="eye-toggle" @click="showPass = !showPass">
                 <i :class="['fa', showPass ? 'fa-eye-slash' : 'fa-eye']"></i>
               </div>
@@ -72,7 +72,7 @@
 
             <div class="input-group-cyber mb-4">
               <div class="input-icon"><i class="fa fa-shield-check"></i></div>
-              <input :type="showPass ? 'text' : 'password'" v-model="conf" class="cyber-input" placeholder="Confirmer le mot de passe" required>
+              <input :type="showPass ? 'text' : 'password'" v-model="conf" class="cyber-input" placeholder="Confirmer le mot de passe" maxlength="20" required>
             </div>
             
             <button type="submit" class="btn-primary-gradient" :disabled="isLoading || !isFormValid">
@@ -118,7 +118,7 @@ onMounted(() => {
 });
 
 const isFormValid = computed(() => {
-  return token.value && pass.value && pass.value.length >= 6 && pass.value === conf.value;
+  return token.value && pass.value && pass.value.length >= 8 && pass.value.length <= 20 && pass.value === conf.value;
 });
 
 const handleResetPassword = async () => {
@@ -173,7 +173,7 @@ const handleResetPassword = async () => {
 .brand-title span { color: #eab308; }
 .brand-subtitle { color: #94a3b8; font-size: 11px; font-weight: 700; letter-spacing: 1px; }
 
-.input-group-cyber { position: relative; display: flex; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; }
+.input-group-cyber { position: relative; display: flex; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding-right: 45px; }
 .input-group-cyber:focus-within { border-color: #eab308; background: #fff; box-shadow: 0 0 0 4px rgba(234, 179, 8, 0.08); }
 .input-icon { padding-left: 15px; color: #94a3b8; }
 .cyber-input { width: 100%; background: transparent; border: none; padding: 12px; outline: none; font-size: 14px; }

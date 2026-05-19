@@ -63,6 +63,77 @@ namespace NeoEvaluation.API.Controllers
                         Count = match?.Count ?? 0
                     });
                 }
+
+                // Récupération des abonnements récents réels depuis la base de données
+                var recentOrgs = await _context.Entreprises
+                    .OrderByDescending(e => e.CreeLe)
+                    .Take(5)
+                    .Select(e => new RecentTransactionDto
+                    {
+                        Id = e.Id,
+                        Name = e.Nom,
+                        Plan = e.Plan,
+                        Date = e.CreeLe.ToString("dd MMM yyyy", System.Globalization.CultureInfo.InvariantCulture),
+                        Price = e.Plan.ToLower() == "startup" ? 79.0 : 
+                                (e.Plan.ToLower() == "business" || e.Plan.ToLower() == "business ia" ? 199.0 : 
+                                (e.Plan.ToLower() == "enterprise" || e.Plan.ToLower() == "entreprise" || e.Plan.ToLower() == "enterprise ia" ? 499.0 : 0.0)),
+                        Color = e.CouleurSignature ?? "#6366f1"
+                    })
+                    .ToListAsync();
+
+                stats.RecentTransactions = recentOrgs;
+
+                // Calcul dynamique des statistiques de plan d'abonnement réels
+                stats.StartupCount = await _context.Entreprises.CountAsync(e => e.Plan.ToLower() == "startup");
+                stats.BusinessCount = await _context.Entreprises.CountAsync(e => e.Plan.ToLower() == "business" || e.Plan.ToLower() == "business ia");
+                stats.EnterpriseCount = await _context.Entreprises.CountAsync(e => e.Plan.ToLower() == "enterprise" || e.Plan.ToLower() == "entreprise" || e.Plan.ToLower() == "enterprise ia");
+                stats.GratuitCount = await _context.Entreprises.CountAsync(e => e.Plan.ToLower() == "gratuit" || string.IsNullOrEmpty(e.Plan));
+                stats.TotalRevenus = (stats.StartupCount * 79.0) + (stats.BusinessCount * 199.0) + (stats.EnterpriseCount * 499.0);
+
+                var now = DateTime.UtcNow;
+                var sevenDaysAgo = now.AddDays(-7);
+                var thirtyDaysAgo = now.AddDays(-30);
+
+                stats.TotalEntreprises7Days = await _context.Entreprises.CountAsync(e => e.CreeLe >= sevenDaysAgo);
+                stats.TotalUtilisateurs7Days = await _context.Utilisateurs.CountAsync(u => u.CreeLe >= sevenDaysAgo);
+                stats.TotalTests7Days = await _context.Evaluations.CountAsync(ev => ev.DateDebut != null && ev.DateDebut >= sevenDaysAgo);
+
+                var startup7 = await _context.Entreprises.CountAsync(e => e.CreeLe >= sevenDaysAgo && e.Plan.ToLower() == "startup");
+                var business7 = await _context.Entreprises.CountAsync(e => e.CreeLe >= sevenDaysAgo && (e.Plan.ToLower() == "business" || e.Plan.ToLower() == "business ia"));
+                var enterprise7 = await _context.Entreprises.CountAsync(e => e.CreeLe >= sevenDaysAgo && (e.Plan.ToLower() == "enterprise" || e.Plan.ToLower() == "entreprise" || e.Plan.ToLower() == "enterprise ia"));
+                stats.TotalRevenus7Days = (startup7 * 79.0) + (business7 * 199.0) + (enterprise7 * 499.0);
+
+                stats.TotalEntreprises30Days = await _context.Entreprises.CountAsync(e => e.CreeLe >= thirtyDaysAgo);
+                stats.TotalUtilisateurs30Days = await _context.Utilisateurs.CountAsync(u => u.CreeLe >= thirtyDaysAgo);
+                stats.TotalTests30Days = await _context.Evaluations.CountAsync(ev => ev.DateDebut != null && ev.DateDebut >= thirtyDaysAgo);
+
+                var startup30 = await _context.Entreprises.CountAsync(e => e.CreeLe >= thirtyDaysAgo && e.Plan.ToLower() == "startup");
+                var business30 = await _context.Entreprises.CountAsync(e => e.CreeLe >= thirtyDaysAgo && (e.Plan.ToLower() == "business" || e.Plan.ToLower() == "business ia"));
+                var enterprise30 = await _context.Entreprises.CountAsync(e => e.CreeLe >= thirtyDaysAgo && (e.Plan.ToLower() == "enterprise" || e.Plan.ToLower() == "entreprise" || e.Plan.ToLower() == "enterprise ia"));
+                stats.TotalRevenus30Days = (startup30 * 79.0) + (business30 * 199.0) + (enterprise30 * 499.0);
+
+                // Calcul dynamique des revenus mensuels réels sur les 6 derniers mois basés sur la date de création des entreprises
+                stats.MonthlyRevenues = new List<double>();
+                for (int i = 5; i >= 0; i--)
+                {
+                    var targetDate = now.AddMonths(-i);
+                    var endOfTargetMonth = new DateTime(targetDate.Year, targetDate.Month, 1, 23, 59, 59, DateTimeKind.Utc).AddMonths(1).AddDays(-1);
+
+                    var activeOrgsUpToMonth = await _context.Entreprises
+                        .Where(e => e.CreeLe <= endOfTargetMonth)
+                        .ToListAsync();
+
+                    double revForMonth = 0;
+                    foreach (var org in activeOrgsUpToMonth)
+                    {
+                        var planLower = org.Plan.ToLower();
+                        if (planLower == "startup") revForMonth += 79.0;
+                        else if (planLower == "business" || planLower == "business ia") revForMonth += 199.0;
+                        else if (planLower == "enterprise" || planLower == "entreprise" || planLower == "enterprise ia") revForMonth += 499.0;
+                    }
+                    stats.MonthlyRevenues.Add(revForMonth);
+                }
+
                 // Vérification de l'intégration Gmail Système
                 var systemOrg = await _context.Entreprises.IgnoreQueryFilters()
                     .FirstOrDefaultAsync(e => e.Nom == "SYSTEM_PLATFORM");
@@ -310,8 +381,15 @@ namespace NeoEvaluation.API.Controllers
                 NomResponsable = dto.AdminLastName,
                 PrenomResponsable = dto.AdminFirstName,
                 EmailResponsable = dto.AdminEmail,
-                TelephoneResponsable = dto.AdminPhone,
                 MatriculeFiscale = dto.MatriculeFiscale,
+                Domaine = dto.Domaine,
+                Secteur = dto.Industrie,
+                SiteWeb = dto.SiteWeb,
+                Ville = dto.Ville,
+                Pays = dto.Pays,
+                CodePostal = dto.CodePostal,
+                Adresse = dto.Adresse,
+                Description = dto.Description,
                 Statut = 1,
                 CreeLe = DateTime.UtcNow
             };

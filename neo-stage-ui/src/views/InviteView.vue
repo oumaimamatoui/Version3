@@ -21,27 +21,27 @@
           <header class="d-flex justify-content-between align-items-end mb-5 flex-wrap gap-3">
             <div>
               <div class="breadcrumb-pro mb-2">
-                <span class="root">Administration</span>
+                <span class="root">{{ $t('invite.breadcrumb') }}</span>
                 <i class="fa-solid fa-chevron-right mx-2 separator"></i>
-                <span class="current">Terminal d'Invitations</span>
+                <span class="current">{{ $t('invite.subtitle') }}</span>
               </div>
-              <h2 class="premium-title">Studio de <span class="gradient-text">Déploiement</span></h2>
+              <h2 class="premium-title">{{ $t('invite.title') }} <span class="gradient-text">{{ $t('invite.subtitle') }}</span></h2>
             </div>
             <div class="d-flex gap-3 flex-wrap align-items-center">
               <div class="system-live-badge">
-                <span class="pulse-dot"></span> RÉSEAU OPTIMAL
+                <span class="pulse-dot"></span> {{ $t('invite.networkOk') }}
               </div>
               <div class="view-toggle-cluster">
                 <button :class="['btn-view-toggle', { active: activeView === 'send' }]"
-                  @click="activeView = 'send'" title="Envoi">
+                  @click="activeView = 'send'" :title="$t('invite.tabs.send')">
                   <i class="fa-solid fa-paper-plane"></i>
                 </button>
                 <button :class="['btn-view-toggle', { active: activeView === 'logs' }]"
-                  @click="activeView = 'logs'" title="Logs">
+                  @click="activeView = 'logs'" :title="$t('invite.tabs.logs')">
                   <i class="fa-solid fa-clock-rotate-left"></i>
                 </button>
                 <button :class="['btn-view-toggle', { active: activeView === 'recycle' }]"
-                  @click="activeView = 'recycle'" title="Corbeille">
+                  @click="activeView = 'recycle'" :title="$t('invite.tabs.recycle')">
                   <i class="fa-solid fa-trash-can"></i>
                   <span v-if="recycleItems.length > 0" class="recycle-dot">{{ recycleItems.length }}</span>
                 </button>
@@ -49,7 +49,7 @@
               <div class="counter-badge-pro">
                 <i class="fa-solid fa-paper-plane me-2"></i>
                 <span class="fw-900">{{ recentInvites.length }}</span>
-                <span class="badge-label">ENVOIS</span>
+                <span class="badge-label">{{ $t('invite.kpi.sent').toUpperCase() }}</span>
               </div>
             </div>
           </header>
@@ -101,59 +101,59 @@
                   <div class="steps-track mb-5">
                     <div class="step-item step-done">
                       <div class="step-bubble"><i class="fa-solid fa-check"></i></div>
-                      <span>Campagne</span>
+                      <span>{{ $t('invite.steps.campaign') }}</span>
                     </div>
                     <div class="step-line"></div>
                     <div class="step-item step-active">
                       <div class="step-bubble">2</div>
-                      <span>Talent</span>
+                      <span>{{ $t('invite.steps.talent') }}</span>
                     </div>
                     <div class="step-line"></div>
                     <div class="step-item" :class="{ 'step-done': currentEmail && form.campagneId }">
                       <div class="step-bubble">{{ currentEmail && form.campagneId ? '✓' : '3' }}</div>
-                      <span>Envoi</span>
+                      <span>{{ $t('invite.steps.send') }}</span>
                     </div>
                   </div>
 
                   <h4 class="form-section-title mb-5">
                     <i class="fa-solid fa-sliders me-2 text-amber"></i>
-                    Configuration de l'accès
+                    {{ $t('invite.form.title') }}
                   </h4>
 
                   <!-- Sélection campagne -->
                   <div class="enigma-input-wrap mb-4">
-                    <label>FLUX D'ÉVALUATION CIBLE</label>
+                    <label>{{ $t('invite.form.campaignLabel') }}</label>
                     <div class="theme-select-wrapper">
                       <i class="fa-solid fa-rocket theme-select-icon"></i>
                       <select v-model="form.campagneId" class="enigma-field theme-select ps-5" :disabled="loadingCampagnes">
-                        <option value="">{{ loadingCampagnes ? 'Synchronisation...' : 'Sélectionner une campagne' }}</option>
+                        <option value="">{{ loadingCampagnes ? $t('invite.form.syncing') : $t('invite.form.campaignPlaceholder') }}</option>
                         <option v-for="c in campagnes" :key="c.id" :value="c.id">{{ c.nom }}</option>
                       </select>
                     </div>
                     <p class="field-hint" v-if="form.campagneId">
-                      <i class="fa-solid fa-circle-check me-1"></i> Campagne sélectionnée
+                      <i class="fa-solid fa-circle-check me-1"></i> {{ $t('invite.form.campaignSelected') }}
                     </p>
                   </div>
 
                   <!-- Mode tabs -->
                   <div class="mode-tabs mb-4">
                     <button :class="['mode-tab', { active: sendMode === 'single' }]" @click="sendMode = 'single'">
-                      <i class="fa-solid fa-at me-2"></i>Talent unique
+                      <i class="fa-solid fa-at me-2"></i>{{ $t('invite.form.modeUnique') }}
                     </button>
                     <button :class="['mode-tab', { active: sendMode === 'bulk' }]" @click="sendMode = 'bulk'">
-                      <i class="fa-solid fa-layer-group me-2"></i>Import CSV
+                      <i class="fa-solid fa-layer-group me-2"></i>{{ $t('invite.form.modeBulk') }}
                     </button>
                   </div>
 
                   <!-- Mode : single -->
                   <div v-if="sendMode === 'single'" class="enigma-input-wrap mb-5">
-                    <label>IDENTIFIANT E-MAIL DU TALENT</label>
+                    <label>{{ $t('invite.form.emailLabel') }}</label>
                     <div class="theme-select-wrapper">
                       <i class="fa-solid fa-at theme-select-icon"></i>
                       <input
                         type="email"
                         v-model="currentEmail"
-                        placeholder="talent@entreprise.com"
+                        :placeholder="$t('invite.form.emailPlaceholder')"
                         class="enigma-field ps-5"
                         @keyup.enter="sendInvitation"
                       />
@@ -163,17 +163,17 @@
                   <!-- Mode : bulk CSV -->
                   <div v-if="sendMode === 'bulk'" class="mb-5">
                     <div class="enigma-input-wrap mb-3">
-                      <label>IMPORT CSV (UN EMAIL PAR LIGNE)</label>
+                      <label>{{ $t('invite.form.bulkLabel') }}</label>
                       <textarea
                         v-model="bulkEmailsRaw"
                         class="enigma-field"
                         rows="5"
-                        placeholder="alice@corp.com&#10;bob@startup.io&#10;carol@agency.fr"
+                        :placeholder="$t('invite.form.bulkPlaceholder')"
                       ></textarea>
                     </div>
                     <div v-if="parsedBulkEmails.length > 0" class="bulk-preview-bar">
                       <i class="fa-solid fa-users me-2 text-amber"></i>
-                      <span class="fw-800">{{ parsedBulkEmails.length }}</span> talent(s) détecté(s)
+                      <span class="fw-800">{{ parsedBulkEmails.length }}</span> {{ $t('invite.form.detected') }}
                       <div class="bulk-chips ms-3">
                         <span v-for="(e, i) in parsedBulkEmails.slice(0, 4)" :key="i" class="bulk-chip">{{ e }}</span>
                         <span v-if="parsedBulkEmails.length > 4" class="bulk-chip more">+{{ parsedBulkEmails.length - 4 }}</span>
@@ -188,8 +188,8 @@
                         <i class="fa-solid fa-shield-halved"></i>
                       </div>
                       <div>
-                        <div class="security-label">Protocole SHA-256</div>
-                        <div class="security-sub">Lien chiffré · Validité 72h</div>
+                        <div class="security-label">{{ $t('invite.form.protocol') }}</div>
+                        <div class="security-sub">{{ $t('invite.form.protocolSub') }}</div>
                       </div>
                     </div>
                     <button
@@ -200,7 +200,7 @@
                       <div class="btn-content">
                         <template v-if="!isLoading">
                           <i class="fa-solid fa-paper-plane me-2"></i>
-                          <span>DÉPLOYER</span>
+                          <span>{{ $t('invite.form.deploy') }}</span>
                         </template>
                         <div v-else class="btn-dots-loader">
                           <span></span><span></span><span></span>
@@ -219,9 +219,9 @@
                 <div class="enigma-dark-card p-4">
                   <div class="info-card-top mb-3">
                     <div class="info-icon-wrap"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
-                    <h5 class="text-white fw-900 m-0">Guide de Flux</h5>
+                    <h5 class="text-white fw-900 m-0">{{ $t('invite.guide.title') }}</h5>
                   </div>
-                  <p class="text-muted-light mb-0">Chaque invitation génère un environnement sécurisé unique. Le système Proctoring surveille les anomalies comportementales en temps réel.</p>
+                  <p class="text-muted-light mb-0">{{ $t('invite.guide.desc') }}</p>
                   <div class="luxury-divider my-3"></div>
                   <div class="info-features">
                     <div class="info-feature-item" v-for="feat in infoFeatures" :key="feat.label">
@@ -236,19 +236,19 @@
 
                 <!-- Stats rapides -->
                 <div class="enigma-card p-4">
-                  <div class="stats-title mb-3">ACTIVITÉ DU JOUR</div>
+                  <div class="stats-title mb-3">{{ $t('invite.activity.today') }}</div>
                   <div class="stats-bento-grid">
                     <div class="bento-stat-box">
                       <span class="bento-val">{{ recentInvites.length }}</span>
-                      <span class="bento-lbl">Invitations</span>
+                      <span class="bento-lbl">{{ $t('invite.activity.invites') }}</span>
                     </div>
                     <div class="bento-stat-box highlight">
                       <span class="bento-val">{{ campagnes.length }}</span>
-                      <span class="bento-lbl">Campagnes</span>
+                      <span class="bento-lbl">{{ $t('invite.activity.campaigns') }}</span>
                     </div>
                     <div class="bento-stat-full">
                       <i class="fa-solid fa-shield-halved me-2"></i>
-                      <span>Système sécurisé · En ligne</span>
+                      <span>{{ $t('invite.activity.secure') }}</span>
                     </div>
                   </div>
                 </div>
@@ -261,18 +261,18 @@
                       <span class="pd yellow"></span>
                       <span class="pd green"></span>
                     </div>
-                    <span class="preview-label">Aperçu e-mail</span>
+                    <span class="preview-label">{{ $t('invite.emailPreview.label') }}</span>
                   </div>
                   <div class="p-4">
                     <div class="preview-logo-row mb-3">
                       <div class="prev-logo-box">E</div>
-                      <span class="prev-brand fw-900">EvaluaTech</span>
+                      <span class="prev-brand fw-900">{{ $t('invite.emailPreview.brand') }}</span>
                     </div>
                     <div class="mock-line" style="width:70%"></div>
                     <div class="mock-line" style="width:90%"></div>
                     <div class="mock-line" style="width:55%"></div>
                     <div class="mock-btn-preview mt-3">
-                      <i class="fa-solid fa-arrow-right me-1"></i> Accéder à l'évaluation
+                      <i class="fa-solid fa-arrow-right me-1"></i> {{ $t('invite.emailPreview.cta') }}
                     </div>
                     <div class="mock-line" style="width:40%; margin-top:12px; opacity:0.4"></div>
                   </div>
@@ -285,20 +285,20 @@
           <div v-if="activeView === 'logs'" class="animate__animated animate__fadeIn">
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
               <div>
-                <h4 class="fw-900 m-0 section-title-dark">Logs de Transmission</h4>
-                <p class="text-muted small m-0">Historique complet des signaux envoyés</p>
+                <h4 class="fw-900 m-0 section-title-dark">{{ $t('invite.logs.title') }}</h4>
+                <p class="text-muted small m-0">{{ $t('invite.logs.subtitle') }}</p>
               </div>
               <div class="d-flex gap-2 align-items-center flex-wrap">
                 <div class="search-inline-box">
                   <i class="fa-solid fa-magnifying-glass"></i>
-                  <input type="text" v-model="logsSearch" placeholder="Filtrer..." class="search-inline-input">
+                  <input type="text" v-model="logsSearch" :placeholder="$t('invite.logs.filter')" class="search-inline-input">
                   <button v-if="logsSearch" @click="logsSearch = ''" class="btn-clear-search"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <button class="btn-outline-pro" @click="exportLogs">
-                  <i class="fa-solid fa-file-export me-2"></i>Exporter
+                  <i class="fa-solid fa-file-export me-2"></i>{{ $t('invite.logs.export') }}
                 </button>
                 <button class="btn-danger-outline" @click="clearLogsWithConfirm" :disabled="recentInvites.length === 0">
-                  <i class="fa-solid fa-trash-can me-1"></i>Vider
+                  <i class="fa-solid fa-trash-can me-1"></i>{{ $t('invite.logs.clear') }}
                 </button>
               </div>
             </div>
@@ -307,19 +307,19 @@
               <div class="table-header-elite">
                 <div class="d-flex align-items-center gap-2">
                   <div class="table-header-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
-                  <span>LOGS DE TRANSMISSION RÉCENTS</span>
+                  <span>{{ $t('invite.logs.recent') }}</span>
                 </div>
-                <div class="table-badge-count">{{ filteredLogs.length }} envois</div>
+                <div class="table-badge-count">{{ $t('invite.logs.count', { count: filteredLogs.length }) }}</div>
               </div>
               <div class="table-responsive">
                 <table class="table elite-table mb-0">
                   <thead>
                     <tr>
-                      <th>DESTINATAIRE</th>
-                      <th>CAMPAGNE</th>
-                      <th>STATUT</th>
-                      <th class="text-end">HEURE</th>
-                      <th class="text-center">ACTION</th>
+                      <th>{{ $t('invite.logs.cols.recipient') }}</th>
+                      <th>{{ $t('invite.logs.cols.campaign') }}</th>
+                      <th>{{ $t('invite.logs.cols.status') }}</th>
+                      <th class="text-end">{{ $t('invite.logs.cols.time') }}</th>
+                      <th class="text-center">{{ $t('invite.logs.cols.action') }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -333,14 +333,14 @@
                       <td class="text-muted small">{{ item.campagne || '—' }}</td>
                       <td>
                         <span class="status-pill-elite">
-                          <i class="fa-solid fa-check me-1"></i>EXPÉDIÉ
+                          <i class="fa-solid fa-check me-1"></i>{{ $t('invite.logs.status') }}
                         </span>
                       </td>
                       <td class="text-end text-muted small">{{ item.date }}</td>
                       <td class="text-center">
                         <button class="btn-icon-sm danger"
                           @click="deleteLog(logsCurrentPage * logsPerPage + index)"
-                          title="Déplacer en corbeille">
+                          :title="$t('delete')">
                           <i class="fa-solid fa-trash-can"></i>
                         </button>
                       </td>
@@ -348,7 +348,7 @@
                     <tr v-if="filteredLogs.length === 0">
                       <td colspan="5" class="empty-state-row">
                         <div class="empty-icon"><i class="fa-solid fa-satellite-dish"></i></div>
-                        <p>Aucun signal envoyé pour le moment.</p>
+                        <p>{{ $t('invite.logs.empty') }}</p>
                       </td>
                     </tr>
                   </tbody>
@@ -358,17 +358,16 @@
               <!-- PAGINATION LOGS -->
               <div v-if="logsTotalPages > 1" class="pagination-bar">
                 <div class="pagination-info">
-                  <span>Affichage</span>
+                  <span>{{ $t('view') }}</span>
                   <strong>{{ logsCurrentPage * logsPerPage + 1 }}–{{ Math.min((logsCurrentPage + 1) * logsPerPage, filteredLogs.length) }}</strong>
-                  <span>sur</span>
+                  <span>/</span>
                   <strong>{{ filteredLogs.length }}</strong>
-                  <span>entrées</span>
                 </div>
                 <div class="pagination-controls">
-                  <button class="pg-btn" @click="logsCurrentPage = 0" :disabled="logsCurrentPage === 0" title="Première">
+                  <button class="pg-btn" @click="logsCurrentPage = 0" :disabled="logsCurrentPage === 0">
                     <i class="fa-solid fa-angles-left"></i>
                   </button>
-                  <button class="pg-btn" @click="logsCurrentPage--" :disabled="logsCurrentPage === 0" title="Précédente">
+                  <button class="pg-btn" @click="logsCurrentPage--" :disabled="logsCurrentPage === 0">
                     <i class="fa-solid fa-angle-left"></i>
                   </button>
                   <div class="pg-numbers">
@@ -380,15 +379,15 @@
                       {{ p === '...' ? '…' : p + 1 }}
                     </button>
                   </div>
-                  <button class="pg-btn" @click="logsCurrentPage++" :disabled="logsCurrentPage >= logsTotalPages - 1" title="Suivante">
+                  <button class="pg-btn" @click="logsCurrentPage++" :disabled="logsCurrentPage >= logsTotalPages - 1">
                     <i class="fa-solid fa-angle-right"></i>
                   </button>
-                  <button class="pg-btn" @click="logsCurrentPage = logsTotalPages - 1" :disabled="logsCurrentPage >= logsTotalPages - 1" title="Dernière">
+                  <button class="pg-btn" @click="logsCurrentPage = logsTotalPages - 1" :disabled="logsCurrentPage >= logsTotalPages - 1">
                     <i class="fa-solid fa-angles-right"></i>
                   </button>
                 </div>
                 <div class="pagination-size">
-                  <span class="pg-size-label">Lignes</span>
+                  <span class="pg-size-label">{{ $t('filter') }}</span>
                   <select v-model="logsPerPage" @change="logsCurrentPage = 0" class="pg-size-select">
                     <option :value="5">5</option>
                     <option :value="10">10</option>
@@ -406,16 +405,16 @@
               <div>
                 <h4 class="fw-900 m-0 d-flex align-items-center gap-2 section-title-dark">
                   <div class="recycle-header-icon"><i class="fa-solid fa-trash-can"></i></div>
-                  Corbeille
+                  {{ $t('invite.recycle.title') }}
                 </h4>
-                <p class="text-muted small m-0 mt-1">Éléments supprimés — restauration possible sous 30 jours</p>
+                <p class="text-muted small m-0 mt-1">{{ $t('invite.recycle.subtitle') }}</p>
               </div>
               <div class="d-flex gap-2">
                 <button class="btn-outline-pro" @click="restoreAll" :disabled="recycleItems.length === 0">
-                  <i class="fa-solid fa-rotate-left me-2"></i>Tout restaurer
+                  <i class="fa-solid fa-rotate-left me-2"></i>{{ $t('invite.recycle.restoreAll') }}
                 </button>
                 <button class="btn-danger-outline" @click="purgeRecycle" :disabled="recycleItems.length === 0">
-                  <i class="fa-solid fa-fire me-2"></i>Vider définitivement
+                  <i class="fa-solid fa-fire me-2"></i>{{ $t('invite.recycle.purgeAll') }}
                 </button>
               </div>
             </div>
@@ -425,10 +424,10 @@
               <div class="recycle-empty-icon">
                 <i class="fa-solid fa-trash-can"></i>
               </div>
-              <h5 class="fw-900 mt-4 mb-2 section-title-dark">Corbeille vide</h5>
-              <p class="text-muted small">Les invitations supprimées apparaîtront ici pour récupération.</p>
+              <h5 class="fw-900 mt-4 mb-2 section-title-dark">{{ $t('invite.recycle.empty') }}</h5>
+              <p class="text-muted small">{{ $t('invite.recycle.emptyDesc') }}</p>
               <button class="btn-enigma-primary mt-3" @click="activeView = 'logs'">
-                <div class="btn-content"><i class="fa-solid fa-arrow-left me-2"></i>Retour aux logs</div>
+                <div class="btn-content"><i class="fa-solid fa-arrow-left me-2"></i>{{ $t('invite.recycle.backToLogs') }}</div>
                 <div class="btn-glow"></div>
               </button>
             </div>
@@ -437,27 +436,27 @@
             <div v-else>
               <div class="recycle-info-bar mb-4">
                 <i class="fa-solid fa-circle-info me-2 text-amber"></i>
-                <span>{{ recycleItems.length }} élément(s) en attente de suppression définitive</span>
-                <span class="ms-auto text-muted small">Restauration possible avant purge manuelle</span>
+                <span>{{ $t('invite.recycle.infoBar', { count: recycleItems.length }) }}</span>
+                <span class="ms-auto text-muted small">{{ $t('invite.recycle.infoNote') }}</span>
               </div>
 
               <div class="enigma-card overflow-hidden">
                 <div class="table-header-elite">
                   <div class="d-flex align-items-center gap-2">
                     <div class="table-header-icon recycle-icon"><i class="fa-solid fa-trash-can"></i></div>
-                    <span>ÉLÉMENTS SUPPRIMÉS</span>
+                    <span>{{ $t('invite.recycle.table') }}</span>
                   </div>
-                  <div class="table-badge-count danger-badge">{{ recycleItems.length }} éléments</div>
+                  <div class="table-badge-count danger-badge">{{ $t('invite.recycle.count', { count: recycleItems.length }) }}</div>
                 </div>
                 <div class="table-responsive">
                   <table class="table elite-table mb-0">
                     <thead>
                       <tr>
-                        <th>DESTINATAIRE</th>
-                        <th>CAMPAGNE</th>
-                        <th>ENVOYÉ</th>
-                        <th>SUPPRIMÉ</th>
-                        <th class="text-center">ACTIONS</th>
+                        <th>{{ $t('invite.recycle.cols.recipient') }}</th>
+                        <th>{{ $t('invite.recycle.cols.campaign') }}</th>
+                        <th>{{ $t('invite.recycle.cols.sent') }}</th>
+                        <th>{{ $t('invite.recycle.cols.deleted') }}</th>
+                        <th class="text-center">{{ $t('invite.recycle.cols.actions') }}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -467,7 +466,7 @@
                             <div class="email-avatar recycle-avatar">{{ item.email.charAt(0).toUpperCase() }}</div>
                             <div>
                               <span class="fw-700">{{ item.email }}</span>
-                              <div class="deleted-badge">SUPPRIMÉ</div>
+                              <div class="deleted-badge">{{ $t('invite.recycle.deletedBadge') }}</div>
                             </div>
                           </div>
                         </td>
@@ -477,13 +476,11 @@
                         <td class="text-center">
                           <div class="d-flex gap-2 justify-content-center">
                             <button class="btn-restore"
-                              @click="restoreItem(recycleCurrentPage * recyclePerPage + index)"
-                              title="Restaurer">
-                              <i class="fa-solid fa-rotate-left me-1"></i>Restaurer
+                              @click="restoreItem(recycleCurrentPage * recyclePerPage + index)">
+                              <i class="fa-solid fa-rotate-left me-1"></i>{{ $t('invite.recycle.restore') }}
                             </button>
                             <button class="btn-icon-sm danger"
-                              @click="purgeItem(recycleCurrentPage * recyclePerPage + index)"
-                              title="Supprimer définitivement">
+                              @click="purgeItem(recycleCurrentPage * recyclePerPage + index)">
                               <i class="fa-solid fa-xmark"></i>
                             </button>
                           </div>
@@ -496,17 +493,15 @@
                 <!-- PAGINATION CORBEILLE -->
                 <div v-if="recycleTotalPages > 1" class="pagination-bar">
                   <div class="pagination-info">
-                    <span>Affichage</span>
                     <strong>{{ recycleCurrentPage * recyclePerPage + 1 }}–{{ Math.min((recycleCurrentPage + 1) * recyclePerPage, recycleItems.length) }}</strong>
-                    <span>sur</span>
+                    <span>/</span>
                     <strong>{{ recycleItems.length }}</strong>
-                    <span>éléments</span>
                   </div>
                   <div class="pagination-controls">
-                    <button class="pg-btn" @click="recycleCurrentPage = 0" :disabled="recycleCurrentPage === 0" title="Première">
+                    <button class="pg-btn" @click="recycleCurrentPage = 0" :disabled="recycleCurrentPage === 0">
                       <i class="fa-solid fa-angles-left"></i>
                     </button>
-                    <button class="pg-btn" @click="recycleCurrentPage--" :disabled="recycleCurrentPage === 0" title="Précédente">
+                    <button class="pg-btn" @click="recycleCurrentPage--" :disabled="recycleCurrentPage === 0">
                       <i class="fa-solid fa-angle-left"></i>
                     </button>
                     <div class="pg-numbers">
@@ -518,15 +513,14 @@
                         {{ p === '...' ? '…' : p + 1 }}
                       </button>
                     </div>
-                    <button class="pg-btn" @click="recycleCurrentPage++" :disabled="recycleCurrentPage >= recycleTotalPages - 1" title="Suivante">
+                    <button class="pg-btn" @click="recycleCurrentPage++" :disabled="recycleCurrentPage >= recycleTotalPages - 1">
                       <i class="fa-solid fa-angle-right"></i>
                     </button>
-                    <button class="pg-btn" @click="recycleCurrentPage = recycleTotalPages - 1" :disabled="recycleCurrentPage >= recycleTotalPages - 1" title="Dernière">
+                    <button class="pg-btn" @click="recycleCurrentPage = recycleTotalPages - 1" :disabled="recycleCurrentPage >= recycleTotalPages - 1">
                       <i class="fa-solid fa-angles-right"></i>
                     </button>
                   </div>
                   <div class="pagination-size">
-                    <span class="pg-size-label">Lignes</span>
                     <select v-model="recyclePerPage" @change="recycleCurrentPage = 0" class="pg-size-select">
                       <option :value="5">5</option>
                       <option :value="10">10</option>
@@ -553,8 +547,8 @@
           <h5 class="fw-900 mb-2 section-title-dark">{{ confirmDialog.title }}</h5>
           <p class="text-muted small mb-4">{{ confirmDialog.message }}</p>
           <div class="d-flex gap-3 justify-content-center">
-            <button @click="confirmDialog.show = false" class="btn-qv-cancel">ANNULER</button>
-            <button @click="runConfirm" class="btn-confirm-danger">CONFIRMER</button>
+            <button @click="confirmDialog.show = false" class="btn-qv-cancel">{{ $t('cancel').toUpperCase() }}</button>
+            <button @click="runConfirm" class="btn-confirm-danger">{{ $t('confirm').toUpperCase() }}</button>
           </div>
         </div>
       </div>
@@ -565,7 +559,7 @@
       <div v-if="globalToast.active" class="enigma-toast" :class="globalToast.type">
         <div class="t-ico"><i :class="globalToast.icon"></i></div>
         <div class="t-body">
-          <strong>SYSTEM MESSAGE</strong>
+          <strong>{{ $t('invite.toast.systemMessage') }}</strong>
           <p class="m-0 small">{{ globalToast.message }}</p>
         </div>
       </div>
@@ -574,10 +568,13 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted } from 'vue';
+import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import api from '@/services/api';
 import AppSidebar from '@/components/AppSidebar.vue';
 import AppNavbar  from '@/components/AppNavbar.vue';
+
+const { t } = useI18n();
 
 /* ─── STATE ─────────────────────────────────────────────────────── */
 const campagnes        = ref([]);
@@ -595,6 +592,28 @@ const mousePos         = reactive({ x: 0, y: 0 });
 
 const globalToast   = reactive({ active: false, message: '', type: '', icon: '' });
 const confirmDialog = reactive({ show: false, title: '', message: '', icon: '', _cb: null });
+
+/* ─── THEME SYNC ─────────────────────────────────────────────────
+   Écoute les changements de data-theme sur <html> posés par AppNavbar
+   et applique la même valeur sur la root de ce composant via CSS vars.
+   Pas besoin de dupliquer le toggle ici — AppNavbar/AppSidebar gèrent
+   déjà document.documentElement.setAttribute('data-theme', ...).
+   Les sélecteurs [data-theme="dark"] dans le <style scoped> ciblent
+   uniquement document.documentElement, donc ils fonctionnent globalement.
+   On observe juste pour forcer une réactivité si besoin.
+──────────────────────────────────────────────────────────────────── */
+const currentTheme = ref(document.documentElement.getAttribute('data-theme') || 'light');
+
+let themeObserver = null;
+onMounted(() => {
+  themeObserver = new MutationObserver(() => {
+    currentTheme.value = document.documentElement.getAttribute('data-theme') || 'light';
+  });
+  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+});
+onUnmounted(() => {
+  if (themeObserver) themeObserver.disconnect();
+});
 
 /* ─── PAGINATION ─────────────────────────────────────────────────── */
 const logsCurrentPage    = ref(0);
@@ -643,21 +662,20 @@ const buildPagesRange = (current, total) => {
 const logsPagesRange    = computed(() => buildPagesRange(logsCurrentPage.value, logsTotalPages.value));
 const recyclePagesRange = computed(() => buildPagesRange(recycleCurrentPage.value, recycleTotalPages.value));
 
-/* ─── RESET PAGES ON SEARCH ──────────────────────────────────────── */
 watch(logsSearch, () => { logsCurrentPage.value = 0; });
 
 const kpiStats = computed(() => [
-  { label: 'Invitations Envoyées', value: recentInvites.value.length,   icon: 'fa-solid fa-paper-plane', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
-  { label: 'Campagnes Actives',    value: campagnes.value.length,        icon: 'fa-solid fa-rocket',      color: '#6366f1', bg: 'rgba(99,102,241,0.12)' },
-  { label: 'En Corbeille',         value: recycleItems.value.length,     icon: 'fa-solid fa-trash-can',   color: '#f43f5e', bg: 'rgba(244,63,94,0.12)'  },
-  { label: 'Taux de Succès',       value: recentInvites.value.length ? '100%' : '—', icon: 'fa-solid fa-chart-line', color: '#10b981', bg: 'rgba(16,185,129,0.12)' },
+  { label: t('invite.kpi.sent'),      value: recentInvites.value.length,   icon: 'fa-solid fa-paper-plane', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
+  { label: t('invite.kpi.campaigns'), value: campagnes.value.length,        icon: 'fa-solid fa-rocket',      color: '#6366f1', bg: 'rgba(99,102,241,0.12)' },
+  { label: t('invite.kpi.recycle'),   value: recycleItems.value.length,     icon: 'fa-solid fa-trash-can',   color: '#f43f5e', bg: 'rgba(244,63,94,0.12)'  },
+  { label: t('invite.kpi.success'),   value: recentInvites.value.length ? '100%' : '—', icon: 'fa-solid fa-chart-line', color: '#10b981', bg: 'rgba(16,185,129,0.12)' },
 ]);
 
-const infoFeatures = [
-  { label: 'Chiffrement',    value: 'SHA-256 · TLS 1.3' },
-  { label: 'Validité',       value: '72 heures' },
-  { label: 'Proctoring',     value: 'Actif · Temps réel' },
-];
+const infoFeatures = computed(() => [
+  { label: t('invite.guide.encryption'), value: t('invite.guide.encryptionValue') },
+  { label: t('invite.guide.validity'),   value: t('invite.guide.validityValue') },
+  { label: t('invite.guide.proctoring'), value: t('invite.guide.proctoringValue') },
+]);
 
 /* ─── DATA ───────────────────────────────────────────────────────── */
 onMounted(async () => {
@@ -694,11 +712,11 @@ const sendInvitation = async () => {
       recentInvites.value.unshift({ email, campagne: campagneName, date: nowStr });
     });
 
-    showToast(`${emails.length} signal(s) transmis avec succès.`, 't-success', 'fa-solid fa-circle-check');
+    showToast(t('invite.messages.success', { count: emails.length }), 't-success', 'fa-solid fa-circle-check');
     currentEmail.value  = '';
     bulkEmailsRaw.value = '';
   } catch {
-    showToast('Échec de la transmission du signal.', 't-error', 'fa-solid fa-circle-exclamation');
+    showToast(t('invite.messages.error'), 't-error', 'fa-solid fa-circle-exclamation');
   } finally {
     isLoading.value = false;
   }
@@ -711,13 +729,13 @@ const deleteLog = (index) => {
     deletedAt: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
   });
   recentInvites.value.splice(index, 1);
-  showToast('Élément déplacé vers la corbeille.', 't-warn', 'fa-solid fa-trash-can');
+  showToast(t('invite.logs.deleted'), 't-warn', 'fa-solid fa-trash-can');
 };
 
 const clearLogsWithConfirm = () => {
   showConfirmDialog(
-    'Vider les logs ?',
-    'Tous les logs seront déplacés dans la corbeille.',
+    t('invite.logs.confirmClear'),
+    t('invite.logs.confirmMsg'),
     'fa-solid fa-trash-can',
     () => {
       const nowStr = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
@@ -725,7 +743,7 @@ const clearLogsWithConfirm = () => {
         recycleItems.value.unshift({ ...item, deletedAt: nowStr });
       });
       recentInvites.value = [];
-      showToast('Logs déplacés en corbeille.', 't-warn', 'fa-solid fa-trash-can');
+      showToast(t('invite.logs.cleared'), 't-warn', 'fa-solid fa-trash-can');
     }
   );
 };
@@ -735,7 +753,7 @@ const restoreItem = (index) => {
   delete item.deletedAt;
   recentInvites.value.unshift(item);
   recycleItems.value.splice(index, 1);
-  showToast('Invitation restaurée avec succès.', 't-success', 'fa-solid fa-rotate-left');
+  showToast(t('invite.recycle.restored'), 't-success', 'fa-solid fa-rotate-left');
 };
 
 const restoreAll = () => {
@@ -745,29 +763,29 @@ const restoreAll = () => {
     recentInvites.value.unshift(restored);
   });
   recycleItems.value = [];
-  showToast('Tous les éléments ont été restaurés.', 't-success', 'fa-solid fa-rotate-left');
+  showToast(t('invite.recycle.restoredAll'), 't-success', 'fa-solid fa-rotate-left');
 };
 
 const purgeItem = (index) => {
   showConfirmDialog(
-    'Suppression définitive ?',
-    'Cette action est irréversible.',
+    t('invite.recycle.purgeItem'),
+    t('invite.recycle.purgeItemMsg'),
     'fa-solid fa-fire',
     () => {
       recycleItems.value.splice(index, 1);
-      showToast('Élément supprimé définitivement.', 't-error', 'fa-solid fa-xmark');
+      showToast(t('invite.recycle.purged'), 't-error', 'fa-solid fa-xmark');
     }
   );
 };
 
 const purgeRecycle = () => {
   showConfirmDialog(
-    'Vider la corbeille définitivement ?',
-    'Toutes les données seront perdues. Cette action est irréversible.',
+    t('invite.recycle.purgeConfirm'),
+    t('invite.recycle.purgeMsg'),
     'fa-solid fa-fire',
     () => {
       recycleItems.value = [];
-      showToast('Corbeille vidée définitivement.', 't-error', 'fa-solid fa-fire');
+      showToast(t('invite.recycle.purgedAll'), 't-error', 'fa-solid fa-fire');
     }
   );
 };
@@ -808,6 +826,56 @@ const handleParallax = (e) => {
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800;900&display=swap');
 
 /* ════════════════════════════════════════════════════════
+   CSS CUSTOM PROPERTIES — Light (défaut)
+   Toutes les valeurs de couleur passent par ces variables
+   pour que le dark mode n'ait à overrider qu'elles.
+════════════════════════════════════════════════════════ */
+:root,
+.enigma-invite-root {
+  --bg-page:       #f8fafc;
+  --bg-card:       #ffffff;
+  --bg-input:      #f8fafc;
+  --bg-hover:      #f1f5f9;
+  --border-color:  #e2e8f0;
+  --text-main:     #0f172a;
+  --text-muted:    #64748b;
+  --text-light:    #94a3b8;
+  --success:       #10b981;
+  --success-bg:    rgba(16,185,129,0.1);
+  --danger:        #f43f5e;
+  --danger-bg:     rgba(244,63,94,0.1);
+  --shadow-sm:     0 4px 16px rgba(0,0,0,0.04);
+  --shadow-md:     0 12px 32px rgba(0,0,0,0.08);
+  --shadow-lg:     0 24px 48px rgba(0,0,0,0.12);
+  --bg-overlay:    rgba(0,0,0,0.4);
+  --transition:    all 0.25s ease;
+}
+
+/* ─── DARK MODE VARIABLES ─────────────────────────────────────────
+   Quand AppNavbar / AppSidebar pose data-theme="dark" sur <html>,
+   ces variables s'appliquent à tout le composant via l'héritage CSS.
+──────────────────────────────────────────────────────────────────── */
+:root[data-theme="dark"],
+[data-theme="dark"] .enigma-invite-root {
+  --bg-page:      #0d1117;
+  --bg-card:      #161b22;
+  --bg-input:     rgba(255,255,255,0.05);
+  --bg-hover:     rgba(255,255,255,0.04);
+  --border-color: rgba(255,255,255,0.08);
+  --text-main:    #f0f6fc;
+  --text-muted:   #8b949e;
+  --text-light:   #4b5563;
+  --success:      #34d399;
+  --success-bg:   rgba(52,211,153,0.1);
+  --danger:       #f87171;
+  --danger-bg:    rgba(248,113,113,0.1);
+  --shadow-sm:    0 4px 16px rgba(0,0,0,0.3);
+  --shadow-md:    0 12px 32px rgba(0,0,0,0.4);
+  --shadow-lg:    0 24px 48px rgba(0,0,0,0.5);
+  --bg-overlay:   rgba(0,0,0,0.7);
+}
+
+/* ════════════════════════════════════════════════════════
    BASE
 ════════════════════════════════════════════════════════ */
 .enigma-invite-root {
@@ -815,6 +883,7 @@ const handleParallax = (e) => {
   background: var(--bg-page);
   font-family: 'Plus Jakarta Sans', sans-serif;
   color: var(--text-main);
+  transition: background 0.3s, color 0.3s;
 }
 
 /* ════════════════════════════════════════════════════════
@@ -824,7 +893,7 @@ const handleParallax = (e) => {
 .quantum-grid {
   position: absolute; inset: 0;
   background-image: radial-gradient(var(--border-color) 1px, transparent 1px);
-  background-size: 40px 40px; opacity: 0.25;
+  background-size: 40px 40px; opacity: 0.3;
 }
 .glow-orb {
   position: absolute; width: 600px; height: 600px;
@@ -995,6 +1064,9 @@ const handleParallax = (e) => {
 }
 .enigma-field::placeholder { color: var(--text-light); }
 .field-hint { font-size: 11px; color: var(--success); font-weight: 700; margin: 8px 0 0 4px; }
+
+/* dark mode — select options */
+[data-theme="dark"] select.enigma-field option { background: #161b22; color: #f0f6fc; }
 
 /* MODE TABS */
 .mode-tabs { display: flex; gap: 8px; }
@@ -1219,7 +1291,6 @@ const handleParallax = (e) => {
 }
 .btn-clear-search { border: none; background: transparent; color: var(--text-muted); padding: 0; cursor: pointer; }
 
-/* SECTION TITLE (texte adapté dark) */
 .section-title-dark { color: var(--text-main); }
 
 /* ════════════════════════════════════════════════════════
@@ -1278,15 +1349,13 @@ const handleParallax = (e) => {
 .btn-qv-cancel {
   background: var(--bg-hover); color: var(--text-muted); border: none;
   padding: 12px 24px; border-radius: 14px; font-weight: 800;
-  cursor: pointer; font-family: inherit;
-  transition: var(--transition);
+  cursor: pointer; font-family: inherit; transition: var(--transition);
 }
 .btn-qv-cancel:hover { background: var(--border-color); }
 .btn-confirm-danger {
   background: var(--danger); color: white; border: none;
   padding: 12px 24px; border-radius: 14px; font-weight: 800;
-  cursor: pointer; font-family: inherit;
-  transition: var(--transition);
+  cursor: pointer; font-family: inherit; transition: var(--transition);
 }
 .btn-confirm-danger:hover { opacity: 0.9; }
 
@@ -1318,7 +1387,7 @@ const handleParallax = (e) => {
 @keyframes zoomIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
 
 /* ════════════════════════════════════════════════════════
-   PAGINATION — identique à CampagneView
+   PAGINATION
 ════════════════════════════════════════════════════════ */
 .pagination-bar {
   display: flex; align-items: center; justify-content: space-between;
@@ -1368,116 +1437,7 @@ const handleParallax = (e) => {
 .fw-700 { font-weight: 700 !important; }
 .fw-900 { font-weight: 900 !important; }
 .text-danger { color: var(--danger) !important; }
-
-/* ════════════════════════════════════════════════════════
-   DARK MODE OVERRIDES
-   (reprend exactement le pattern de CampagneView)
-════════════════════════════════════════════════════════ */
-[data-theme="dark"] .enigma-invite-root { background: #0d1117; color: #f0f6fc; }
-[data-theme="dark"] .premium-title      { color: #f0f6fc; }
-[data-theme="dark"] .section-title-dark { color: #f0f6fc; }
-[data-theme="dark"] .form-section-title { color: #f0f6fc; }
-[data-theme="dark"] .breadcrumb-pro .current { color: #f0f6fc; }
-
-/* Cards */
-[data-theme="dark"] .enigma-card { background: #161b22; border-color: rgba(255,255,255,0.08); }
-[data-theme="dark"] .stat-card-premium { background: rgba(22,27,34,0.7); border-color: rgba(255,255,255,0.05); }
-[data-theme="dark"] .stat-value { color: #f0f6fc; }
-
-/* Formulaires */
-[data-theme="dark"] .enigma-field {
-  background: rgba(255,255,255,0.05);
-  border-color: rgba(255,255,255,0.1);
-  color: #f0f6fc;
-}
-[data-theme="dark"] .enigma-field:focus {
-  border-color: #d97706;
-  background: rgba(255,255,255,0.08);
-}
-[data-theme="dark"] .enigma-field::placeholder { color: #4b5563; }
-
-/* Mode tabs */
-[data-theme="dark"] .mode-tab {
-  background: rgba(255,255,255,0.05);
-  border-color: rgba(255,255,255,0.1);
-  color: #94a3b8;
-}
-[data-theme="dark"] .mode-tab.active { background: #0f172a; color: #f59e0b; border-color: #0f172a; }
-[data-theme="dark"] .mode-tab:hover  { border-color: #d97706; color: #f0f6fc; }
-
-/* Toggle cluster */
-[data-theme="dark"] .view-toggle-cluster {
-  background: #161b22;
-  border-color: rgba(255,255,255,0.08);
-}
-[data-theme="dark"] .btn-view-toggle:hover { background: rgba(255,255,255,0.08); color: #f0f6fc; }
-
-/* System live badge */
-[data-theme="dark"] .system-live-badge {
-  background: rgba(255,255,255,0.05);
-  border-color: rgba(255,255,255,0.08);
-  color: #34d399;
-}
-
-/* Stats bento */
-[data-theme="dark"] .bento-stat-box { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.08); }
-[data-theme="dark"] .bento-val      { color: #f0f6fc; }
-
-/* Preview bars */
-[data-theme="dark"] .preview-header-bar { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08); }
-[data-theme="dark"] .prev-brand         { color: #f0f6fc; }
-[data-theme="dark"] .mock-line          { background: rgba(255,255,255,0.08); }
-
-/* Tables */
-[data-theme="dark"] .table-header-elite { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08); }
-[data-theme="dark"] .elite-table td     { border-top-color: rgba(255,255,255,0.05); color: #f0f6fc; }
-[data-theme="dark"] .elite-table tbody tr:hover { background: rgba(255,255,255,0.04); }
-[data-theme="dark"] .elite-table thead th { color: #8b949e; }
-
-/* Security cluster */
-[data-theme="dark"] .security-icon-box { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.08); }
-[data-theme="dark"] .security-label    { color: #f0f6fc; }
-
-/* Form footer */
-[data-theme="dark"] .form-footer-pro { border-top-color: rgba(255,255,255,0.08); }
-
-/* Steps */
-[data-theme="dark"] .step-bubble { background: rgba(255,255,255,0.08); }
-[data-theme="dark"] .step-line   { background: rgba(255,255,255,0.1); }
-
-/* Buttons */
-[data-theme="dark"] .btn-icon-sm      { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); color: #94a3b8; }
-[data-theme="dark"] .btn-outline-pro  { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); color: #f0f6fc; }
-[data-theme="dark"] .btn-outline-pro:hover:not(:disabled) { border-color: #d97706; background: rgba(217,119,6,0.1); }
-[data-theme="dark"] .btn-danger-outline { background: rgba(255,255,255,0.05); border-color: rgba(248,113,113,0.2); color: #f87171; }
-[data-theme="dark"] .btn-danger-outline:hover:not(:disabled) { background: rgba(248,113,113,0.1); }
-
-/* Search */
-[data-theme="dark"] .search-inline-box { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.08); }
-[data-theme="dark"] .search-inline-input { color: #f0f6fc; }
-
-/* Bulk preview */
-[data-theme="dark"] .bulk-preview-bar { background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.2); color: #f0f6fc; }
-
-/* Recycle */
-[data-theme="dark"] .recycle-empty-state { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.1); }
-[data-theme="dark"] .recycle-info-bar    { background: rgba(245,158,11,0.07); border-color: rgba(245,158,11,0.15); color: #f0f6fc; }
-
-/* Confirm modal */
-[data-theme="dark"] .confirm-modal { background: #161b22; border-color: rgba(255,255,255,0.08); }
-[data-theme="dark"] .btn-qv-cancel { background: rgba(255,255,255,0.08); color: #94a3b8; }
-[data-theme="dark"] .btn-qv-cancel:hover { background: rgba(255,255,255,0.12); }
-
-/* Pagination */
-[data-theme="dark"] .pagination-bar  { background: rgba(255,255,255,0.02); border-top-color: rgba(255,255,255,0.08); }
-[data-theme="dark"] .pagination-info { color: #64748b; }
-[data-theme="dark"] .pagination-info strong { color: #f0f6fc; }
-[data-theme="dark"] .pg-btn { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); color: #94a3b8; }
-[data-theme="dark"] .pg-btn:hover:not(:disabled) { background: #f59e0b; border-color: #f59e0b; color: #0f172a; }
-[data-theme="dark"] .pg-num { color: #64748b; }
-[data-theme="dark"] .pg-num:hover:not(:disabled):not(.ellipsis) { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: #f0f6fc; }
-[data-theme="dark"] .pg-num.active { background: #f59e0b; color: #0f172a; border-color: #f59e0b; }
-[data-theme="dark"] .pg-size-select { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); color: #f0f6fc; }
+.text-muted  { color: var(--text-muted) !important; }
 
 /* ════════════════════════════════════════════════════════
    RESPONSIVE

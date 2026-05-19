@@ -104,20 +104,25 @@
               <div class="input-icon"><i class="fa fa-lock"></i></div>
               <input 
                 v-model="form.password" 
-                type="password" 
+                :type="showPass ? 'text' : 'password'" 
                 class="cyber-input" 
                 placeholder="Nouveau mot de passe" 
+                maxlength="20"
                 required
               >
+              <div class="eye-toggle" @click="showPass = !showPass">
+                <i :class="['fa', showPass ? 'fa-eye-slash' : 'fa-eye']"></i>
+              </div>
             </div>
             
             <div class="input-group-cyber mb-4">
               <div class="input-icon"><i class="fa fa-shield-halved"></i></div>
               <input 
                 v-model="form.confirmPassword" 
-                type="password" 
+                :type="showPass ? 'text' : 'password'" 
                 class="cyber-input" 
                 placeholder="Confirmer le mot de passe" 
+                maxlength="20"
                 required
               >
             </div>
@@ -147,6 +152,7 @@ const success = ref(false);
 const error = ref(false);
 const errorMessage = ref('');
 const isSubmitting = ref(false);
+const showPass = ref(false);
 
 const form = ref({
   prenom: '',
@@ -185,7 +191,9 @@ onMounted(async () => {
 });
 
 const handleActivation = async () => {
-  if (form.value.password.length < 6) return alert("Minimum 6 caractères requis.");
+  if (form.value.password.length < 8 || form.value.password.length > 20) {
+    return alert("Le mot de passe doit contenir entre 8 et 20 caractères.");
+  }
   if (form.value.password !== form.value.confirmPassword) return alert("Les mots de passe divergent.");
 
   isSubmitting.value = true;
@@ -236,10 +244,11 @@ const handleActivation = async () => {
 .brand-subtitle { color: #94a3b8; font-size: 11px; font-weight: 700; letter-spacing: 2px; }
 
 /* INPUTS & BUTTONS */
-.input-group-cyber { position: relative; display: flex; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; }
+.input-group-cyber { position: relative; display: flex; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding-right: 45px; }
 .input-group-cyber:focus-within { border-color: #eab308; background: #fff; box-shadow: 0 0 0 4px rgba(234, 179, 8, 0.08); }
 .input-icon { width: 45px; text-align: center; color: #94a3b8; }
-.cyber-input { width: 100%; background: transparent; border: none; padding: 14px 14px 14px 0; outline: none; font-size: 14px; font-weight: 600; }
+.cyber-input { width: 100%; background: transparent; border: none; padding: 14px 0 14px 0; outline: none; font-size: 14px; font-weight: 600; }
+.eye-toggle { position: absolute; right: 18px; color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
 .btn-primary-gradient {
   width: 100%; padding: 16px; background: linear-gradient(135deg, #eab308 0%, #facc15 100%);

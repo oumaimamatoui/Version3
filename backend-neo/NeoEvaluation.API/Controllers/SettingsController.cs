@@ -34,8 +34,8 @@ namespace NeoEvaluation.API.Controllers
             var user = await _context.Utilisateurs.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null) return NotFound();
 
-            var entrepriseNom = user.EntrepriseId.HasValue 
-                ? await _context.Entreprises.Where(e => e.Id == user.EntrepriseId).Select(e => e.Nom).FirstOrDefaultAsync() 
+            var entreprise = user.EntrepriseId.HasValue 
+                ? await _context.Entreprises.FirstOrDefaultAsync(e => e.Id == user.EntrepriseId) 
                 : null;
 
             return Ok(new UserProfileDto {
@@ -46,7 +46,10 @@ namespace NeoEvaluation.API.Controllers
                 Bio = user.Bio,
                 JoinDate = user.CreeLe.ToString("MMMM yyyy"),
                 ThemePreference = user.ThemePreference,
-                EntrepriseNom = entrepriseNom
+                EntrepriseNom = entreprise?.Nom,
+                SubscriptionPlan = entreprise?.Plan,
+                SubscriptionDate = entreprise?.CreeLe.ToString("dd/MM/yyyy"),
+                SubscriptionExpiry = entreprise?.AbonnementFin?.ToString("dd/MM/yyyy")
             });
         }
 
@@ -116,6 +119,15 @@ namespace NeoEvaluation.API.Controllers
                     CompanyName = entreprise?.Nom ?? "NeoEvaluation",
                     Color = entreprise?.CouleurSignature ?? "#6366f1",
                     LogoUrl = entreprise?.LogoUrl,
+                    Domaine = entreprise?.Domaine,
+                    Secteur = entreprise?.Secteur,
+                    SiteWeb = entreprise?.SiteWeb,
+                    Ville = entreprise?.Ville,
+                    Pays = entreprise?.Pays,
+                    CodePostal = entreprise?.CodePostal,
+                    Adresse = entreprise?.Adresse,
+                    Description = entreprise?.Description,
+                    MatriculeFiscale = entreprise?.MatriculeFiscale,
                     IsGoogleConnected = !string.IsNullOrEmpty(entreprise?.GmailRefreshToken),
                     ConnectedEmail = entreprise?.GmailEmail
                 });
@@ -128,16 +140,25 @@ namespace NeoEvaluation.API.Controllers
         public async Task<IActionResult> UpdateBranding([FromBody] BrandingUpdateDto dto)
         {
             var userId = GetCurrentUserId();
-            var user = await _context.Utilisateurs.FindAsync(userId);
+            var user = await _context.Utilisateurs.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
             
             if (user == null || user.EntrepriseId == null)
                 return BadRequest("Action réservée aux entreprises.");
 
-            var entreprise = await _context.Entreprises.FindAsync(user.EntrepriseId);
+            var entreprise = await _context.Entreprises.IgnoreQueryFilters().FirstOrDefaultAsync(e => e.Id == user.EntrepriseId);
             if (entreprise == null) return NotFound();
 
             entreprise.Nom = dto.CompanyName;
             entreprise.CouleurSignature = dto.Color;
+            entreprise.Domaine = dto.Domaine;
+            entreprise.Secteur = dto.Secteur;
+            entreprise.SiteWeb = dto.SiteWeb;
+            entreprise.Ville = dto.Ville;
+            entreprise.Pays = dto.Pays;
+            entreprise.CodePostal = dto.CodePostal;
+            entreprise.Adresse = dto.Adresse;
+            entreprise.Description = dto.Description;
+            entreprise.MatriculeFiscale = dto.MatriculeFiscale;
 
             await _context.SaveChangesAsync();
             return Ok(new { message = "Identité visuelle mise à jour." });

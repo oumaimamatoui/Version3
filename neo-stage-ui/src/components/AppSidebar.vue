@@ -162,6 +162,27 @@
             </div>
           </template>
 
+          <!-- Évaluations -->
+          <template v-if="authStore.hasPermission('view_tests') || authStore.hasPermission('edit_bank')">
+            <div class="sb-groupe">
+              <div class="sb-groupe-label">
+                <span class="point-label" style="background:#F59E0B"></span>Évaluations
+              </div>
+              <router-link v-if="authStore.hasPermission('view_tests') || authStore.hasPermission('inv_can')" to="/campaigns" class="sb-lien">
+                <span class="sb-lien-icone ic-amber"><i class="fa-solid fa-clipboard-list"></i></span>
+                <span class="sb-lien-texte">{{ t('sidebar.links.campaigns') }}</span>
+              </router-link>
+              <router-link v-if="authStore.hasPermission('edit_bank')" to="/questions" class="sb-lien">
+                <span class="sb-lien-icone ic-gold"><i class="fa-solid fa-vault"></i></span>
+                <span class="sb-lien-texte">{{ t('sidebar.links.bank') }}</span>
+              </router-link>
+              <router-link v-if="authStore.hasPermission('edit_bank')" to="/ai-generator" class="sb-lien">
+                <span class="sb-lien-icone ic-violet"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+                <span class="sb-lien-texte">{{ t('sidebar.links.ai') }}</span>
+              </router-link>
+            </div>
+          </template>
+
           <!-- Analytique -->
           <template v-if="authStore.hasPermission('view_tests')">
             <div class="sb-groupe">
@@ -246,7 +267,7 @@
           </div>
         </div>
 
-        <div class="sb-nav-espacement"></div>
+        <div class="sb-nav-espacement" style="height: 100px;"></div>
       </nav>
 
       <!-- ── MINI STATISTIQUES ── -->
@@ -511,6 +532,7 @@ onMounted(chargerNombres);
   --ombre-douce: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
   --ombre-or:    0 4px 20px rgba(234,179,8,0.18);
   --ombre-carte: 0 1px 4px rgba(0,0,0,0.05);
+  --sb-logo-bg:   #0f172a;
 
   --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -539,6 +561,7 @@ onMounted(chargerNombres);
   --ombre-douce: 0 1px 3px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.2);
   --ombre-or:    0 4px 20px rgba(234,179,8,0.1);
   --ombre-carte: 0 1px 4px rgba(0,0,0,0.2);
+  --sb-logo-bg:   #0d1117;
 }
 
 /* ════════════════════════════════════════════════════
@@ -651,6 +674,7 @@ onMounted(chargerNombres);
   border-radius: 13px; overflow: hidden;
   box-shadow: 0 4px 16px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.08);
   transition: all 0.36s var(--ease-spring);
+  background: var(--sb-logo-bg);
 }
 .sb-logo--actif { transform: rotate(-6deg) scale(1.08); box-shadow: 0 8px 28px rgba(234,179,8,0.3); }
 .sb-logo svg { display: block; width: 100%; height: 100%; }

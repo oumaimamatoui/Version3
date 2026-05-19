@@ -237,7 +237,7 @@
                         </div>
                       </div>
 
-                      <div class="col-12 mt-2">
+                      <div class="col-12 mt-2" v-if="authStore.role !== 'Candidat'">
                         <div class="protocol-row">
                           <div class="p-icon"><i class="fa-solid fa-mobile-screen-button"></i></div>
                           <div class="p-data">

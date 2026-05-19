@@ -38,7 +38,7 @@
 
         <div class="options-container">
           <!-- QCU / Vrai/Faux -->
-          <template v-if="currentQuestion.type === 'QCU' || currentQuestion.type === 'VRAI_FAUX'">
+          <template v-if="currentQuestion.type === 'QCU' || currentQuestion.type === 'VRAI_FAUX' || currentQuestion.type === 0 || currentQuestion.type === 2">
             <label 
               v-for="(opt, idx) in currentQuestion.options" 
               :key="idx"
@@ -57,7 +57,7 @@
           </template>
 
           <!-- QCM -->
-          <template v-else-if="currentQuestion.type === 'QCM'">
+          <template v-else-if="currentQuestion.type === 'QCM' || currentQuestion.type === 1">
             <label 
               v-for="(opt, idx) in currentQuestion.options" 
               :key="idx"
@@ -126,7 +126,7 @@ const currentQuestion = computed(() => questions.value[currentIndex.value] || nu
 const isLastQuestion = computed(() => currentIndex.value >= questions.value.length - 1);
 const hasAnswered = computed(() => {
   if (!currentQuestion.value) return false;
-  if (currentQuestion.value.type === 'QCM') return selectedMultiple.value.length > 0;
+  if (currentQuestion.value.type === 'QCM' || currentQuestion.value.type === 1) return selectedMultiple.value.length > 0;
   return selectedSingle.value !== null;
 });
 
@@ -194,7 +194,7 @@ const saveResponse = async () => {
   if (!currentQuestion.value) return;
   
   let valeur = "";
-  if (currentQuestion.value.type === 'QCM') {
+  if (currentQuestion.value.type === 'QCM' || currentQuestion.value.type === 1) {
     valeur = selectedMultiple.value.sort().join(';'); // On trie et on sépare par point-virgule
   } else {
     valeur = selectedSingle.value || "";

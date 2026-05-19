@@ -10,6 +10,9 @@ namespace NeoEvaluation.API.Dtos
         public string? JoinDate { get; set; } // Formaté pour l'affichage
         public string ThemePreference { get; set; } = "light";
         public string? EntrepriseNom { get; set; }
+        public string? SubscriptionPlan { get; set; }
+        public string? SubscriptionDate { get; set; }
+        public string? SubscriptionExpiry { get; set; }
     }
     public class ChangePasswordDto
     {
@@ -24,6 +27,17 @@ namespace NeoEvaluation.API.Dtos
         public string Color { get; set; } = "#6366f1";
         public string? LogoUrl { get; set; }
 
+        // Champs Profil Entreprise
+        public string? Domaine { get; set; }
+        public string? Secteur { get; set; }
+        public string? SiteWeb { get; set; }
+        public string? Ville { get; set; }
+        public string? Pays { get; set; }
+        public string? CodePostal { get; set; }
+        public string? Adresse { get; set; }
+        public string? Description { get; set; }
+        public string? MatriculeFiscale { get; set; }
+
         [System.Text.Json.Serialization.JsonPropertyName("isGoogleConnected")]
         public bool IsGoogleConnected { get; set; }
 
@@ -35,5 +49,15 @@ namespace NeoEvaluation.API.Dtos
     {
         public string CompanyName { get; set; } = string.Empty;
         public string Color { get; set; } = "#6366f1";
+        
+        public string? Domaine { get; set; }
+        public string? Secteur { get; set; }
+        public string? SiteWeb { get; set; }
+        public string? Ville { get; set; }
+        public string? Pays { get; set; }
+        public string? CodePostal { get; set; }
+        public string? Adresse { get; set; }
+        public string? Description { get; set; }
+        public string? MatriculeFiscale { get; set; }
     }
 }

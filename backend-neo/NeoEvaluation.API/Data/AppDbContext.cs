@@ -47,6 +47,8 @@ namespace NeoEvaluation.API.Data
 
         public DbSet<Categorie> Categories { get; set; } = null!;
         public DbSet<SousCategorie> SousCategories { get; set; } = null!;
+        public DbSet<UsageLog> UsageLogs { get; set; } = null!;
+       public DbSet<CvAnalysis> CvAnalyses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -148,7 +150,21 @@ namespace NeoEvaluation.API.Data
                 .Property(e => e.Privileges)
                 .HasConversion(listConverter)
                 .Metadata.SetValueComparer(listComparer);
+// À ajouter vers la ligne 155 de votre AppDbContext.cs
+modelBuilder.Entity<CvAnalysis>(entity =>
+{
+    entity.Property(e => e.PointsForts)
+        .HasConversion(listConverter)
+        .Metadata.SetValueComparer(listComparer);
 
+    entity.Property(e => e.PointsFaibles)
+        .HasConversion(listConverter)
+        .Metadata.SetValueComparer(listComparer);
+
+    entity.Property(e => e.Conseils)
+        .HasConversion(listConverter)
+        .Metadata.SetValueComparer(listComparer);
+});
             // Application aux champs Dictionary<string, float>
             modelBuilder.Entity<Evaluation>()
                 .Property(e => e.ScoresParTheme)
@@ -182,7 +198,7 @@ namespace NeoEvaluation.API.Data
                 .HasQueryFilter(e => IsSuperAdmin || e.EntrepriseId == CurrentTenantId);
 
             modelBuilder.Entity<Question>()
-                .HasQueryFilter(e => IsSuperAdmin || e.EntrepriseId == CurrentTenantId);
+                .HasQueryFilter(e => (IsSuperAdmin || e.EntrepriseId == CurrentTenantId) && !e.IsDeleted);
 
             modelBuilder.Entity<Candidature>()
                 .HasQueryFilter(e => IsSuperAdmin || e.Campagne.EntrepriseId == CurrentTenantId);
@@ -207,6 +223,7 @@ namespace NeoEvaluation.API.Data
                 .HasQueryFilter(e => IsSuperAdmin || e.Candidat.EntrepriseId == CurrentTenantId);
 
         }
+        
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {

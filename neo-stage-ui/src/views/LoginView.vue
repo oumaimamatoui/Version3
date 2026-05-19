@@ -67,7 +67,7 @@
               </div>
 
               <div class="field-premium">
-                <label>Email Professionnel</label>
+                <label>Email</label>
                 <div class="input-glow-wrapper">
                   <i class="fa-solid fa-envelope-open-text"></i>
                   <input v-model="loginForm.email" type="email" placeholder="nom@entreprise.pro" required>

@@ -86,8 +86,8 @@ const routes = [
   { path: '/aide-support', name: 'aide-support', component: AideSupportView, meta: { requiresAuth: true } },
   { path: '/google-callback', name: 'google-callback', component: GoogleCallbackView, meta: { requiresAuth: true } },
 
-  { path: '/payment/success', name: 'payment-success', component: PaymentSuccessView, meta: { requiresAuth: true } },
-  { path: '/payment/cancel', name: 'payment-cancel', component: PaymentCancelView, meta: { requiresAuth: true } },
+  { path: '/payment/success', name: 'payment-success', component: PaymentSuccessView },
+  { path: '/payment/cancel', name: 'payment-cancel', component: PaymentCancelView },
 
   /**
    * ESPACE CANDIDAT (SÉCURISÉ)

@@ -23,18 +23,18 @@
           <header class="d-flex justify-content-between align-items-end mb-5 flex-wrap gap-3">
             <div>
               <div class="breadcrumb-pro mb-2">
-                <span class="root" @click="$router.push('/dashboard')" style="cursor:pointer">Accueil</span>
+                <span class="root" @click="$router.push('/dashboard')" style="cursor:pointer">{{ t('sidebar.dashboard') }}</span>
                 <i class="fa-solid fa-chevron-right mx-2 separator"></i>
-                <span class="current">Historique des Sessions</span>
+                <span class="current">{{ t('history.breadcrumb') }}</span>
               </div>
               <div class="d-flex align-items-center gap-2 mb-1">
                 <div class="live-indicator"></div>
-                <span class="top-label">PORTAL ANALYTICS</span>
+                <span class="top-label">{{ t('history.subtitle') }}</span>
               </div>
-              <h2 class="premium-title">Mes <span class="gradient-text">Performances</span></h2>
+              <h2 class="premium-title">{{ t('history.title').split(' ')[0] }} <span class="gradient-text">{{ t('history.title').split(' ').slice(1).join(' ') }}</span></h2>
             </div>
             <div class="d-flex gap-3 align-items-center flex-wrap">
-              <button class="btn-refresh-pro" @click="fetchHistory" :disabled="loading" title="Rafraîchir">
+              <button class="btn-refresh-pro" @click="fetchHistory" :disabled="loading" :title="t('refresh')">
                 <i class="fa-solid fa-rotate" :class="{ 'fa-spin': loading }"></i>
               </button>
               <div class="view-toggle-cluster">
@@ -42,30 +42,18 @@
                   class="btn-view-toggle"
                   :class="{ active: viewMode === 'list' }"
                   @click="viewMode = 'list'"
-                  title="Vue liste"
+                  :title="t('view')"
                 ><i class="fa-solid fa-list-ul"></i></button>
                 <button
                   class="btn-view-toggle"
                   :class="{ active: viewMode === 'grid' }"
                   @click="viewMode = 'grid'"
-                  title="Vue grille"
+                  :title="t('view')"
                 ><i class="fa-solid fa-table-cells-large"></i></button>
-                <button
-                  class="btn-view-toggle"
-                  :class="{ active: themeLocal === 'light' }"
-                  @click="themeLocal = 'light'"
-                  title="Mode clair"
-                ><i class="fa-solid fa-sun"></i></button>
-                <button
-                  class="btn-view-toggle"
-                  :class="{ active: themeLocal === 'dark' }"
-                  @click="themeLocal = 'dark'"
-                  title="Mode sombre"
-                ><i class="fa-solid fa-moon"></i></button>
               </div>
               <div class="search-inline-box">
                 <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" v-model="searchQuery" placeholder="Rechercher une session..." class="search-inline-input">
+                <input type="text" v-model="searchQuery" :placeholder="t('search')" class="search-inline-input">
                 <button v-if="searchQuery" @click="searchQuery = ''" class="btn-clear-search"><i class="fa-solid fa-xmark"></i></button>
               </div>
             </div>
@@ -103,9 +91,9 @@
             </div>
             <div class="d-flex gap-2 align-items-center">
               <select v-model="sortBy" class="sort-select-pro">
-                <option value="date">Date</option>
-                <option value="score">Score</option>
-                <option value="name">Nom</option>
+                <option value="date">{{ t('history.sort.date') }}</option>
+                <option value="score">{{ t('history.sort.score') }}</option>
+                <option value="name">{{ t('history.sort.name') }}</option>
               </select>
             </div>
           </div>
@@ -113,7 +101,7 @@
           <!-- LOADER -->
           <div v-if="loading" class="loader-portal">
             <div class="robot-ring mb-3"></div>
-            <span class="loading-text">CHARGEMENT DES DONNÉES</span>
+            <span class="loading-text">{{ t('history.loading') }}</span>
           </div>
 
           <!-- ÉTAT VIDE -->
@@ -121,10 +109,10 @@
             <div class="empty-visual mb-4">
               <i class="fa-solid fa-layer-group"></i>
             </div>
-            <h3 class="fw-800 mb-2">Aucun historique</h3>
-            <p class="text-muted-pro">Votre parcours de certification commence ici.</p>
+            <h3 class="fw-800 mb-2">{{ t('history.empty.title') }}</h3>
+            <p class="text-muted-pro">{{ t('history.empty.desc') }}</p>
             <button @click="$router.push('/dashboard')" class="btn-enigma-primary mt-4">
-              <div class="btn-content"><i class="fa-solid fa-rocket me-2"></i>DÉMARRER MAINTENANT</div>
+              <div class="btn-content"><i class="fa-solid fa-rocket me-2"></i>{{ t('history.empty.start') }}</div>
               <div class="btn-glow"></div>
             </button>
           </div>
@@ -132,7 +120,7 @@
           <!-- RÉSULTATS VIDE (filtre) -->
           <div v-else-if="filteredHistory.length === 0" class="text-center py-5 text-muted-pro">
             <i class="fa-solid fa-magnifying-glass fa-2x mb-3"></i>
-            <p class="fw-700">Aucun résultat pour "{{ searchQuery }}"</p>
+            <p class="fw-700">{{ t('history.noResults', { query: searchQuery }) }}</p>
           </div>
 
           <!-- ══ VUE LISTE ══ -->
@@ -161,7 +149,7 @@
                   </div>
                   <div class="mt-2">
                     <span class="result-pill-sm" :class="test.score >= (test.scoreReussite || 70) ? 'pill-pass' : 'pill-fail'">
-                      {{ test.score >= (test.scoreReussite || 70) ? 'ADMIS' : 'ÉCHEC' }}
+                      {{ test.score >= (test.scoreReussite || 70) ? t('history.card.passed') : t('history.card.failed') }}
                     </span>
                   </div>
                 </div>
@@ -169,11 +157,11 @@
                 <!-- Infos -->
                 <div class="col-md-7 px-md-5 py-4">
                   <div class="d-flex align-items-center gap-3 mb-2 flex-wrap">
-                    <span class="badge-glass">{{ test.statut || 'Terminé' }}</span>
+                    <span class="badge-glass">{{ test.statut || t('history.card.ended') }}</span>
                     <span class="date-text"><i class="fa-regular fa-calendar me-1"></i>{{ formatDate(test.date) }}</span>
                     <span v-if="test.infractions !== undefined" class="integrity-badge">
                       <i class="fa-solid fa-shield-halved me-1"></i>
-                      Intégrité {{ Math.max(0, 100 - (test.infractions || 0) * 10) }}%
+                      {{ t('history.card.integrity', { pct: Math.max(0, 100 - (test.infractions || 0) * 10) }) }}
                     </span>
                   </div>
                   <h3 class="test-name mb-2">{{ test.titreExamen || test.titre }}</h3>
@@ -188,21 +176,19 @@
                     </span>
                     <span>
                       <i class="fa-solid fa-trophy me-1" style="color:#f59e0b"></i>
-                      Résultat :
+                      {{ t('results.score.label') }} :
                       <strong :class="test.score >= (test.scoreReussite || 70) ? 'text-success' : 'text-danger'">
-                        {{ test.score >= (test.scoreReussite || 70) ? 'Admis' : 'Échec' }}
+                        {{ test.score >= (test.scoreReussite || 70) ? t('history.card.passed') : t('history.card.failed') }}
                       </strong>
                     </span>
                   </div>
 
-                  <!-- Barre de progression thème -->
                   <div v-if="test.theme" class="mt-3">
                     <div class="d-flex align-items-center gap-2">
                       <span class="theme-tag"><i class="fa-solid fa-tag me-1"></i>{{ test.theme }}</span>
                     </div>
                   </div>
 
-                  <!-- Mini progress bar -->
                   <div class="mt-3">
                     <div class="metric-bar">
                       <div class="mbar-fill" :style="{
@@ -216,13 +202,13 @@
                 <!-- Action -->
                 <div class="col-md-3 p-4 text-end">
                   <router-link :to="`/results/${test.id}`" class="btn-elite-action">
-                    <span>VOIR RAPPORT</span>
+                    <span>{{ t('history.card.report') }}</span>
                     <div class="icon-box">
                       <i class="fa-solid fa-arrow-right-long"></i>
                     </div>
                   </router-link>
                   <div v-if="test.scoreReussite" class="mt-2 text-center">
-                    <span class="small text-muted-pro" style="font-size:0.65rem;">Seuil : {{ test.scoreReussite }}%</span>
+                    <span class="small text-muted-pro" style="font-size:0.65rem;">{{ t('history.card.threshold') }} {{ test.scoreReussite }}%</span>
                   </div>
                 </div>
               </div>
@@ -230,13 +216,13 @@
           </div>
 
           <!-- ══ VUE GRILLE ══ -->
-          <div v-else class="row g-4">
+          <div v-else class="row g-5">
             <div v-for="test in filteredHistory" :key="test.id" class="col-xl-4 col-md-6 animate__animated animate__fadeInUp">
               <div class="campaign-card-modern h-100">
                 <div class="card-header-modern mb-3 d-flex justify-content-between align-items-start">
                   <span class="result-pill-sm" :class="test.score >= (test.scoreReussite || 70) ? 'pill-pass' : 'pill-fail'">
                     <span class="status-dot"></span>
-                    {{ test.score >= (test.scoreReussite || 70) ? 'ADMIS' : 'ÉCHEC' }}
+                    {{ test.score >= (test.scoreReussite || 70) ? t('history.card.passed') : t('history.card.failed') }}
                   </span>
                   <span class="date-text">{{ formatDate(test.date) }}</span>
                 </div>
@@ -266,7 +252,7 @@
                     </div>
                     <div v-if="test.infractions !== undefined" class="small text-muted-pro fw-700 mt-1">
                       <i class="fa-solid fa-shield-halved me-1" style="color:#10b981"></i>
-                      Intégrité {{ Math.max(0, 100 - (test.infractions || 0) * 10) }}%
+                      {{ t('history.card.integrity', { pct: Math.max(0, 100 - (test.infractions || 0) * 10) }) }}
                     </div>
                   </div>
                 </div>
@@ -279,9 +265,9 @@
                 </div>
 
                 <div class="card-footer-modern d-flex justify-content-between align-items-center pt-3 border-top border-light-pro">
-                  <span class="badge-glass">{{ test.statut || 'Terminé' }}</span>
+                  <span class="badge-glass">{{ test.statut || t('history.card.ended') }}</span>
                   <router-link :to="`/results/${test.id}`" class="btn-elite-action btn-elite-sm">
-                    <span>RAPPORT</span>
+                    <span>{{ t('history.card.shortReport') }}</span>
                     <div class="icon-box icon-box-sm">
                       <i class="fa-solid fa-arrow-right-long"></i>
                     </div>
@@ -306,21 +292,19 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, reactive } from 'vue';
+import { ref, computed, onMounted, reactive, inject } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import api from '@/services/api';
 import AppSidebar from '../components/AppSidebar.vue';
 import AppNavbar from '../components/AppNavbar.vue';
 
+const { t } = useI18n();
 const router = useRouter();
 
 /* ─── THEME ─────────────────────────────────────────────────────── */
-const themeLocal = ref(localStorage.getItem('app-theme') || 'light');
-const theme = computed(() => themeLocal.value);
-const toggleTheme = () => {
-  themeLocal.value = themeLocal.value === 'light' ? 'dark' : 'light';
-  localStorage.setItem('app-theme', themeLocal.value);
-};
+const isDark = inject('isDark', ref(false));
+const theme = computed(() => isDark.value ? 'dark' : 'light');
 
 /* ─── ÉTAT ─────────────────────────────────────────────────────── */
 const historyData  = ref([]);
@@ -359,7 +343,7 @@ const fetchHistory = async () => {
         statut: 'Terminé', scoreReussite: 70, theme: 'Data Engineering', nombreQuestions: 18, dureeMinutes: 60, infractions: 2
       },
     ];
-    showToast('Mode démo actif (API offline)', 'warn', 'fa-solid fa-plug-circle-xmark');
+    showToast(t('history.demo'), 'warn', 'fa-solid fa-plug-circle-xmark');
   } finally {
     loading.value = false;
   }
@@ -367,10 +351,10 @@ const fetchHistory = async () => {
 
 /* ─── COMPUTED ──────────────────────────────────────────────────── */
 const passedSessions = computed(() =>
-  historyData.value.filter(t => t.score >= (t.scoreReussite || 70))
+  historyData.value.filter(item => item.score >= (item.scoreReussite || 70))
 );
 const failedSessions = computed(() =>
-  historyData.value.filter(t => t.score < (t.scoreReussite || 70))
+  historyData.value.filter(item => item.score < (item.scoreReussite || 70))
 );
 const avgScore = computed(() => {
   if (!historyData.value.length) return 0;
@@ -378,34 +362,34 @@ const avgScore = computed(() => {
 });
 const bestScore = computed(() => {
   if (!historyData.value.length) return 0;
-  return Math.max(...historyData.value.map(t => t.score));
+  return Math.max(...historyData.value.map(item => item.score));
 });
 
 const kpiStats = computed(() => [
-  { label: 'Sessions totales', value: historyData.value.length, icon: 'fa-solid fa-layer-group', color: '#6366f1', bg: 'rgba(99,102,241,0.1)', trend: 12 },
-  { label: 'Sessions validées', value: passedSessions.value.length, icon: 'fa-solid fa-medal', color: '#10b981', bg: 'rgba(16,185,129,0.1)', trend: 5 },
-  { label: 'Score moyen', value: avgScore.value + '%', icon: 'fa-solid fa-chart-line', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', trend: 8 },
-  { label: 'Meilleur score', value: bestScore.value + '%', icon: 'fa-solid fa-trophy', color: '#f43f5e', bg: 'rgba(244,63,94,0.1)' },
+  { label: t('history.kpi.total'),    value: historyData.value.length,     icon: 'fa-solid fa-layer-group',  color: '#6366f1', bg: 'rgba(99,102,241,0.1)',  trend: 12 },
+  { label: t('history.kpi.passed'),   value: passedSessions.value.length,  icon: 'fa-solid fa-medal',        color: '#10b981', bg: 'rgba(16,185,129,0.1)',  trend: 5  },
+  { label: t('history.kpi.avgScore'), value: avgScore.value + '%',         icon: 'fa-solid fa-chart-line',   color: '#f59e0b', bg: 'rgba(245,158,11,0.1)',  trend: 8  },
+  { label: t('history.kpi.best'),     value: bestScore.value + '%',        icon: 'fa-solid fa-trophy',       color: '#f43f5e', bg: 'rgba(244,63,94,0.1)'             },
 ]);
 
 const filterTabs = computed(() => [
-  { label: 'Tout',      val: 'all',    count: historyData.value.length },
-  { label: 'Validées',  val: 'pass',   count: passedSessions.value.length },
-  { label: 'Échouées',  val: 'fail',   count: failedSessions.value.length },
+  { label: t('history.tabs.all'),  val: 'all',  count: historyData.value.length },
+  { label: t('history.tabs.pass'), val: 'pass', count: passedSessions.value.length },
+  { label: t('history.tabs.fail'), val: 'fail', count: failedSessions.value.length },
 ]);
 
 const filteredHistory = computed(() => {
   let list = [...historyData.value];
 
   if (activeTab.value === 'pass')
-    list = list.filter(t => t.score >= (t.scoreReussite || 70));
+    list = list.filter(item => item.score >= (item.scoreReussite || 70));
   else if (activeTab.value === 'fail')
-    list = list.filter(t => t.score < (t.scoreReussite || 70));
+    list = list.filter(item => item.score < (item.scoreReussite || 70));
 
   if (searchQuery.value)
-    list = list.filter(t =>
-      (t.titreExamen || t.titre || '').toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      (t.theme || '').toLowerCase().includes(searchQuery.value.toLowerCase())
+    list = list.filter(item =>
+      (item.titreExamen || item.titre || '').toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      (item.theme || '').toLowerCase().includes(searchQuery.value.toLowerCase())
     );
 
   if (sortBy.value === 'score')
@@ -606,6 +590,7 @@ onMounted(fetchHistory);
 .progress-fill { height: 100%; border-radius: 10px; transition: width 0.6s ease; }
 
 /* GRID VIEW - CAMPAIGN CARD */
+/* NOTE : espacement entre cartes géré par Bootstrap g-5 (gap: 3rem) */
 .campaign-card-modern {
   background: white;
   border-radius: 30px;

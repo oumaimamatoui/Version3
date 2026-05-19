@@ -23,23 +23,23 @@
           <header class="d-flex justify-content-between align-items-end mb-5 flex-wrap gap-3">
             <div>
               <div class="breadcrumb-pro mb-2">
-                <span class="root">Administration</span>
+                <span class="root">{{ t('campaigns.breadcrumb') || 'Administration' }}</span>
                 <i class="fa-solid fa-chevron-right mx-2 separator"></i>
-                <span class="current">Terminal de Campagnes</span>
+                <span class="current">{{ t('campaigns.breadcrumb') }}</span>
               </div>
-              <h2 class="premium-title">Architecture &amp; <span class="gradient-text">Déploiement</span></h2>
+              <h2 class="premium-title">{{ t('campaigns.subtitle').split('&')[0] }}&amp; <span class="gradient-text">{{ t('campaigns.subtitle').split('&')[1] || t('campaigns.subtitle') }}</span></h2>
             </div>
             <div class="d-flex gap-3 flex-wrap align-items-center">
-              <button class="btn-refresh-pro" @click="fetchInitialData" :disabled="loading" title="Rafraîchir">
+              <button class="btn-refresh-pro" @click="fetchInitialData" :disabled="loading" :title="t('refresh')">
                 <i class="fa-solid fa-rotate" :class="{ 'fa-spin': loading }"></i>
               </button>
               <div class="view-toggle-cluster">
-                <button :class="['btn-view-toggle', { active: viewMode === 'grid' }]"      @click="viewMode = 'grid'"      title="Vue grille"><i class="fa-solid fa-table-cells-large"></i></button>
-                <button :class="['btn-view-toggle', { active: viewMode === 'list' }]"      @click="viewMode = 'list'"      title="Vue liste"><i class="fa-solid fa-list-ul"></i></button>
-                <button :class="['btn-view-toggle', { active: viewMode === 'analytics' }]" @click="viewMode = 'analytics'" title="Analytique"><i class="fa-solid fa-chart-simple"></i></button>
+                <button :class="['btn-view-toggle', { active: viewMode === 'grid' }]"      @click="viewMode = 'grid'"      :title="t('view')"><i class="fa-solid fa-table-cells-large"></i></button>
+                <button :class="['btn-view-toggle', { active: viewMode === 'list' }]"      @click="viewMode = 'list'"      :title="t('view')"><i class="fa-solid fa-list-ul"></i></button>
+                <button :class="['btn-view-toggle', { active: viewMode === 'analytics' }]" @click="viewMode = 'analytics'" :title="t('filter')"><i class="fa-solid fa-chart-simple"></i></button>
               </div>
               <button class="btn-enigma-primary shadow-premium" @click="enterStudioMode()">
-                <div class="btn-content"><i class="fa-solid fa-plus me-2"></i> CRÉER UNE ARCHITECTURE</div>
+                <div class="btn-content"><i class="fa-solid fa-plus me-2"></i> {{ t('campaigns.create') }}</div>
                 <div class="btn-glow"></div>
               </button>
             </div>
@@ -126,13 +126,13 @@
             <div class="d-flex gap-2">
               <div class="search-inline-box">
                 <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" v-model="dashboardSearch" placeholder="Rechercher..." class="search-inline-input">
+                <input type="text" v-model="dashboardSearch" :placeholder="t('search')" class="search-inline-input">
                 <button v-if="dashboardSearch" @click="dashboardSearch = ''" class="btn-clear-search"><i class="fa-solid fa-xmark"></i></button>
               </div>
               <select v-model="sortBy" class="sort-select-pro">
-                <option value="date">Date</option>
-                <option value="name">Nom</option>
-                <option value="candidates">Candidats</option>
+                <option value="date">{{ t('date') }}</option>
+                <option value="name">{{ t('name') }}</option>
+                <option value="candidates">{{ t('campaigns.filterTabs.active') }}</option>
               </select>
             </div>
           </div>
@@ -146,7 +146,7 @@
                 <h5 class="fw-800">Aucune campagne trouvée</h5>
                 <p class="text-muted">Créez votre première architecture ou modifiez les filtres.</p>
                 <button class="btn-enigma-primary mt-3" @click="enterStudioMode()">
-                  <div class="btn-content"><i class="fa-solid fa-plus me-2"></i> Nouvelle Architecture</div>
+                  <div class="btn-content"><i class="fa-solid fa-plus me-2"></i> {{ t('campaigns.create') }}</div>
                   <div class="btn-glow"></div>
                 </button>
               </div>
@@ -158,27 +158,26 @@
                     <span class="status-dot"></span> {{ getStatusLabel(c.statut) }}
                   </span>
                   <div class="d-flex gap-2 align-items-center">
-                    <button class="btn-icon-sm" @click.stop="duplicateCampaign(c)" title="Dupliquer"><i class="fa-regular fa-copy"></i></button>
+                    <button class="btn-icon-sm" @click.stop="duplicateCampaign(c)" :title="t('campaigns.duplicate')"><i class="fa-regular fa-copy"></i></button>
                     <div class="dropdown">
                       <button class="btn-options-round" data-bs-toggle="dropdown" @click.stop><i class="fa-solid fa-ellipsis-vertical"></i></button>
                       <ul class="dropdown-menu border-0 shadow-premium p-2 rounded-4">
-                        <li><button class="dropdown-item rounded-3" @click.stop="enterStudioMode(c)"><i class="fa-solid fa-pen-to-square me-2"></i>Editer</button></li>
-                        <li><button class="dropdown-item rounded-3" @click.stop="exportCampaign(c)"><i class="fa-solid fa-file-export me-2"></i>Exporter JSON</button></li>
-                        <li><button class="dropdown-item rounded-3" @click.stop="togglePinCampaign(c.id)"><i :class="['me-2', pinnedCampaigns.includes(c.id) ? 'fa-solid fa-thumbtack text-amber' : 'fa-regular fa-thumbtack']"></i>{{ pinnedCampaigns.includes(c.id) ? 'Désépingler' : 'Épingler' }}</button></li>
+                        <li><button class="dropdown-item rounded-3" @click.stop="enterStudioMode(c)"><i class="fa-solid fa-pen-to-square me-2"></i>{{ t('campaigns.edit') }}</button></li>
+                        <li><button class="dropdown-item rounded-3" @click.stop="exportCampaign(c)"><i class="fa-solid fa-file-export me-2"></i>{{ t('campaigns.exportJson') }}</button></li>
+                        <li><button class="dropdown-item rounded-3" @click.stop="togglePinCampaign(c.id)"><i :class="['me-2', pinnedCampaigns.includes(c.id) ? 'fa-solid fa-thumbtack text-amber' : 'fa-regular fa-thumbtack']"></i>{{ pinnedCampaigns.includes(c.id) ? t('campaigns.unpin') : t('campaigns.pin') }}</button></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><button class="dropdown-item rounded-3 text-danger" @click.stop="handleDelete(c.id)"><i class="fa-solid fa-trash-can me-2"></i>Supprimer</button></li>
+                        <li><button class="dropdown-item rounded-3 text-danger" @click.stop="handleDelete(c.id)"><i class="fa-solid fa-trash-can me-2"></i>{{ t('campaigns.delete') }}</button></li>
                       </ul>
                     </div>
                   </div>
                 </div>
-                <div v-if="pinnedCampaigns.includes(c.id)" class="pin-badge"><i class="fa-solid fa-thumbtack"></i> Épinglé</div>
+                <div v-if="pinnedCampaigns.includes(c.id)" class="pin-badge"><i class="fa-solid fa-thumbtack"></i> {{ t('campaigns.pinned') }}</div>
                 <h5 class="campaign-title-modern fw-800">{{ c.nom }}</h5>
 
-                <!-- ✅ FIX : STRUCTURE LIÉE — affiche le vrai nom ou le nom de la campagne en fallback -->
                 <div class="test-attachment-box mt-3 mb-3 p-3 bg-light rounded-4 d-flex align-items-center gap-3">
                   <div class="icon-file text-amber"><i class="fa-solid fa-file-code fa-lg"></i></div>
                   <div class="flex-grow-1 overflow-hidden">
-                    <span class="text-overline d-block" style="font-size:0.6rem;font-weight:900;opacity:0.5;">STRUCTURE LIÉE</span>
+                    <span class="text-overline d-block" style="font-size:0.6rem;font-weight:900;opacity:0.5;">{{ t('campaigns.card.structure') }}</span>
                     <p class="m-0 text-truncate fw-bold small">
                       {{ getQuestionnaireName(c.questionnaireId) }}
                     </p>
@@ -189,12 +188,11 @@
                   <div class="progress-fill" :style="{ width: getCampaignProgress(c) + '%', background: getProgressColor(getCampaignProgress(c)) }"></div>
                 </div>
 
-                <!-- ✅ FIX : slots — affiche la valeur réelle ou '—' si absent -->
                 <div class="card-footer-modern d-flex justify-content-between pt-3 border-top border-light">
                   <div class="meta-item small text-muted"><i class="fa-regular fa-calendar me-2"></i>{{ formatDate(c.dateDebut) }}</div>
                   <div class="meta-item small text-muted">
                     <i class="fa-solid fa-user-group me-2"></i>
-                    {{ c.maxCandidats != null && c.maxCandidats !== '' ? c.maxCandidats : '—' }} slots
+                    {{ c.maxCandidats != null && c.maxCandidats !== '' ? c.maxCandidats : t('campaigns.card.noSlots') }} {{ t('campaigns.card.slots') }}
                   </div>
                 </div>
               </div>
@@ -204,11 +202,11 @@
           <!-- LIST VIEW -->
           <div v-if="viewMode === 'list'" class="list-view-pro animate__animated animate__fadeIn">
             <div class="list-header-row d-flex align-items-center px-4 py-2 mb-2">
-              <span style="width:200px" class="list-col-label">STATUT / NOM</span>
-              <span class="flex-grow-1 list-col-label">STRUCTURE</span>
-              <span style="width:120px" class="list-col-label">DATE</span>
-              <span style="width:100px" class="list-col-label text-center">SLOTS</span>
-              <span style="width:80px"  class="list-col-label text-center">ACTIONS</span>
+              <span style="width:200px" class="list-col-label">{{ t('status') }} / {{ t('name') }}</span>
+              <span class="flex-grow-1 list-col-label">{{ t('campaigns.card.structure') }}</span>
+              <span style="width:120px" class="list-col-label">{{ t('date') }}</span>
+              <span style="width:100px" class="list-col-label text-center">{{ t('campaigns.card.slots') }}</span>
+              <span style="width:80px"  class="list-col-label text-center">{{ t('actions') }}</span>
             </div>
             <div v-if="loading" class="text-center py-4"><div class="spinner-pro-premium"></div></div>
             <div v-else-if="filteredCampaigns.length === 0" class="text-center py-4 text-muted">Aucune campagne trouvée.</div>
@@ -218,16 +216,15 @@
               </div>
               <div class="flex-grow-1">
                 <div class="fw-800 small">{{ c.nom }}</div>
-                <!-- ✅ FIX list view -->
                 <div class="text-muted" style="font-size:0.7rem">{{ getQuestionnaireName(c.questionnaireId) }}</div>
               </div>
               <div style="width:120px" class="small text-muted">{{ formatDate(c.dateDebut) }}</div>
               <div style="width:100px" class="text-center">
-                <span class="slot-badge">{{ c.maxCandidats != null && c.maxCandidats !== '' ? c.maxCandidats : '—' }}</span>
+                <span class="slot-badge">{{ c.maxCandidats != null && c.maxCandidats !== '' ? c.maxCandidats : t('campaigns.card.noSlots') }}</span>
               </div>
               <div style="width:80px" class="d-flex gap-2 justify-content-center">
-                <button class="btn-icon-sm" @click="enterStudioMode(c)" title="Editer"><i class="fa-solid fa-pen-to-square"></i></button>
-                <button class="btn-icon-sm danger" @click="handleDelete(c.id)" title="Supprimer"><i class="fa-solid fa-trash-can"></i></button>
+                <button class="btn-icon-sm" @click="enterStudioMode(c)" :title="t('edit')"><i class="fa-solid fa-pen-to-square"></i></button>
+                <button class="btn-icon-sm danger" @click="handleDelete(c.id)" :title="t('delete')"><i class="fa-solid fa-trash-can"></i></button>
               </div>
             </div>
           </div>
@@ -241,16 +238,16 @@
             <button class="btn-back-to-dash" @click="activeView = 'dashboard'"><i class="fa-solid fa-arrow-left"></i></button>
             <div>
               <div class="breadcrumb-pro mb-1">
-                <span class="root" @click="activeView = 'dashboard'" style="cursor:pointer">Campagnes</span>
+                <span class="root" @click="activeView = 'dashboard'" style="cursor:pointer">{{ t('campaigns.title') }}</span>
                 <i class="fa-solid fa-chevron-right mx-2 separator"></i>
                 <span class="current">Aperçu</span>
               </div>
               <h2 class="premium-title m-0">{{ previewData.nom }}</h2>
             </div>
             <div class="ms-auto d-flex gap-3">
-              <button class="btn-outline-pro" @click="exportCampaign(previewData)"><i class="fa-solid fa-file-export me-2"></i>Export JSON</button>
+              <button class="btn-outline-pro" @click="exportCampaign(previewData)"><i class="fa-solid fa-file-export me-2"></i>{{ t('campaigns.preview.export') }}</button>
               <button class="btn-enigma-primary" @click="enterStudioMode(previewData)">
-                <div class="btn-content"><i class="fa-solid fa-pen-to-square me-2"></i>Éditer</div>
+                <div class="btn-content"><i class="fa-solid fa-pen-to-square me-2"></i>{{ t('campaigns.preview.general') && t('edit') }}</div>
                 <div class="btn-glow"></div>
               </button>
             </div>
@@ -258,28 +255,27 @@
           <div class="row g-4">
             <div class="col-lg-8">
               <div class="enigma-card p-5 mb-4">
-                <h6 class="fw-900 mb-4 text-muted" style="font-size:0.65rem;letter-spacing:2px;">INFORMATIONS GÉNÉRALES</h6>
+                <h6 class="fw-900 mb-4 text-muted" style="font-size:0.65rem;letter-spacing:2px;">{{ t('campaigns.preview.general') }}</h6>
                 <div class="row g-4">
                   <div class="col-md-6">
                     <div class="preview-field-box">
-                      <span class="preview-field-label">STATUT</span>
+                      <span class="preview-field-label">{{ t('campaigns.preview.status') }}</span>
                       <span class="status-badge mt-1" :class="'status-' + previewData.statut"><span class="status-dot"></span> {{ getStatusLabel(previewData.statut) }}</span>
                     </div>
                   </div>
                   <div class="col-md-6">
-                    <!-- ✅ FIX preview -->
-                    <div class="preview-field-box"><span class="preview-field-label">STRUCTURE LIÉE</span><span class="fw-800">{{ getQuestionnaireName(previewData.questionnaireId) }}</span></div>
+                    <div class="preview-field-box"><span class="preview-field-label">{{ t('campaigns.preview.structure') }}</span><span class="fw-800">{{ getQuestionnaireName(previewData.questionnaireId) }}</span></div>
                   </div>
                   <div class="col-md-6">
-                    <div class="preview-field-box"><span class="preview-field-label">DATE D'OUVERTURE</span><span class="fw-800">{{ formatDate(previewData.dateDebut) }}</span></div>
+                    <div class="preview-field-box"><span class="preview-field-label">{{ t('campaigns.preview.openDate') }}</span><span class="fw-800">{{ formatDate(previewData.dateDebut) }}</span></div>
                   </div>
                   <div class="col-md-6">
-                    <div class="preview-field-box"><span class="preview-field-label">MAX CANDIDATS</span><span class="fw-800">{{ previewData.maxCandidats != null && previewData.maxCandidats !== '' ? previewData.maxCandidats : '—' }}</span></div>
+                    <div class="preview-field-box"><span class="preview-field-label">{{ t('campaigns.preview.maxCandidats') }}</span><span class="fw-800">{{ previewData.maxCandidats != null && previewData.maxCandidats !== '' ? previewData.maxCandidats : t('campaigns.card.noSlots') }}</span></div>
                   </div>
                 </div>
               </div>
               <div class="enigma-card p-5">
-                <h6 class="fw-900 mb-4 text-muted" style="font-size:0.65rem;letter-spacing:2px;">TIMELINE D'ACTIVITÉ</h6>
+                <h6 class="fw-900 mb-4 text-muted" style="font-size:0.65rem;letter-spacing:2px;">{{ t('campaigns.preview.timeline') }}</h6>
                 <div class="activity-timeline">
                   <div class="timeline-item" v-for="event in previewTimeline" :key="event.id">
                     <div class="tl-dot" :style="{ background: event.color }"></div>
@@ -291,7 +287,7 @@
             </div>
             <div class="col-lg-4">
               <div class="enigma-card p-4 mb-4">
-                <h6 class="fw-900 mb-3" style="font-size:0.65rem;letter-spacing:2px;color:#94a3b8;">TAUX DE COMPLÉTION</h6>
+                <h6 class="fw-900 mb-3" style="font-size:0.65rem;letter-spacing:2px;color:#94a3b8;">{{ t('campaigns.preview.completion') }}</h6>
                 <div class="big-progress-container">
                   <svg viewBox="0 0 120 120" width="120">
                     <circle cx="60" cy="60" r="50" fill="none" stroke="#eef2f6" stroke-width="10"/>
@@ -304,11 +300,11 @@
                 </div>
               </div>
               <div class="enigma-card p-4">
-                <h6 class="fw-900 mb-4" style="font-size:0.65rem;letter-spacing:2px;color:#94a3b8;">ACTIONS RAPIDES</h6>
+                <h6 class="fw-900 mb-4" style="font-size:0.65rem;letter-spacing:2px;color:#94a3b8;">{{ t('campaigns.preview.quickActions') }}</h6>
                 <div class="d-flex flex-column gap-2">
-                  <button class="btn-quick-action" @click="changeStatus(previewData, 1)"><i class="fa-solid fa-play me-2 text-amber"></i>Activer la campagne</button>
-                  <button class="btn-quick-action" @click="changeStatus(previewData, 2)"><i class="fa-solid fa-stop me-2 text-danger"></i>Terminer la campagne</button>
-                  <button class="btn-quick-action" @click="duplicateCampaign(previewData)"><i class="fa-regular fa-copy me-2 text-indigo"></i>Dupliquer l'architecture</button>
+                  <button class="btn-quick-action" @click="changeStatus(previewData, 1)"><i class="fa-solid fa-play me-2 text-amber"></i>{{ t('campaigns.preview.activate') }}</button>
+                  <button class="btn-quick-action" @click="changeStatus(previewData, 2)"><i class="fa-solid fa-stop me-2 text-danger"></i>{{ t('campaigns.preview.end') }}</button>
+                  <button class="btn-quick-action" @click="duplicateCampaign(previewData)"><i class="fa-regular fa-copy me-2 text-indigo"></i>{{ t('campaigns.preview.duplicate') }}</button>
                 </div>
               </div>
             </div>
@@ -333,14 +329,14 @@
                     </svg>
                   </div>
                   <div>
-                    <h1 class="main-title-v2">Studio<span>Architect</span> <span class="v-badge">v6.5</span></h1>
-                    <p class="brand-subtitle-v2">CONFIGURATION DE L'INSTANCE UML &amp; SQL</p>
+                    <h1 class="main-title-v2">{{ t('campaigns.studio.title') }}<span>Architect</span> <span class="v-badge">{{ t('campaigns.studio.version') }}</span></h1>
+                    <p class="brand-subtitle-v2">{{ t('campaigns.studio.subtitle') }}</p>
                   </div>
                 </div>
                 <div class="global-actions-cluster d-flex gap-3 align-items-center flex-wrap">
                   <div class="autosave-indicator" :class="{ 'saving': isSaving, 'saved': lastSaved }">
                     <i :class="isSaving ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-cloud-arrow-up'"></i>
-                    <span>{{ isSaving ? 'Sauvegarde...' : lastSaved ? 'Sauvegardé ' + lastSavedTime : 'Non sauvegardé' }}</span>
+                    <span>{{ isSaving ? t('campaigns.studio.autosave') : lastSaved ? t('campaigns.studio.saved') + ' ' + lastSavedTime : t('campaigns.studio.unsaved') }}</span>
                   </div>
                   <div class="health-core-widget">
                     <div class="health-ring-box">
@@ -351,15 +347,15 @@
                       <span class="health-percent">{{ architectureHealth }}%</span>
                     </div>
                     <div class="health-label-box">
-                      <span class="h-main">VIABILITÉ</span>
+                      <span class="h-main">{{ t('campaigns.studio.viability') }}</span>
                       <span class="h-sub" :style="{ color: healthColor }">{{ healthStatusText }}</span>
                     </div>
                   </div>
-                  <button class="btn-shortcuts" @click="modals.shortcuts = true" title="Raccourcis"><i class="fa-solid fa-keyboard"></i></button>
+                  <button class="btn-shortcuts" @click="modals.shortcuts = true" :title="t('campaigns.studio.shortcuts')"><i class="fa-solid fa-keyboard"></i></button>
                   <button @click="publishToProduction" :disabled="!isReadyToPublish || isPublishing" class="btn-enigma-primary">
                     <div class="btn-content">
                       <span v-if="isPublishing" class="spinner-border spinner-border-sm me-2"></span>
-                      <i v-else class="fa-solid fa-rocket me-2"></i> DÉPLOYER
+                      <i v-else class="fa-solid fa-rocket me-2"></i> {{ isPublishing ? t('campaigns.studio.deploying') : t('campaigns.studio.deploy') }}
                     </div>
                     <div class="btn-glow"></div>
                   </button>
@@ -386,102 +382,107 @@
             <div class="row g-5">
               <div class="col-xl-8">
 
-                <!-- ═══════════════════════════════════
-                     ÉTAPE 1 — ARCHITECTURE NOYAU
-                ═══════════════════════════════════ -->
+                <!-- ÉTAPE 1 -->
                 <section v-if="currentStep === 1" class="engine-pane animate__animated animate__fadeIn">
                   <div class="enigma-card p-5">
                     <div class="pane-header-v2 mb-5">
                       <div class="icon-box-v2 amber"><i class="fa-solid fa-layer-group"></i></div>
-                      <div><h4 class="fw-900 m-0">Architecture Noyau</h4><p class="text-muted m-0">Métadonnées de l'instance SQL.</p></div>
+                      <div><h4 class="fw-900 m-0">{{ t('campaigns.studio.step1.title') }}</h4><p class="text-muted m-0">{{ t('campaigns.studio.step1.subtitle') }}</p></div>
                     </div>
                     <div class="row g-5">
                       <div class="col-12">
                         <div class="enigma-input-wrap">
                           <label>NOM DE L'INSTANCE *</label>
-                          <input type="text" v-model="studio.questionnaire.titre" class="enigma-field" :class="{ 'field-error': showValidation && !studio.questionnaire.titre }" placeholder="Ex: Frontend Senior Audit 2025">
-                          <span v-if="showValidation && !studio.questionnaire.titre" class="field-error-msg">Ce champ est requis</span>
+                          <input type="text" v-model="studio.questionnaire.titre" class="enigma-field" :class="{ 'field-error': showValidation && !studio.questionnaire.titre }" :placeholder="t('campaigns.studio.step1.namePlaceholder')">
+                          <span v-if="showValidation && !studio.questionnaire.titre" class="field-error-msg">{{ t('required') }}</span>
                         </div>
                       </div>
 
-                      <!-- ─── THÈME (CATÉGORIE PRINCIPALE) ─── -->
                       <div class="col-md-6">
                         <div class="enigma-input-wrap">
-                          <label>THÈME / DOMAINE</label>
+                          <label>{{ t('campaigns.studio.step1.theme') }}</label>
                           <div class="theme-select-wrapper">
                             <i class="fa-solid fa-tag theme-select-icon"></i>
                             <select v-model="studio.questionnaire.theme" class="enigma-field theme-select" @change="studio.questionnaire.sousTheme = ''">
                               <option value="">— Choisir —</option>
-                              <option v-for="cat in categoriesList" :key="cat.id" :value="cat.nom">
-                                {{ cat.nom }}
-                              </option>
+                              <option v-for="cat in (categoriesList.length > 0 ? categoriesList : themesData)" :key="cat.id || cat.nom" :value="cat.nom">{{ cat.nom }}</option>
                             </select>
                           </div>
                         </div>
                       </div>
 
-                      <!-- ─── SOUS-THÈME (FILTRÉ DYNAMIQUEMENT) ─── -->
                       <div class="col-md-6">
                         <div class="enigma-input-wrap">
-                          <label>SOUS-THÈME / SPÉCIALITÉ</label>
-                          <div class="theme-select-wrapper" :class="{ 'disabled-wrapper': !studio.questionnaire.theme }">
-                            <i class="fa-solid fa-sitemap theme-select-icon"></i>
-                            <select v-model="studio.questionnaire.sousTheme" class="enigma-field theme-select" :disabled="!studio.questionnaire.theme">
-                              <option value="">— Sélectionner —</option>
-                              <option v-for="sub in dynamicSubCategories" :key="sub.id" :value="sub.nom">
-                                {{ sub.nom }}
-                              </option>
-                            </select>
+                          <label>{{ t('campaigns.studio.step1.subTheme') }}</label>
+                          <div v-if="!studio.questionnaire.theme" class="subthemes-placeholder-card p-3 text-center rounded-4 border-dashed">
+                            <i class="fa-solid fa-circle-info text-muted mb-2"></i>
+                            <p class="small text-muted m-0">Veuillez d'abord choisir un thème pour charger les spécialités disponibles.</p>
+                          </div>
+                          <div v-else class="subthemes-grid mt-2">
+                            <div v-for="sub in dynamicSubCategories" :key="sub.id" 
+                                 :class="['subtheme-badge-card', { active: selectedSubThemes.includes(sub.nom) }]"
+                                 @click="toggleSubTheme(sub.nom)">
+                              <div class="subtheme-card-indicator">
+                                <i :class="selectedSubThemes.includes(sub.nom) ? 'fa-solid fa-square-check' : 'fa-regular fa-square'"></i>
+                              </div>
+                              <span class="subtheme-card-label">{{ sub.nom }}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
 
-                      <!-- Breadcrumb thème sélectionné -->
                       <div class="col-12" v-if="studio.questionnaire.theme">
-                        <div class="theme-breadcrumb-display">
+                        <div class="theme-breadcrumb-display d-flex align-items-center flex-wrap gap-2">
                           <i class="fa-solid fa-folder-open text-amber me-2"></i>
                           <span class="theme-bc-item">{{ studio.questionnaire.theme }}</span>
-                          <template v-if="studio.questionnaire.sousTheme">
+                          <template v-if="selectedSubThemes.length > 0">
                             <i class="fa-solid fa-chevron-right mx-2 opacity-40"></i>
-                            <span class="theme-bc-item active">{{ studio.questionnaire.sousTheme }}</span>
+                            <div class="d-flex flex-wrap gap-2">
+                              <span v-for="sub in selectedSubThemes" :key="sub" class="theme-bc-item active sub-badge-pill">
+                                {{ sub }}
+                                <button @click.stop="toggleSubTheme(sub)" class="sub-badge-remove">
+                                  <i class="fa-solid fa-xmark"></i>
+                                </button>
+                              </span>
+                            </div>
                           </template>
                         </div>
                       </div>
 
                       <div class="col-md-6">
                         <div class="enigma-input-wrap">
-                          <label>DURÉE GLOBALE (MIN)</label>
+                          <label>{{ t('campaigns.studio.step1.duration') }}</label>
                           <input type="number" v-model.number="studio.questionnaire.duree" class="enigma-field" min="5" max="360">
                         </div>
                       </div>
                       <div class="col-12">
                         <div class="enigma-input-wrap">
-                          <label>DESCRIPTION (OPTIONNEL)</label>
-                          <textarea v-model="studio.questionnaire.description" class="enigma-field" rows="3" placeholder="Décrivez l'objectif de cette session..."></textarea>
+                          <label>{{ t('campaigns.studio.step1.description') }}</label>
+                          <textarea v-model="studio.questionnaire.description" class="enigma-field" rows="3" :placeholder="t('campaigns.studio.step1.descPlaceholder')"></textarea>
                         </div>
                       </div>
                       <div class="col-12 mt-4">
                         <div class="admissibility-dashboard">
                           <div class="d-flex justify-content-between">
-                            <h6>SEUIL D'ADMISSIBILITÉ</h6>
+                            <h6>{{ t('campaigns.studio.step1.threshold') }}</h6>
                             <span class="fw-900">{{ studio.questionnaire.scoreReussite }}%</span>
                           </div>
                           <input type="range" v-model="studio.questionnaire.scoreReussite" min="1" max="100" class="enigma-range mt-3">
                           <div class="d-flex justify-content-between mt-2">
-                            <span class="score-tier tier-low">Junior</span>
-                            <span class="score-tier tier-mid">Standard</span>
-                            <span class="score-tier tier-high">Expert</span>
+                            <span class="score-tier tier-low">{{ t('campaigns.studio.step1.tiers.low') }}</span>
+                            <span class="score-tier tier-mid">{{ t('campaigns.studio.step1.tiers.mid') }}</span>
+                            <span class="score-tier tier-high">{{ t('campaigns.studio.step1.tiers.high') }}</span>
                           </div>
                         </div>
                       </div>
                       <div class="col-12">
                         <div class="enigma-input-wrap">
-                          <label>TAGS</label>
+                          <label>{{ t('campaigns.studio.step1.tags') }}</label>
                           <div class="tags-input-container enigma-field" style="height:auto;min-height:50px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
                             <span v-for="(tag, i) in studio.questionnaire.tags" :key="i" class="tag-chip">
                               {{ tag }} <button @click="removeTag(i)" class="tag-remove"><i class="fa-solid fa-xmark"></i></button>
                             </span>
-                            <input type="text" v-model="tagInput" @keydown.enter.prevent="addTag" @keydown.188.prevent="addTag" placeholder="Ajouter un tag..." class="tag-field-input">
+                            <input type="text" v-model="tagInput" @keydown.enter.prevent="addTag" @keydown.188.prevent="addTag" :placeholder="t('campaigns.studio.step1.tagPlaceholder')" class="tag-field-input">
                           </div>
                         </div>
                       </div>
@@ -489,27 +490,25 @@
                   </div>
                 </section>
 
-                <!-- ═══════════════════════════════════
-                     ÉTAPE 2 — INGÉNIERIE / QUESTIONS
-                ═══════════════════════════════════ -->
+                <!-- ÉTAPE 2 -->
                 <section v-if="currentStep === 2" class="engine-pane animate__animated animate__fadeIn">
                   <div class="orchestrator-head-v2 mb-4 d-flex justify-content-between align-items-end">
-                    <h5 class="fw-900 m-0">Composition ({{ studio.questions.length }})</h5>
+                    <h5 class="fw-900 m-0">{{ t('campaigns.studio.step2.title').replace('{count}', studio.questions.length) }}</h5>
                     <div class="d-flex gap-2">
-                      <button @click="openDeepBankModal" class="btn-bank-action-v2"><i class="fa-solid fa-vault me-2"></i> BANQUE</button>
+                      <button @click="openDeepBankModal" class="btn-bank-action-v2"><i class="fa-solid fa-vault me-2"></i> {{ t('campaigns.studio.step2.bank') }}</button>
                     </div>
                   </div>
                   <div v-if="studio.questions.length > 0" class="bulk-actions-bar mb-3">
                     <label class="d-flex align-items-center gap-2 small fw-700" style="cursor:pointer">
                       <input type="checkbox" @change="toggleSelectAll" :checked="selectedQuestions.length === studio.questions.length && studio.questions.length > 0">
-                      Tout sélectionner
+                      {{ t('campaigns.studio.step2.selectAll') }}
                     </label>
                     <div v-if="selectedQuestions.length > 0" class="d-flex gap-2 ms-auto">
-                      <span class="small text-muted">{{ selectedQuestions.length }} sélectionné(s)</span>
+                      <span class="small text-muted">{{ t('campaigns.studio.step2.selected').replace('{count}', selectedQuestions.length) }}</span>
                       <button @click="removeSelectedQuestions" class="btn-icon-sm danger"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
                     <div class="ms-auto" v-else>
-                      <span class="small text-muted">Total: <strong>{{ totalLogicPoints }} pts</strong></span>
+                      <span class="small text-muted">{{ t('campaigns.studio.step2.totalPts').replace('{count}', totalLogicPoints) }}</span>
                     </div>
                   </div>
                   <div class="assets-scroll-v8 custom-scrollbar">
@@ -524,7 +523,7 @@
                             <div class="d-flex gap-2 mt-1 flex-wrap">
                               <span class="t-pill weight">{{ element.poids || element.points }} PTS</span>
                               <span v-if="element.duree && element.duree > 0" class="t-pill time">
-                                <i class="fa-solid fa-stopwatch me-1"></i>{{ element.duree }}s
+                                <i class="fa-solid fa-stopwatch me-1"></i>{{ element.duree }}{{ t('campaigns.studio.step2.timerUnit') }}
                               </span>
                               <span v-if="element.difficulty" class="t-pill" :class="'diff-' + element.difficulty?.toLowerCase()">{{ element.difficulty }}</span>
                               <span v-if="element.type !== undefined" class="t-pill type-pill">
@@ -533,13 +532,12 @@
                               <span v-if="element.theme" class="t-pill cat-pill">{{ element.theme }}</span>
                             </div>
                           </div>
-                          <!-- Timer individuel inline -->
                           <div class="question-timer-inline" @click.stop>
                             <button
                               class="timer-toggle-btn"
                               :class="{ 'timer-active': element.duree > 0 }"
                               @click="toggleQuestionTimer(element)"
-                              :title="element.duree > 0 ? 'Minuteur activé — cliquer pour désactiver' : 'Activer un minuteur pour cette question'"
+                              :title="element.duree > 0 ? t('campaigns.studio.step2.timerActive') : t('campaigns.studio.step2.timerAdd')"
                             >
                               <i class="fa-solid fa-stopwatch"></i>
                             </button>
@@ -555,7 +553,7 @@
                                   @focus="element._showTimer = true"
                                   @blur="handleTimerBlur(element)"
                                 >
-                                <span class="timer-unit">s</span>
+                                <span class="timer-unit">{{ t('campaigns.studio.step2.timerUnit') }}</span>
                               </div>
                             </transition>
                           </div>
@@ -566,7 +564,7 @@
                     </draggable>
                     <div v-if="studio.questions.length === 0" class="empty-questions-hint text-center py-5">
                       <i class="fa-solid fa-vault fa-2x text-muted mb-3"></i>
-                      <p class="text-muted small">Commencez par créer ou importer des questions depuis la banque d'actifs.</p>
+                      <p class="text-muted small">{{ t('campaigns.studio.step2.noQuestions') }}</p>
                     </div>
                   </div>
                 </section>
@@ -574,15 +572,15 @@
                 <!-- ÉTAPE 3 -->
                 <section v-if="currentStep === 3" class="engine-pane animate__animated animate__fadeIn">
                   <div class="talent-hub-search-v2 mb-4">
-                    <div class="search-enigma-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" v-model="searchCandQuery" placeholder="Cibler un candidat..." class="enigma-search-field"></div>
-                    <div class="batch-counter-v2"><span class="val">{{ selectedCandidatesIds.length }}</span><span class="lab">CANDIDATS</span></div>
-                    <button v-if="selectedCandidatesIds.length < filteredCandidatePool.length" @click="selectAllCandidates" class="btn-outline-pro ms-2">Tout sélectionner</button>
-                    <button v-else @click="selectedCandidatesIds = []" class="btn-outline-pro ms-2">Désélectionner</button>
+                    <div class="search-enigma-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" v-model="searchCandQuery" :placeholder="t('campaigns.studio.step3.target')" class="enigma-search-field"></div>
+                    <div class="batch-counter-v2"><span class="val">{{ selectedCandidatesIds.length }}</span><span class="lab">{{ t('campaigns.studio.step3.candidates') }}</span></div>
+                    <button v-if="selectedCandidatesIds.length < filteredCandidatePool.length" @click="selectAllCandidates" class="btn-outline-pro ms-2">{{ t('campaigns.studio.step3.selectAll') }}</button>
+                    <button v-else @click="selectedCandidatesIds = []" class="btn-outline-pro ms-2">{{ t('campaigns.studio.step3.deselect') }}</button>
                   </div>
                   <div class="d-flex gap-2 mb-4 flex-wrap">
-                    <button :class="['filter-chip', { active: candidateFilter === '' }]"       @click="candidateFilter = ''">Tous</button>
-                    <button :class="['filter-chip', { active: candidateFilter === 'new' }]"    @click="candidateFilter = 'new'">Nouveaux</button>
-                    <button :class="['filter-chip', { active: candidateFilter === 'senior' }]" @click="candidateFilter = 'senior'">Seniors</button>
+                    <button :class="['filter-chip', { active: candidateFilter === '' }]"       @click="candidateFilter = ''">{{ t('campaigns.studio.step3.filters.all') }}</button>
+                    <button :class="['filter-chip', { active: candidateFilter === 'new' }]"    @click="candidateFilter = 'new'">{{ t('campaigns.studio.step3.filters.new') }}</button>
+                    <button :class="['filter-chip', { active: candidateFilter === 'senior' }]" @click="candidateFilter = 'senior'">{{ t('campaigns.studio.step3.filters.senior') }}</button>
                   </div>
                   <div class="talent-matrix-grid custom-scrollbar">
                     <div class="row g-4">
@@ -600,14 +598,14 @@
                 <!-- ÉTAPE 4 -->
                 <section v-if="currentStep === 4" class="engine-pane animate__animated animate__fadeIn">
                   <div class="enigma-card p-5">
-                    <h5 class="fw-900 mb-5"><i class="fa-solid fa-calendar-check text-amber me-3"></i>Matrix Planning</h5>
+                    <h5 class="fw-900 mb-5"><i class="fa-solid fa-calendar-check text-amber me-3"></i>{{ t('campaigns.studio.step4.title') }}</h5>
                     <div class="row g-5">
-                      <div class="col-md-6"><div class="enigma-input-wrap"><label>OUVERTURE TERMINAL</label><input type="datetime-local" v-model="studio.campagne.dateDebut" class="enigma-field"></div></div>
-                      <div class="col-md-6"><div class="enigma-input-wrap"><label>FERMETURE ACCÈS</label><input type="datetime-local" v-model="studio.campagne.dateFin" class="enigma-field"></div></div>
-                      <div class="col-md-6"><div class="enigma-input-wrap"><label>MAX CANDIDATS</label><input type="number" v-model.number="studio.campagne.maxCandidats" class="enigma-field" min="1"></div></div>
+                      <div class="col-md-6"><div class="enigma-input-wrap"><label>{{ t('campaigns.studio.step4.openDate') }}</label><input type="datetime-local" v-model="studio.campagne.dateDebut" class="enigma-field"></div></div>
+                      <div class="col-md-6"><div class="enigma-input-wrap"><label>{{ t('campaigns.studio.step4.closeDate') }}</label><input type="datetime-local" v-model="studio.campagne.dateFin" class="enigma-field"></div></div>
+                      <div class="col-md-6"><div class="enigma-input-wrap"><label>{{ t('campaigns.studio.step4.maxCand') }}</label><input type="number" v-model.number="studio.campagne.maxCandidats" class="enigma-field" min="1"></div></div>
                       <div class="col-md-6">
                         <div class="enigma-input-wrap">
-                          <label>FUSEAU HORAIRE</label>
+                          <label>{{ t('campaigns.studio.step4.timezone') }}</label>
                           <select v-model="studio.campagne.timezone" class="enigma-field">
                             <option value="Europe/Paris">Europe/Paris (UTC+1)</option>
                             <option value="UTC">UTC</option>
@@ -619,25 +617,23 @@
                       <div class="col-12 mt-5">
                         <div class="protocol-row border-top pt-4">
                           <div class="p-icon"><i class="fa-solid fa-shield-halved"></i></div>
-                          <div class="p-data"><h6>Surveillance Anti-Cheat v2.0</h6><p>Analyse de fraude asynchrone.</p></div>
+                          <div class="p-data"><h6>{{ t('campaigns.studio.step4.anticheat.title') }}</h6><p>{{ t('campaigns.studio.step4.anticheat.desc') }}</p></div>
                           <div class="form-check form-switch enigma-switch"><input class="form-check-input" type="checkbox" v-model="studio.campagne.anticheat"></div>
                         </div>
                         <div class="protocol-row border-top pt-4 mt-4">
-                          <div class="p-icon p-icon-blue">
-                            <i class="fa-solid fa-stopwatch"></i>
-                          </div>
+                          <div class="p-icon p-icon-blue"><i class="fa-solid fa-stopwatch"></i></div>
                           <div class="p-data">
-                            <h6>Minuteur par Question</h6>
-                            <p>Activez un chronomètre individuel sur chaque actif depuis l'étape 2.</p>
+                            <h6>{{ t('campaigns.studio.step4.timer.title') }}</h6>
+                            <p>{{ t('campaigns.studio.step4.timer.desc') }}</p>
                           </div>
                           <div class="timer-per-q-summary">
                             <span class="tpq-count">{{ questionsWithTimer }}</span>
-                            <span class="tpq-label">question(s)<br>minutées</span>
+                            <span class="tpq-label">{{ t('campaigns.studio.step4.timer.count').replace('{count}', '') }}</span>
                           </div>
                         </div>
                         <div class="protocol-row border-top pt-4 mt-4">
                           <div class="p-icon text-success"><i class="fa-solid fa-paper-plane"></i></div>
-                          <div class="p-data"><h6>Notifications Email Automatiques</h6><p>Envoi automatique aux candidats sélectionnés.</p></div>
+                          <div class="p-data"><h6>{{ t('campaigns.studio.step4.notifications.title') }}</h6><p>{{ t('campaigns.studio.step4.notifications.desc') }}</p></div>
                           <div class="form-check form-switch enigma-switch"><input class="form-check-input" type="checkbox" v-model="studio.campagne.sendNotifications"></div>
                         </div>
                       </div>
@@ -651,18 +647,18 @@
                 <aside class="sidebar-analytics-engine">
                   <div class="analytics-hub-glass">
                     <div class="hub-header-v2">
-                      <span class="hub-label">DASHBOARD ARCHITECTE</span>
-                      <h4 class="hub-title-v2">{{ studio.questionnaire.titre || 'UML SANS TITRE' }}</h4>
+                      <span class="hub-label">{{ t('campaigns.studio.hud.title') }}</span>
+                      <h4 class="hub-title-v2">{{ studio.questionnaire.titre || t('campaigns.studio.hud.untitled') }}</h4>
                       <div class="hub-status-box" :class="validationState.class"><span class="pulse-dot"></span> {{ validationState.text }}</div>
                     </div>
                     <div class="kpi-bento-grid mt-4">
-                      <div class="bento-item"><span class="v">{{ studio.questions.length }}</span><span class="l">ACTIFS</span></div>
-                      <div class="bento-item highlight"><span class="v">{{ totalLogicPoints }}</span><span class="l">POINTS</span></div>
-                      <div class="bento-item"><span class="v">{{ studio.questionnaire.duree }}'</span><span class="l">DURÉE</span></div>
-                      <div class="bento-item"><span class="v">{{ selectedCandidatesIds.length }}</span><span class="l">CIBLÉS</span></div>
+                      <div class="bento-item"><span class="v">{{ studio.questions.length }}</span><span class="l">{{ t('campaigns.studio.hud.assets') }}</span></div>
+                      <div class="bento-item highlight"><span class="v">{{ totalLogicPoints }}</span><span class="l">{{ t('campaigns.studio.hud.points') }}</span></div>
+                      <div class="bento-item"><span class="v">{{ studio.questionnaire.duree }}'</span><span class="l">{{ t('campaigns.studio.hud.duration') }}</span></div>
+                      <div class="bento-item"><span class="v">{{ selectedCandidatesIds.length }}</span><span class="l">{{ t('campaigns.studio.hud.targeted') }}</span></div>
                     </div>
                     <div class="readiness-checklist mt-4">
-                      <div class="checklist-label mb-2">CHECKLIST DE DÉPLOIEMENT</div>
+                      <div class="checklist-label mb-2">{{ t('campaigns.studio.hud.checklist') }}</div>
                       <div v-for="check in deployChecklist" :key="check.label" class="check-item" :class="{ 'passed': check.passed }">
                         <i :class="check.passed ? 'fa-solid fa-check-circle text-success' : 'fa-regular fa-circle text-muted'"></i>
                         <span>{{ check.label }}</span>
@@ -672,18 +668,18 @@
                       <div class="d-flex gap-2">
                         <button @click="prevStep" :disabled="currentStep === 1" class="btn-step-nav back"><i class="fa-solid fa-arrow-left"></i></button>
                         <button v-if="currentStep < 4" @click="nextStep" class="btn-step-nav next flex-grow-1">ÉTAPE SUIVANTE</button>
-                        <button v-else @click="publishToProduction" :disabled="!isReadyToPublish" class="btn-step-deploy flex-grow-1">DÉPLOYER</button>
+                        <button v-else @click="publishToProduction" :disabled="!isReadyToPublish" class="btn-step-deploy flex-grow-1">{{ t('campaigns.studio.deploy') }}</button>
                       </div>
                     </div>
                   </div>
 
                   <div class="ia-coach-terminal mt-4">
                     <div class="robot-glow-container"><i class="fa-solid fa-robot text-white"></i></div>
-                    <div class="coach-text-v8"><h6>Coach EvaluaArchitect</h6><p class="m-0 small">{{ coachAIAdvice }}</p></div>
+                    <div class="coach-text-v8"><h6>{{ t('campaigns.studio.hud.coach') }}</h6><p class="m-0 small">{{ coachAIAdvice }}</p></div>
                   </div>
 
                   <div class="activity-feed-widget mt-4">
-                    <div class="feed-header">ACTIVITÉ RÉCENTE</div>
+                    <div class="feed-header">{{ t('campaigns.studio.hud.activity') }}</div>
                     <div v-for="act in studioActivityFeed" :key="act.id" class="feed-item">
                       <div class="feed-dot" :style="{ background: act.color }"></div>
                       <span class="feed-text small">{{ act.text }}</span>
@@ -706,34 +702,33 @@
         <div class="quantum-vault-window">
           <header class="qv-header">
             <div class="qv-title">
-              <h2 class="m-0 fw-900">Bibliothèque d'Actifs Certifiés</h2>
-              <p class="m-0 text-muted small">Panier temporaire : {{ selectedItemsInBank.length }} actifs sélectionnés</p>
+              <h2 class="m-0 fw-900">{{ t('campaigns.studio.bank.title') }}</h2>
+              <p class="m-0 text-muted small">{{ t('campaigns.studio.bank.basket').replace('{count}', selectedItemsInBank.length) }}</p>
             </div>
             <div class="qv-actions d-flex gap-3">
-              <button @click="modals.bank = false" class="btn-qv-cancel">ANNULER</button>
+              <button @click="modals.bank = false" class="btn-qv-cancel">{{ t('campaigns.studio.bank.cancel') }}</button>
               <button @click="confirmStudioSync" :disabled="selectedItemsInBank.length === 0" class="btn-qv-confirm">
-                <i class="fa-solid fa-bolt me-2"></i>IMPORTER ({{ selectedItemsInBank.length }})
+                <i class="fa-solid fa-bolt me-2"></i>{{ t('campaigns.studio.bank.import').replace('{count}', selectedItemsInBank.length) }}
               </button>
             </div>
           </header>
 
           <div class="qv-filter-tabs px-4 py-3 border-bottom">
             <div class="d-flex align-items-center flex-wrap gap-2 mb-2">
-              <span class="qv-filter-section-label">DIFFICULTÉ :</span>
+              <span class="qv-filter-section-label">{{ t('campaigns.studio.bank.diff.all').toUpperCase() }} :</span>
               <button v-for="diff in ['Tous', 'EXPERT', 'MEDIUM', 'EASY']" :key="diff"
                 :class="['qv-filter-btn', { active: bankDiffFilter === diff }]"
                 @click="bankDiffFilter = diff">{{ diff }}</button>
               <div class="vr mx-2 opacity-25" style="height:20px"></div>
-              <span class="ms-auto small text-muted fw-800">{{ filteredBankReference.length }} actifs trouvés</span>
+              <span class="ms-auto small text-muted fw-800">{{ t('campaigns.studio.bank.found').replace('{count}', filteredBankReference.length) }}</span>
             </div>
             <div class="d-flex align-items-center flex-wrap gap-2">
-              <span class="qv-filter-section-label">TYPE :</span>
-              <button :class="['qv-filter-btn', { active: bankTypeFilter === -1 }]"
-                @click="bankTypeFilter = -1">Tous types</button>
-              <button v-for="t in typeDefinitions" :key="t.val"
-                :class="['qv-filter-btn', 'qv-filter-btn-type', { active: bankTypeFilter === t.val }]"
-                @click="bankTypeFilter = t.val">
-                <i :class="t.icon + ' me-1'"></i>{{ t.label }}
+              <span class="qv-filter-section-label">{{ t('campaigns.studio.bank.type') }} :</span>
+              <button :class="['qv-filter-btn', { active: bankTypeFilter === -1 }]" @click="bankTypeFilter = -1">{{ t('campaigns.studio.bank.allTypes') }}</button>
+              <button v-for="t_def in typeDefinitions" :key="t_def.val"
+                :class="['qv-filter-btn', 'qv-filter-btn-type', { active: bankTypeFilter === t_def.val }]"
+                @click="bankTypeFilter = t_def.val">
+                <i :class="t_def.icon + ' me-1'"></i>{{ t_def.label }}
               </button>
             </div>
           </div>
@@ -741,21 +736,19 @@
           <div class="qv-layout">
             <aside class="qv-sidebar">
               <div class="qv-search-area mb-4">
-                <label class="small fw-800 text-muted d-block mb-2">RECHERCHE</label>
-                <input type="text" v-model="searchBankQuery" class="enigma-field" placeholder="SQL, Kafka, Vue...">
+                <label class="small fw-800 text-muted d-block mb-2">{{ t('campaigns.studio.bank.search') }}</label>
+                <input type="text" v-model="searchBankQuery" class="enigma-field" :placeholder="t('campaigns.studio.bank.searchPlaceholder')">
               </div>
 
               <div class="mb-4">
-                <label class="small fw-800 text-muted d-block mb-2">THÈME</label>
+                <label class="small fw-800 text-muted d-block mb-2">{{ t('campaigns.studio.bank.theme') }}</label>
                 <div class="d-flex flex-column gap-1">
-                  <button :class="['qv-cat-btn', { active: bankCatFilter === 'Toutes' }]"
-                    @click="bankCatFilter = 'Toutes'">
-                    <i class="fa-solid fa-layer-group me-2 text-muted" style="font-size:0.65rem"></i>Tous
+                  <button :class="['qv-cat-btn', { active: bankCatFilter === 'Toutes' }]" @click="bankCatFilter = 'Toutes'">
+                    <i class="fa-solid fa-layer-group me-2 text-muted" style="font-size:0.65rem"></i>{{ t('campaigns.studio.bank.allThemes') }}
                   </button>
                   <template v-if="categoriesList.length === 0">
                     <div v-for="th in themesData" :key="th.nom">
-                      <button :class="['qv-cat-btn', { active: bankCatFilter === th.nom }]"
-                        @click="bankCatFilter = th.nom">
+                      <button :class="['qv-cat-btn', { active: bankCatFilter === th.nom }]" @click="bankCatFilter = th.nom">
                         <i class="fa-solid fa-tag me-2 text-amber" style="font-size:0.65rem"></i>{{ th.nom }}
                       </button>
                       <div v-if="th.sousTh && th.sousTh.length > 0" class="ms-3">
@@ -769,8 +762,7 @@
                   </template>
                   <template v-else>
                     <div v-for="cat in categoriesList" :key="cat.id">
-                      <button :class="['qv-cat-btn', { active: bankCatFilter === cat.nom }]"
-                        @click="bankCatFilter = cat.nom">
+                      <button :class="['qv-cat-btn', { active: bankCatFilter === cat.nom }]" @click="bankCatFilter = cat.nom">
                         <i class="fa-solid fa-tag me-2 text-amber" style="font-size:0.65rem"></i>{{ cat.nom }}
                       </button>
                       <div v-if="cat.sousCategories && cat.sousCategories.length > 0" class="ms-3">
@@ -787,19 +779,19 @@
 
               <div class="qv-bank-stats mt-auto p-4 bg-light rounded-4">
                 <div class="d-flex justify-content-between mb-2">
-                  <span class="small text-muted fw-700">Total actifs</span>
+                  <span class="small text-muted fw-700">{{ t('campaigns.studio.bank.stats.total') }}</span>
                   <strong>{{ bankGlobalReference.length }}</strong>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
-                  <span class="small text-muted fw-700">Expert</span>
+                  <span class="small text-muted fw-700">{{ t('campaigns.studio.bank.stats.expert') }}</span>
                   <strong class="text-danger">{{ bankGlobalReference.filter(q => q.difficulty === 'EXPERT').length }}</strong>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
-                  <span class="small text-muted fw-700">Medium</span>
+                  <span class="small text-muted fw-700">{{ t('campaigns.studio.bank.stats.medium') }}</span>
                   <strong class="text-amber">{{ bankGlobalReference.filter(q => q.difficulty === 'MEDIUM').length }}</strong>
                 </div>
                 <div class="d-flex justify-content-between">
-                  <span class="small text-muted fw-700">Easy</span>
+                  <span class="small text-muted fw-700">{{ t('campaigns.studio.bank.stats.easy') }}</span>
                   <strong class="text-success">{{ bankGlobalReference.filter(q => q.difficulty === 'EASY').length }}</strong>
                 </div>
               </div>
@@ -808,7 +800,7 @@
             <section class="qv-list custom-scrollbar">
               <div v-if="filteredBankReference.length === 0" class="text-center py-5 text-muted">
                 <i class="fa-solid fa-box-open fa-2x mb-3"></i>
-                <p class="small fw-700">Aucun actif trouvé pour cette sélection.</p>
+                <p class="small fw-700">{{ t('campaigns.studio.bank.empty') }}</p>
               </div>
               <div v-for="qRef in filteredBankReference" :key="qRef.id"
                 @click="currentInspectedBankItem = qRef"
@@ -829,7 +821,7 @@
                   <span v-if="qRef.sousTheme"> › {{ qRef.sousTheme }}</span>
                 </div>
                 <div class="qv-item-footer mt-3 d-flex justify-content-between align-items-center">
-                  <span><strong>{{ qRef.poids || qRef.points }}</strong> PTS</span>
+                  <span><strong>{{ qRef.poids || qRef.points }}</strong> {{ t('campaigns.studio.bank.pts') }}</span>
                   <span class="small text-muted">{{ getTypeInfo(qRef.type).label }}</span>
                 </div>
               </div>
@@ -837,57 +829,44 @@
 
             <section class="qv-inspector">
               <div v-if="currentInspectedBankItem" class="p-4 animate__animated animate__fadeIn h-100 d-flex flex-column">
-                <h5 class="fw-900 mb-4">Aperçu Technique</h5>
+                <h5 class="fw-900 mb-4">{{ t('campaigns.studio.bank.preview') }}</h5>
                 <div class="d-flex gap-2 flex-wrap mb-4">
-                  <span class="qv-badge" :class="(currentInspectedBankItem.difficulty || 'EXPERT').toLowerCase()">
-                    {{ currentInspectedBankItem.difficulty || 'EXPERT' }}
-                  </span>
-                  <span class="inspector-type-badge">
-                    <i :class="getTypeInfo(currentInspectedBankItem.type).icon + ' me-1'"></i>
-                    {{ getTypeInfo(currentInspectedBankItem.type).label }}
-                  </span>
+                  <span class="qv-badge" :class="(currentInspectedBankItem.difficulty || 'EXPERT').toLowerCase()">{{ currentInspectedBankItem.difficulty || 'EXPERT' }}</span>
+                  <span class="inspector-type-badge"><i :class="getTypeInfo(currentInspectedBankItem.type).icon + ' me-1'"></i>{{ getTypeInfo(currentInspectedBankItem.type).label }}</span>
                   <span v-if="currentInspectedBankItem.theme || currentInspectedBankItem.categorie" class="inspector-cat-badge">
-                    <i class="fa-solid fa-tag me-1"></i>
-                    {{ currentInspectedBankItem.theme || currentInspectedBankItem.categorie }}
+                    <i class="fa-solid fa-tag me-1"></i>{{ currentInspectedBankItem.theme || currentInspectedBankItem.categorie }}
                   </span>
                 </div>
                 <div class="device-mockup-v8 p-4 mb-4 flex-grow-1">
                   <p class="fw-bold mb-3">{{ currentInspectedBankItem.texte || currentInspectedBankItem.enonce }}</p>
                   <hr>
                   <div v-if="currentInspectedBankItem.reponses && currentInspectedBankItem.reponses.length > 0" class="mb-3">
-                    <p class="small fw-800 text-muted mb-2">OPTIONS :</p>
-                    <div v-for="(rep, i) in currentInspectedBankItem.reponses" :key="i"
-                      class="d-flex align-items-center gap-2 mb-1 small">
+                    <p class="small fw-800 text-muted mb-2">{{ t('campaigns.studio.bank.options') }}</p>
+                    <div v-for="(rep, i) in currentInspectedBankItem.reponses" :key="i" class="d-flex align-items-center gap-2 mb-1 small">
                       <i :class="rep.estCorrecte ? 'fa-solid fa-check-circle text-success' : 'fa-regular fa-circle text-muted'"></i>
                       <span>{{ rep.texte }}</span>
                     </div>
                   </div>
                   <p v-if="currentInspectedBankItem.explication || currentInspectedBankItem.bonneReponse" class="small text-muted mb-0">
-                    <strong>Explication :</strong> {{ currentInspectedBankItem.explication || currentInspectedBankItem.bonneReponse }}
+                    <strong>{{ t('campaigns.studio.bank.explanation') }}</strong> {{ currentInspectedBankItem.explication || currentInspectedBankItem.bonneReponse }}
                   </p>
                 </div>
                 <div class="inspector-stats-row mb-4">
-                  <div class="inspector-stat-box">
-                    <span class="v">{{ currentInspectedBankItem.poids || currentInspectedBankItem.points }}</span>
-                    <span class="l">PTS</span>
-                  </div>
-                  <div v-if="currentInspectedBankItem.duree" class="inspector-stat-box">
-                    <span class="v">{{ currentInspectedBankItem.duree }}s</span>
-                    <span class="l">DURÉE</span>
-                  </div>
+                  <div class="inspector-stat-box"><span class="v">{{ currentInspectedBankItem.poids || currentInspectedBankItem.points }}</span><span class="l">{{ t('campaigns.studio.bank.pts') }}</span></div>
+                  <div v-if="currentInspectedBankItem.duree" class="inspector-stat-box"><span class="v">{{ currentInspectedBankItem.duree }}s</span><span class="l">{{ t('campaigns.studio.bank.duration') }}</span></div>
                 </div>
                 <button @click="toggleInBankPool(currentInspectedBankItem)" class="btn-enigma-primary w-100">
                   <div class="btn-content">
                     <i :class="isCocheeInBank(currentInspectedBankItem.id) ? 'fa-solid fa-check me-2' : 'fa-solid fa-plus me-2'"></i>
-                    {{ isCocheeInBank(currentInspectedBankItem.id) ? 'Retirer du panier' : 'Ajouter au panier' }}
+                    {{ isCocheeInBank(currentInspectedBankItem.id) ? t('campaigns.studio.bank.removeCart') : t('campaigns.studio.bank.addCart') }}
                   </div>
                   <div class="btn-glow"></div>
                 </button>
               </div>
               <div v-else class="p-5 text-center text-muted d-flex flex-column align-items-center justify-content-center h-100">
                 <i class="fa-solid fa-hand-pointer fa-2x mb-3 text-muted"></i>
-                <p class="small fw-700">Cliquez sur un actif pour l'inspecter</p>
-                <p class="small opacity-50">Vous pouvez aussi cocher directement depuis la liste.</p>
+                <p class="small fw-700">{{ t('campaigns.studio.bank.clickToInspect') }}</p>
+                <p class="small opacity-50">{{ t('campaigns.studio.bank.checkHint') }}</p>
               </div>
             </section>
           </div>
@@ -900,25 +879,25 @@
       <div v-if="modals.quickAdd" class="quantum-vault-overlay" @click.self="closeQuickAdd">
         <div class="quick-add-modal animate__animated animate__zoomIn animate__faster">
           <div class="d-flex justify-content-between align-items-center mb-4">
-            <h5 class="fw-900 m-0">{{ editingQuestion ? 'Modifier la Question' : 'Créer une Question' }}</h5>
+            <h5 class="fw-900 m-0">{{ editingQuestion ? t('campaigns.studio.quickAdd.editTitle') : t('campaigns.studio.quickAdd.createTitle') }}</h5>
             <button @click="closeQuickAdd" class="btn-icon-sm"><i class="fa-solid fa-xmark"></i></button>
           </div>
           <div class="row g-4">
             <div class="col-12">
-              <div class="enigma-input-wrap"><label>ÉNONCÉ *</label>
-                <textarea v-model="newQuestion.texte" class="enigma-field" rows="3" placeholder="Quelle est la différence entre..."></textarea>
+              <div class="enigma-input-wrap"><label>{{ t('campaigns.studio.quickAdd.enonce') }}</label>
+                <textarea v-model="newQuestion.texte" class="enigma-field" rows="3" :placeholder="t('campaigns.studio.quickAdd.enocePlaceholder')"></textarea>
               </div>
             </div>
             <div class="col-md-6">
-              <div class="enigma-input-wrap"><label>POINTS</label>
+              <div class="enigma-input-wrap"><label>{{ t('campaigns.studio.quickAdd.points') }}</label>
                 <input type="number" v-model.number="newQuestion.poids" class="enigma-field" min="1" max="100">
               </div>
             </div>
             <div class="col-md-6">
               <div class="enigma-input-wrap">
-                <label><i class="fa-solid fa-stopwatch me-1 text-amber"></i> MINUTEUR (SECONDES)</label>
+                <label><i class="fa-solid fa-stopwatch me-1 text-amber"></i> {{ t('campaigns.studio.quickAdd.timer') }}</label>
                 <div class="timer-modal-row">
-                  <input type="number" v-model.number="newQuestion.duree" class="enigma-field" placeholder="Ex: 60 (0 = pas de minuteur)" min="0">
+                  <input type="number" v-model.number="newQuestion.duree" class="enigma-field" :placeholder="t('campaigns.studio.quickAdd.timerPlaceholder')" min="0">
                   <span v-if="newQuestion.duree > 0" class="timer-modal-preview">
                     <i class="fa-solid fa-stopwatch text-amber me-1"></i>{{ Math.floor(newQuestion.duree/60) }}m{{ newQuestion.duree % 60 }}s
                   </span>
@@ -926,29 +905,29 @@
               </div>
             </div>
             <div class="col-md-6">
-              <div class="enigma-input-wrap"><label>DIFFICULTÉ</label>
+              <div class="enigma-input-wrap"><label>{{ t('campaigns.studio.quickAdd.difficulty') }}</label>
                 <select v-model="newQuestion.difficulty" class="enigma-field">
-                  <option value="EASY">Facile</option>
-                  <option value="MEDIUM">Moyen</option>
-                  <option value="EXPERT">Expert</option>
+                  <option value="EASY">{{ t('campaigns.studio.quickAdd.difficulty_options.easy') }}</option>
+                  <option value="MEDIUM">{{ t('campaigns.studio.quickAdd.difficulty_options.medium') }}</option>
+                  <option value="EXPERT">{{ t('campaigns.studio.quickAdd.difficulty_options.expert') }}</option>
                 </select>
               </div>
             </div>
             <div class="col-md-6">
-              <div class="enigma-input-wrap"><label>TYPE</label>
+              <div class="enigma-input-wrap"><label>{{ t('campaigns.studio.quickAdd.type') }}</label>
                 <select v-model="newQuestion.type" class="enigma-field">
-                  <option v-for="t in typeDefinitions" :key="t.val" :value="t.val">{{ t.label }}</option>
+                  <option v-for="t_def in typeDefinitions" :key="t_def.val" :value="t_def.val">{{ t_def.label }}</option>
                 </select>
               </div>
             </div>
             <div class="col-12">
-              <div class="enigma-input-wrap"><label>EXPLICATION (OPTIONNEL)</label>
-                <textarea v-model="newQuestion.explication" class="enigma-field" rows="2" placeholder="Réponse attendue ou justification..."></textarea>
+              <div class="enigma-input-wrap"><label>{{ t('campaigns.studio.quickAdd.explanation') }}</label>
+                <textarea v-model="newQuestion.explication" class="enigma-field" rows="2" :placeholder="t('campaigns.studio.quickAdd.expPlaceholder')"></textarea>
               </div>
             </div>
             <div class="col-12 d-flex gap-3 justify-content-end mt-2">
-              <button @click="closeQuickAdd" class="btn-qv-cancel">ANNULER</button>
-              <button @click="saveQuestion" class="btn-qv-confirm">{{ editingQuestion ? 'MODIFIER' : 'AJOUTER' }}</button>
+              <button @click="closeQuickAdd" class="btn-qv-cancel">{{ t('cancel') }}</button>
+              <button @click="saveQuestion" class="btn-qv-confirm">{{ editingQuestion ? t('campaigns.studio.quickAdd.update') : t('campaigns.studio.quickAdd.add') }}</button>
             </div>
           </div>
         </div>
@@ -960,14 +939,12 @@
       <div v-if="modals.shortcuts" class="quantum-vault-overlay" @click.self="modals.shortcuts = false">
         <div class="shortcuts-modal animate__animated animate__zoomIn animate__faster">
           <div class="d-flex justify-content-between align-items-center mb-4">
-            <h5 class="fw-900 m-0"><i class="fa-solid fa-keyboard me-2 text-amber"></i>Raccourcis Clavier</h5>
+            <h5 class="fw-900 m-0"><i class="fa-solid fa-keyboard me-2 text-amber"></i>{{ t('campaigns.studio.shortcuts') }}</h5>
             <button @click="modals.shortcuts = false" class="btn-icon-sm"><i class="fa-solid fa-xmark"></i></button>
           </div>
           <div class="shortcuts-grid">
             <div class="shortcut-item" v-for="s in keyboardShortcuts" :key="s.label">
-              <div class="d-flex gap-2">
-                <kbd v-for="k in s.keys" :key="k">{{ k }}</kbd>
-              </div>
+              <div class="d-flex gap-2"><kbd v-for="k in s.keys" :key="k">{{ k }}</kbd></div>
               <span class="small text-muted">{{ s.label }}</span>
             </div>
           </div>
@@ -983,8 +960,8 @@
           <h5 class="fw-900 mb-2">{{ confirmDialog.title }}</h5>
           <p class="text-muted small mb-4">{{ confirmDialog.message }}</p>
           <div class="d-flex gap-3 justify-content-center">
-            <button @click="confirmDialog.show = false" class="btn-qv-cancel">ANNULER</button>
-            <button @click="runConfirmDialog" class="btn-confirm-danger">CONFIRMER</button>
+            <button @click="confirmDialog.show = false" class="btn-qv-cancel">{{ t('cancel') }}</button>
+            <button @click="runConfirmDialog" class="btn-confirm-danger">{{ t('confirm') }}</button>
           </div>
         </div>
       </div>
@@ -1002,8 +979,14 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import api from '@/services/api';
 import draggable from 'vuedraggable';
+import Swal from 'sweetalert2';
+
+/* ─── i18n ───────────────────────────────────────────────────────── */
+const { t } = useI18n();
 
 /* ─── TYPES ─────────────────────────────────────────────────────── */
 const typeDefinitions = [
@@ -1026,6 +1009,7 @@ const themesData = [
 ];
 
 /* ─── ÉTAT GLOBAL ─────────────────────────────────────────────── */
+const router          = useRouter();
 const isStudioMode    = ref(false);
 const loading         = ref(true);
 const currentStep     = ref(1);
@@ -1106,12 +1090,12 @@ const studio = reactive({
 
 const newQuestion = reactive({ texte: '', poids: 10, difficulty: 'MEDIUM', explication: '', duree: 0, type: 0 });
 
-const steps = [
-  { id: 1, label: 'Structure' },
-  { id: 2, label: 'Ingénierie' },
-  { id: 3, label: 'Ciblage' },
-  { id: 4, label: 'Matrix' },
-];
+const steps = computed(() => [
+  { id: 1, label: t('campaigns.studio.steps.structure') },
+  { id: 2, label: t('campaigns.studio.steps.engineering') },
+  { id: 3, label: t('campaigns.studio.steps.targeting') },
+  { id: 4, label: t('campaigns.studio.steps.matrix') },
+]);
 
 const keyboardShortcuts = [
   { keys: ['Ctrl', 'S'],     label: 'Sauvegarder le brouillon' },
@@ -1134,19 +1118,32 @@ const dynamicSubCategories = computed(() => {
   return found ? found.sousTh.map((s, i) => ({ id: i, nom: s })) : [];
 });
 
-/* ─── COMPUTED : questions avec minuteur ─────────────────────── */
+const selectedSubThemes = computed(() => {
+  if (!studio.questionnaire.sousTheme) return [];
+  return studio.questionnaire.sousTheme.split(',').map(s => s.trim()).filter(Boolean);
+});
+
+const toggleSubTheme = (subName) => {
+  let current = [...selectedSubThemes.value];
+  if (current.includes(subName)) {
+    current = current.filter(s => s !== subName);
+  } else {
+    current.push(subName);
+  }
+  studio.questionnaire.sousTheme = current.join(', ');
+};
+
 const questionsWithTimer = computed(() =>
   studio.questions.filter(q => q.duree && q.duree > 0).length
 );
 
-/* ─── TIMER BLUR HANDLER ─────────────────────────────────────── */
 const handleTimerBlur = (element) => {
   if (!element.duree || element.duree <= 0) {
     element._showTimer = false;
   }
 };
 
-/* ─── DATA FETCHING ────────nafs les qestion walaw ───────────────────────────────────── */
+/* ─── DATA FETCHING ─────────────────────────────────────────────── */
 const fetchInitialData = async () => {
   loading.value = true;
   try {
@@ -1194,13 +1191,13 @@ const getDifficultyFromPoints = (pts) => {
   return 'EASY';
 };
 
-const getTypeInfo = (val) => typeDefinitions.find(t => t.val === val) || typeDefinitions[0];
+const getTypeInfo = (val) => typeDefinitions.find(t_def => t_def.val === val) || typeDefinitions[0];
 
 /* ─── DASHBOARD LOGIC ─────────────────────────────────────────── */
 const filterTabs = computed(() => [
-  { label: 'Tout',      value: 'all', count: campaigns.value.length },
-  { label: 'Actives',   value: 1,     count: campaigns.value.filter(c => c.statut === 1).length },
-  { label: 'Terminées', value: 2,     count: campaigns.value.filter(c => c.statut === 2).length },
+  { label: t('campaigns.filterTabs.all'),    value: 'all', count: campaigns.value.length },
+  { label: t('campaigns.filterTabs.active'), value: 1,     count: campaigns.value.filter(c => c.statut === 1).length },
+  { label: t('campaigns.filterTabs.ended'),  value: 2,     count: campaigns.value.filter(c => c.statut === 2).length },
 ]);
 
 const filteredCampaigns = computed(() => {
@@ -1218,15 +1215,15 @@ const filteredCampaigns = computed(() => {
 });
 
 const kpiStats = computed(() => [
-  { label: 'Sessions',  value: campaigns.value.length,           icon: 'fa-solid fa-layer-group', color: '#f59e0b', bg: '#fffbeb', trend: 12 },
-  { label: 'Candidats', value: candidateMasterPool.value.length, icon: 'fa-solid fa-user-tie',    color: '#6366f1', bg: '#eef2ff', trend: 8  },
-  { label: 'Questions', value: bankGlobalReference.value.length, icon: 'fa-solid fa-database',    color: '#10b981', bg: '#ecfdf5', trend: -2 },
-  { label: 'Santé Moy.',value: '94%',                            icon: 'fa-solid fa-chart-line',  color: '#f43f5e', bg: '#fff1f2', trend: 5  },
+  { label: t('dashboard.kpis.campaigns'),  value: campaigns.value.length,           icon: 'fa-solid fa-layer-group', color: '#f59e0b', bg: '#fffbeb', trend: 12 },
+  { label: t('dashboard.kpis.candidates'), value: candidateMasterPool.value.length,  icon: 'fa-solid fa-user-tie',    color: '#6366f1', bg: '#eef2ff', trend: 8  },
+  { label: t('dashboard.kpis.evaluations'),value: bankGlobalReference.value.length,  icon: 'fa-solid fa-database',    color: '#10b981', bg: '#ecfdf5', trend: -2 },
+  { label: 'Santé Moy.',                   value: '94%',                             icon: 'fa-solid fa-chart-line',  color: '#f43f5e', bg: '#fff1f2', trend: 5  },
 ]);
 
 const donutSegments = computed(() => {
   const colors  = ['#f59e0b', '#6366f1', '#10b981', '#f43f5e', '#06b6d4'];
-  const labels  = ['Planifié', 'Active', 'Terminée'];
+  const labels  = [t('campaigns.status.planned'), t('campaigns.status.active'), t('campaigns.status.ended')];
   const total   = campaigns.value.length || 1;
   const circ    = 283;
   const startOffset = circ / 4;
@@ -1242,7 +1239,58 @@ const donutSegments = computed(() => {
 });
 
 /* ─── STUDIO CORE ─────────────────────────────────────────────── */
-const enterStudioMode = (campaign = null) => {
+const enterStudioMode = async (campaign = null) => {
+  if (!campaign) {
+    try {
+      await api.get('/Usage/can-create-campaign');
+    } catch (limitErr) {
+      if (limitErr.response && limitErr.response.status === 403) {
+        const secondsLeft = limitErr.response.data.retryAfterSeconds || 0;
+        const h = Math.floor(secondsLeft / 3600);
+        const m = Math.floor((secondsLeft % 3600) / 60);
+        const s = secondsLeft % 60;
+        const timeStr = h > 0 ? `${h}h ${m}m ${s}s` : `${m}m ${s}s`;
+
+        Swal.fire({
+          title: '<span style="color:#0f172a">Limite de déploiement atteinte</span>',
+          html: `
+            <div class="p-3 text-center">
+              <i class="fa-solid fa-rocket-launch fa-3x text-amber mb-3 animate__animated animate__pulse animate__infinite"></i>
+              <p style="font-weight: 600; color: #64748b; font-size: 15px;">
+                Le plan Starter est limité à <b>3 architectures</b>. 
+              </p>
+              <div class="my-3 p-3 rounded-4" style="background: #fff1f2; border: 1px solid #fecdd3;">
+                <p class="mb-0 fw-800" style="font-size: 14px; color: #e11d48;">
+                  <i class="fa-solid fa-clock-rotate-left me-2"></i>
+                  Réessayez dans : <span class="badge bg-danger">${timeStr}</span>
+                </p>
+              </div>
+              <div class="my-4 p-3 rounded-4" style="background: #fffbeb; border: 1px solid #fef3c7;">
+                <p class="mb-0" style="font-size: 13px; color: #b45309;">
+                   Passez à <b>EvaluaTech Go</b> pour supprimer ce délai et créer des architectures illimitées.
+                </p>
+              </div>
+            </div>
+          `,
+          showCancelButton: true,
+          confirmButtonText: 'Passer à EvaluaTech Go',
+          cancelButtonText: 'Plus tard',
+          confirmButtonColor: '#eab308',
+          cancelButtonColor: '#f1f5f9',
+          customClass: {
+            popup: 'rounded-5 border-0 shadow-lg',
+            confirmButton: 'rounded-4 fw-bold px-4 py-2 text-dark',
+            cancelButton: 'rounded-4 fw-bold px-4 py-2 text-muted'
+          }
+        }).then((result) => {
+          if (result.isConfirmed) { router.push('/pricing'); }
+        });
+        return;
+      }
+      console.error("Usage Check Error:", limitErr);
+    }
+  }
+
   if (campaign) {
     Object.assign(studio.campagne, campaign);
     studio.questionnaire.id        = campaign.questionnaireId;
@@ -1269,14 +1317,14 @@ const enterStudioMode = (campaign = null) => {
   isStudioMode.value   = true;
   showValidation.value = false;
   lastSaved.value      = false;
-  studioActivityFeed.value = [{ id: Date.now(), text: 'Studio initialisé', color: '#10b981', time: 'À l\'instant' }];
+  studioActivityFeed.value = [{ id: Date.now(), text: t('campaigns.studio.messages.initFeed'), color: '#10b981', time: 'À l\'instant' }];
 };
 
 const exitStudio = () => {
   if (studio.questionnaire.titre || studio.questions.length > 0) {
     showConfirmDialog(
-      'Quitter le Studio ?',
-      'Les modifications non déployées seront perdues.',
+      t('campaigns.studio.messages.exitConfirmTitle'),
+      t('campaigns.studio.messages.exitConfirmMsg'),
       'fa-solid fa-triangle-exclamation',
       () => { isStudioMode.value = false; }
     );
@@ -1309,11 +1357,11 @@ watch(
       const date = new Date(newDate);
       date.setMinutes(date.getMinutes() + parseInt(newDuree));
       const y   = date.getFullYear();
-      const m   = String(date.getMonth() + 1).padStart(2, '0');
+      const mo  = String(date.getMonth() + 1).padStart(2, '0');
       const d   = String(date.getDate()).padStart(2, '0');
       const h   = String(date.getHours()).padStart(2, '0');
       const min = String(date.getMinutes()).padStart(2, '0');
-      studio.campagne.dateFin = `${y}-${m}-${d}T${h}:${min}`;
+      studio.campagne.dateFin = `${y}-${mo}-${d}T${h}:${min}`;
     }
   }
 );
@@ -1333,35 +1381,33 @@ const healthRingStyle  = computed(() => {
   const circ = 2 * Math.PI * 19;
   return { strokeDasharray: `${circ} ${circ}`, strokeDashoffset: circ - (architectureHealth.value / 100) * circ, stroke: healthColor.value };
 });
-const stepperProgress  = computed(() => ((currentStep.value - 1) / (steps.length - 1)) * 100);
+const stepperProgress  = computed(() => ((currentStep.value - 1) / (steps.value.length - 1)) * 100);
 const totalLogicPoints = computed(() => studio.questions.reduce((a, b) => a + (Number(b.poids || b.points) || 0), 0));
 const isReadyToPublish = computed(() => architectureHealth.value >= 70);
 const coachAIAdvice    = computed(() => {
-  if (!studio.questionnaire.titre)              return 'Commencez par nommer votre instance UML.';
+  if (!studio.questionnaire.titre)              return t('campaigns.studio.hud.status.titleMissing');
   if (studio.questions.length < 3)              return 'Ajoutez au moins 3 actifs pour stabiliser la structure.';
   if (selectedCandidatesIds.value.length === 0) return 'Ciblez des profils pour permettre le déploiement.';
   if (!studio.campagne.dateDebut)               return 'Définissez les dates d\'ouverture du terminal.';
   return 'Architecture certifiée prête pour le déploiement SQL.';
 });
 const validationState = computed(() => {
-  if (!studio.questionnaire.titre) return { text: 'TITRE MANQUANT', class: 'cl-err' };
-  if (studio.questions.length < 3) return { text: 'PUITS FAIBLE',   class: 'cl-warn' };
-  return { text: 'SYSTÈME VALIDE', class: 'cl-success' };
+  if (!studio.questionnaire.titre) return { text: t('campaigns.studio.hud.status.titleMissing'),  class: 'cl-err' };
+  if (studio.questions.length < 3) return { text: t('campaigns.studio.hud.status.weakStructure'), class: 'cl-warn' };
+  return { text: t('campaigns.studio.hud.status.valid'), class: 'cl-success' };
 });
 const deployChecklist = computed(() => [
-  { label: 'Titre défini',        passed: studio.questionnaire.titre.length > 2 },
-  { label: 'Minimum 3 questions', passed: studio.questions.length >= 3 },
-  { label: 'Candidats ciblés',    passed: selectedCandidatesIds.value.length > 0 },
-  { label: 'Date d\'ouverture',   passed: !!studio.campagne.dateDebut },
+  { label: t('campaigns.studio.hud.checks.title'),      passed: studio.questionnaire.titre.length > 2 },
+  { label: t('campaigns.studio.hud.checks.questions'),   passed: studio.questions.length >= 3 },
+  { label: t('campaigns.studio.hud.checks.candidates'),  passed: selectedCandidatesIds.value.length > 0 },
+  { label: t('campaigns.studio.hud.checks.date'),        passed: !!studio.campagne.dateDebut },
 ]);
 
 /* ─── BANK LOGIC ──────────────────────────────────────────────── */
 const filteredBankReference = computed(() => {
   let list = bankGlobalReference.value;
   if (searchBankQuery.value)
-    list = list.filter(q =>
-      (q.texte || q.enonce || '').toLowerCase().includes(searchBankQuery.value.toLowerCase())
-    );
+    list = list.filter(q => (q.texte || q.enonce || '').toLowerCase().includes(searchBankQuery.value.toLowerCase()));
   if (bankDiffFilter.value !== 'Tous')
     list = list.filter(q => q.difficulty === bankDiffFilter.value);
   if (bankTypeFilter.value !== -1)
@@ -1380,15 +1426,10 @@ const filteredCandidatePool = computed(() => {
     c.name?.toLowerCase().includes(searchCandQuery.value.toLowerCase()) ||
     c.email?.toLowerCase().includes(searchCandQuery.value.toLowerCase())
   );
-  
-  // Supprimer les doublons par Email pour le ciblage (Step 3)
   const uniquePool = [];
   const map = new Map();
   for (const item of pool) {
-    if (!map.has(item.email)) {
-      map.set(item.email, true);
-      uniquePool.push(item);
-    }
+    if (!map.has(item.email)) { map.set(item.email, true); uniquePool.push(item); }
   }
   return uniquePool;
 });
@@ -1414,47 +1455,30 @@ const toggleInBankPool = (q)  => {
 
 const confirmStudioSync = () => {
   const added = selectedItemsInBank.value.map(q => {
-    // ✅ FIX CRITIQUE: Les questions de la banque ont q.choix (string[]) mais pas q.reponses
-    // On doit convertir q.choix → reponses pour que publishToProduction puisse les utiliser
     const correctOpts = (q.bonneReponse || '').split('|').map(s => s.trim()).filter(Boolean);
     const reponses = q.reponses && q.reponses.length > 0
       ? JSON.parse(JSON.stringify(q.reponses))
-      : (q.choix || []).map(opt => ({
-          texte: opt,
-          estCorrecte: correctOpts.includes(opt.trim())
-        }));
-
+      : (q.choix || []).map(opt => ({ texte: opt, estCorrecte: correctOpts.includes(opt.trim()) }));
     return {
-      texte:       q.texte || q.enonce,
-      poids:       q.poids || q.points || 10,
-      difficulty:  q.difficulty || 'EXPERT',
-      explication: q.explication || q.bonneReponse || '',
-      bonneReponse: q.bonneReponse || '',
-      choix:       q.choix || [],
-      type:        q.type ?? 0,
-      theme:       q.theme || q.categorie || '',
-      sousTheme:   q.sousTheme || '',
-      duree:       q.duree || 0,
-      id:          `temp-${Math.random()}`,
-      _showTimer:  false,
-      reponses,
+      texte: q.texte || q.enonce, poids: q.poids || q.points || 10,
+      difficulty: q.difficulty || 'EXPERT', explication: q.explication || q.bonneReponse || '',
+      bonneReponse: q.bonneReponse || '', choix: q.choix || [],
+      type: q.type ?? 0, theme: q.theme || q.categorie || '',
+      sousTheme: q.sousTheme || '', duree: q.duree || 0,
+      id: `temp-${Math.random()}`, _showTimer: false, reponses,
+      originalId: q.id,
     };
   });
   studio.questions.push(...added);
   modals.bank = false;
   addFeedItem(`${added.length} actif(s) importé(s)`, '#f59e0b');
-  showPulseToast('Actifs synchronisés', 'success', 'fa-solid fa-bolt');
+  showPulseToast(t('campaigns.studio.bank.synced'), 'success', 'fa-solid fa-bolt');
 };
 
 /* ─── TIMER INDIVIDUEL PAR QUESTION ──────────────────────────── */
 const toggleQuestionTimer = (element) => {
-  if (element.duree > 0) {
-    element.duree      = 0;
-    element._showTimer = false;
-  } else {
-    element.duree      = 60;
-    element._showTimer = true;
-  }
+  if (element.duree > 0) { element.duree = 0; element._showTimer = false; }
+  else { element.duree = 60; element._showTimer = true; }
 };
 
 /* ─── CANDIDATES ──────────────────────────────────────────────── */
@@ -1479,62 +1503,67 @@ const publishToProduction = async () => {
   if (!isReadyToPublish.value) return;
   isPublishing.value = true;
   try {
+    const existingQuestionIds = studio.questions
+      .map(q => {
+        if (q.originalId && q.originalId.length === 36) return q.originalId;
+        if (q.id && q.id.length === 36 && !q.id.startsWith('temp-') && !q.id.startsWith('custom-')) return q.id;
+        return null;
+      })
+      .filter(Boolean);
+
     const qResp = await api.post(`/Questionnaires`, {
-      Titre:         studio.questionnaire.titre,
-      Description:   studio.questionnaire.description || "",
-      DureeMinutes:  studio.questionnaire.duree || 60,
-      ScoreReussite: studio.questionnaire.scoreReussite || 70,
-      Theme:         studio.questionnaire.theme || "",
-      SousTheme:     studio.questionnaire.sousTheme || "",
+      Titre: studio.questionnaire.titre, Description: studio.questionnaire.description || "",
+      DureeMinutes: studio.questionnaire.duree || 60, ScoreReussite: studio.questionnaire.scoreReussite || 70,
+      Theme: studio.questionnaire.theme || "", SousTheme: studio.questionnaire.sousTheme || "",
+      QuestionIds: existingQuestionIds
     });
     const qId = qResp.data.id;
 
+    const newQuestions = studio.questions.filter(q => {
+      const isExisting = (q.originalId && q.originalId.length === 36) ||
+                         (q.id && q.id.length === 36 && !q.id.startsWith('temp-') && !q.id.startsWith('custom-'));
+      return !isExisting;
+    });
+
     await Promise.all(
-      studio.questions.map(q => {
-        // ✅ FIX CRITIQUE: q.reponses peut être [] (tableau vide = truthy!) → vérifier la longueur
+      newQuestions.map(q => {
         const hasReponses = q.reponses && q.reponses.length > 0;
         const choixFinal = hasReponses
           ? q.reponses.map(r => r.texte || r.Texte).filter(Boolean)
           : (q.choix || q.Options || []);
-
         const bonneReponseFinal = hasReponses
           ? q.reponses.filter(r => r.estCorrecte).map(r => r.texte || r.Texte).filter(Boolean).join('|')
           : (q.bonneReponse || q.explication || '');
-
         return api.post(`/Questions`, {
-          enonce:          q.texte || q.enonce || 'Question sans titre',
-          points:          Number(q.poids || q.points) || 1,
-          dureeSecondes:   q.duree > 0 ? q.duree : null,
-          type:            q.type ?? 0,
-          niveau:          1,
-          bonneReponse:    bonneReponseFinal,
-          questionnaireId: qId,
-          choix:           choixFinal,
+          enonce: q.texte || q.enonce || 'Question sans titre',
+          points: Number(q.poids || q.points) || 1,
+          dureeSecondes: q.duree > 0 ? q.duree : null,
+          type: q.type ?? 0, niveau: 1, bonneReponse: bonneReponseFinal,
+          questionnaireId: qId, choix: choixFinal,
         });
       })
     );
 
     await api.post(`/Campagnes`, {
-      Nom:                   studio.campagne.nom || `ARCHITECTE : ${studio.questionnaire.titre}`,
-      Description:           studio.questionnaire.description || "",
-      QuestionnaireId:       qId,
-      DateDebut:             new Date(studio.campagne.dateDebut).toISOString(),
-      DateFin:               new Date(studio.campagne.dateFin).toISOString(),
-      MaxCandidats:          studio.campagne.maxCandidats,
-      ScorePassage:          studio.questionnaire.scoreReussite,
-      DureeMinutes:          studio.questionnaire.duree,
-      Statut:                1,
+      Nom: studio.campagne.nom || `ARCHITECTE : ${studio.questionnaire.titre}`,
+      Description: studio.questionnaire.description || "",
+      QuestionnaireId: qId,
+      DateDebut: new Date(studio.campagne.dateDebut).toISOString(),
+      DateFin: new Date(studio.campagne.dateFin).toISOString(),
+      MaxCandidats: studio.campagne.maxCandidats,
+      ScorePassage: studio.questionnaire.scoreReussite,
+      DureeMinutes: studio.questionnaire.duree,
+      Statut: 1,
       SelectedCandidatesIds: selectedCandidatesIds.value,
-      SendNotifications:     studio.campagne.sendNotifications
+      SendNotifications: studio.campagne.sendNotifications
     });
-    
 
-    showPulseToast('DÉPLOIEMENT RÉUSSI', 'success', 'fa-solid fa-server');
+    showPulseToast(t('campaigns.studio.messages.success'), 'success', 'fa-solid fa-server');
     isStudioMode.value = false;
     fetchInitialData();
   } catch (err) {
     console.error("Erreur détaillée:", err.response?.data || err);
-    showPulseToast('ERREUR DE DÉPLOIEMENT', 'error', 'fa-solid fa-triangle-exclamation');
+    showPulseToast(t('campaigns.studio.messages.error'), 'error', 'fa-solid fa-triangle-exclamation');
   } finally {
     isPublishing.value = false;
   }
@@ -1543,13 +1572,13 @@ const publishToProduction = async () => {
 /* ─── CRUD & UTILS ────────────────────────────────────────────── */
 const handleDelete = (id) => {
   showConfirmDialog(
-    'Supprimer cette session ?',
-    'Cette action est irréversible.',
+    t('campaigns.deleteConfirm'),
+    t('campaigns.deleteMsg'),
     'fa-solid fa-trash-can',
     async () => {
       try {
         await api.delete(`/Campagnes/${id}`);
-        showPulseToast('Session supprimée.', 'warn', 'fa-solid fa-trash-can');
+        showPulseToast(t('campaigns.deleted'), 'warn', 'fa-solid fa-trash-can');
         fetchInitialData();
       } catch {
         campaigns.value = campaigns.value.filter(c => c.id !== id);
@@ -1561,7 +1590,7 @@ const handleDelete = (id) => {
 const duplicateCampaign = (c) => {
   const dup = { ...c, id: crypto.randomUUID(), nom: c.nom + ' (Copie)', statut: 0 };
   campaigns.value.push(dup);
-  showPulseToast('Architecture dupliquée.', 'success', 'fa-regular fa-copy');
+  showPulseToast(t('campaigns.duplicated'), 'success', 'fa-regular fa-copy');
 };
 
 const exportCampaign = (c) => {
@@ -1579,14 +1608,14 @@ const togglePinCampaign = (id) => {
 };
 
 const previewCampaign     = (c) => { previewData.value = c; activeView.value = 'preview'; };
-const changeStatus        = (c, s) => { c.statut = s; showPulseToast('Statut mis à jour.', 'success', 'fa-solid fa-check'); };
+const changeStatus        = (c, s) => { c.statut = s; showPulseToast(t('success'), 'success', 'fa-solid fa-check'); };
 const getCampaignProgress = (c)    => ({ 0: 10, 1: 60, 2: 100 }[c.statut] ?? 0);
 const getProgressColor    = (p)    => p >= 100 ? '#10b981' : p >= 50 ? '#f59e0b' : '#6366f1';
 
 const previewTimeline = computed(() => [
-  { id: 1, title: 'Campagne créée',     desc: 'Architecte initialisé.',  color: '#6366f1', time: formatDate(previewData.value?.dateDebut) },
-  { id: 2, title: 'Candidats notifiés', desc: 'Invitations envoyées.',   color: '#f59e0b', time: 'J+1' },
-  { id: 3, title: 'Session ouverte',    desc: 'Accès activé.',           color: '#10b981', time: formatDate(previewData.value?.dateDebut) },
+  { id: 1, title: t('campaigns.preview.timeline_events.created'),  desc: t('campaigns.preview.timeline_events.created_desc'),  color: '#6366f1', time: formatDate(previewData.value?.dateDebut) },
+  { id: 2, title: t('campaigns.preview.timeline_events.notified'), desc: t('campaigns.preview.timeline_events.notified_desc'), color: '#f59e0b', time: t('campaigns.preview.timeline_events.dayPlus1') },
+  { id: 3, title: t('campaigns.preview.timeline_events.opened'),   desc: t('campaigns.preview.timeline_events.opened_desc'),   color: '#10b981', time: formatDate(previewData.value?.dateDebut) },
 ]);
 
 /* ─── MODAL QUESTIONS ─────────────────────────────────────────── */
@@ -1594,12 +1623,9 @@ const editQuestion = (q, idx) => {
   editingQuestion.value = q;
   editingIndex.value    = idx;
   Object.assign(newQuestion, {
-    texte:       q.texte || q.enonce,
-    poids:       q.poids || q.points || 10,
-    difficulty:  q.difficulty || 'MEDIUM',
-    explication: q.explication || '',
-    duree:       q.duree || 0,
-    type:        q.type ?? 0,
+    texte: q.texte || q.enonce, poids: q.poids || q.points || 10,
+    difficulty: q.difficulty || 'MEDIUM', explication: q.explication || '',
+    duree: q.duree || 0, type: q.type ?? 0,
   });
   modals.quickAdd = true;
 };
@@ -1611,7 +1637,7 @@ const saveQuestion = () => {
   } else {
     studio.questions.push({ ...newQuestion, id: `custom-${Date.now()}`, _showTimer: false });
   }
-  showPulseToast('Question enregistrée.', 'success', 'fa-solid fa-check');
+  showPulseToast(t('campaigns.studio.quickAdd.saved'), 'success', 'fa-solid fa-check');
   closeQuickAdd();
 };
 
@@ -1634,8 +1660,8 @@ const removeSelectedQuestions = () => {
 };
 
 const addTag    = () => {
-  const t = tagInput.value.trim().replace(',', '');
-  if (t && !studio.questionnaire.tags.includes(t)) studio.questionnaire.tags.push(t);
+  const tg = tagInput.value.trim().replace(',', '');
+  if (tg && !studio.questionnaire.tags.includes(tg)) studio.questionnaire.tags.push(tg);
   tagInput.value = '';
 };
 const removeTag = (i) => studio.questionnaire.tags.splice(i, 1);
@@ -1654,21 +1680,23 @@ const runConfirmDialog = () => {
 };
 
 /* ─── HELPERS ─────────────────────────────────────────────────── */
-
-/**
- * ✅ FIX PRINCIPAL : Recherche par id en comparaison stricte ET souple (string vs number)
- * Fallback sur le nom de la campagne si aucun questionnaire trouvé, puis 'Non défini'
- */
 const getQuestionnaireName = (id) => {
-  if (id === null || id === undefined || id === '') return 'Non défini';
+  if (id === null || id === undefined || id === '') return t('campaigns.card.notDefined');
   const found =
     questionnairesList.value.find(q => q.id === id) ||
     questionnairesList.value.find(q => String(q.id) === String(id));
-  return found?.titre || 'Non défini';
+  return found?.titre || t('campaigns.card.notDefined');
 };
 
-const getStatusLabel = (s)  => (['Planifié', 'Active', 'Terminée'][s] ?? 'Brouillon');
-const formatDate     = (d)  => d ? new Date(d).toLocaleDateString('fr-FR') : '∞';
+const getStatusLabel = (s)  => {
+  const labels = {
+    0: t('campaigns.status.planned'),
+    1: t('campaigns.status.active'),
+    2: t('campaigns.status.ended'),
+  };
+  return labels[s] ?? t('campaigns.status.draft');
+};
+const formatDate = (d)  => d ? new Date(d).toLocaleDateString('fr-FR') : '∞';
 
 let _toastTimer = null;
 const showPulseToast = (msg, type = 'success', icon = 'fa-solid fa-check') => {
@@ -1699,7 +1727,6 @@ const generateMocks = () => {
   categoriesList.value = [];
 };
 
-
 /* ─── LIFECYCLE ───────────────────────────────────────────────── */
 onMounted(() => {
   fetchInitialData();
@@ -1709,7 +1736,6 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeyboard);
 });
-
 </script>
 
 <style scoped>
@@ -1717,58 +1743,159 @@ onUnmounted(() => {
 
 .enigma-master-root { min-height: 100vh; background: #f8fafc; font-family: 'Plus Jakarta Sans', sans-serif; color: #0f172a; }
 
-/* BACKGROUND */
+/* ═══════════════════════════════════════
+   BACKGROUND — amélioration CSS
+═══════════════════════════════════════ */
 .cyber-engine-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
-.quantum-grid { position: absolute; inset: 0; background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 40px 40px; opacity: 0.2; }
-.glow-orb { position: absolute; width: 600px; height: 600px; filter: blur(120px); opacity: 0.15; border-radius: 50%; transition: transform 0.3s ease-out; }
-.orb-amber { background: #f59e0b; top: -200px; right: -100px; }
-.orb-blue  { background: #6366f1; bottom: -200px; left: -100px; }
+.quantum-grid {
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(circle, #e2e8f0 1.5px, transparent 1.5px),
+    linear-gradient(rgba(245,158,11,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px);
+  background-size: 40px 40px, 80px 80px, 80px 80px;
+  opacity: 0.4;
+  animation: gridDrift 60s linear infinite;
+}
+@keyframes gridDrift { 0% { background-position: 0 0, 0 0, 0 0; } 100% { background-position: 40px 40px, 80px 80px, 80px 80px; } }
+.glow-orb { position: absolute; width: 700px; height: 700px; filter: blur(140px); opacity: 0.12; border-radius: 50%; transition: transform 0.3s ease-out; }
+.orb-amber { background: radial-gradient(circle, #fbbf24, #f59e0b); top: -250px; right: -150px; }
+.orb-blue  { background: radial-gradient(circle, #818cf8, #6366f1); bottom: -250px; left: -150px; }
 .main-orchestrator { z-index: 5; }
 .canvas-engine { height: calc(100vh - 64px); }
 
-/* DASHBOARD */
+/* ═══════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════ */
 .premium-title { font-weight: 800; font-size: 2.2rem; letter-spacing: -1px; }
-.gradient-text { background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.gradient-text {
+  background: linear-gradient(135deg, #f59e0b 0%, #fb923c 50%, #fbbf24 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 .breadcrumb-pro { font-size: 0.72rem; font-weight: 700; color: #94a3b8; }
-.breadcrumb-pro .root { cursor: pointer; } .breadcrumb-pro .root:hover { color: #f59e0b; }
+.breadcrumb-pro .root { cursor: pointer; transition: color 0.2s; }
+.breadcrumb-pro .root:hover { color: #f59e0b; }
 .breadcrumb-pro .separator { font-size: 0.55rem; opacity: 0.5; }
 .breadcrumb-pro .current { color: #0f172a; font-weight: 800; }
 
-/* STAT CARDS */
-.stat-card-premium { background: white; border-radius: 24px; padding: 24px; display: flex; align-items: center; border: 1px solid #eef2f6; transition: 0.2s; }
-.stat-card-premium:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,0.06); }
-.stat-icon-wrapper { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
-.stat-value { font-size: 1.6rem; font-weight: 800; line-height: 1; }
-.stat-label { font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-top: 4px; }
+/* ═══════════════════════════════════════
+   STAT CARDS — amélioration CSS
+═══════════════════════════════════════ */
+.stat-card-premium {
+  background: white; border-radius: 24px; padding: 24px;
+  display: flex; align-items: center;
+  border: 1px solid #eef2f6;
+  transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+  position: relative; overflow: hidden;
+}
+.stat-card-premium::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, transparent, #f59e0b, transparent);
+  opacity: 0; transition: opacity 0.3s;
+}
+.stat-card-premium:hover::before { opacity: 1; }
+.stat-card-premium:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); }
+.stat-icon-wrapper {
+  width: 58px; height: 58px; border-radius: 18px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; flex-shrink: 0;
+  transition: transform 0.3s;
+}
+.stat-card-premium:hover .stat-icon-wrapper { transform: scale(1.1) rotate(-5deg); }
+.stat-value { font-size: 1.7rem; font-weight: 800; line-height: 1; }
+.stat-label { font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-top: 4px; letter-spacing: 0.5px; }
 .stat-trend { display: flex; flex-direction: column; align-items: center; font-size: 0.65rem; font-weight: 800; gap: 2px; }
 .trend-up { color: #10b981; } .trend-down { color: #f43f5e; }
 
-.view-toggle-cluster { display: flex; background: white; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 4px; gap: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-.btn-view-toggle { width: 38px; height: 38px; border-radius: 12px; border: none; background: transparent; color: #94a3b8; transition: 0.3s; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-.btn-view-toggle:hover { background: #f8fafc; color: #0f172a; }
-.btn-view-toggle.active { background: #0f172a; color: #f59e0b; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2); }
-.btn-refresh-pro { width: 44px; height: 44px; background: white; border: 1.5px solid #e2e8f0; border-radius: 14px; color: #64748b; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; }
-.btn-refresh-pro:hover:not(:disabled) { background: #f8fafc; border-color: #f59e0b; color: #f59e0b; transform: rotate(180deg) scale(1.1); }
+/* ═══════════════════════════════════════
+   VIEW TOGGLE
+═══════════════════════════════════════ */
+.view-toggle-cluster {
+  display: flex; background: white; border: 1.5px solid #e2e8f0;
+  border-radius: 16px; padding: 4px; gap: 4px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+}
+.btn-view-toggle {
+  width: 38px; height: 38px; border-radius: 12px; border: none;
+  background: transparent; color: #94a3b8; transition: all 0.25s; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.btn-view-toggle:hover { background: #f8fafc; color: #0f172a; transform: scale(1.05); }
+.btn-view-toggle.active { background: #0f172a; color: #f59e0b; box-shadow: 0 4px 12px rgba(15,23,42,0.2); }
+.btn-refresh-pro {
+  width: 44px; height: 44px; background: white; border: 1.5px solid #e2e8f0;
+  border-radius: 14px; color: #64748b; cursor: pointer; transition: all 0.3s;
+  display: flex; align-items: center; justify-content: center;
+}
+.btn-refresh-pro:hover:not(:disabled) { background: #fffbeb; border-color: #f59e0b; color: #f59e0b; transform: rotate(180deg) scale(1.05); }
 .shadow-premium { box-shadow: 0 20px 60px rgba(0,0,0,0.12) !important; }
 
-.campaign-card-modern { background: white; border-radius: 30px; padding: 28px; border: 1px solid #eef2f6; transition: 0.3s cubic-bezier(0.4,0,0.2,1); cursor: pointer; height: 100%; }
-.campaign-card-modern:hover { transform: translateY(-10px); border-color: #f59e0b; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.08); }
+/* ═══════════════════════════════════════
+   CAMPAIGN CARDS — amélioration CSS
+═══════════════════════════════════════ */
+.campaign-card-modern {
+  background: white; border-radius: 30px; padding: 28px;
+  border: 1px solid #eef2f6;
+  transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+  cursor: pointer; height: 100%;
+  position: relative; overflow: hidden;
+}
+.campaign-card-modern::after {
+  content: '';
+  position: absolute; inset: 0; border-radius: 30px;
+  background: linear-gradient(135deg, rgba(245,158,11,0.04), rgba(99,102,241,0.04));
+  opacity: 0; transition: opacity 0.3s;
+}
+.campaign-card-modern:hover::after { opacity: 1; }
+.campaign-card-modern:hover {
+  transform: translateY(-12px);
+  border-color: rgba(245,158,11,0.4);
+  box-shadow: 0 30px 60px -12px rgba(0,0,0,0.1), 0 0 0 1px rgba(245,158,11,0.1);
+}
 .campaign-title-modern { font-size: 1rem; color: #0f172a; margin-bottom: 0; }
-.status-badge { padding: 5px 12px; border-radius: 10px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; display: inline-flex; align-items: center; }
-.status-0 { background: #f0f9ff; color: #6366f1; } .status-1 { background: #ecfdf5; color: #10b981; } .status-2 { background: #f1f5f9; color: #64748b; }
-.status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; margin-right: 6px; }
-.pin-badge { font-size: 0.6rem; font-weight: 800; color: #f59e0b; background: #fffbeb; padding: 2px 8px; border-radius: 8px; margin-bottom: 8px; display: inline-block; }
-.progress-slim { height: 4px; background: #f1f5f9; border-radius: 10px; overflow: hidden; }
-.progress-fill { height: 100%; border-radius: 10px; transition: width 0.6s ease; }
-.btn-options-round { width: 32px; height: 32px; border-radius: 10px; border: 1.5px solid #eef2f6; background: white; cursor: pointer; font-size: 0.8rem; color: #94a3b8; }
 
-/* ANALYTICS */
+/* ═══════════════════════════════════════
+   STATUS BADGES — amélioration CSS
+═══════════════════════════════════════ */
+.status-badge {
+  padding: 6px 14px; border-radius: 12px; font-size: 0.65rem;
+  font-weight: 800; text-transform: uppercase;
+  display: inline-flex; align-items: center;
+  transition: all 0.2s;
+}
+.status-0 { background: #f0f9ff; color: #6366f1; border: 1px solid rgba(99,102,241,0.15); }
+.status-1 {
+  background: #ecfdf5; color: #10b981; border: 1px solid rgba(16,185,129,0.15);
+  animation: statusPulse 3s ease-in-out infinite;
+}
+@keyframes statusPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } 50% { box-shadow: 0 0 0 4px rgba(16,185,129,0.1); } }
+.status-2 { background: #f1f5f9; color: #64748b; border: 1px solid rgba(100,116,139,0.15); }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; margin-right: 6px; }
+.status-1 .status-dot { animation: blink 1.5s ease-in-out infinite; }
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+.pin-badge { font-size: 0.6rem; font-weight: 800; color: #f59e0b; background: #fffbeb; padding: 2px 8px; border-radius: 8px; margin-bottom: 8px; display: inline-block; }
+.progress-slim { height: 5px; background: #f1f5f9; border-radius: 10px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 10px; transition: width 0.8s cubic-bezier(0.4,0,0.2,1); }
+.btn-options-round {
+  width: 32px; height: 32px; border-radius: 10px; border: 1.5px solid #eef2f6;
+  background: white; cursor: pointer; font-size: 0.8rem; color: #94a3b8;
+  transition: all 0.2s;
+}
+.btn-options-round:hover { background: #f8fafc; border-color: #0f172a; color: #0f172a; }
+
+/* ═══════════════════════════════════════
+   ANALYTICS
+═══════════════════════════════════════ */
 .analytics-card-pro { background: white; border-radius: 24px; border: 1px solid #eef2f6; }
 .bar-chart-v2 { display: flex; align-items: flex-end; gap: 8px; height: 120px; }
 .bar-col { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
 .bar-wrap { display: flex; gap: 3px; align-items: flex-end; height: 100%; width: 100%; justify-content: center; }
-.bar-fill { width: 12px; border-radius: 6px 6px 0 0; transition: height 0.8s ease; min-height: 4px; }
-.bar-amber { background: #f59e0b; } .bar-indigo { background: #6366f1; }
+.bar-fill { width: 12px; border-radius: 6px 6px 0 0; transition: height 0.8s cubic-bezier(0.4,0,0.2,1); min-height: 4px; }
+.bar-amber { background: linear-gradient(180deg, #fbbf24, #f59e0b); }
+.bar-indigo { background: linear-gradient(180deg, #818cf8, #6366f1); }
 .bar-label { font-size: 0.6rem; font-weight: 800; color: #94a3b8; }
 .legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 .dot-amber { background: #f59e0b; } .dot-indigo { background: #6366f1; }
@@ -1779,50 +1906,99 @@ onUnmounted(() => {
 .donut-center-text { font-size: 22px; font-weight: 900; fill: #0f172a; }
 .donut-sub-text { font-size: 8px; fill: #94a3b8; font-weight: 700; }
 
-.nav-tab-btn-modern { padding: 8px 18px; border-radius: 12px; border: none; background: transparent; font-weight: 800; font-size: 0.8rem; color: #94a3b8; cursor: pointer; transition: 0.2s; }
+/* ═══════════════════════════════════════
+   FILTERS & SEARCH
+═══════════════════════════════════════ */
+.nav-tab-btn-modern {
+  padding: 8px 18px; border-radius: 12px; border: none;
+  background: transparent; font-weight: 800; font-size: 0.8rem; color: #94a3b8;
+  cursor: pointer; transition: all 0.2s;
+}
 .nav-tab-btn-modern.active { background: #0f172a; color: white; }
+.nav-tab-btn-modern:hover:not(.active) { background: #f8fafc; color: #0f172a; }
 .tab-count { background: rgba(255,255,255,0.2); padding: 2px 7px; border-radius: 8px; font-size: 0.65rem; margin-left: 6px; }
 .nav-tab-btn-modern:not(.active) .tab-count { background: #f1f5f9; color: #64748b; }
 
-.search-inline-box { display: flex; align-items: center; background: white; border: 1.5px solid #eef2f6; border-radius: 14px; padding: 0 14px; gap: 10px; color: #94a3b8; }
+.search-inline-box {
+  display: flex; align-items: center; background: white;
+  border: 1.5px solid #eef2f6; border-radius: 14px; padding: 0 14px;
+  gap: 10px; color: #94a3b8; transition: border-color 0.2s;
+}
+.search-inline-box:focus-within { border-color: #f59e0b; }
 .search-inline-input { border: none; outline: none; background: transparent; padding: 10px 0; font-weight: 700; font-size: 0.85rem; width: 180px; font-family: inherit; }
 .btn-clear-search { border: none; background: transparent; color: #94a3b8; padding: 0; cursor: pointer; }
-.sort-select-pro { border: 1.5px solid #eef2f6; border-radius: 14px; padding: 10px 14px; font-weight: 700; font-size: 0.8rem; background: white; outline: none; cursor: pointer; font-family: inherit; }
+.sort-select-pro { border: 1.5px solid #eef2f6; border-radius: 14px; padding: 10px 14px; font-weight: 700; font-size: 0.8rem; background: white; outline: none; cursor: pointer; font-family: inherit; transition: border-color 0.2s; }
+.sort-select-pro:focus { border-color: #f59e0b; }
 
+/* ═══════════════════════════════════════
+   LIST VIEW
+═══════════════════════════════════════ */
 .list-header-row { background: #f8fafc; border-radius: 14px; }
 .list-col-label { font-size: 0.6rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
-.list-row-item { background: white; border-radius: 16px; border: 1px solid #eef2f6; transition: 0.2s; }
-.list-row-item:hover { border-color: #f59e0b; }
+.list-row-item { background: white; border-radius: 16px; border: 1px solid #eef2f6; transition: all 0.2s; cursor: pointer; }
+.list-row-item:hover { border-color: #f59e0b; transform: translateX(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
 .slot-badge { background: #fffbeb; color: #f59e0b; font-weight: 800; font-size: 0.75rem; padding: 3px 10px; border-radius: 8px; }
-.empty-state-pro { background: white; border-radius: 30px; padding: 40px; border: 1px dashed #e2e8f0; }
+.empty-state-pro { background: white; border-radius: 30px; padding: 40px; border: 2px dashed #e2e8f0; transition: border-color 0.3s; }
+.empty-state-pro:hover { border-color: #f59e0b; }
 
-/* PREVIEW */
+/* ═══════════════════════════════════════
+   PREVIEW
+═══════════════════════════════════════ */
 .preview-field-box { display: flex; flex-direction: column; gap: 6px; }
 .preview-field-label { font-size: 0.6rem; font-weight: 900; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase; }
 .big-progress-container { display: flex; justify-content: center; }
-.btn-quick-action { width: 100%; background: #f8fafc; border: 1.5px solid #eef2f6; border-radius: 14px; padding: 12px 16px; text-align: left; font-weight: 700; font-size: 0.82rem; cursor: pointer; transition: 0.2s; font-family: inherit; }
-.btn-quick-action:hover { border-color: #f59e0b; background: #fffbeb; }
+.btn-quick-action {
+  width: 100%; background: #f8fafc; border: 1.5px solid #eef2f6;
+  border-radius: 14px; padding: 12px 16px; text-align: left;
+  font-weight: 700; font-size: 0.82rem; cursor: pointer; transition: all 0.2s; font-family: inherit;
+}
+.btn-quick-action:hover { border-color: #f59e0b; background: #fffbeb; transform: translateX(4px); }
 .activity-timeline { display: flex; flex-direction: column; }
 .timeline-item { display: flex; align-items: flex-start; gap: 16px; padding: 16px 0; border-bottom: 1px solid #f1f5f9; }
 .tl-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
 .tl-content { flex: 1; }
 .tl-time { font-size: 0.65rem; color: #94a3b8; font-weight: 700; white-space: nowrap; }
 
-/* STUDIO HEADER */
-.studio-header-v2 { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid #eef2f6; transition: box-shadow 0.3s; }
+/* ═══════════════════════════════════════
+   STUDIO HEADER — amélioration CSS
+═══════════════════════════════════════ */
+.studio-header-v2 {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(255,255,255,0.95); backdrop-filter: blur(20px) saturate(1.2);
+  border-bottom: 1px solid rgba(238,242,246,0.8);
+  transition: box-shadow 0.3s;
+}
 .studio-header-v2.is-docked { box-shadow: 0 8px 30px rgba(0,0,0,0.06); }
 .main-title-v2 { font-weight: 900; font-size: 1.8rem; margin: 0; }
-.main-title-v2 span { color: #f59e0b; }
-.v-badge { font-size: 0.7rem; background: #fffbeb; color: #f59e0b; padding: 3px 10px; border-radius: 8px; font-weight: 800; vertical-align: middle; }
-.brand-subtitle-v2 { font-size: 0.6rem; font-weight: 800; color: #94a3b8; letter-spacing: 1px; margin: 0; }
-.btn-back-to-dash { width: 44px; height: 44px; border-radius: 14px; border: 1.5px solid #e2e8f0; background: white; cursor: pointer; color: #64748b; transition: 0.2s; }
-.btn-back-to-dash:hover { background: #0f172a; color: white; border-color: #0f172a; }
-.ai-robot-terminal { width: 50px; height: 50px; background: #0f172a; border-radius: 15px; display: flex; align-items: center; justify-content: center; }
+.main-title-v2 span:first-child { color: #f59e0b; }
+.v-badge { font-size: 0.7rem; background: linear-gradient(135deg, #fffbeb, #fef3c7); color: #f59e0b; padding: 3px 10px; border-radius: 8px; font-weight: 800; vertical-align: middle; border: 1px solid #fde68a; }
+.brand-subtitle-v2 { font-size: 0.6rem; font-weight: 800; color: #94a3b8; letter-spacing: 1.5px; margin: 0; }
+.btn-back-to-dash {
+  width: 44px; height: 44px; border-radius: 14px; border: 1.5px solid #e2e8f0;
+  background: white; cursor: pointer; color: #64748b; transition: all 0.25s;
+  display: flex; align-items: center; justify-content: center;
+}
+.btn-back-to-dash:hover { background: #0f172a; color: white; border-color: #0f172a; transform: scale(1.05); }
+.ai-robot-terminal {
+  width: 50px; height: 50px; background: #0f172a; border-radius: 15px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 12px rgba(15,23,42,0.3);
+  animation: robotPulse 4s ease-in-out infinite;
+}
+@keyframes robotPulse { 0%,100% { box-shadow: 0 4px 12px rgba(15,23,42,0.3); } 50% { box-shadow: 0 4px 20px rgba(245,158,11,0.3); } }
 
-.autosave-indicator { display: flex; align-items: center; gap: 8px; font-size: 0.7rem; font-weight: 700; color: #94a3b8; background: #f8fafc; padding: 8px 14px; border-radius: 12px; border: 1px solid #eef2f6; }
-.autosave-indicator.saved { color: #10b981; } .autosave-indicator.saving { color: #f59e0b; }
+.autosave-indicator {
+  display: flex; align-items: center; gap: 8px; font-size: 0.7rem; font-weight: 700; color: #94a3b8;
+  background: #f8fafc; padding: 8px 14px; border-radius: 12px; border: 1px solid #eef2f6;
+  transition: all 0.3s;
+}
+.autosave-indicator.saved { color: #10b981; background: #ecfdf5; border-color: rgba(16,185,129,0.2); }
+.autosave-indicator.saving { color: #f59e0b; background: #fffbeb; border-color: rgba(245,158,11,0.2); }
 
-.health-core-widget { display: flex; align-items: center; gap: 12px; background: #f8fafc; padding: 10px 16px; border-radius: 16px; border: 1px solid #eef2f6; }
+.health-core-widget {
+  display: flex; align-items: center; gap: 12px;
+  background: #f8fafc; padding: 10px 16px; border-radius: 16px; border: 1px solid #eef2f6;
+}
 .health-ring-box { position: relative; display: flex; align-items: center; justify-content: center; }
 .health-ring-box svg { overflow: visible; }
 .ring-track { fill: none; stroke: #eef2f6; stroke-width: 3; }
@@ -1830,94 +2006,156 @@ onUnmounted(() => {
 .health-percent { position: absolute; font-size: 0.65rem; font-weight: 900; color: #0f172a; }
 .health-label-box .h-main { font-size: 0.55rem; font-weight: 900; color: #94a3b8; letter-spacing: 1px; display: block; }
 .health-label-box .h-sub  { font-size: 0.7rem; font-weight: 800; }
-.btn-shortcuts { width: 40px; height: 40px; border-radius: 12px; border: 1.5px solid #eef2f6; background: white; color: #94a3b8; cursor: pointer; transition: 0.2s; }
-.btn-shortcuts:hover { background: #0f172a; color: white; border-color: #0f172a; }
+.btn-shortcuts {
+  width: 40px; height: 40px; border-radius: 12px; border: 1.5px solid #eef2f6;
+  background: white; color: #94a3b8; cursor: pointer; transition: all 0.2s;
+}
+.btn-shortcuts:hover { background: #0f172a; color: white; border-color: #0f172a; transform: scale(1.05); }
 
-/* STEPPER */
+/* ═══════════════════════════════════════
+   STEPPER — amélioration CSS
+═══════════════════════════════════════ */
 .stepper-precision-v8 { position: relative; margin-top: 30px; padding-bottom: 10px; }
 .stepper-line-bg { height: 4px; background: #eef2f6; border-radius: 10px; position: absolute; top: 20px; left: 22px; right: 22px; }
-.stepper-line-fill { height: 100%; background: linear-gradient(90deg, #f59e0b, #fbbf24); transition: width 0.6s ease; border-radius: 10px; }
+.stepper-line-fill { height: 100%; background: linear-gradient(90deg, #f59e0b, #fb923c, #fbbf24); transition: width 0.6s cubic-bezier(0.4,0,0.2,1); border-radius: 10px; }
 .stepper-nodes-row { display: flex; justify-content: space-between; position: relative; }
 .step-node-v8 { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
-.node-point { width: 44px; height: 44px; background: white; border: 4px solid #eef2f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 2; font-weight: 900; font-size: 0.85rem; color: #94a3b8; position: relative; transition: 0.3s; }
-.node-label-floating { position: absolute; top: 52px; font-size: 0.6rem; font-weight: 800; color: #94a3b8; white-space: nowrap; }
-.step-node-v8.active .node-point { border-color: #f59e0b; color: #f59e0b; transform: scale(1.1); box-shadow: 0 0 0 4px rgba(245,158,11,0.15); }
+.node-point {
+  width: 44px; height: 44px; background: white; border: 4px solid #eef2f6;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  z-index: 2; font-weight: 900; font-size: 0.85rem; color: #94a3b8;
+  position: relative; transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+.node-label-floating { position: absolute; top: 52px; font-size: 0.6rem; font-weight: 800; color: #94a3b8; white-space: nowrap; transition: color 0.3s; }
+.step-node-v8.active .node-point {
+  border-color: #f59e0b; color: #f59e0b; transform: scale(1.15);
+  box-shadow: 0 0 0 4px rgba(245,158,11,0.15), 0 0 0 8px rgba(245,158,11,0.05);
+}
 .step-node-v8.active .node-label-floating { color: #f59e0b; }
 .step-node-v8.completed .node-point { background: #f59e0b; border-color: #f59e0b; color: white; }
 
-/* FORMS */
+/* ═══════════════════════════════════════
+   FORMS — amélioration CSS
+═══════════════════════════════════════ */
 .enigma-card { background: white; border-radius: 32px; border: 1px solid #eef2f6; }
-.enigma-field { width: 100%; padding: 15px 20px; background: #f8fafc; border: 2px solid #f59e0b; border-radius: 16px; font-weight: 700; outline: none; font-family: inherit; transition: border-color 0.2s; font-size: 0.9rem; color: #0f172a; }
-.enigma-field:focus { border-color: #f59e0b; background: white; }
+.enigma-field {
+  width: 100%; padding: 15px 20px; background: #f8fafc;
+  border: 2px solid #e2e8f0; border-radius: 16px; font-weight: 700;
+  outline: none; font-family: inherit; transition: all 0.25s; font-size: 0.9rem; color: #0f172a;
+}
+.enigma-field:focus { border-color: #f59e0b; background: white; box-shadow: 0 0 0 4px rgba(245,158,11,0.08); }
 .enigma-field:disabled { opacity: 0.4; cursor: not-allowed; border-color: #e2e8f0; }
-.enigma-field.field-error { border-color: #f43f5e !important; }
+.enigma-field.field-error { border-color: #f43f5e !important; box-shadow: 0 0 0 4px rgba(244,63,94,0.08); }
 .field-error-msg { font-size: 0.7rem; color: #f43f5e; font-weight: 700; margin-top: 4px; display: block; }
-.enigma-input-wrap label { font-size: 0.6rem; font-weight: 900; color: #94a3b8; letter-spacing: 1px; margin-bottom: 8px; display: block; }
-.enigma-range { accent-color: #f59e0b; width: 100%; }
-.admissibility-dashboard { background: #f8fafc; border-radius: 20px; padding: 24px; }
-.score-tier { font-size: 0.6rem; font-weight: 800; opacity: 0.5; }
+.enigma-input-wrap label { font-size: 0.6rem; font-weight: 900; color: #94a3b8; letter-spacing: 1px; margin-bottom: 8px; display: block; text-transform: uppercase; }
+.enigma-range { accent-color: #f59e0b; width: 100%; height: 6px; cursor: pointer; }
+.admissibility-dashboard { background: linear-gradient(135deg, #f8fafc, #fffbeb40); border-radius: 20px; padding: 24px; border: 1px solid #fde68a40; }
+.score-tier { font-size: 0.6rem; font-weight: 800; opacity: 0.6; }
 .tier-low { color: #10b981; } .tier-mid { color: #f59e0b; } .tier-high { color: #f43f5e; }
 .pane-header-v2 { display: flex; align-items: center; gap: 20px; }
 .icon-box-v2 { width: 52px; height: 52px; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
 .icon-box-v2.amber { background: #fffbeb; color: #f59e0b; }
 
-/* THÈME + SOUS-THÈME */
+/* ═══════════════════════════════════════
+   THÈME + SOUS-THÈME
+═══════════════════════════════════════ */
 .theme-select-wrapper { position: relative; }
 .theme-select-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #f59e0b; font-size: 0.75rem; z-index: 2; pointer-events: none; }
 .theme-select { padding-left: 40px !important; appearance: none; -webkit-appearance: none; cursor: pointer; }
 .disabled-wrapper .theme-select-icon { color: #cbd5e1; }
-.theme-breadcrumb-display { display: inline-flex; align-items: center; background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 12px; padding: 8px 16px; font-size: 0.75rem; font-weight: 700; }
+.theme-breadcrumb-display {
+  display: inline-flex; align-items: center;
+  background: linear-gradient(135deg, #fffbeb, #fef9ee); border: 1.5px solid #fde68a;
+  border-radius: 12px; padding: 8px 16px; font-size: 0.75rem; font-weight: 700;
+}
 .theme-bc-item { color: #92400e; }
 .theme-bc-item.active { color: #f59e0b; font-weight: 900; }
 .opacity-40 { opacity: 0.4; }
 
-/* TAGS */
+/* ═══════════════════════════════════════
+   TAGS
+═══════════════════════════════════════ */
 .tags-input-container { cursor: text; }
-.tag-chip { background: #fffbeb; color: #f59e0b; font-size: 0.7rem; font-weight: 800; padding: 4px 10px; border-radius: 8px; display: flex; align-items: center; gap: 6px; }
+.tag-chip {
+  background: linear-gradient(135deg, #fffbeb, #fef3c7); color: #f59e0b;
+  font-size: 0.7rem; font-weight: 800; padding: 4px 10px; border-radius: 8px;
+  display: flex; align-items: center; gap: 6px; border: 1px solid #fde68a;
+  transition: all 0.2s;
+}
+.tag-chip:hover { background: #fde68a; }
 .tag-remove { border: none; background: transparent; color: #f59e0b; padding: 0; cursor: pointer; font-size: 0.7rem; line-height: 1; }
 .tag-field-input { border: none; outline: none; background: transparent; font-weight: 700; font-size: 0.85rem; flex: 1; min-width: 100px; font-family: inherit; }
 
-/* PROTOCOL ROWS */
+/* ═══════════════════════════════════════
+   PROTOCOL ROWS
+═══════════════════════════════════════ */
 .protocol-row { display: flex; align-items: center; gap: 20px; }
 .p-icon { width: 44px; height: 44px; background: #f8fafc; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #f59e0b; flex-shrink: 0; }
 .p-icon-blue { background: #eff6ff; color: #3b82f6; }
 .p-data { flex: 1; } .p-data h6 { font-weight: 800; margin: 0; font-size: 0.9rem; } .p-data p { font-size: 0.75rem; color: #94a3b8; margin: 0; }
 .enigma-switch .form-check-input { width: 44px; height: 24px; cursor: pointer; }
-.enigma-switch .form-check-input:checked { background-color: #f59e0b; border-color: #f59e0b; }
+.enigma-switch .form-check-input:checked { background-color: #f59e0b; border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,0.15); }
 
-/* Timer per question summary */
 .timer-per-q-summary { display: flex; flex-direction: column; align-items: center; background: #eff6ff; border-radius: 14px; padding: 10px 18px; min-width: 70px; }
 .tpq-count { font-size: 1.4rem; font-weight: 900; color: #3b82f6; line-height: 1; }
 .tpq-label { font-size: 0.55rem; font-weight: 800; color: #93c5fd; text-align: center; letter-spacing: 0.5px; margin-top: 3px; }
 
-/* ASSET CARDS + TIMER INDIVIDUEL */
+/* ═══════════════════════════════════════
+   ASSET CARDS + TIMER — amélioration CSS
+═══════════════════════════════════════ */
 .assets-scroll-v8 { max-height: 500px; overflow-y: auto; padding-right: 4px; }
-.asset-card-v8 { background: white; border: 1.5px solid #eef2f6; border-radius: 20px; padding: 15px 20px; display: flex; align-items: center; gap: 12px; margin-bottom: 12px; transition: 0.2s; }
-.asset-card-v8:hover { border-color: #f59e0b; transform: translateX(4px); }
+.asset-card-v8 {
+  background: white; border: 1.5px solid #eef2f6; border-radius: 20px; padding: 15px 20px;
+  display: flex; align-items: center; gap: 12px; margin-bottom: 12px; transition: all 0.2s;
+  position: relative; overflow: hidden;
+}
+.asset-card-v8::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: #f59e0b; opacity: 0; transition: opacity 0.2s;
+  border-radius: 3px 0 0 3px;
+}
+.asset-card-v8:hover::before { opacity: 1; }
+.asset-card-v8:hover { border-color: #f59e0b; transform: translateX(6px); box-shadow: 0 4px 12px rgba(245,158,11,0.08); }
 .asset-card-v8.selected { border-color: #6366f1; background: #f5f3ff; }
+.asset-card-v8.selected::before { background: #6366f1; opacity: 1; }
 .asset-checkbox { width: 16px; height: 16px; accent-color: #6366f1; flex-shrink: 0; cursor: pointer; }
-.drag-node-handle { color: #cbd5e1; cursor: grab; font-size: 0.85rem; flex-shrink: 0; }
+.drag-node-handle { color: #cbd5e1; cursor: grab; font-size: 0.85rem; flex-shrink: 0; transition: color 0.2s; }
+.drag-node-handle:hover { color: #94a3b8; }
 .drag-node-handle:active { cursor: grabbing; }
-.asset-index-v8 { font-size: 0.6rem; font-weight: 900; background: #fffbeb; color: #f59e0b; padding: 4px 8px; border-radius: 8px; flex-shrink: 0; }
+.asset-index-v8 { font-size: 0.6rem; font-weight: 900; background: #fffbeb; color: #f59e0b; padding: 4px 8px; border-radius: 8px; flex-shrink: 0; border: 1px solid #fde68a; }
 .asset-title-v8 { font-size: 0.88rem; font-weight: 700; margin: 0; }
-.asset-ghost-v8 { opacity: 0.4; background: #fffbeb; }
+.asset-ghost-v8 { opacity: 0.4; background: #fffbeb; border-style: dashed; }
 .asset-core-v8 { min-width: 0; }
-.btn-remove-v8 { width: 28px; height: 28px; border-radius: 8px; border: none; background: #f1f5f9; color: #94a3b8; cursor: pointer; flex-shrink: 0; font-size: 0.75rem; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
-.btn-remove-v8:hover { background: #fee2e2; color: #f43f5e; }
+.btn-remove-v8 {
+  width: 28px; height: 28px; border-radius: 8px; border: none;
+  background: #f1f5f9; color: #94a3b8; cursor: pointer; flex-shrink: 0;
+  font-size: 0.75rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center;
+}
+.btn-remove-v8:hover { background: #fee2e2; color: #f43f5e; transform: scale(1.1); }
 .t-pill { font-size: 0.6rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; }
 .t-pill.weight  { background: #fffbeb; color: #f59e0b; }
 .t-pill.time    { background: #eff6ff; color: #3b82f6; }
 .t-pill.type-pill { background: #f0f9ff; color: #0284c7; }
 .t-pill.cat-pill  { background: #f0fdf4; color: #16a34a; }
 .diff-expert { background: #fff1f2; color: #f43f5e; } .diff-medium { background: #fffbeb; color: #f59e0b; } .diff-easy { background: #ecfdf5; color: #10b981; }
-.bulk-actions-bar { background: #f8fafc; border-radius: 14px; padding: 10px 16px; display: flex; align-items: center; gap: 10px; }
-.btn-bank-action-v2 { background: #0f172a; color: white; border: none; padding: 10px 20px; border-radius: 14px; font-weight: 800; font-size: 0.78rem; cursor: pointer; }
-.empty-questions-hint { background: #f8fafc; border-radius: 16px; }
+.bulk-actions-bar { background: #f8fafc; border-radius: 14px; padding: 10px 16px; display: flex; align-items: center; gap: 10px; border: 1px solid #eef2f6; }
+.btn-bank-action-v2 {
+  background: linear-gradient(135deg, #0f172a, #1e293b); color: white; border: none;
+  padding: 10px 20px; border-radius: 14px; font-weight: 800; font-size: 0.78rem;
+  cursor: pointer; transition: all 0.25s; box-shadow: 0 4px 12px rgba(15,23,42,0.2);
+}
+.btn-bank-action-v2:hover { background: linear-gradient(135deg, #f59e0b, #fbbf24); color: #0f172a; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(245,158,11,0.3); }
+.empty-questions-hint { background: #f8fafc; border-radius: 16px; border: 2px dashed #e2e8f0; }
 
 /* Timer individuel inline */
 .question-timer-inline { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-.timer-toggle-btn { width: 32px; height: 32px; border-radius: 10px; border: 1.5px solid #e2e8f0; background: white; color: #cbd5e1; cursor: pointer; font-size: 0.8rem; transition: 0.2s; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.timer-toggle-btn:hover { border-color: #3b82f6; color: #3b82f6; background: #eff6ff; }
+.timer-toggle-btn {
+  width: 32px; height: 32px; border-radius: 10px; border: 1.5px solid #e2e8f0;
+  background: white; color: #cbd5e1; cursor: pointer; font-size: 0.8rem;
+  transition: all 0.2s; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.timer-toggle-btn:hover { border-color: #3b82f6; color: #3b82f6; background: #eff6ff; transform: scale(1.05); }
 .timer-toggle-btn.timer-active { background: #eff6ff; border-color: #3b82f6; color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
 .timer-input-group { display: flex; align-items: center; background: #eff6ff; border: 1.5px solid #3b82f6; border-radius: 10px; padding: 0 8px; gap: 4px; overflow: hidden; }
 .timer-input-field { border: none; outline: none; background: transparent; font-weight: 800; font-size: 0.8rem; color: #1d4ed8; font-family: inherit; width: 48px; padding: 6px 0; text-align: center; }
@@ -1925,54 +2163,90 @@ onUnmounted(() => {
 .timer-expand-enter-active { animation: timerIn 0.2s ease-out; }
 .timer-expand-leave-active  { animation: timerIn 0.15s ease-in reverse; }
 @keyframes timerIn { from { opacity: 0; transform: scaleX(0.6); } to { opacity: 1; transform: scaleX(1); } }
-
-/* Timer dans modal quick-add */
 .timer-modal-row { position: relative; }
 .timer-modal-preview { display: block; margin-top: 6px; font-size: 0.7rem; font-weight: 800; color: #3b82f6; background: #eff6ff; padding: 4px 10px; border-radius: 8px; width: fit-content; }
 
-/* CANDIDATES */
+/* ═══════════════════════════════════════
+   CANDIDATES
+═══════════════════════════════════════ */
 .talent-hub-search-v2 { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-.search-enigma-box { display: flex; align-items: center; gap: 10px; background: white; border: 1.5px solid #eef2f6; border-radius: 14px; padding: 0 16px; flex: 1; min-width: 200px; color: #94a3b8; }
+.search-enigma-box { display: flex; align-items: center; gap: 10px; background: white; border: 1.5px solid #eef2f6; border-radius: 14px; padding: 0 16px; flex: 1; min-width: 200px; color: #94a3b8; transition: border-color 0.2s; }
+.search-enigma-box:focus-within { border-color: #f59e0b; }
 .enigma-search-field { border: none; outline: none; background: transparent; padding: 12px 0; font-weight: 700; font-family: inherit; flex: 1; }
-.batch-counter-v2 { background: #0f172a; color: white; padding: 10px 18px; border-radius: 14px; display: flex; flex-direction: column; align-items: center; }
+.batch-counter-v2 { background: linear-gradient(135deg, #0f172a, #1e293b); color: white; padding: 10px 18px; border-radius: 14px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 12px rgba(15,23,42,0.2); }
 .batch-counter-v2 .val { font-size: 1.2rem; font-weight: 900; line-height: 1; }
 .batch-counter-v2 .lab { font-size: 0.5rem; font-weight: 800; opacity: 0.5; letter-spacing: 1px; }
-.filter-chip { padding: 6px 14px; border-radius: 10px; border: 1.5px solid #eef2f6; background: white; font-size: 0.7rem; font-weight: 800; cursor: pointer; transition: 0.2s; font-family: inherit; }
+.filter-chip {
+  padding: 6px 14px; border-radius: 10px; border: 1.5px solid #eef2f6;
+  background: white; font-size: 0.7rem; font-weight: 800; cursor: pointer;
+  transition: all 0.2s; font-family: inherit;
+}
+.filter-chip:hover:not(.active) { border-color: #f59e0b; color: #f59e0b; background: #fffbeb; }
 .filter-chip.active { background: #0f172a; color: white; border-color: #0f172a; }
 .talent-matrix-grid { max-height: 420px; overflow-y: auto; }
-.talent-card-v8 { background: white; border: 2px solid #eef2f6; border-radius: 20px; padding: 18px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: 0.2s; position: relative; }
-.talent-card-v8:hover { border-color: #f59e0b; }
-.talent-card-v8.active { border-color: #10b981; background: #f0fdf4; }
+.talent-card-v8 {
+  background: white; border: 2px solid #eef2f6; border-radius: 20px; padding: 18px;
+  display: flex; align-items: center; gap: 14px; cursor: pointer;
+  transition: all 0.25s; position: relative; overflow: hidden;
+}
+.talent-card-v8:hover { border-color: #f59e0b; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
+.talent-card-v8.active { border-color: #10b981; background: linear-gradient(135deg, #f0fdf4, white); }
 .card-check-v8 { position: absolute; top: 12px; right: 12px; width: 20px; height: 20px; border-radius: 50%; background: #10b981; color: white; font-size: 0.6rem; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
 .talent-card-v8.active .card-check-v8 { opacity: 1; }
 .avatar-v8 { width: 44px; height: 44px; border-radius: 14px; background: linear-gradient(135deg, #f59e0b, #fbbf24); color: #0f172a; font-weight: 900; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .data-v8 b { font-size: 0.9rem; } .data-v8 p { font-size: 0.72rem; }
 
-/* HUD SIDEBAR */
-.analytics-hub-glass { background: #0f172a; color: white; border-radius: 40px; padding: 40px; }
+/* ═══════════════════════════════════════
+   HUD SIDEBAR — amélioration CSS
+═══════════════════════════════════════ */
+.analytics-hub-glass {
+  background: linear-gradient(160deg, #0f172a 0%, #1e293b 100%);
+  color: white; border-radius: 40px; padding: 40px;
+  position: relative; overflow: hidden;
+}
+.analytics-hub-glass::before {
+  content: '';
+  position: absolute; top: -50px; right: -50px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(245,158,11,0.15), transparent 70%);
+  pointer-events: none;
+}
 .hub-label { font-size: 0.55rem; font-weight: 900; opacity: 0.4; letter-spacing: 2px; text-transform: uppercase; }
 .hub-title-v2 { font-size: 1.1rem; font-weight: 900; margin-top: 8px; margin-bottom: 4px; word-break: break-word; }
 .hub-status-box { font-size: 0.6rem; font-weight: 800; padding: 6px 12px; border-radius: 10px; display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; }
-.cl-success { background: rgba(16,185,129,0.1); color: #10b981; }
-.cl-warn    { background: rgba(245,158,11,0.1);  color: #f59e0b; }
-.cl-err     { background: rgba(244,63,94,0.1);   color: #f43f5e; }
+.cl-success { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.2); }
+.cl-warn    { background: rgba(245,158,11,0.15);  color: #f59e0b; border: 1px solid rgba(245,158,11,0.2); }
+.cl-err     { background: rgba(244,63,94,0.15);   color: #f43f5e; border: 1px solid rgba(244,63,94,0.2); }
 .pulse-dot  { width: 6px; height: 6px; background: currentColor; border-radius: 50%; animation: pulse 2s infinite; }
-@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+@keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(0.8); } }
 .kpi-bento-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.bento-item { background: rgba(255,255,255,0.05); padding: 18px; border-radius: 18px; text-align: center; }
-.bento-item.highlight { background: rgba(245,158,11,0.15); }
+.bento-item {
+  background: rgba(255,255,255,0.06); padding: 18px; border-radius: 18px; text-align: center;
+  transition: background 0.2s; border: 1px solid rgba(255,255,255,0.05);
+}
+.bento-item:hover { background: rgba(255,255,255,0.09); }
+.bento-item.highlight { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.2); }
 .bento-item .v { font-size: 1.8rem; font-weight: 800; display: block; line-height: 1; }
 .bento-item .l { font-size: 0.55rem; opacity: 0.5; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; display: block; }
-.readiness-checklist { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 16px; }
+.readiness-checklist { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 16px; border: 1px solid rgba(255,255,255,0.06); }
 .checklist-label { font-size: 0.55rem; font-weight: 900; opacity: 0.4; letter-spacing: 1px; }
-.check-item { display: flex; align-items: center; gap: 10px; font-size: 0.75rem; padding: 6px 0; opacity: 0.4; transition: 0.3s; }
+.check-item { display: flex; align-items: center; gap: 10px; font-size: 0.75rem; padding: 6px 0; opacity: 0.3; transition: all 0.4s; }
 .check-item.passed { opacity: 1; }
 .wizard-controls-v8 { border-top: 1px solid rgba(255,255,255,0.08); }
-.btn-step-nav { padding: 12px 18px; border-radius: 16px; font-weight: 800; border: 1.5px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.06); color: white; cursor: pointer; font-family: inherit; transition: 0.2s; }
+.btn-step-nav { padding: 12px 18px; border-radius: 16px; font-weight: 800; border: 1.5px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.06); color: white; cursor: pointer; font-family: inherit; transition: all 0.2s; }
 .btn-step-nav:disabled { opacity: 0.3; cursor: not-allowed; }
-.btn-step-nav.next { background: #f59e0b; border-color: #f59e0b; color: #0f172a; }
-.btn-step-deploy { padding: 12px; border-radius: 16px; font-weight: 800; background: #10b981; border: none; color: white; cursor: pointer; font-family: inherit; }
-.ia-coach-terminal { background: #0f172a; border-radius: 24px; padding: 24px; display: flex; gap: 16px; align-items: flex-start; }
+.btn-step-nav:hover:not(:disabled) { background: rgba(255,255,255,0.12); }
+.btn-step-nav.next { background: linear-gradient(135deg, #f59e0b, #fbbf24); border-color: transparent; color: #0f172a; }
+.btn-step-nav.next:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(245,158,11,0.4); }
+.btn-step-deploy { padding: 12px; border-radius: 16px; font-weight: 800; background: linear-gradient(135deg, #10b981, #059669); border: none; color: white; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+.btn-step-deploy:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(16,185,129,0.4); }
+.btn-step-deploy:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.ia-coach-terminal {
+  background: linear-gradient(160deg, #0f172a, #1e293b);
+  border-radius: 24px; padding: 24px; display: flex; gap: 16px; align-items: flex-start;
+  border: 1px solid rgba(255,255,255,0.06);
+}
 .robot-glow-container { width: 44px; height: 44px; border-radius: 14px; background: rgba(245,158,11,0.2); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
 .coach-text-v8 h6 { color: white; font-weight: 800; margin-bottom: 4px; font-size: 0.85rem; }
 .coach-text-v8 p { color: #94a3b8; font-size: 0.75rem; }
@@ -1983,49 +2257,85 @@ onUnmounted(() => {
 .feed-text { flex: 1; font-size: 0.72rem; font-weight: 600; }
 .feed-time { font-size: 0.6rem; color: #94a3b8; }
 
-/* BUTTONS */
-.btn-enigma-primary { background: #0f172a; color: white; border: none; padding: 14px 28px; border-radius: 18px; font-weight: 800; position: relative; overflow: hidden; cursor: pointer; font-family: inherit; }
-.btn-enigma-primary .btn-glow { position: absolute; inset: 0; background: linear-gradient(135deg, #f59e0b, #fbbf24); opacity: 0; transition: 0.3s; z-index: 1; }
+/* ═══════════════════════════════════════
+   BUTTONS — amélioration CSS
+═══════════════════════════════════════ */
+.btn-enigma-primary {
+  background: #0f172a; color: white; border: none; padding: 14px 28px;
+  border-radius: 18px; font-weight: 800; position: relative; overflow: hidden;
+  cursor: pointer; font-family: inherit; transition: all 0.3s;
+}
+.btn-enigma-primary .btn-glow {
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, #f59e0b, #fb923c, #fbbf24);
+  opacity: 0; transition: opacity 0.3s; z-index: 1;
+}
 .btn-enigma-primary:hover .btn-glow { opacity: 1; }
+.btn-enigma-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(245,158,11,0.3); }
 .btn-enigma-primary .btn-content { position: relative; z-index: 2; display: flex; align-items: center; }
 .btn-enigma-primary:hover .btn-content { color: #0f172a; }
-.btn-enigma-primary:disabled { opacity: 0.4; cursor: not-allowed; }
-.btn-outline-pro { background: white; color: #0f172a; border: 1.5px solid #eef2f6; padding: 10px 18px; border-radius: 14px; font-weight: 800; font-size: 0.8rem; cursor: pointer; transition: 0.2s; font-family: inherit; }
-.btn-outline-pro:hover { border-color: #0f172a; }
-.btn-icon-sm { width: 32px; height: 32px; border-radius: 10px; border: 1.5px solid #eef2f6; background: white; color: #64748b; cursor: pointer; transition: 0.2s; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; }
-.btn-icon-sm:hover { background: #f8fafc; color: #0f172a; }
+.btn-enigma-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+.btn-outline-pro {
+  background: white; color: #0f172a; border: 1.5px solid #eef2f6;
+  padding: 10px 18px; border-radius: 14px; font-weight: 800; font-size: 0.8rem;
+  cursor: pointer; transition: all 0.2s; font-family: inherit;
+}
+.btn-outline-pro:hover { border-color: #0f172a; transform: translateY(-1px); }
+.btn-icon-sm {
+  width: 32px; height: 32px; border-radius: 10px; border: 1.5px solid #eef2f6;
+  background: white; color: #64748b; cursor: pointer; transition: all 0.2s;
+  font-size: 0.75rem; display: flex; align-items: center; justify-content: center;
+}
+.btn-icon-sm:hover { background: #f8fafc; color: #0f172a; transform: scale(1.05); }
 .btn-icon-sm.danger:hover { background: #fff1f2; color: #f43f5e; border-color: #f43f5e; }
 
-/* VAULT MODAL */
-.quantum-vault-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(10px); z-index: 2000; display: flex; align-items: center; justify-content: center; }
-.quantum-vault-window { width: 92vw; height: 88vh; background: white; border-radius: 40px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,0.2); }
+/* ═══════════════════════════════════════
+   VAULT MODAL — amélioration CSS
+═══════════════════════════════════════ */
+.quantum-vault-overlay {
+  position: fixed; inset: 0;
+  background: rgba(15,23,42,0.7); backdrop-filter: blur(12px) saturate(0.8);
+  z-index: 2000; display: flex; align-items: center; justify-content: center;
+}
+.quantum-vault-window {
+  width: 92vw; height: 88vh; background: white; border-radius: 40px;
+  display: flex; flex-direction: column; overflow: hidden;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.1);
+}
 .qv-header { padding: 24px 36px; border-bottom: 1px solid #eef2f6; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
 .qv-filter-tabs { background: #f8fafc; flex-shrink: 0; }
 .qv-filter-section-label { font-size: 0.55rem; font-weight: 900; color: #94a3b8; letter-spacing: 1.5px; text-transform: uppercase; white-space: nowrap; }
-.qv-filter-btn { padding: 5px 12px; border-radius: 10px; border: 1.5px solid transparent; background: white; font-size: 0.68rem; font-weight: 800; cursor: pointer; font-family: inherit; transition: 0.2s; color: #64748b; border-color: #eef2f6; }
-.qv-filter-btn:hover { border-color: #f59e0b; color: #f59e0b; }
+.qv-filter-btn {
+  padding: 5px 12px; border-radius: 10px; border: 1.5px solid transparent;
+  background: white; font-size: 0.68rem; font-weight: 800; cursor: pointer;
+  font-family: inherit; transition: all 0.2s; color: #64748b; border-color: #eef2f6;
+}
+.qv-filter-btn:hover { border-color: #f59e0b; color: #f59e0b; background: #fffbeb; }
 .qv-filter-btn.active { background: #0f172a; color: white; border-color: #0f172a; }
 .qv-filter-btn-type.active { background: #fffbeb; color: #f59e0b; border-color: #f59e0b; }
 .qv-layout { display: flex; flex-grow: 1; overflow: hidden; }
 .qv-sidebar { width: 220px; padding: 20px 16px; border-right: 1px solid #eef2f6; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; background: #fafbfc; }
-.qv-cat-btn { padding: 7px 12px; border-radius: 10px; border: none; background: transparent; font-size: 0.72rem; font-weight: 700; cursor: pointer; text-align: left; color: #64748b; font-family: inherit; transition: 0.2s; width: 100%; }
+.qv-cat-btn { padding: 7px 12px; border-radius: 10px; border: none; background: transparent; font-size: 0.72rem; font-weight: 700; cursor: pointer; text-align: left; color: #64748b; font-family: inherit; transition: all 0.2s; width: 100%; }
 .qv-cat-btn:hover { background: #f1f5f9; color: #0f172a; }
 .qv-cat-btn.active { background: #fffbeb; color: #f59e0b; font-weight: 800; }
 .qv-cat-sub-btn { font-size: 0.68rem; padding: 5px 10px; opacity: 0.85; }
 .qv-cat-sub-btn.active { background: #fffbeb; color: #f59e0b; font-weight: 800; opacity: 1; }
 .qv-bank-stats { margin-top: auto; }
 .qv-list { flex-grow: 1; padding: 20px; background: #f8fafc; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; align-content: start; }
-.qv-item-card { background: white; padding: 16px; border-radius: 18px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
-.qv-item-card:hover { border-color: #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
-.qv-item-card.active { border-color: #f59e0b; }
-.qv-item-card.checked { background: #f0fdf4; border-color: #10b981; }
+.qv-item-card {
+  background: white; padding: 16px; border-radius: 18px; cursor: pointer;
+  border: 2px solid transparent; transition: all 0.2s;
+}
+.qv-item-card:hover { border-color: #e2e8f0; box-shadow: 0 8px 20px rgba(0,0,0,0.05); transform: translateY(-2px); }
+.qv-item-card.active { border-color: #f59e0b; box-shadow: 0 4px 12px rgba(245,158,11,0.1); }
+.qv-item-card.checked { background: linear-gradient(135deg, #f0fdf4, white); border-color: #10b981; }
 .qv-item-top { display: flex; justify-content: space-between; align-items: flex-start; }
 .qv-badge { font-size: 0.6rem; font-weight: 900; padding: 3px 10px; border-radius: 8px; text-transform: uppercase; }
 .qv-badge.expert { background: #fff1f2; color: #f43f5e; }
 .qv-badge.medium { background: #fffbeb; color: #f59e0b; }
 .qv-badge.easy   { background: #ecfdf5; color: #10b981; }
 .qv-type-badge { font-size: 0.7rem; color: #94a3b8; background: #f8fafc; width: 24px; height: 24px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
-.qv-checkbox { color: #94a3b8; cursor: pointer; transition: color 0.2s; font-size: 1.1rem; }
+.qv-checkbox { color: #94a3b8; cursor: pointer; transition: all 0.2s; font-size: 1.1rem; }
 .qv-item-card.checked .qv-checkbox { color: #10b981; }
 .qv-item-text { font-size: 0.82rem; font-weight: 700; color: #0f172a; line-height: 1.4; }
 .qv-item-cat { font-size: 0.62rem; color: #94a3b8; font-weight: 700; }
@@ -2035,39 +2345,67 @@ onUnmounted(() => {
 .inspector-type-badge { font-size: 0.68rem; font-weight: 800; background: #eff6ff; color: #3b82f6; padding: 3px 10px; border-radius: 8px; }
 .inspector-cat-badge { font-size: 0.68rem; font-weight: 800; background: #f0fdf4; color: #16a34a; padding: 3px 10px; border-radius: 8px; }
 .inspector-stats-row { display: flex; gap: 12px; }
-.inspector-stat-box { flex: 1; background: #f8fafc; border-radius: 14px; padding: 14px; text-align: center; }
+.inspector-stat-box { flex: 1; background: #f8fafc; border-radius: 14px; padding: 14px; text-align: center; border: 1px solid #eef2f6; }
 .inspector-stat-box .v { font-size: 1.4rem; font-weight: 900; display: block; color: #0f172a; line-height: 1; }
 .inspector-stat-box .l { font-size: 0.55rem; font-weight: 900; color: #94a3b8; letter-spacing: 1px; margin-top: 4px; display: block; }
 
-/* MODALES */
-.btn-qv-cancel  { background: #f1f5f9; color: #64748b; border: none; padding: 12px 24px; border-radius: 14px; font-weight: 800; cursor: pointer; font-family: inherit; }
-.btn-qv-confirm { background: #0f172a; color: white; border: none; padding: 12px 24px; border-radius: 14px; font-weight: 800; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 6px; }
+/* ═══════════════════════════════════════
+   MODALES — amélioration CSS
+═══════════════════════════════════════ */
+.btn-qv-cancel { background: #f1f5f9; color: #64748b; border: none; padding: 12px 24px; border-radius: 14px; font-weight: 800; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+.btn-qv-cancel:hover { background: #e2e8f0; }
+.btn-qv-confirm { background: linear-gradient(135deg, #0f172a, #1e293b); color: white; border: none; padding: 12px 24px; border-radius: 14px; font-weight: 800; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 6px; transition: all 0.2s; }
+.btn-qv-confirm:hover:not(:disabled) { background: linear-gradient(135deg, #f59e0b, #fbbf24); color: #0f172a; transform: translateY(-2px); }
 .btn-qv-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
-.quick-add-modal { background: white; border-radius: 32px; padding: 40px; width: 550px; max-width: 95vw; box-shadow: 0 40px 80px rgba(0,0,0,0.15); }
-.shortcuts-modal { background: white; border-radius: 32px; padding: 40px; width: 480px; max-width: 95vw; box-shadow: 0 40px 80px rgba(0,0,0,0.15); }
+.quick-add-modal { background: white; border-radius: 32px; padding: 40px; width: 550px; max-width: 95vw; box-shadow: 0 40px 80px rgba(0,0,0,0.18); }
+.shortcuts-modal { background: white; border-radius: 32px; padding: 40px; width: 480px; max-width: 95vw; box-shadow: 0 40px 80px rgba(0,0,0,0.18); }
 .shortcuts-grid { display: flex; flex-direction: column; gap: 10px; }
-.shortcut-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #f8fafc; border-radius: 14px; }
-kbd { background: #0f172a; color: white; padding: 4px 10px; border-radius: 8px; font-size: 0.7rem; font-weight: 800; font-family: monospace; }
-.confirm-modal { background: white; border-radius: 32px; padding: 40px; width: 420px; max-width: 95vw; text-align: center; box-shadow: 0 40px 80px rgba(0,0,0,0.15); }
-.btn-confirm-danger { background: #f43f5e; color: white; border: none; padding: 12px 24px; border-radius: 14px; font-weight: 800; cursor: pointer; font-family: inherit; }
+.shortcut-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #f8fafc; border-radius: 14px; transition: background 0.2s; }
+.shortcut-item:hover { background: #f1f5f9; }
+kbd { background: #0f172a; color: white; padding: 4px 10px; border-radius: 8px; font-size: 0.7rem; font-weight: 800; font-family: monospace; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+.confirm-modal { background: white; border-radius: 32px; padding: 40px; width: 420px; max-width: 95vw; text-align: center; box-shadow: 0 40px 80px rgba(0,0,0,0.18); }
+.confirm-icon { width: 64px; height: 64px; background: #fff1f2; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+.btn-confirm-danger { background: linear-gradient(135deg, #f43f5e, #e11d48); color: white; border: none; padding: 12px 24px; border-radius: 14px; font-weight: 800; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+.btn-confirm-danger:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(244,63,94,0.3); }
 
-/* TOAST */
-.enigma-toast { position: fixed; bottom: 30px; right: 30px; background: #0f172a; color: white; padding: 20px 30px; border-radius: 20px; display: flex; align-items: center; gap: 15px; z-index: 3000; border-left: 5px solid #f59e0b; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
-.t-success { border-left-color: #10b981; } .t-error { border-left-color: #f43f5e; } .t-warn { border-left-color: #f59e0b; }
-.toast-slide-enter-active { animation: slideIn 0.4s ease-out; }
-.toast-slide-leave-active { animation: slideIn 0.3s ease-in reverse; }
-@keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+/* ═══════════════════════════════════════
+   TOAST — amélioration CSS
+═══════════════════════════════════════ */
+.enigma-toast {
+  position: fixed; bottom: 30px; right: 30px;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  color: white; padding: 20px 30px; border-radius: 20px;
+  display: flex; align-items: center; gap: 15px; z-index: 3000;
+  border-left: 5px solid #f59e0b;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+}
+.t-success { border-left-color: #10b981; }
+.t-error   { border-left-color: #f43f5e; }
+.t-warn    { border-left-color: #f59e0b; }
+.toast-slide-enter-active { animation: slideIn 0.4s cubic-bezier(0.4,0,0.2,1); }
+.toast-slide-leave-active { animation: slideIn 0.3s cubic-bezier(0.4,0,0.2,1) reverse; }
+@keyframes slideIn { from { transform: translateX(120%) scale(0.9); opacity: 0; } to { transform: translateX(0) scale(1); opacity: 1; } }
 
-/* TRANSITIONS */
-.modal-quantum-enter-active { animation: zoomIn 0.25s ease-out; }
-.modal-quantum-leave-active { animation: zoomIn 0.2s ease-in reverse; }
-@keyframes zoomIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+/* ═══════════════════════════════════════
+   TRANSITIONS
+═══════════════════════════════════════ */
+.modal-quantum-enter-active { animation: zoomIn 0.25s cubic-bezier(0.4,0,0.2,1); }
+.modal-quantum-leave-active { animation: zoomIn 0.2s cubic-bezier(0.4,0,0.2,1) reverse; }
+@keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 
-/* SPINNER */
-.spinner-pro-premium { width: 50px; height: 50px; border: 4px solid #f1f5f9; border-top: 4px solid #f59e0b; border-radius: 50%; animation: spin 1s linear infinite; margin: 40px auto; }
+/* ═══════════════════════════════════════
+   SPINNER — amélioration CSS
+═══════════════════════════════════════ */
+.spinner-pro-premium {
+  width: 50px; height: 50px;
+  border: 4px solid #f1f5f9; border-top: 4px solid #f59e0b;
+  border-radius: 50%; animation: spin 0.8s linear infinite; margin: 40px auto;
+}
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* MISC */
+/* ═══════════════════════════════════════
+   MISC UTILS
+═══════════════════════════════════════ */
 .text-amber   { color: #f59e0b !important; }
 .text-indigo  { color: #6366f1 !important; }
 .text-success { color: #10b981 !important; }
@@ -2075,57 +2413,46 @@ kbd { background: #0f172a; color: white; padding: 4px 10px; border-radius: 8px; 
 .fw-800 { font-weight: 800 !important; }
 .fw-900 { font-weight: 900 !important; }
 
-/* ════════════════════════════════════════════
-   DARK MODE OVERRIDES (CAMPAGNES VIEW)
-════════════════════════════════════════════ */
+/* ═══════════════════════════════════════
+   CUSTOM SCROLLBAR — amélioration CSS
+═══════════════════════════════════════ */
+.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #f59e0b; }
+
+/* ═══════════════════════════════════════
+   DARK MODE OVERRIDES
+═══════════════════════════════════════ */
 [data-theme="dark"] .canvas-engine { background: #0d1117; color: #f0f6fc; }
 [data-theme="dark"] .enigma-master-root { background: #0d1117; color: #f0f6fc; }
 [data-theme="dark"] .premium-title, [data-theme="dark"] .main-title-v2 { color: #f0f6fc; }
-
-[data-theme="dark"] .stat-card-premium { background: rgba(22, 27, 34, 0.7); border-color: rgba(255,255,255,0.05); }
+[data-theme="dark"] .stat-card-premium { background: rgba(22,27,34,0.8); border-color: rgba(255,255,255,0.06); }
 [data-theme="dark"] .stat-value { color: #f0f6fc; }
-
 [data-theme="dark"] .analytics-card-pro { background: #161b22; border-color: rgba(255,255,255,0.08); }
 [data-theme="dark"] .analytics-card-pro h6 { color: #f0f6fc; }
-
 [data-theme="dark"] .campaign-card-modern { background: #161b22; border-color: rgba(255,255,255,0.08); }
-[data-theme="dark"] .campaign-card-modern:hover { border-color: #d97706; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+[data-theme="dark"] .campaign-card-modern:hover { border-color: rgba(245,158,11,0.4); }
 [data-theme="dark"] .campaign-title-modern { color: #f0f6fc; }
 [data-theme="dark"] .test-attachment-box { background: rgba(255,255,255,0.05) !important; color: #f0f6fc; }
-
 [data-theme="dark"] .enigma-card { background: #161b22; border-color: rgba(255,255,255,0.08); }
 [data-theme="dark"] .enigma-card h6 { color: #8b949e !important; }
 [data-theme="dark"] .preview-field-box .fw-800 { color: #f0f6fc; }
-
 [data-theme="dark"] .tabs-container .bg-white { background: #161b22 !important; border-color: rgba(255,255,255,0.08) !important; }
 [data-theme="dark"] .nav-tab-btn-modern { color: #8b949e; }
 [data-theme="dark"] .nav-tab-btn-modern.active { background: #0d1117; color: #f0f6fc; }
-
 [data-theme="dark"] .search-inline-box, [data-theme="dark"] .sort-select-pro { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.08); color: #f0f6fc; }
 [data-theme="dark"] .search-inline-input { color: #f0f6fc; }
-
 [data-theme="dark"] .list-row-item { background: #161b22; border-color: rgba(255,255,255,0.08); color: #f0f6fc; }
-[data-theme="dark"] .list-row-item:hover { background: rgba(255,255,255,0.03); }
-
-[data-theme="dark"] .studio-header-v2 { background: #161b22; border-bottom-color: rgba(255,255,255,0.08); }
-[data-theme="dark"] .engine-pane { background: #0d1117; color: #f0f6fc; }
-
-[data-theme="dark"] .enigma-field, [data-theme="dark"] .theme-select { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.08); color: #f0f6fc; }
-[data-theme="dark"] .enigma-field:focus { border-color: #d97706; background: rgba(255,255,255,0.08); }
-
+[data-theme="dark"] .studio-header-v2 { background: rgba(22,27,34,0.95); border-bottom-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .enigma-field { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); color: #f0f6fc; }
+[data-theme="dark"] .enigma-field:focus { border-color: #f59e0b; background: rgba(255,255,255,0.08); }
 [data-theme="dark"] .asset-card-v8 { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08); }
 [data-theme="dark"] .asset-title-v8 { color: #f0f6fc; }
-[data-theme="dark"] .timer-input-field { background: rgba(255,255,255,0.05); color: #f0f6fc; border-color: rgba(255,255,255,0.1); }
-
 [data-theme="dark"] .talent-card-v8 { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08); }
-[data-theme="dark"] .talent-card-v8.active { background: rgba(217,119,6,0.1); border-color: #d97706; }
+[data-theme="dark"] .talent-card-v8.active { background: rgba(245,158,11,0.1); border-color: #f59e0b; }
 [data-theme="dark"] .talent-card-v8 b { color: #f0f6fc; }
-
-[data-theme="dark"] .sidebar-analytics-engine .analytics-hub-glass { background: #161b22; border-color: rgba(255,255,255,0.08); }
 [data-theme="dark"] .activity-feed-widget { background: #161b22; border-color: rgba(255,255,255,0.08); }
-[data-theme="dark"] .hub-title-v2 { color: #f0f6fc; }
-[data-theme="dark"] .feed-item { border-bottom-color: rgba(255,255,255,0.05); }
-
 [data-theme="dark"] .quantum-vault-window { background: #0d1117; }
 [data-theme="dark"] .qv-header { background: #161b22; border-bottom-color: rgba(255,255,255,0.08); }
 [data-theme="dark"] .qv-header h2 { color: #f0f6fc; }
@@ -2133,18 +2460,144 @@ kbd { background: #0f172a; color: white; padding: 4px 10px; border-radius: 8px; 
 [data-theme="dark"] .qv-sidebar { background: #161b22; border-right-color: rgba(255,255,255,0.08); }
 [data-theme="dark"] .qv-list { background: #0d1117; }
 [data-theme="dark"] .qv-bank-stats { background: rgba(255,255,255,0.03) !important; }
-
-[data-theme="dark"] .qv-item-card { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08); }
-[data-theme="dark"] .qv-item-card:hover { border-color: rgba(255,255,255,0.2); }
-[data-theme="dark"] .qv-item-card.active { border-color: #d97706; }
+[data-theme="dark"] .qv-item-card { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.06); }
+[data-theme="dark"] .qv-item-card:hover { border-color: rgba(255,255,255,0.15); }
+[data-theme="dark"] .qv-item-card.active { border-color: #f59e0b; }
 [data-theme="dark"] .qv-item-card.checked { background: rgba(16,185,129,0.1); border-color: #10b981; }
 [data-theme="dark"] .qv-item-text { color: #f0f6fc; }
-
-[data-theme="dark"] .btn-glass-secondary, [data-theme="dark"] .btn-outline-pro { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); color: #f0f6fc; }
-[data-theme="dark"] .btn-glass-secondary:hover, [data-theme="dark"] .btn-outline-pro:hover { border-color: #d97706; background: rgba(217,119,6,0.1); }
-
+[data-theme="dark"] .qv-inspector { background: #161b22; border-left-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .device-mockup-v8 { background: rgba(255,255,255,0.04); }
+[data-theme="dark"] .btn-outline-pro { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); color: #f0f6fc; }
+[data-theme="dark"] .btn-outline-pro:hover { border-color: #f59e0b; background: rgba(245,158,11,0.1); }
 [data-theme="dark"] .dropdown-menu { background: #161b22; border: 1px solid rgba(255,255,255,0.08) !important; }
 [data-theme="dark"] .dropdown-item { color: #f0f6fc; }
 [data-theme="dark"] .dropdown-item:hover { background: rgba(255,255,255,0.08); color: #f0f6fc; }
 [data-theme="dark"] .dropdown-divider { border-color: rgba(255,255,255,0.1); }
-</style> 
+[data-theme="dark"] .admissibility-dashboard { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .bulk-actions-bar { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .empty-questions-hint { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .shortcuts-modal, [data-theme="dark"] .quick-add-modal, [data-theme="dark"] .confirm-modal { background: #161b22; color: #f0f6fc; }
+[data-theme="dark"] .shortcut-item { background: rgba(255,255,255,0.04); }
+[data-theme="dark"] .btn-qv-cancel { background: rgba(255,255,255,0.08); color: #94a3b8; }
+[data-theme="dark"] .inspector-stat-box { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .inspector-stat-box .v { color: #f0f6fc; }
+
+/* ═══════════════════════════════════════
+   PREMIUM SUBTHEMES GRID & BADGES
+═══════════════════════════════════════ */
+.subthemes-placeholder-card {
+  border: 2px dashed rgba(0,0,0,0.06);
+  background: #f8fafc;
+  color: #64748b;
+  transition: all 0.3s ease;
+}
+.subthemes-placeholder-card i {
+  font-size: 1.5rem;
+}
+.subthemes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+}
+.subtheme-badge-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.subtheme-badge-card:hover {
+  border-color: #f59e0b;
+  background: #fffbeb;
+  transform: translateY(-2px);
+}
+.subtheme-badge-card.active {
+  border-color: #f59e0b;
+  background: #f59e0b;
+  color: #0f172a;
+  box-shadow: 0 4px 12px rgba(245,158,11,0.2);
+}
+.subtheme-card-indicator {
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.subtheme-badge-card.active .subtheme-card-indicator {
+  color: #0f172a;
+}
+.subtheme-badge-card:not(.active) .subtheme-card-indicator {
+  color: #94a3b8;
+}
+.subtheme-card-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.sub-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fffbeb !important;
+  color: #b45309 !important;
+  border: 1px solid #fde68a !important;
+  padding: 4px 10px !important;
+  border-radius: 8px;
+  font-size: 0.7rem !important;
+  font-weight: 800;
+}
+.sub-badge-remove {
+  border: none;
+  background: transparent;
+  color: #b45309;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.8rem;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+.sub-badge-remove:hover {
+  opacity: 1;
+}
+
+/* Dark Mode support */
+[data-theme="dark"] .subthemes-placeholder-card {
+  border-color: rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.02);
+  color: #8b949e;
+}
+[data-theme="dark"] .subtheme-badge-card {
+  background: rgba(255,255,255,0.03);
+  border-color: rgba(255,255,255,0.08);
+  color: #f0f6fc;
+}
+[data-theme="dark"] .subtheme-badge-card:hover {
+  background: rgba(245,158,11,0.1);
+  border-color: #f59e0b;
+}
+[data-theme="dark"] .subtheme-badge-card.active {
+  background: #f59e0b;
+  color: #0f172a;
+  border-color: #f59e0b;
+}
+[data-theme="dark"] .subtheme-badge-card.active .subtheme-card-indicator {
+  color: #0f172a;
+}
+[data-theme="dark"] .sub-badge-pill {
+  background: rgba(245,158,11,0.1) !important;
+  color: #f59e0b !important;
+  border-color: rgba(245,158,11,0.2) !important;
+}
+[data-theme="dark"] .sub-badge-remove {
+  color: #f59e0b;
+}
+</style>

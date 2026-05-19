@@ -201,6 +201,86 @@
                   </div>
                 </div>
 
+                <!--  SUBSCRIPTION CARD (Uniquement pour AdminEntreprise) -->
+                <div v-if="authStore.role === 'AdminEntreprise' && user.subscriptionPlan && user.subscriptionPlan !== 'Starter'" class="enigma-card p-5 border-amber shadow-premium">
+                  <div class="d-flex align-items-center gap-4 pb-4 mb-4" style="border-bottom:1px solid #f1f5f9">
+                    <div class="pane-icon-box amber-glow">
+                      <i class="fa-solid fa-crown"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                      <h6 class="fw-900 m-0">{{ t('profile.subscriptionTitle') }}</h6>
+                      <p class="text-muted small m-0">{{ t('profile.subscriptionSub') }}</p>
+                    </div>
+                    <div class="ms-auto">
+                      <span v-if="daysRemaining > 7" class="status-badge-v2 success">
+                        <i class="fa-solid fa-check-circle me-1"></i> {{ t('profile.statusActive') }}
+                      </span>
+                      <span v-else-if="daysRemaining > 0" class="status-badge-v2 warning">
+                        <i class="fa-solid fa-clock me-1"></i> {{ t('profile.expiresIn', { days: daysRemaining }) }}
+                      </span>
+                      <span v-else class="status-badge-v2 danger">
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i> {{ t('profile.subscriptionExpired') }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="info-fields-grid mb-4">
+                    <div class="info-field-item">
+                      <div class="field-icon-box" style="background:#fffbeb; color:#f59e0b;">
+                        <i class="fa-solid fa-gem"></i>
+                      </div>
+                      <div class="field-content">
+                        <div class="field-label">{{ t('profile.currentPlan') }}</div>
+                        <div class="field-value fw-900 text-amber">{{ user.subscriptionPlan || 'Starter' }}</div>
+                      </div>
+                    </div>
+
+                    <div class="info-field-item">
+                      <div class="field-icon-box" style="background:#f0f9ff; color:#0ea5e9;">
+                        <i class="fa-solid fa-calendar-day"></i>
+                      </div>
+                      <div class="field-content">
+                        <div class="field-label">{{ t('profile.activationDate') }}</div>
+                        <div class="field-value">{{ user.subscriptionDate || '—' }}</div>
+                      </div>
+                    </div>
+
+                    <div class="info-field-item">
+                      <div class="field-icon-box" style="background:#fef2f2; color:#ef4444;">
+                        <i class="fa-solid fa-hourglass-end"></i>
+                      </div>
+                      <div class="field-content">
+                        <div class="field-label">{{ t('profile.expirationDate') }}</div>
+                        <div class="field-value">{{ user.subscriptionExpiry || '—' }}</div>
+                      </div>
+                    </div>
+
+                    <div class="info-field-item">
+                      <div class="field-icon-box" :style="{ background: daysRemaining > 7 ? '#ecfdf5' : '#fff7ed', color: daysRemaining > 7 ? '#10b981' : '#f97316' }">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                      </div>
+                      <div class="field-content">
+                        <div class="field-label">{{ t('profile.timeLeft') }}</div>
+                        <div class="field-value" :class="{ 'text-warning fw-900': daysRemaining <= 7 }">
+                          {{ daysRemaining > 0 ? daysRemaining + ' ' + t('profile.days') : t('profile.finished') }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- ACTIONS ABONNEMENT -->
+                  <div class="d-flex gap-3">
+                    <button v-if="daysRemaining <= 7 && daysRemaining > 0" class="btn-enigma-primary flex-grow-1 shadow-amber" @click="router.push('/tarification')">
+                      <div class="btn-content"><i class="fa-solid fa-arrows-rotate me-2"></i>{{ t('profile.renewNow') }}</div>
+                      <div class="btn-glow"></div>
+                    </button>
+                    <button v-if="daysRemaining <= 0" class="btn-enigma-primary flex-grow-1 shadow-danger" @click="router.push('/tarification')" style="background:#ef4444">
+                      <div class="btn-content"><i class="fa-solid fa-power-off me-2"></i>{{ t('profile.reactivate') }}</div>
+                      <div class="btn-glow"></div>
+                    </button>
+                  </div>
+                </div>
+
                 <!-- BIO CARD -->
                 <div class="enigma-card p-5" v-if="user.bio">
                   <div class="d-flex align-items-center gap-4 pb-4 mb-4" style="border-bottom:1px solid #f1f5f9">
@@ -362,7 +442,7 @@ const authStore   = useAuthStore();
 const fileInput   = ref(null);
 
 /* ── State ── */
-const user      = ref({ nom: '', prenom: '', email: '', photoUrl: '', joinDate: '', entrepriseNom: '', bio: '' });
+const user      = ref({ nom: '', prenom: '', email: '', photoUrl: '', joinDate: '', entrepriseNom: '', bio: '', subscriptionPlan: '', subscriptionDate: '', subscriptionExpiry: '' });
 const loading   = ref(true);
 const uploading = ref(false);
 const mousePos  = reactive({ x: 0, y: 0 });
@@ -385,6 +465,28 @@ const profileDisplayUrl = computed(() => {
 const roleDisplay = computed(() => {
   if (!authStore.role) return '...';
   return t(`roles.${authStore.role}`);
+});
+
+const daysRemaining = computed(() => {
+  if (!user.value.subscriptionExpiry) return 0;
+  
+  // Parse "dd/MM/yyyy"
+  const parts = user.value.subscriptionExpiry.split('/');
+  if (parts.length === 3) {
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1; // Months are 0-indexed in JS
+    const year = parseInt(parts[2], 10);
+    const expiry = new Date(year, month, day);
+    const now = new Date();
+    const diff = expiry.getTime() - now.getTime();
+    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  }
+  
+  // Fallback
+  const expiry = new Date(user.value.subscriptionExpiry);
+  const now    = new Date();
+  const diff   = expiry.getTime() - now.getTime();
+  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 });
 
 /* ── API ── */
@@ -740,6 +842,35 @@ const handleParallax = (e) => {
 .pane-icon-box.amber  { background: #fffbeb; color: #f59e0b; }
 .pane-icon-box.indigo { background: #eef2ff; color: #6366f1; }
 .pane-icon-box.green  { background: #ecfdf5; color: #10b981; }
+.pane-icon-box.amber-glow {
+  background: #fffbeb; color: #f59e0b;
+  box-shadow: 0 0 20px rgba(245,158,11,0.2);
+  border: 1px solid rgba(245,158,11,0.2);
+}
+
+/* SUBSCRIPTION SPECIFIC */
+.border-amber { border-color: #fde68a !important; }
+.shadow-amber { box-shadow: 0 15px 40px rgba(245,158,11,0.15) !important; }
+.shadow-danger { box-shadow: 0 15px 40px rgba(239,68,68,0.2) !important; }
+
+.status-badge-v2 {
+  font-size: 0.65rem; font-weight: 800;
+  padding: 6px 14px; border-radius: 12px;
+  display: inline-flex; align-items: center; gap: 6px;
+  letter-spacing: 0.5px;
+}
+.status-badge-v2.success { background: #ecfdf5; color: #10b981; border: 1px solid #d1fae5; }
+.status-badge-v2.warning { background: #fff7ed; color: #f97316; border: 1px solid #ffedd5; animation: pulse-warning 2s infinite; }
+.status-badge-v2.danger  { background: #fef2f2; color: #ef4444; border: 1px solid #fee2e2; }
+
+@keyframes pulse-warning {
+  0% { box-shadow: 0 0 0 0 rgba(249,115,22,0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(249,115,22,0); }
+  100% { box-shadow: 0 0 0 0 rgba(249,115,22,0); }
+}
+
+.text-amber { color: #d97706 !important; }
+.text-warning { color: #f97316 !important; }
 
 /* LIVE BADGE */
 .live-badge {

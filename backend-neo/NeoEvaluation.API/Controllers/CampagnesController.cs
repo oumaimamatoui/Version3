@@ -20,11 +20,11 @@ namespace NeoEvaluation.API.Controllers
         private readonly ITenantService _tenantService;
         private readonly INotificationService _notificationService;
 
-        public CampagnesController(AppDbContext context, ITenantService tenantService) 
+        public CampagnesController(AppDbContext context, ITenantService tenantService, INotificationService notificationService) 
         { 
             _context = context; 
             _tenantService = tenantService;
-            INotificationService notificationService;
+            _notificationService = notificationService;
         }
         
 

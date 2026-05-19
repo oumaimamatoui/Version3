@@ -1,7 +1,6 @@
 <template>
   <div class="enigma-master-root d-flex overflow-hidden" @mousemove="handleParallax">
 
-    <!-- BACKGROUND — identique Campagnes.vue -->
     <div class="cyber-engine-bg">
       <div class="bg-vignette"></div>
       <div class="glow-orb orb-amber" :style="orbStyle(0.04)"></div>
@@ -17,33 +16,34 @@
       <main class="canvas-engine flex-grow-1 overflow-auto custom-scrollbar">
         <div class="dashboard-view animate__animated animate__fadeIn p-4 p-lg-5">
 
-          <!-- ══════════════════════════════════════
-               HEADER
-          ══════════════════════════════════════ -->
+          <!-- ═══ HEADER ═══ -->
           <header class="d-flex justify-content-between align-items-end mb-5 flex-wrap gap-3">
             <div>
               <div class="breadcrumb-pro mb-2">
-                <span class="root">Administration</span>
+                <span class="root">{{ t('candidatListe.breadcrumb') }}</span>
                 <i class="fa-solid fa-chevron-right mx-2 separator"></i>
-                <span class="current">Terminal des Candidats</span>
+                <span class="current">{{ t('candidatListe.titleHighlight') }}</span>
               </div>
-              <h2 class="premium-title">Gestion des <span class="gradient-text">Candidats</span></h2>
-              <p class="brand-subtitle">RÉPERTOIRE GLOBAL ET SUIVI DES TALENTS</p>
+              <h2 class="premium-title">
+                {{ t('candidatListe.title') }}
+                <span class="gradient-text">{{ t('candidatListe.titleHighlight') }}</span>
+              </h2>
+              <p class="brand-subtitle">{{ t('candidatListe.subtitle') }}</p>
             </div>
             <div class="d-flex gap-3 flex-wrap">
               <button @click="$router.push('/invite')" class="btn-outline-pro">
-                <i class="fa-solid fa-user-plus me-2"></i> Invite Unique
+                <i class="fa-solid fa-user-plus me-2"></i>{{ t('candidatListe.inviteUnique') }}
               </button>
               <button @click="$router.push('/groups')" class="btn-enigma-primary shadow-premium">
-                <div class="btn-content"><i class="fa-solid fa-users-rectangle me-2"></i> Invite par Groupe</div>
+                <div class="btn-content">
+                  <i class="fa-solid fa-users-rectangle me-2"></i>{{ t('candidatListe.inviteGroup') }}
+                </div>
                 <div class="btn-glow"></div>
               </button>
             </div>
           </header>
 
-          <!-- ══════════════════════════════════════
-               KPI CARDS
-          ══════════════════════════════════════ -->
+          <!-- ═══ KPI CARDS ═══ -->
           <div class="row g-4 mb-5">
             <div class="col-md-4" v-for="stat in kpiStats" :key="stat.label">
               <div class="stat-card-premium">
@@ -61,9 +61,7 @@
             </div>
           </div>
 
-          <!-- ══════════════════════════════════════
-               FILTER BAR
-          ══════════════════════════════════════ -->
+          <!-- ═══ FILTER BAR ═══ -->
           <div class="enigma-card p-4 mb-4">
             <div class="row g-3 align-items-center">
               <div class="col-md-5">
@@ -72,7 +70,7 @@
                   <input
                     v-model="search"
                     type="text"
-                    placeholder="Rechercher un candidat, email, groupe..."
+                    :placeholder="t('candidatListe.searchPlaceholder')"
                     class="search-inline-input"
                   >
                   <button v-if="search" @click="search = ''" class="btn-clear-search">
@@ -84,7 +82,7 @@
                 <div class="select-pro-wrap">
                   <i class="fa-solid fa-filter select-pro-icon"></i>
                   <select v-model="selectedFilter" class="enigma-field select-pro">
-                    <option value="">Toutes les Campagnes</option>
+                    <option value="">{{ t('candidatListe.allCampaigns') }}</option>
                     <option v-for="camp in campaigns" :key="camp.id" :value="camp.nom || camp.titre">
                       {{ camp.nom || camp.titre }}
                     </option>
@@ -92,47 +90,43 @@
                 </div>
               </div>
               <div class="col-md-3 d-flex justify-content-end gap-2 align-items-center">
-                <span class="results-count">{{ filteredCandidates.length }} résultat(s)</span>
-                <button @click="fetchCandidates" class="btn-refresh-pro" title="Actualiser">
+                <span class="results-count">{{ filteredCandidates.length }} {{ t('candidatListe.results') }}</span>
+                <button @click="fetchCandidates" class="btn-refresh-pro" :title="t('candidatListe.refreshTitle')">
                   <i class="fa-solid fa-rotate"></i>
                 </button>
               </div>
             </div>
           </div>
 
-          <!-- ══════════════════════════════════════
-               LOADING STATE
-          ══════════════════════════════════════ -->
+          <!-- ═══ LOADING ═══ -->
           <div v-if="loading" class="text-center py-5">
             <div class="spinner-pro-premium"></div>
-            <p class="fw-700 text-muted mt-3" style="font-size:0.85rem">Chargement des candidats...</p>
+            <p class="fw-700 text-muted mt-3" style="font-size:0.85rem">{{ t('candidatListe.loadingText') }}</p>
           </div>
 
-          <!-- ══════════════════════════════════════
-               EMPTY STATE
-          ══════════════════════════════════════ -->
+          <!-- ═══ EMPTY STATE ═══ -->
           <div v-else-if="filteredCandidates.length === 0" class="empty-state-pro py-5 text-center enigma-card">
             <i class="fa-solid fa-users-slash fa-3x text-muted mb-3"></i>
-            <h5 class="fw-800">Aucun candidat trouvé</h5>
-            <p class="text-muted small">Essayez de modifier vos filtres ou d'inviter de nouveaux candidats.</p>
+            <h5 class="fw-800">{{ t('candidatListe.emptyTitle') }}</h5>
+            <p class="text-muted small">{{ t('candidatListe.emptySubtitle') }}</p>
             <button @click="$router.push('/invite')" class="btn-enigma-primary mt-3">
-              <div class="btn-content"><i class="fa-solid fa-user-plus me-2"></i> Inviter un Candidat</div>
+              <div class="btn-content">
+                <i class="fa-solid fa-user-plus me-2"></i>{{ t('candidatListe.inviteBtn') }}
+              </div>
               <div class="btn-glow"></div>
             </button>
           </div>
 
-          <!-- ══════════════════════════════════════
-               TABLE
-          ══════════════════════════════════════ -->
+          <!-- ═══ TABLE ═══ -->
           <div v-else class="enigma-card p-0 overflow-hidden">
 
             <!-- LIST HEADER -->
             <div class="list-header-row d-flex align-items-center px-4 py-3">
-              <span style="width:260px" class="list-col-label">CANDIDAT</span>
-              <span class="flex-grow-1 list-col-label">E-MAIL</span>
-              <span style="width:180px" class="list-col-label">CAMPAGNE / GROUPE</span>
-              <span style="width:150px" class="list-col-label text-center">STATUT</span>
-              <span style="width:120px" class="list-col-label text-end pe-2">ACTIONS</span>
+              <span style="width:260px" class="list-col-label">{{ t('candidatListe.colCandidate') }}</span>
+              <span class="flex-grow-1 list-col-label">{{ t('candidatListe.colEmail') }}</span>
+              <span style="width:180px" class="list-col-label">{{ t('candidatListe.colGroup') }}</span>
+              <span style="width:150px" class="list-col-label text-center">{{ t('candidatListe.colStatus') }}</span>
+              <span style="width:120px" class="list-col-label text-end pe-2">{{ t('candidatListe.colActions') }}</span>
             </div>
 
             <!-- ROWS -->
@@ -148,8 +142,8 @@
                   {{ c.name ? c.name.charAt(0).toUpperCase() : '?' }}
                 </div>
                 <div>
-                  <div class="candidate-name">{{ c.name || 'Nom non renseigné' }}</div>
-                  <div class="candidate-meta">Candidat #{{ c.id ? c.id.toString().split('-')[0] : 'N/A' }}</div>
+                  <div class="candidate-name">{{ c.name || t('candidatListe.noName') }}</div>
+                  <div class="candidate-meta">{{ t('candidatListe.candidateId') }}{{ c.id ? c.id.toString().split('-')[0] : 'N/A' }}</div>
                 </div>
               </div>
 
@@ -161,7 +155,7 @@
               <!-- Groupe -->
               <div style="width:180px">
                 <span class="group-tag">
-                  <i class="fa-solid fa-tag me-1"></i>{{ c.group || 'Aucun groupe' }}
+                  <i class="fa-solid fa-tag me-1"></i>{{ c.group || t('candidatListe.noGroup') }}
                 </span>
               </div>
 
@@ -175,14 +169,10 @@
 
               <!-- Actions -->
               <div style="width:120px" class="d-flex gap-2 justify-content-end">
-                <button
-                  @click="goToDetails(c.id)"
-                  class="btn-icon-sm btn-view-cand"
-                  title="Voir le profil"
-                >
+                <button @click="goToDetails(c.id)" class="btn-icon-sm btn-view-cand" :title="t('candidatListe.viewProfile')">
                   <i class="fa-solid fa-eye"></i>
                 </button>
-                <button class="btn-icon-sm" title="Plus d'options">
+                <button class="btn-icon-sm" :title="t('candidatListe.moreOptions')">
                   <i class="fa-solid fa-ellipsis-vertical"></i>
                 </button>
               </div>
@@ -191,8 +181,11 @@
             <!-- TABLE FOOTER -->
             <div class="table-footer-bar px-4 py-3 d-flex justify-content-between align-items-center">
               <span class="footer-text">
-                Affichage de <strong>{{ filteredCandidates.length }}</strong>
-                sur <strong>{{ candidates.length }}</strong> candidats
+                {{ t('candidatListe.showing') }}
+                <strong>{{ filteredCandidates.length }}</strong>
+                {{ t('candidatListe.outOf') }}
+                <strong>{{ candidates.length }}</strong>
+                {{ t('candidatListe.candidatesSuffix') }}
               </span>
               <div class="d-flex gap-2">
                 <button class="btn-page" disabled><i class="fa-solid fa-chevron-left"></i></button>
@@ -210,11 +203,13 @@
 
 <script setup>
 import { ref, computed, reactive, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import api from '@/services/api';
 import AppSidebar from '@/components/AppSidebar.vue';
 import AppNavbar from '@/components/AppNavbar.vue';
 
+const { t } = useI18n();
 const router     = useRouter();
 const candidates = ref([]);
 const campaigns  = ref([]);
@@ -229,24 +224,24 @@ const goToDetails = (id) => {
   router.push({ name: 'details-candidat', params: { id } });
 };
 
-/* ── KPI ── */
+/* ── KPI — labels traduits ── */
 const kpiStats = computed(() => [
   {
-    label: 'Total Candidats',
+    label: t('candidatListe.kpiTotal'),
     value: candidates.value.length,
     icon:  'fa-solid fa-users',
     bg:    '#fffbeb',
     color: '#f59e0b',
   },
   {
-    label: 'Invitations Actives',
+    label: t('candidatListe.kpiActive'),
     value: candidates.value.filter(c => c.status !== 'terminé').length,
     icon:  'fa-solid fa-paper-plane',
     bg:    '#eef2ff',
     color: '#6366f1',
   },
   {
-    label: 'Groupes Engagés',
+    label: t('candidatListe.kpiGroups'),
     value: campaigns.value.length,
     icon:  'fa-solid fa-layer-group',
     bg:    '#ecfdf5',
@@ -259,7 +254,31 @@ const fetchCandidates = async () => {
   loading.value = true;
   try {
     const res = await api.get('/Candidates');
-    candidates.value = Array.isArray(res.data) ? res.data : [];
+    const allCandidates = Array.isArray(res.data) ? res.data : [];
+
+    // ── FILTRAGE : exclure les admins / responsables / entreprises ──
+    // On exclut tout utilisateur dont le rôle indique admin/responsable/entreprise
+    // OU dont le nom commence par des mots-clés typiques d'un compte admin
+    const adminKeywords = ['responsable', 'admin', 'administrateur', 'manager', 'rh ', 'drh', 'entreprise'];
+    const adminRoles    = ['admin', 'administrator', 'manager', 'responsable', 'hr', 'recruiter', 'entreprise'];
+
+    candidates.value = allCandidates.filter(c => {
+      const name  = (c.name  || c.fullName || c.nom  || '').toLowerCase();
+      const role  = (c.role  || c.Role     || c.type || c.userType || '').toLowerCase();
+      const email = (c.email || c.Email    || '').toLowerCase();
+
+      // Exclure si le rôle est explicitement non-candidat
+      if (adminRoles.some(r => role.includes(r))) return false;
+
+      // Exclure si le nom contient un mot-clé admin
+      if (adminKeywords.some(kw => name.startsWith(kw) || name.includes(' ' + kw))) return false;
+
+      // Exclure si isAdmin / isEnterprise flag est true
+      if (c.isAdmin || c.IsAdmin || c.isEntreprise || c.IsEntreprise) return false;
+
+      return true;
+    });
+
   } catch (e) {
     console.error('Erreur chargement candidats:', e);
     candidates.value = [];
@@ -290,13 +309,12 @@ const filteredCandidates = computed(() =>
       c.name?.toLowerCase().includes(q) ||
       c.email?.toLowerCase().includes(q) ||
       c.group?.toLowerCase().includes(q);
-    const matchesGroup =
-      selectedFilter.value === '' || c.group === selectedFilter.value;
+    const matchesGroup = selectedFilter.value === '' || c.group === selectedFilter.value;
     return matchesSearch && matchesGroup;
   })
 );
 
-/* ── Status ── */
+/* ── Status — traduits via i18n ── */
 const getStatusClass = (status) => {
   if (!status) return 'status-0';
   const s = status.toLowerCase();
@@ -306,7 +324,14 @@ const getStatusClass = (status) => {
   return 'status-0';
 };
 
-const getStatusLabel = (status) => status || 'Invité';
+const getStatusLabel = (status) => {
+  if (!status) return t('candidatListe.statusInvited');
+  const s = status.toLowerCase();
+  if (s === 'terminé' || s === 'termine') return t('candidatListe.statusTerminated');
+  if (s === 'postulé' || s === 'postule') return t('candidatListe.statusApplied');
+  if (s === 'en cours') return t('candidatListe.statusInProgress');
+  return t('candidatListe.statusInvited');
+};
 
 /* ── Avatar ── */
 const avatarPalette = [
@@ -331,11 +356,12 @@ const handleParallax = (e) => {
 };
 </script>
 
+
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
 
 /* ════════════════════════════════════════
-   BASE — identique à Campagnes.vue
+   BASE
 ════════════════════════════════════════ */
 .enigma-master-root {
   min-height: 100vh;
@@ -388,7 +414,7 @@ const handleParallax = (e) => {
 .breadcrumb-pro .current { color: #0f172a; font-weight: 800; }
 
 /* ════════════════════════════════════════
-   BUTTONS — copie exacte Campagnes.vue
+   BUTTONS
 ════════════════════════════════════════ */
 .btn-enigma-primary {
   background: #0f172a; color: white; border: none;
@@ -437,7 +463,7 @@ const handleParallax = (e) => {
 .btn-view-cand:hover { background: #0f172a; color: #f59e0b; border-color: #0f172a; }
 
 /* ════════════════════════════════════════
-   STAT CARDS — copie exacte Campagnes.vue
+   STAT CARDS
 ════════════════════════════════════════ */
 .stat-card-premium {
   background: white; border-radius: 24px; padding: 24px;
@@ -450,6 +476,7 @@ const handleParallax = (e) => {
   display: flex; align-items: center; justify-content: center;
   font-size: 1.4rem; flex-shrink: 0;
 }
+.stat-details { margin-left: 16px; }
 .stat-value { font-size: 1.6rem; font-weight: 800; line-height: 1; }
 .stat-label { font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-top: 4px; }
 .stat-trend { display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; font-weight: 800; }
@@ -501,7 +528,7 @@ const handleParallax = (e) => {
 .results-count { font-size: 0.72rem; font-weight: 700; color: #94a3b8; }
 
 /* ════════════════════════════════════════
-   LIST — même pattern que Campagnes list view
+   LIST
 ════════════════════════════════════════ */
 .list-header-row {
   background: #f8fafc;
@@ -545,7 +572,7 @@ const handleParallax = (e) => {
   display: inline-flex; align-items: center;
 }
 
-/* ── Status badges — même pattern status-0 / status-1 / status-2 de Campagnes ── */
+/* ── Status badges ── */
 .status-badge {
   padding: 5px 12px; border-radius: 10px;
   font-size: 0.62rem; font-weight: 800;
@@ -558,10 +585,10 @@ const handleParallax = (e) => {
 }
 @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
 
-.status-0        { background: #eef2ff; color: #6366f1; }   /* Invité */
-.status-2        { background: #ecfdf5; color: #10b981; }   /* Terminé */
-.status-applied  { background: #fffbeb; color: #d97706; }   /* Postulé */
-.status-progress { background: #fff7ed; color: #f97316; }   /* En cours */
+.status-0        { background: #eef2ff; color: #6366f1; }
+.status-2        { background: #ecfdf5; color: #10b981; }
+.status-applied  { background: #fffbeb; color: #d97706; }
+.status-progress { background: #fff7ed; color: #f97316; }
 
 /* ── TABLE FOOTER ── */
 .table-footer-bar {
@@ -610,7 +637,7 @@ const handleParallax = (e) => {
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
 /* ════════════════════════════════════════
-   DARK MODE — même pattern Campagnes.vue
+   DARK MODE
 ════════════════════════════════════════ */
 [data-theme="dark"] .enigma-master-root { background: #0d1117; color: #f0f6fc; }
 [data-theme="dark"] .canvas-engine      { background: #0d1117; }
@@ -618,12 +645,10 @@ const handleParallax = (e) => {
 [data-theme="dark"] .brand-subtitle     { color: #8b949e; }
 [data-theme="dark"] .breadcrumb-pro .current { color: #f0f6fc; }
 
-/* Stat cards */
 [data-theme="dark"] .stat-card-premium { background: rgba(22,27,34,0.7); border-color: rgba(255,255,255,0.05); }
 [data-theme="dark"] .stat-value        { color: #f0f6fc; }
 [data-theme="dark"] .stat-label        { color: #8b949e; }
 
-/* Buttons */
 [data-theme="dark"] .btn-outline-pro {
   background: rgba(255,255,255,0.05);
   border-color: rgba(255,255,255,0.1); color: #f0f6fc;
@@ -642,10 +667,8 @@ const handleParallax = (e) => {
 [data-theme="dark"] .btn-view-cand { background: rgba(245,158,11,0.1); color: #fbbf24; border-color: rgba(245,158,11,0.2); }
 [data-theme="dark"] .btn-view-cand:hover { background: #f59e0b; color: #0d1117; border-color: #f59e0b; }
 
-/* Enigma card */
 [data-theme="dark"] .enigma-card { background: #161b22; border-color: rgba(255,255,255,0.08); }
 
-/* Filter bar */
 [data-theme="dark"] .search-inline-box {
   background: rgba(255,255,255,0.04);
   border-color: rgba(255,255,255,0.08);
@@ -658,27 +681,22 @@ const handleParallax = (e) => {
 }
 [data-theme="dark"] .enigma-field:focus { border-color: #d97706; background: rgba(255,255,255,0.06); }
 
-/* List */
 [data-theme="dark"] .list-header-row { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.06); }
 [data-theme="dark"] .list-col-label   { color: #8b949e; }
 [data-theme="dark"] .list-row-item    { border-color: rgba(255,255,255,0.05); }
 [data-theme="dark"] .list-row-item:hover { background: rgba(245,158,11,0.04); }
 
-/* Candidate info */
 [data-theme="dark"] .candidate-name { color: #f0f6fc; }
 [data-theme="dark"] .candidate-meta { color: #8b949e; }
 [data-theme="dark"] .email-text     { color: #8b949e; }
 
-/* Group tag */
 [data-theme="dark"] .group-tag { background: rgba(255,255,255,0.05); color: #8b949e; border-color: rgba(255,255,255,0.08); }
 
-/* Status badges */
 [data-theme="dark"] .status-0        { background: rgba(99,102,241,0.12);  color: #a5b4fc; }
 [data-theme="dark"] .status-2        { background: rgba(16,185,129,0.12);  color: #34d399; }
 [data-theme="dark"] .status-applied  { background: rgba(217,119,6,0.12);   color: #fbbf24; }
 [data-theme="dark"] .status-progress { background: rgba(249,115,22,0.12);  color: #fb923c; }
 
-/* Table footer */
 [data-theme="dark"] .table-footer-bar { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.05); }
 [data-theme="dark"] .footer-text      { color: #8b949e; }
 [data-theme="dark"] .btn-page {
@@ -688,6 +706,5 @@ const handleParallax = (e) => {
 [data-theme="dark"] .btn-page.active { background: #f59e0b; color: #0d1117; border-color: #f59e0b; }
 [data-theme="dark"] .btn-page:not(:disabled):not(.active):hover { background: rgba(255,255,255,0.08); color: #f0f6fc; }
 
-/* Empty state */
 [data-theme="dark"] .empty-state-pro { border-color: rgba(255,255,255,0.08); }
 </style>

@@ -16,15 +16,18 @@ namespace NeoEvaluation.API.Controllers
         private readonly AppDbContext _context;
         private readonly ITenantService _tenantService;
         private readonly IEmailService _emailService;
+        private readonly AiService _aiService;
 
         public ExamenController(
             AppDbContext context,
             ITenantService tenantService,
-            IEmailService emailService)
+            IEmailService emailService,
+            AiService aiService)
         {
             _context = context;
             _tenantService = tenantService;
             _emailService = emailService;
+            _aiService = aiService;
         }
 
         // ─────────────────────────────────────────────────────────────────
@@ -201,50 +204,92 @@ namespace NeoEvaluation.API.Controllers
 
             var reponses = eval.Reponses.ToDictionary(r => r.QuestionId, r => r.Valeur ?? "");
 
-            float totalObtenu = 0;
-            float totalPossible = 0;
+            var candidat = eval.CandidatId.HasValue ? await _context.Utilisateurs.FindAsync(eval.CandidatId) : null;
+            string candidatNom = candidat != null ? $"{candidat.Prenom} {candidat.Nom}" : "Candidat Anonyme";
+            string examenNom = candidature?.Campagne?.Nom ?? "Examen";
 
-            foreach (var q in questions!)
+            var reponsesDict = eval.Reponses.ToDictionary(r => r.QuestionId.ToString(), r => r.Valeur ?? "");
+
+            var payload = new {
+                questions = questions!.Select(q => new {
+                    id = q.Id,
+                    enonce = q.Enonce,
+                    type = q.Type.ToString(),
+                    choix = q.Choix,
+                    bonneReponse = q.BonneReponse
+                }),
+                reponses = reponsesDict,
+                candidatNom = candidatNom,
+                examenNom = examenNom
+            };
+
+            bool aiSuccess = false;
+            try 
             {
-                float pts = q.Points > 0 ? q.Points : 1;
-                totalPossible += pts;
-
-                if (reponses.TryGetValue(q.Id, out var rawUserVal))
+                var aiResponse = await _aiService.EvaluateExamAsync(payload);
+                if (aiResponse.Status == "SUCCESS" && aiResponse.Evaluation != null) 
                 {
-                    string processedUserVal = rawUserVal;
-                    
-                    // Traduction des index (0;2) en texte (Option A;Option C)
-                    if (q.Choix != null && q.Choix.Any() && !string.IsNullOrWhiteSpace(rawUserVal))
-                    {
-                        var parts = rawUserVal.Split(';', StringSplitOptions.RemoveEmptyEntries);
-                        var mappedValues = parts
-                            .Select(p => int.TryParse(p.Trim(), out int idx) ? idx : -1)
-                            .Where(idx => idx >= 0 && idx < q.Choix.Count)
-                            .Select(idx => q.Choix[idx].Trim())
-                            .ToList();
-
-                        if (mappedValues.Any())
-                            processedUserVal = string.Join(";", mappedValues);
-                    }
-
-                    if (EvaluerReponse(processedUserVal, q.BonneReponse ?? "")) 
-                        totalObtenu += pts;
+                    eval.ScorePourcentage = aiResponse.Evaluation.ScorePourcentage;
+                    eval.RapportFinalIA = aiResponse.Evaluation.RapportFinal;
+                    eval.CorrectionIA = System.Text.Json.JsonSerializer.Serialize(aiResponse.Evaluation.Corrections);
+                    aiSuccess = true;
                 }
+            } 
+            catch (Exception) 
+            {
+                // Fallback to local
             }
 
-            eval.ScoreTotal = totalObtenu;
-            eval.ScorePourcentage = totalPossible > 0 ? (totalObtenu / totalPossible) * 100f : 0f;
+            if (!aiSuccess)
+            {
+                var reponsesLocales = eval.Reponses.ToDictionary(r => r.QuestionId, r => r.Valeur ?? "");
+                float totalObtenu = 0;
+                float totalPossible = 0;
+
+                foreach (var q in questions!)
+                {
+                    float pts = q.Points > 0 ? q.Points : 1;
+                    totalPossible += pts;
+
+                    if (reponsesLocales.TryGetValue(q.Id, out var rawUserVal))
+                    {
+                        string processedUserVal = rawUserVal;
+                        
+                        // Traduction des index (0;2) en texte (Option A;Option C)
+                        if (q.Choix != null && q.Choix.Any() && !string.IsNullOrWhiteSpace(rawUserVal))
+                        {
+                            var parts = rawUserVal.Split(';', StringSplitOptions.RemoveEmptyEntries);
+                            var mappedValues = parts
+                                .Select(p => int.TryParse(p.Trim(), out int idx) ? idx : -1)
+                                .Where(idx => idx >= 0 && idx < q.Choix.Count)
+                                .Select(idx => q.Choix[idx].Trim())
+                                .ToList();
+
+                            if (mappedValues.Any())
+                                processedUserVal = string.Join(";", mappedValues);
+                        }
+
+                        if (EvaluerReponse(processedUserVal, q.BonneReponse ?? "")) 
+                            totalObtenu += pts;
+                    }
+                }
+
+                eval.ScoreTotal = totalObtenu;
+                eval.ScorePourcentage = totalPossible > 0 ? (totalObtenu / totalPossible) * 100f : 0f;
+            }
+
             eval.Statut = StatutPassage.TERMINE;
             eval.DateFin = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            return Ok(new { success = true, score = eval.ScorePourcentage });
+            return Ok(new { success = true, score = eval.ScorePourcentage, aiGraded = aiSuccess });
         }
 
         [HttpGet("results/{evaluationId}")]
         public async Task<IActionResult> GetResults(Guid evaluationId)
         {
             var eval = await _context.Evaluations
+                .IgnoreQueryFilters()
                 .Include(e => e.Reponses)
                 .Include(e => e.Candidature)
                     .ThenInclude(c => c!.Campagne)
@@ -256,53 +301,91 @@ namespace NeoEvaluation.API.Controllers
             var qIds = eval.Candidature?.Campagne?.CampagneQuestionnaires
                            .Select(cq => cq.QuestionnaireId).ToList() ?? new List<Guid>();
 
-            var questions = await _context.QuestionnaireQuestions
+            var questionnaireQuestions = await _context.QuestionnaireQuestions
                 .IgnoreQueryFilters()
-                .Include(qq => qq.Question)
                 .Where(qq => qIds.Contains(qq.QuestionnaireId))
                 .OrderBy(qq => qq.Ordre)
-                .Select(qq => qq.Question)
-                .Where(q => q != null)
                 .ToListAsync();
+
+            var questionIds = questionnaireQuestions.Select(qq => qq.QuestionId).ToList();
+
+            var dbQuestions = await _context.Questions
+                .IgnoreQueryFilters()
+                .Where(q => questionIds.Contains(q.Id))
+                .ToListAsync();
+
+            var questions = questionnaireQuestions
+                .Select(qq => dbQuestions.FirstOrDefault(q => q.Id == qq.QuestionId))
+                .Where(q => q != null)
+                .ToList();
 
             var reponses = eval.Reponses.ToDictionary(r => r.QuestionId, r => r.Valeur ?? "");
             var correction = new List<object>();
 
+            var correctionIA = new List<AiCorrectionItem>();
+            if (!string.IsNullOrWhiteSpace(eval.CorrectionIA))
+            {
+                try {
+                    correctionIA = System.Text.Json.JsonSerializer.Deserialize<List<AiCorrectionItem>>(eval.CorrectionIA, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
+                } catch {}
+            }
+            var aiDict = correctionIA.ToDictionary(c => c.QuestionId, c => c);
+
             foreach (var q in questions!)
             {
-                string rawUserVal = reponses.TryGetValue(q.Id, out var v) ? v.Trim() : "";
-                
-                string displayUserVal = rawUserVal;
-                string processedForEval = rawUserVal;
-
-                if (q.Choix != null && q.Choix.Any() && !string.IsNullOrWhiteSpace(rawUserVal))
+                if (aiDict.TryGetValue(q.Id.ToString(), out var aiItem))
                 {
-                    var parts = rawUserVal.Split(';', StringSplitOptions.RemoveEmptyEntries);
-                    var texts = parts
-                        .Select(p => int.TryParse(p.Trim(), out int idx) ? idx : -1)
-                        .Where(idx => idx >= 0 && idx < q.Choix.Count)
-                        .Select(idx => q.Choix[idx].Trim())
-                        .ToList();
-
-                    displayUserVal = string.Join("; ", texts);
-                    processedForEval = string.Join(";", texts);
+                    correction.Add(new
+                    {
+                        Enonce = q.Enonce,
+                        UserAnswer = aiItem.CandidateAnswer,
+                        CorrectAnswer = aiItem.CorrectAnswer,
+                        IsCorrect = aiItem.IsCorrect,
+                        Options = q.Choix ?? new List<string>(),
+                        Theme = q.Theme ?? "Général",
+                        Points = q.Points > 0 ? q.Points : 1,
+                        Explication = aiItem.Explication
+                    });
                 }
-
-                bool isCorrect = EvaluerReponse(processedForEval, q.BonneReponse ?? "");
-
-                correction.Add(new
+                else
                 {
-                    Enonce = q.Enonce,
-                    UserAnswer = displayUserVal,
-                    CorrectAnswer = q.BonneReponse ?? "",
-                    IsCorrect = isCorrect,
-                    Options = q.Choix ?? new List<string>(),
-                    Theme = q.Theme ?? "Général",
-                    Points = q.Points > 0 ? q.Points : 1,
-                    Explication = !string.IsNullOrWhiteSpace(q.BonneReponse)
-                                    ? $"La bonne réponse était : {q.BonneReponse}"
-                                    : ""
-                });
+                    string rawUserVal = reponses.TryGetValue(q.Id, out var v) ? v.Trim() : "";
+                    
+                    string displayUserVal = rawUserVal;
+                    string processedForEval = rawUserVal;
+
+                    if (q.Choix != null && q.Choix.Any() && !string.IsNullOrWhiteSpace(rawUserVal))
+                    {
+                        var parts = rawUserVal.Split(';', StringSplitOptions.RemoveEmptyEntries);
+                        var texts = parts
+                            .Select(p => int.TryParse(p.Trim(), out int idx) ? idx : -1)
+                            .Where(idx => idx >= 0 && idx < q.Choix.Count)
+                            .Select(idx => q.Choix[idx].Trim())
+                            .ToList();
+
+                        if (texts.Any())
+                        {
+                            displayUserVal = string.Join("; ", texts);
+                            processedForEval = string.Join(";", texts);
+                        }
+                    }
+
+                    bool isCorrect = EvaluerReponse(processedForEval, q.BonneReponse ?? "");
+
+                    correction.Add(new
+                    {
+                        Enonce = q.Enonce,
+                        UserAnswer = displayUserVal,
+                        CorrectAnswer = q.BonneReponse ?? "",
+                        IsCorrect = isCorrect,
+                        Options = q.Choix ?? new List<string>(),
+                        Theme = q.Theme ?? "Général",
+                        Points = q.Points > 0 ? q.Points : 1,
+                        Explication = !string.IsNullOrWhiteSpace(q.BonneReponse)
+                                        ? $"La bonne réponse était : {q.BonneReponse}"
+                                        : ""
+                    });
+                }
             }
 
             return Ok(new
@@ -310,6 +393,7 @@ namespace NeoEvaluation.API.Controllers
                 Pourcentage = (int)Math.Round(eval.ScorePourcentage),
                 ScoreTotal = eval.ScoreTotal,
                 DetailedCorrection = correction,
+                RapportFinalIA = eval.RapportFinalIA,
                 Infractions = 0
             });
         }

@@ -133,6 +133,62 @@ namespace NeoEvaluation.API.Data.Migrations
                     b.ToTable("Categories");
                 });
 
+            modelBuilder.Entity("NeoEvaluation.API.Models.CvAnalysis", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid?>("CandidatId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Conseils")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedByUserId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Decision")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsCv")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("JobDescription")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Lang")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PointsFaibles")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PointsForts")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CvAnalyses");
+                });
+
             modelBuilder.Entity("NeoEvaluation.API.Models.DocumentCandidat", b =>
                 {
                     b.Property<Guid>("Id")
@@ -172,12 +228,24 @@ namespace NeoEvaluation.API.Data.Migrations
                     b.Property<DateTime?>("AbonnementFin")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Adresse")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CodePostal")
+                        .HasColumnType("text");
+
                     b.Property<string>("CouleurSignature")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreeLe")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Domaine")
+                        .HasColumnType("text");
 
                     b.Property<string>("GmailAccessToken")
                         .HasColumnType("text");
@@ -208,11 +276,20 @@ namespace NeoEvaluation.API.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Pays")
+                        .HasColumnType("text");
+
                     b.Property<string>("Plan")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Secteur")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SiteWeb")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Ville")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -232,6 +309,9 @@ namespace NeoEvaluation.API.Data.Migrations
                     b.Property<Guid>("CandidatureId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("CorrectionIA")
+                        .HasColumnType("text");
+
                     b.Property<int>("CurrentQuestionIndex")
                         .HasColumnType("integer");
 
@@ -246,6 +326,9 @@ namespace NeoEvaluation.API.Data.Migrations
 
                     b.Property<int>("NbReprises")
                         .HasColumnType("integer");
+
+                    b.Property<string>("RapportFinalIA")
+                        .HasColumnType("text");
 
                     b.Property<float>("ScorePourcentage")
                         .HasColumnType("real");
@@ -276,8 +359,20 @@ namespace NeoEvaluation.API.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Adresse")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CodePostal")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("CreeLe")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Domaine")
+                        .HasColumnType("text");
 
                     b.Property<string>("EmailResponsable")
                         .IsRequired()
@@ -294,14 +389,26 @@ namespace NeoEvaluation.API.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Pays")
+                        .HasColumnType("text");
+
                     b.Property<string>("PrenomResponsable")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Secteur")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SiteWeb")
                         .HasColumnType("text");
 
                     b.Property<int>("Statut")
                         .HasColumnType("integer");
 
                     b.Property<string>("TelephoneResponsable")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Ville")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -341,6 +448,14 @@ namespace NeoEvaluation.API.Data.Migrations
 
                     b.Property<string>("Explication")
                         .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Langue")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
 
                     b.Property<int>("Niveau")
                         .HasColumnType("integer");
@@ -616,6 +731,30 @@ namespace NeoEvaluation.API.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("TokensActivation");
+                });
+
+            modelBuilder.Entity("NeoEvaluation.API.Models.UsageLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("EntrepriseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Feature")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Metadata")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("UsageLogs");
                 });
 
             modelBuilder.Entity("NeoEvaluation.API.Models.Utilisateur", b =>
