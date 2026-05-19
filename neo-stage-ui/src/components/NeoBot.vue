@@ -298,6 +298,27 @@ watch(currentLang, async () => {
    Le RTL s'applique UNIQUEMENT dans .chat-window[dir="rtl"]
    ════════════════════════════════════════════════════════════ */
 
+.chatbot-wrapper {
+  --bg-card: var(--surface, #fff);
+  --bg-page: var(--surface2, #f8fafc);
+  --bg-input: var(--surface, #fff);
+  --border-color: var(--bdr, #e2e8f0);
+  --text-main: var(--text, #1e293b);
+  --text-muted: var(--text3, #64748b);
+  --text-light: var(--text3, #94a3b8);
+  --primary: var(--amber, #f59e0b);
+  --primary-light: rgba(245, 158, 11, 0.1);
+  --primary-dark: #d97706;
+  --danger: #ef4444;
+  --danger-bg: rgba(239, 68, 68, 0.1);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-primary: 0 4px 14px 0 rgba(245, 158, 11, 0.39);
+  --radius-lg: 0.5rem;
+  --radius-xl: 1rem;
+  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* Chatbot wrapper : toujours positionné en bas à droite (LTR) */
 .chatbot-wrapper {
   position: fixed;

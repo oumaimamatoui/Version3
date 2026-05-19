@@ -636,10 +636,16 @@
               {{ t('activation.form.desc') }}
             </div>
             <div class="row g-4 mb-4">
-              <div class="col-12">
+              <div class="col-md-6">
                 <div class="enigma-input-wrap">
                   <label>{{ t('name').toUpperCase() }} <span class="required-star">*</span></label>
                   <input type="text" v-model="newOrg.name" class="enigma-field" :placeholder="t('name')" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="enigma-input-wrap">
+                  <label>{{ t('settings.labels.matriculeFiscale').toUpperCase() }}</label>
+                  <input type="text" v-model="newOrg.matriculeFiscale" class="enigma-field" placeholder="1234567/A/B/C/000">
                 </div>
               </div>
               <div class="col-md-6">
@@ -1002,7 +1008,7 @@ const newOrg = reactive({
   name:'', domain:'', industry:'', website:'',
   city:'', country:'', zipCode:'', address:'',
   description:'', adminFirstName:'', adminLastName:'',
-  adminEmail:''
+  adminEmail:'', matriculeFiscale:''
 });
 
 // ─── TOAST ─────────────────────────────────────────────────────────
@@ -1066,9 +1072,7 @@ const fetchData = async () => {
 // ─── ACTIONS ───────────────────────────────────────────────────────
 const handleApprove = async (id) => {
   if (!isGoogleConnected.value) {
-    showPulseToast("Allez dans Paramètres > INTÉGRATIONS pour connecter Gmail et pouvoir accepter/refuser les demandes.", "error", "fa-brands fa-google");
-    addTerminalLog('amber', 'Action bloquée: Connexion Gmail requise');
-    return;
+    showPulseToast("⚠️ Gmail non connecté — l'email d'activation ne sera pas envoyé.", 'warn', 'fa-brands fa-google');
   }
   try {
     await superAdminApi.approveRequest(id);
@@ -1082,9 +1086,7 @@ const handleApprove = async (id) => {
 };
 const handleReject = async (id) => {
   if (!isGoogleConnected.value) {
-    showPulseToast("Allez dans Paramètres > INTÉGRATIONS pour connecter Gmail et pouvoir accepter/refuser les demandes.", "error", "fa-brands fa-google");
-    addTerminalLog('amber', 'Action bloquée: Connexion Gmail requise');
-    return;
+    showPulseToast("⚠️ Gmail non connecté — l'email de refus ne sera pas envoyé.", 'warn', 'fa-brands fa-google');
   }
   if (!confirm(t('campaigns.deleteConfirm'))) return;
   try {
@@ -1098,9 +1100,7 @@ const handleReject = async (id) => {
 };
 const handleCreateOrg = async () => {
   if (!isGoogleConnected.value) {
-    showPulseToast("Allez dans Paramètres > INTÉGRATIONS pour connecter Gmail et pouvoir envoyer des invitations.", "error", "fa-brands fa-google");
-    addTerminalLog('amber', 'Action bloquée: Connexion Gmail requise');
-    return;
+    showPulseToast("⚠️ Gmail non connecté — l'email d'invitation ne sera pas envoyé.", 'warn', 'fa-brands fa-google');
   }
   isCreating.value = true;
   try {

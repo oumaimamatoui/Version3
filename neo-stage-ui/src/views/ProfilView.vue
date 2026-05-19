@@ -270,11 +270,11 @@
 
                   <!-- ACTIONS ABONNEMENT -->
                   <div class="d-flex gap-3">
-                    <button v-if="daysRemaining <= 7 && daysRemaining > 0" class="btn-enigma-primary flex-grow-1 shadow-amber" @click="router.push('/tarification')">
+                    <button v-if="daysRemaining <= 7 && daysRemaining > 0" class="btn-enigma-primary flex-grow-1 shadow-amber" @click="router.push('/pricing')">
                       <div class="btn-content"><i class="fa-solid fa-arrows-rotate me-2"></i>{{ t('profile.renewNow') }}</div>
                       <div class="btn-glow"></div>
                     </button>
-                    <button v-if="daysRemaining <= 0" class="btn-enigma-primary flex-grow-1 shadow-danger" @click="router.push('/tarification')" style="background:#ef4444">
+                    <button v-if="daysRemaining <= 0" class="btn-enigma-primary flex-grow-1 shadow-danger" @click="router.push('/pricing')" style="background:#ef4444">
                       <div class="btn-content"><i class="fa-solid fa-power-off me-2"></i>{{ t('profile.reactivate') }}</div>
                       <div class="btn-glow"></div>
                     </button>

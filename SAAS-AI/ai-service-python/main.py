@@ -1314,15 +1314,18 @@ RECO_COLORS = ["#6366f1","#f59e0b","#10b981","#ef4444","#8b5cf6","#3b82f6","#ec4
 
 def _build_reco_prompt(role: str, context_data: dict = None) -> str:
     ctx = f"\nContexte: {json.dumps(context_data, ensure_ascii=False)[:400]}" if context_data else ""
+    routes_valides = "/dashboard, /questions, /campaigns, /my-tests, /eval-queue, /analyse-comportementale, /sessions, /cv-library, /candidates-list, /invite, /reporting, /staff-members, /gestion-staff, /super-admin, /gestion-abonnements, /platform-users, /super-admin-analytics"
+    
     prompts = {
-        "Candidat":        f"Coach carrière EvaluaTech. 3 recommandations candidat (score 82%, 2 tests en attente).{ctx}\nJSON: {{\"recommendations\":[{{\"title\":\"...\",\"description\":\"...\",\"actionLabel\":\"...\",\"icon\":\"test|skill|cv|interview|star|letter\",\"priority\":\"urgent|high|medium|low\"}},{{\"title\":\"...\",\"description\":\"...\",\"actionLabel\":\"...\",\"icon\":\"...\",\"priority\":\"...\"}},{{\"title\":\"...\",\"description\":\"...\",\"actionLabel\":\"...\",\"icon\":\"...\",\"priority\":\"...\"}}]}}",
-        "Evaluateur":      f"Expert RH. 3 recommandations évaluateur (5 en attente, taux 91%).{ctx}\nJSON: {{\"recommendations\":[{{\"title\":\"...\",\"description\":\"...\",\"actionLabel\":\"...\",\"icon\":\"test|user|report|calendar|alert\",\"priority\":\"urgent|high|medium|low\"}},{{\"title\":\"...\",\"description\":\"...\",\"actionLabel\":\"...\",\"icon\":\"...\",\"priority\":\"...\"}},{{\"title\":\"...\",\"description\":\"...\",\"actionLabel\":\"...\",\"icon\":\"...\",\"priority\":\"...\"}}]}}",
-        "RH":              f"Expert RH. 3 recommandations RH (3 campagnes, 18 candidats, 84%).{ctx}\nJSON: {{\"recommendations\":[{{\"title\":\"...\",\"description\":\"...\",\"actionLabel\":\"...\",\"icon\":\"user|campaign|report|performance|team\",\"priority\":\"urgent|high|medium|low\"}},{{\"title\":\"...\",\"description\":\"...\",\"actionLabel\":\"...\",\"icon\":\"...\",\"priority\":\"...\"}},{{\"title\":\"...\",\"description\":\"...\",\"actionLabel\":\"...\",\"icon\":\"...\",\"priority\":\"...\"}}]}}",
-        "Recruteur":       f"Expert recrutement. 3 recommandations recruteur (22 candidats, 7 sans réponse).{ctx}\nJSON: {{\"recommendations\":[{{\"title\":\"...\",\"description\":\"...\",\"actionLabel\":\"...\",\"icon\":\"user|campaign|cv|performance|mail|stats\",\"priority\":\"urgent|high|medium|low\"}},{{\"title\":\"...\",\"description\":\"...\",\"actionLabel\":\"...\",\"icon\":\"...\",\"priority\":\"...\"}},{{\"title\":\"...\",\"description\":\"...\",\"actionLabel\":\"...\",\"icon\":\"...\",\"priority\":\"...\"}}]}}",
-        "AdminEntreprise": f"Consultant EvaluaTech. 3 recommandations Admin (124 talents, 88%, 8 candidats 48h).{ctx}\nJSON: {{\"recommendations\":[{{\"title\":\"...\",\"description\":\"...\",\"actionLabel\":\"...\",\"icon\":\"performance|user|report|security|campaign|team|stats\",\"priority\":\"urgent|high|medium|low\"}},{{\"title\":\"...\",\"description\":\"...\",\"actionLabel\":\"...\",\"icon\":\"...\",\"priority\":\"...\"}},{{\"title\":\"...\",\"description\":\"...\",\"actionLabel\":\"...\",\"icon\":\"...\",\"priority\":\"...\"}}]}}",
-        "SuperAdmin":      f"Expert SaaS. 3 recommandations SuperAdmin (Mailer DOWN 2h, 3 abonnements 7j).{ctx}\nJSON: {{\"recommendations\":[{{\"title\":\"...\",\"description\":\"...\",\"actionLabel\":\"...\",\"icon\":\"system|security|alert|money|report\",\"priority\":\"urgent|high|medium|low\"}},{{\"title\":\"...\",\"description\":\"...\",\"actionLabel\":\"...\",\"icon\":\"...\",\"priority\":\"...\"}},{{\"title\":\"...\",\"description\":\"...\",\"actionLabel\":\"...\",\"icon\":\"...\",\"priority\":\"...\"}}]}}",
+        "Candidat":        f"Coach carrière EvaluaTech. 3 recommandations candidat (score 82%, 2 tests en attente).{ctx}\nJSON: {{\"recommendations\":[{{\"title\":\"...\",\"description\":\"...\",\"actionLabel\":\"...\",\"icon\":\"test|skill|cv|interview|star|letter\",\"priority\":\"urgent|high|medium|low\",\"route\":\"{routes_valides}\"}}]}}",
+        "Evaluateur":      f"Expert RH. 3 recommandations évaluateur (5 en attente, taux 91%).{ctx}\nJSON: {{\"recommendations\":[{{\"title\":\"...\",\"description\":\"...\",\"actionLabel\":\"...\",\"icon\":\"test|user|report|calendar|alert\",\"priority\":\"urgent|high|medium|low\",\"route\":\"{routes_valides}\"}}]}}",
+        "RH":              f"Expert RH. 3 recommandations RH (3 campagnes, 18 candidats, 84%).{ctx}\nJSON: {{\"recommendations\":[{{\"title\":\"...\",\"description\":\"...\",\"actionLabel\":\"...\",\"icon\":\"user|campaign|report|performance|team\",\"priority\":\"urgent|high|medium|low\",\"route\":\"{routes_valides}\"}}]}}",
+        "Recruteur":       f"Expert recrutement. 3 recommandations recruteur (22 candidats, 7 sans réponse).{ctx}\nJSON: {{\"recommendations\":[{{\"title\":\"...\",\"description\":\"...\",\"actionLabel\":\"...\",\"icon\":\"user|campaign|cv|performance|mail|stats\",\"priority\":\"urgent|high|medium|low\",\"route\":\"{routes_valides}\"}}]}}",
+        "AdminEntreprise": f"Consultant EvaluaTech. 3 recommandations Admin (124 talents, 88%, 8 candidats 48h).{ctx}\nJSON: {{\"recommendations\":[{{\"title\":\"...\",\"description\":\"...\",\"actionLabel\":\"...\",\"icon\":\"performance|user|report|security|campaign|team|stats\",\"priority\":\"urgent|high|medium|low\",\"route\":\"{routes_valides}\"}}]}}",
+        "SuperAdmin":      f"Expert SaaS. 3 recommandations SuperAdmin (Mailer DOWN 2h, 3 abonnements 7j).{ctx}\nJSON: {{\"recommendations\":[{{\"title\":\"...\",\"description\":\"...\",\"actionLabel\":\"...\",\"icon\":\"system|security|alert|money|report\",\"priority\":\"urgent|high|medium|low\",\"route\":\"{routes_valides}\"}}]}}",
     }
-    return prompts.get(role, prompts["AdminEntreprise"])
+    base_prompt = prompts.get(role, prompts["AdminEntreprise"])
+    return base_prompt + f"\nCONTRAINTE STRICTE: Pour la clé 'route', vous DEVEZ choisir UNIQUEMENT parmi ces routes exactes : {routes_valides}. Ne générez JAMAIS d'autres URLs."
 
 def _get_fallback_recommendations(role: str) -> list:
     fallbacks = {
@@ -1378,6 +1381,7 @@ def _parse_gemini_recommendations(raw_text: str, role: str) -> list:
                 "priority":      prio["label"],
                 "priorityBg":    prio["bg"],
                 "priorityColor": prio["color"],
+                "route":         r.get("route", "/dashboard")
             })
         return result
     except Exception:

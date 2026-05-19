@@ -357,11 +357,17 @@ const onUploadCv = async (event, specificCandidatId = null) => {
   const jobDesc  = detailModal.analysis?.profile_type ?? 'Poste Fullstack';
   const formData = new FormData();
   formData.append('file', file);
+  formData.append('File', file);
   formData.append('lang', 'fr');
+  formData.append('Lang', 'fr');
   formData.append('job_description', jobDesc);
+  formData.append('jobDescription', jobDesc);
+  formData.append('JobDescription', jobDesc);
 
   if (specificCandidatId) {
     formData.append('candidat_id', specificCandidatId);
+    formData.append('candidatId', specificCandidatId);
+    formData.append('CandidatId', specificCandidatId);
     detailModal.loading = true;
   }
 
@@ -371,6 +377,12 @@ const onUploadCv = async (event, specificCandidatId = null) => {
     const { data } = await api.post('/Ai/analyze-cv', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
+
+    if (data.is_cv === false || data.isCv === false || data.status === 'NOT_A_CV') {
+      const msg = data.alert?.subtitle || data.alert?.title || "Ce document n'est pas reconnu comme un CV.";
+      showToast(msg, 'error');
+      return;
+    }
 
     showToast('Analyse terminée avec succès !', 'success');
 

@@ -49,6 +49,7 @@ namespace NeoEvaluation.API.Controllers
                 .IgnoreQueryFilters()
                 .Include(c => c.Candidat)
                 .Include(c => c.Campagne)
+                .Include(c => c.Evaluation)
                 .Where(c => c.Campagne.EntrepriseId == tenantId)
                 .OrderByDescending(c => c.PostuleLe)
                 .Select(c => new {
@@ -56,7 +57,7 @@ namespace NeoEvaluation.API.Controllers
                     name = (c.Candidat.Prenom + " " + c.Candidat.Nom).Trim() == "" ? "Candidat" : (c.Candidat.Prenom + " " + c.Candidat.Nom).Trim(),
                     email = c.Candidat.Email,
                     group = c.Campagne.Nom,
-                    score = 0,
+                    score = c.Evaluation != null ? (int)Math.Round(c.Evaluation.ScorePourcentage) : 0,
                     status = c.Statut.ToString()
                 }).ToListAsync();
 

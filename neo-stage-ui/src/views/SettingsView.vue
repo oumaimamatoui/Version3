@@ -255,7 +255,9 @@
                   ══════════════════════════ -->
                   <div v-if="activeTab === 'branding'" class="settings-section animate__animated animate__fadeIn">
                     <div class="row g-4">
-                      <div class="col-12">
+                      
+                      <!-- Raison Sociale -->
+                      <div class="col-md-6">
                         <div class="enigma-input-wrap">
                           <label>{{ t('settings.labels.companyName').toUpperCase() }}</label>
                           <div class="input-with-icon">
@@ -265,6 +267,103 @@
                         </div>
                       </div>
 
+                      <!-- Matricule Fiscale -->
+                      <div class="col-md-6">
+                        <div class="enigma-input-wrap">
+                          <label>{{ t('settings.labels.matriculeFiscale').toUpperCase() }}</label>
+                          <div class="input-with-icon">
+                            <i class="fa-solid fa-id-card input-icon"></i>
+                            <input type="text" class="enigma-field" v-model="brandForm.matriculeFiscale">
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Domaine d'activité -->
+                      <div class="col-md-6">
+                        <div class="enigma-input-wrap">
+                          <label>{{ t('settings.labels.domain').toUpperCase() }}</label>
+                          <div class="input-with-icon">
+                            <i class="fa-solid fa-globe input-icon"></i>
+                            <input type="text" class="enigma-field" v-model="brandForm.domaine">
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Secteur d'activité -->
+                      <div class="col-md-6">
+                        <div class="enigma-input-wrap">
+                          <label>{{ t('settings.labels.industry').toUpperCase() }}</label>
+                          <div class="input-with-icon">
+                            <i class="fa-solid fa-briefcase input-icon"></i>
+                            <input type="text" class="enigma-field" v-model="brandForm.secteur">
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Site internet -->
+                      <div class="col-md-6">
+                        <div class="enigma-input-wrap">
+                          <label>{{ t('settings.labels.website').toUpperCase() }}</label>
+                          <div class="input-with-icon">
+                            <i class="fa-solid fa-link input-icon"></i>
+                            <input type="text" class="enigma-field" v-model="brandForm.siteWeb">
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Code Postal -->
+                      <div class="col-md-6">
+                        <div class="enigma-input-wrap">
+                          <label>{{ t('settings.labels.zipCode').toUpperCase() }}</label>
+                          <div class="input-with-icon">
+                            <i class="fa-solid fa-map-pin input-icon"></i>
+                            <input type="text" class="enigma-field" v-model="brandForm.codePostal">
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Ville -->
+                      <div class="col-md-6">
+                        <div class="enigma-input-wrap">
+                          <label>{{ t('settings.labels.city').toUpperCase() }}</label>
+                          <div class="input-with-icon">
+                            <i class="fa-solid fa-city input-icon"></i>
+                            <input type="text" class="enigma-field" v-model="brandForm.ville">
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Pays -->
+                      <div class="col-md-6">
+                        <div class="enigma-input-wrap">
+                          <label>{{ t('settings.labels.country').toUpperCase() }}</label>
+                          <div class="input-with-icon">
+                            <i class="fa-solid fa-flag input-icon"></i>
+                            <input type="text" class="enigma-field" v-model="brandForm.pays">
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Adresse -->
+                      <div class="col-12">
+                        <div class="enigma-input-wrap">
+                          <label>{{ t('settings.labels.address').toUpperCase() }}</label>
+                          <div class="input-with-icon">
+                            <i class="fa-solid fa-location-dot input-icon"></i>
+                            <input type="text" class="enigma-field" v-model="brandForm.adresse">
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Description / Présentation -->
+                      <div class="col-12">
+                        <div class="enigma-input-wrap">
+                          <label>{{ t('settings.labels.description').toUpperCase() }}</label>
+                          <textarea class="enigma-field p-3" rows="4" style="height: auto;" v-model="brandForm.description"></textarea>
+                        </div>
+                      </div>
+
+                      <!-- Couleur Signature -->
                       <div class="col-12">
                         <div class="enigma-input-wrap">
                           <label>{{ t('settings.labels.signatureColor').toUpperCase() }}</label>
@@ -290,6 +389,7 @@
                         </div>
                       </div>
 
+                      <!-- Aperçu en direct -->
                       <div class="col-12">
                         <div class="brand-preview-card">
                           <div class="brand-preview-label">APERÇU EN DIRECT</div>
@@ -451,7 +551,19 @@ const photoInput = ref(null);
 
 const userForm = ref({ nom: '', prenom: '', email: '', photoUrl: '', joinDate: '' });
 const securityForm = ref({ currentPassword: '', newPassword: '', confirmPassword: '' });
-const brandForm = ref({ companyName: '', color: '#eab308' });
+const brandForm = ref({
+  companyName: '',
+  color: '#eab308',
+  domaine: '',
+  secteur: '',
+  siteWeb: '',
+  ville: '',
+  pays: '',
+  codePostal: '',
+  adresse: '',
+  description: '',
+  matriculeFiscale: ''
+});
 
 const mousePos = reactive({ x: 0, y: 0 });
 const globalToast = reactive({ active: false, message: '', type: '', icon: '' });

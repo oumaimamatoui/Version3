@@ -10,7 +10,7 @@
         Si vous avez rencontré un problème, n'hésitez pas à nous contacter.
       </p>
       <div class="action-buttons d-flex gap-3 justify-content-center">
-        <router-link to="/tarification" class="btn-outline-amber px-4">
+        <router-link to="/pricing" class="btn-outline-amber px-4">
           Réessayer
         </router-link>
         <router-link to="/dashboard" class="btn-navy-premium px-4">

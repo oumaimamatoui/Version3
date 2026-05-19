@@ -30,12 +30,17 @@ namespace NeoEvaluation.API.Controllers
         {
             try {
                 // Initialisation des stats de base
+                // Exclure SYSTEM_PLATFORM des comptes
                 var stats = new SuperAdminStatsDto
                 {
-                    TotalEntreprises = await _context.Entreprises.CountAsync(),
-                    TotalUtilisateurs = await _context.Utilisateurs.CountAsync(),
+                    TotalEntreprises = await _context.Entreprises
+                        .IgnoreQueryFilters()
+                        .CountAsync(e => e.Nom != "SYSTEM_PLATFORM"),
+                    TotalUtilisateurs = await _context.Utilisateurs
+                        .IgnoreQueryFilters()
+                        .CountAsync(u => u.RoleNom != "SuperAdmin"),
                     DemandesEnAttente = await _context.InscriptionsEntreprises.CountAsync(i => i.Statut == 0),
-                    TotalTests = await _context.Evaluations.CountAsync()
+                    TotalTests = await _context.Evaluations.IgnoreQueryFilters().CountAsync()
                 };
 
                 // Calcul de la croissance des entreprises sur les 6 derniers mois
@@ -43,7 +48,8 @@ namespace NeoEvaluation.API.Controllers
                 var startDate = new DateTime(sixMonthsAgo.Year, sixMonthsAgo.Month, 1, 0, 0, 0, DateTimeKind.Utc);
                 
                 var monthlyData = await _context.Entreprises
-                    .Where(e => e.CreeLe >= startDate)
+                    .IgnoreQueryFilters()
+                    .Where(e => e.CreeLe >= startDate && e.Nom != "SYSTEM_PLATFORM")
                     .GroupBy(e => new { e.CreeLe.Year, e.CreeLe.Month })
                     .Select(g => new { 
                         Year = g.Key.Year, 
@@ -66,6 +72,8 @@ namespace NeoEvaluation.API.Controllers
 
                 // Récupération des abonnements récents réels depuis la base de données
                 var recentOrgs = await _context.Entreprises
+                    .IgnoreQueryFilters()
+                    .Where(e => e.Nom != "SYSTEM_PLATFORM")
                     .OrderByDescending(e => e.CreeLe)
                     .Take(5)
                     .Select(e => new RecentTransactionDto
@@ -84,32 +92,32 @@ namespace NeoEvaluation.API.Controllers
                 stats.RecentTransactions = recentOrgs;
 
                 // Calcul dynamique des statistiques de plan d'abonnement réels
-                stats.StartupCount = await _context.Entreprises.CountAsync(e => e.Plan.ToLower() == "startup");
-                stats.BusinessCount = await _context.Entreprises.CountAsync(e => e.Plan.ToLower() == "business" || e.Plan.ToLower() == "business ia");
-                stats.EnterpriseCount = await _context.Entreprises.CountAsync(e => e.Plan.ToLower() == "enterprise" || e.Plan.ToLower() == "entreprise" || e.Plan.ToLower() == "enterprise ia");
-                stats.GratuitCount = await _context.Entreprises.CountAsync(e => e.Plan.ToLower() == "gratuit" || string.IsNullOrEmpty(e.Plan));
-                stats.TotalRevenus = (stats.StartupCount * 79.0) + (stats.BusinessCount * 199.0) + (stats.EnterpriseCount * 499.0);
+                stats.StartupCount    = await _context.Entreprises.IgnoreQueryFilters().CountAsync(e => e.Nom != "SYSTEM_PLATFORM" && e.Plan.ToLower() == "startup");
+                stats.BusinessCount   = await _context.Entreprises.IgnoreQueryFilters().CountAsync(e => e.Nom != "SYSTEM_PLATFORM" && (e.Plan.ToLower() == "business" || e.Plan.ToLower() == "business ia"));
+                stats.EnterpriseCount = await _context.Entreprises.IgnoreQueryFilters().CountAsync(e => e.Nom != "SYSTEM_PLATFORM" && (e.Plan.ToLower() == "enterprise" || e.Plan.ToLower() == "entreprise" || e.Plan.ToLower() == "enterprise ia"));
+                stats.GratuitCount    = await _context.Entreprises.IgnoreQueryFilters().CountAsync(e => e.Nom != "SYSTEM_PLATFORM" && (e.Plan.ToLower() == "gratuit" || e.Plan.ToLower() == "starter" || string.IsNullOrEmpty(e.Plan)));
+                stats.TotalRevenus    = (stats.StartupCount * 79.0) + (stats.BusinessCount * 199.0) + (stats.EnterpriseCount * 499.0);
 
                 var now = DateTime.UtcNow;
-                var sevenDaysAgo = now.AddDays(-7);
+                var sevenDaysAgo  = now.AddDays(-7);
                 var thirtyDaysAgo = now.AddDays(-30);
 
-                stats.TotalEntreprises7Days = await _context.Entreprises.CountAsync(e => e.CreeLe >= sevenDaysAgo);
-                stats.TotalUtilisateurs7Days = await _context.Utilisateurs.CountAsync(u => u.CreeLe >= sevenDaysAgo);
-                stats.TotalTests7Days = await _context.Evaluations.CountAsync(ev => ev.DateDebut != null && ev.DateDebut >= sevenDaysAgo);
+                stats.TotalEntreprises7Days  = await _context.Entreprises.IgnoreQueryFilters().CountAsync(e => e.Nom != "SYSTEM_PLATFORM" && e.CreeLe >= sevenDaysAgo);
+                stats.TotalUtilisateurs7Days = await _context.Utilisateurs.IgnoreQueryFilters().CountAsync(u => u.RoleNom != "SuperAdmin" && u.CreeLe >= sevenDaysAgo);
+                stats.TotalTests7Days        = await _context.Evaluations.IgnoreQueryFilters().CountAsync(ev => ev.DateDebut != null && ev.DateDebut >= sevenDaysAgo);
 
-                var startup7 = await _context.Entreprises.CountAsync(e => e.CreeLe >= sevenDaysAgo && e.Plan.ToLower() == "startup");
-                var business7 = await _context.Entreprises.CountAsync(e => e.CreeLe >= sevenDaysAgo && (e.Plan.ToLower() == "business" || e.Plan.ToLower() == "business ia"));
-                var enterprise7 = await _context.Entreprises.CountAsync(e => e.CreeLe >= sevenDaysAgo && (e.Plan.ToLower() == "enterprise" || e.Plan.ToLower() == "entreprise" || e.Plan.ToLower() == "enterprise ia"));
+                var startup7    = await _context.Entreprises.IgnoreQueryFilters().CountAsync(e => e.Nom != "SYSTEM_PLATFORM" && e.CreeLe >= sevenDaysAgo && e.Plan.ToLower() == "startup");
+                var business7   = await _context.Entreprises.IgnoreQueryFilters().CountAsync(e => e.Nom != "SYSTEM_PLATFORM" && e.CreeLe >= sevenDaysAgo && (e.Plan.ToLower() == "business" || e.Plan.ToLower() == "business ia"));
+                var enterprise7 = await _context.Entreprises.IgnoreQueryFilters().CountAsync(e => e.Nom != "SYSTEM_PLATFORM" && e.CreeLe >= sevenDaysAgo && (e.Plan.ToLower() == "enterprise" || e.Plan.ToLower() == "entreprise" || e.Plan.ToLower() == "enterprise ia"));
                 stats.TotalRevenus7Days = (startup7 * 79.0) + (business7 * 199.0) + (enterprise7 * 499.0);
 
-                stats.TotalEntreprises30Days = await _context.Entreprises.CountAsync(e => e.CreeLe >= thirtyDaysAgo);
-                stats.TotalUtilisateurs30Days = await _context.Utilisateurs.CountAsync(u => u.CreeLe >= thirtyDaysAgo);
-                stats.TotalTests30Days = await _context.Evaluations.CountAsync(ev => ev.DateDebut != null && ev.DateDebut >= thirtyDaysAgo);
+                stats.TotalEntreprises30Days  = await _context.Entreprises.IgnoreQueryFilters().CountAsync(e => e.Nom != "SYSTEM_PLATFORM" && e.CreeLe >= thirtyDaysAgo);
+                stats.TotalUtilisateurs30Days = await _context.Utilisateurs.IgnoreQueryFilters().CountAsync(u => u.RoleNom != "SuperAdmin" && u.CreeLe >= thirtyDaysAgo);
+                stats.TotalTests30Days        = await _context.Evaluations.IgnoreQueryFilters().CountAsync(ev => ev.DateDebut != null && ev.DateDebut >= thirtyDaysAgo);
 
-                var startup30 = await _context.Entreprises.CountAsync(e => e.CreeLe >= thirtyDaysAgo && e.Plan.ToLower() == "startup");
-                var business30 = await _context.Entreprises.CountAsync(e => e.CreeLe >= thirtyDaysAgo && (e.Plan.ToLower() == "business" || e.Plan.ToLower() == "business ia"));
-                var enterprise30 = await _context.Entreprises.CountAsync(e => e.CreeLe >= thirtyDaysAgo && (e.Plan.ToLower() == "enterprise" || e.Plan.ToLower() == "entreprise" || e.Plan.ToLower() == "enterprise ia"));
+                var startup30    = await _context.Entreprises.IgnoreQueryFilters().CountAsync(e => e.Nom != "SYSTEM_PLATFORM" && e.CreeLe >= thirtyDaysAgo && e.Plan.ToLower() == "startup");
+                var business30   = await _context.Entreprises.IgnoreQueryFilters().CountAsync(e => e.Nom != "SYSTEM_PLATFORM" && e.CreeLe >= thirtyDaysAgo && (e.Plan.ToLower() == "business" || e.Plan.ToLower() == "business ia"));
+                var enterprise30 = await _context.Entreprises.IgnoreQueryFilters().CountAsync(e => e.Nom != "SYSTEM_PLATFORM" && e.CreeLe >= thirtyDaysAgo && (e.Plan.ToLower() == "enterprise" || e.Plan.ToLower() == "entreprise" || e.Plan.ToLower() == "enterprise ia"));
                 stats.TotalRevenus30Days = (startup30 * 79.0) + (business30 * 199.0) + (enterprise30 * 499.0);
 
                 // Calcul dynamique des revenus mensuels réels sur les 6 derniers mois basés sur la date de création des entreprises
@@ -120,7 +128,8 @@ namespace NeoEvaluation.API.Controllers
                     var endOfTargetMonth = new DateTime(targetDate.Year, targetDate.Month, 1, 23, 59, 59, DateTimeKind.Utc).AddMonths(1).AddDays(-1);
 
                     var activeOrgsUpToMonth = await _context.Entreprises
-                        .Where(e => e.CreeLe <= endOfTargetMonth)
+                        .IgnoreQueryFilters()
+                        .Where(e => e.Nom != "SYSTEM_PLATFORM" && e.CreeLe <= endOfTargetMonth)
                         .ToListAsync();
 
                     double revForMonth = 0;
@@ -437,6 +446,66 @@ namespace NeoEvaluation.API.Controllers
             } catch (Exception ex) {
                 return BadRequest(new { message = "Erreur d'envoi d'email de création : " + ex.Message });
             }
+        }
+        // --- ORGANIZATIONS LIST (SuperAdmin only) ---
+        [HttpGet("organizations")]
+        public async Task<IActionResult> GetOrganizations([FromQuery] int page = 1, [FromQuery] int limit = 20, [FromQuery] string? search = null)
+        {
+            try {
+                var query = _context.Entreprises
+                    .IgnoreQueryFilters()
+                    .Where(e => e.Nom != "SYSTEM_PLATFORM");
+
+                if (!string.IsNullOrWhiteSpace(search))
+                    query = query.Where(e =>
+                        e.Nom.Contains(search) ||
+                        (e.Domaine != null && e.Domaine.Contains(search)) ||
+                        (e.Secteur != null && e.Secteur.Contains(search)));
+
+                var total = await query.CountAsync();
+                var data = await query
+                    .OrderByDescending(e => e.CreeLe)
+                    .Skip((page - 1) * limit)
+                    .Take(limit)
+                    .Select(e => new {
+                        e.Id,
+                        e.Nom,
+                        e.Plan,
+                        EstActif = e.AbonnementFin == null || e.AbonnementFin > DateTime.UtcNow,
+                        e.CreeLe,
+                        e.CouleurSignature,
+                        e.Secteur,
+                        e.Ville,
+                        e.Pays,
+                        e.Domaine,
+                        e.SiteWeb,
+                        e.AbonnementFin,
+                        EmailAdmin = _context.Utilisateurs
+                            .IgnoreQueryFilters()
+                            .Where(u => u.EntrepriseId == e.Id && u.RoleNom == "AdminEntreprise")
+                            .Select(u => u.Email)
+                            .FirstOrDefault()
+                    })
+                    .ToListAsync();
+
+                return Ok(new { total, page, limit, data });
+            } catch (Exception ex) {
+                Console.WriteLine($"[ERROR] GetOrganizations: {ex.Message}");
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        [HttpDelete("organizations/{id}")]
+        public async Task<IActionResult> DeleteOrg(Guid id)
+        {
+            var ent = await _context.Entreprises.IgnoreQueryFilters().FirstOrDefaultAsync(e => e.Id == id);
+            if (ent == null) return NotFound();
+
+            _context.Entreprises.Remove(ent);
+            await _context.SaveChangesAsync();
+
+            await _auditLogService.LogActionAsync("DELETE_ORG", "SuperAdmin", $"Suppression de l'organisation : {ent.Nom}");
+            return Ok(new { message = "Organisation supprimée." });
         }
     }
 }

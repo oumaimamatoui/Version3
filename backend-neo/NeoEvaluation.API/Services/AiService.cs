@@ -72,7 +72,10 @@ namespace NeoEvaluation.API.Services
             content.Add(new StringContent(lang), "lang");
 
             var resp = await _http.PostAsync("/ia/match-cv", content);
-            if (!resp.IsSuccessStatusCode) throw new Exception("FastAPI unreachable");
+            if (!resp.IsSuccessStatusCode && resp.StatusCode != System.Net.HttpStatusCode.UnprocessableEntity)
+            {
+                throw new Exception("FastAPI unreachable");
+            }
 
             var json = await resp.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<CvAnalysisResult>(json, _jsonOpts) ?? new();

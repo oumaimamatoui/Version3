@@ -22,8 +22,10 @@ export const superAdminApi = {
   approveRequest: (id) => api.post(`/SuperAdmin/approve/${id}`),
   rejectRequest: (id) => api.post(`/SuperAdmin/reject/${id}`),
   createOrg: (data) => api.post('/SuperAdmin/create-org', data),
-  
-  // NOUVEAUX : Gestion des Utilisateurs Plateforme
+  getOrganizations: (params) => api.get('/SuperAdmin/organizations', { params }),
+  deleteOrg: (id) => api.delete(`/SuperAdmin/organizations/${id}`),
+
+  // Gestion des Utilisateurs Plateforme
   getPlatformUsers: () => api.get('/SuperAdmin/users'),
   deleteUser: (id) => api.delete(`/SuperAdmin/users/${id}`),
   inviteAdmin: (data) => api.post('/SuperAdmin/invite-admin', data),
