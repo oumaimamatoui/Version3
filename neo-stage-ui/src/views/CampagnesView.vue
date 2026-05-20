@@ -814,7 +814,7 @@
                     <i :class="isCocheeInBank(qRef.id) ? 'fa-solid fa-check-circle' : 'fa-regular fa-circle'"></i>
                   </div>
                 </div>
-                <h6 class="qv-item-text mt-2">{{ qRef.texte || qRef.enonce }}</h6>
+                <h6 class="qv-item-text mt-2 text-truncate-2">{{ qRef.texte || qRef.enonce }}</h6>
                 <div v-if="qRef.theme || qRef.categorie" class="qv-item-cat mt-1">
                   <i class="fa-solid fa-tag me-1"></i>
                   {{ qRef.theme || qRef.categorie }}
@@ -1158,7 +1158,12 @@ const fetchInitialData = async () => {
     if (results[1].status === 'fulfilled') questionnairesList.value = results[1].value.data;
     if (results[2].status === 'fulfilled') candidateMasterPool.value = results[2].value.data;
     if (results[3].status === 'fulfilled') {
-      bankGlobalReference.value = results[3].value.data.map(q => ({
+      const uniqueMap = new Map();
+      results[3].value.data.forEach(q => {
+        const textKey = (q.texte || q.enonce || '').trim().toLowerCase();
+        if (!uniqueMap.has(textKey)) uniqueMap.set(textKey, q);
+      });
+      bankGlobalReference.value = Array.from(uniqueMap.values()).map(q => ({
         ...q,
         difficulty:  q.difficulty  || getDifficultyFromPoints(q.points),
         explication: q.explication || q.bonneReponse || 'Justification UML standard.',
@@ -2015,7 +2020,7 @@ onUnmounted(() => {
 /* ═══════════════════════════════════════
    STEPPER — amélioration CSS
 ═══════════════════════════════════════ */
-.stepper-precision-v8 { position: relative; margin-top: 30px; padding-bottom: 10px; }
+.stepper-precision-v8 { position: relative; margin-top: 30px; padding-bottom: 40px; }
 .stepper-line-bg { height: 4px; background: #eef2f6; border-radius: 10px; position: absolute; top: 20px; left: 22px; right: 22px; }
 .stepper-line-fill { height: 100%; background: linear-gradient(90deg, #f59e0b, #fb923c, #fbbf24); transition: width 0.6s cubic-bezier(0.4,0,0.2,1); border-radius: 10px; }
 .stepper-nodes-row { display: flex; justify-content: space-between; position: relative; }
@@ -2103,7 +2108,7 @@ onUnmounted(() => {
 /* ═══════════════════════════════════════
    ASSET CARDS + TIMER — amélioration CSS
 ═══════════════════════════════════════ */
-.assets-scroll-v8 { max-height: 500px; overflow-y: auto; padding-right: 4px; }
+.assets-scroll-v8 { overflow-y: visible; padding-right: 4px; padding-bottom: 100px; }
 .asset-card-v8 {
   background: white; border: 1.5px solid #eef2f6; border-radius: 20px; padding: 15px 20px;
   display: flex; align-items: center; gap: 12px; margin-bottom: 12px; transition: all 0.2s;
@@ -2341,7 +2346,7 @@ onUnmounted(() => {
 .qv-item-cat { font-size: 0.62rem; color: #94a3b8; font-weight: 700; }
 .qv-item-footer { font-size: 0.75rem; color: #94a3b8; }
 .qv-inspector { width: 290px; border-left: 1px solid #eef2f6; overflow-y: auto; display: flex; flex-direction: column; flex-shrink: 0; background: white; }
-.device-mockup-v8 { background: #f8fafc; border-radius: 20px; flex-grow: 1; }
+.device-mockup-v8 { background: #f8fafc; border-radius: 20px; flex-grow: 1; overflow-y: auto; }
 .inspector-type-badge { font-size: 0.68rem; font-weight: 800; background: #eff6ff; color: #3b82f6; padding: 3px 10px; border-radius: 8px; }
 .inspector-cat-badge { font-size: 0.68rem; font-weight: 800; background: #f0fdf4; color: #16a34a; padding: 3px 10px; border-radius: 8px; }
 .inspector-stats-row { display: flex; gap: 12px; }
@@ -2406,6 +2411,12 @@ kbd { background: #0f172a; color: white; padding: 4px 10px; border-radius: 8px; 
 /* ═══════════════════════════════════════
    MISC UTILS
 ═══════════════════════════════════════ */
+.text-truncate-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 .text-amber   { color: #f59e0b !important; }
 .text-indigo  { color: #6366f1 !important; }
 .text-success { color: #10b981 !important; }

@@ -842,6 +842,22 @@ onMounted(async () => {
     ]);
     if (historiqueList.value.length > 0) {
       await loadSession(historiqueList.value[0].id);
+    } else {
+      isSessionLoading.value = false;
+      isAiLoading.value      = false;
+      globalScore.value      = 0;
+      scorePoints.value      = 0;
+      infractions.value      = 0;
+      detailedCorrection.value = [];
+      aiInsights.value = {
+        synthese: "Aucune session d'examen enregistrée pour ce candidat pour le moment. Dès qu'un test est soumis, l'IA générera automatiquement le rapport complet.",
+        forces: ["Aucun test soumis"],
+        axes: ["En attente de passation"],
+        roadmap: {
+          objectif: "Inviter le candidat à finaliser son test",
+          certification: "En attente de résultats"
+        }
+      };
     }
   } catch (err) {
     console.error('DetailsCandidat mount error:', err);

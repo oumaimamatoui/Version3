@@ -746,6 +746,246 @@
       </div>
     </transition>
 
+    <!-- ═══ MODALE : DÉTAILS ORGANISATION ═══ -->
+    <transition name="modal-quantum">
+      <div v-if="showViewModal" class="quantum-vault-overlay" @click.self="showViewModal = false">
+        <div class="quick-add-modal animate__animated animate__zoomIn animate__faster" style="max-width:650px;width:95%">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center gap-3">
+              <div class="avatar-v8" :style="{ background: selectedOrg?._color + '22', color: selectedOrg?._color, width: '48px', height: '48px', 'font-size': '20px' }">
+                {{ selectedOrg?.nom?.[0] || '?' }}
+              </div>
+              <div>
+                <h5 class="fw-900 m-0">{{ selectedOrg?.nom }}</h5>
+                <p class="m-0 text-muted small">ID: {{ selectedOrg?.id }}</p>
+              </div>
+            </div>
+            <button @click="showViewModal = false" class="btn-icon-sm"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <div class="detail-group" style="padding: 12px; border-radius: 12px; background: var(--bg-input,#f8fafc); border: 1px solid var(--border-color,#eef2f6);">
+                <label class="text-muted small fw-bold d-block mb-1">E-MAIL</label>
+                <div class="fw-800 text-indigo">{{ selectedOrg?.email || selectedOrg?.emailAdmin || '—' }}</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-group" style="padding: 12px; border-radius: 12px; background: var(--bg-input,#f8fafc); border: 1px solid var(--border-color,#eef2f6);">
+                <label class="text-muted small fw-bold d-block mb-1">PLAN D'ABONNEMENT</label>
+                <div>
+                  <span class="plan-badge-v2" :class="selectedOrg?.plan === 'EvaluaTech Go' ? 'gold' : 'blue'">
+                    {{ selectedOrg?.plan || 'Starter' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-group" style="padding: 12px; border-radius: 12px; background: var(--bg-input,#f8fafc); border: 1px solid var(--border-color,#eef2f6);">
+                <label class="text-muted small fw-bold d-block mb-1">DOMAINE</label>
+                <div class="fw-700">{{ selectedOrg?.domaine || '—' }}</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-group" style="padding: 12px; border-radius: 12px; background: var(--bg-input,#f8fafc); border: 1px solid var(--border-color,#eef2f6);">
+                <label class="text-muted small fw-bold d-block mb-1">SITE WEB</label>
+                <div class="fw-700">
+                  <a v-if="selectedOrg?.siteWeb" :href="selectedOrg.siteWeb" target="_blank" class="text-amber decoration-none">{{ selectedOrg.siteWeb }} <i class="fa-solid fa-arrow-up-right-from-square ms-1" style="font-size:10px"></i></a>
+                  <span v-else>—</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-group" style="padding: 12px; border-radius: 12px; background: var(--bg-input,#f8fafc); border: 1px solid var(--border-color,#eef2f6);">
+                <label class="text-muted small fw-bold d-block mb-1">SECTEUR / INDUSTRIE</label>
+                <div class="fw-700"><span class="t-pill type-pill">{{ selectedOrg?.secteur || selectedOrg?.industrie || 'Tech' }}</span></div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-group" style="padding: 12px; border-radius: 12px; background: var(--bg-input,#f8fafc); border: 1px solid var(--border-color,#eef2f6);">
+                <label class="text-muted small fw-bold d-block mb-1">MATRICULE FISCALE</label>
+                <div class="fw-700">{{ selectedOrg?.matriculeFiscale || '—' }}</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-group" style="padding: 12px; border-radius: 12px; background: var(--bg-input,#f8fafc); border: 1px solid var(--border-color,#eef2f6);">
+                <label class="text-muted small fw-bold d-block mb-1">VILLE</label>
+                <div class="fw-700">{{ selectedOrg?.ville || selectedOrg?.city || '—' }}</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-group" style="padding: 12px; border-radius: 12px; background: var(--bg-input,#f8fafc); border: 1px solid var(--border-color,#eef2f6);">
+                <label class="text-muted small fw-bold d-block mb-1">PAYS</label>
+                <div class="fw-700">{{ selectedOrg?.pays || '—' }}</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-group" style="padding: 12px; border-radius: 12px; background: var(--bg-input,#f8fafc); border: 1px solid var(--border-color,#eef2f6);">
+                <label class="text-muted small fw-bold d-block mb-1">DATE D'INSCRIPTION</label>
+                <div class="fw-700"><span class="date-chip-pro">{{ selectedOrg?.creeLe ? new Date(selectedOrg.creeLe).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '—' }}</span></div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="detail-group" style="padding: 12px; border-radius: 12px; background: var(--bg-input,#f8fafc); border: 1px solid var(--border-color,#eef2f6);">
+                <label class="text-muted small fw-bold d-block mb-1">STATUT DE L'ABONNEMENT</label>
+                <div>
+                  <span class="status-badge" :class="selectedOrg?.estActif ? 'status-1' : 'status-2'">
+                    <span class="status-dot"></span>
+                    {{ selectedOrg?.estActif ? 'ACTIF' : 'INACTIF' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="col-12" v-if="selectedOrg?.description">
+              <div class="detail-group" style="padding: 12px; border-radius: 12px; background: var(--bg-input,#f8fafc); border: 1px solid var(--border-color,#eef2f6);">
+                <label class="text-muted small fw-bold d-block mb-1">DESCRIPTION</label>
+                <div class="fw-700 text-muted" style="font-size:0.85rem">{{ selectedOrg.description }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end gap-3 pt-3 border-top">
+            <button type="button" @click="showViewModal = false" class="btn-qv-cancel" style="border:1px solid var(--border-color,#ddd)">{{ t('cancel').toUpperCase() }}</button>
+            <button type="button" @click="editOrg(selectedOrg)" class="btn-enigma-primary">
+              <div class="btn-content"><i class="fa-solid fa-pen-to-square me-2"></i> MODIFIER</div>
+              <div class="btn-glow"></div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- ═══ MODALE : MODIFIER ORGANISATION ═══ -->
+    <transition name="modal-quantum">
+      <div v-if="showEditModal" class="quantum-vault-overlay" @click.self="showEditModal = false">
+        <div class="quick-add-modal animate__animated animate__zoomIn animate__faster" style="max-width:840px;width:95%">
+
+          <div class="d-flex justify-content-between align-items-center mb-5">
+            <div class="d-flex align-items-center gap-3">
+              <div class="icon-box-v2 amber"><i class="fa-solid fa-pen-to-square"></i></div>
+              <div>
+                <h5 class="fw-900 m-0">Modifier {{ editOrgData.nom }}</h5>
+                <p class="m-0 text-muted small">ID: {{ editOrgData.id }}</p>
+              </div>
+            </div>
+            <button @click="showEditModal = false" class="btn-icon-sm"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <form @submit.prevent="handleUpdateOrg">
+            <div class="modal-section-label mb-4">
+              <i class="fa-solid fa-briefcase text-amber me-2"></i>
+              Informations sur l'Organisation
+            </div>
+            <div class="row g-4 mb-4">
+              <div class="col-md-6">
+                <div class="enigma-input-wrap">
+                  <label>{{ t('name').toUpperCase() }} <span class="required-star">*</span></label>
+                  <input type="text" v-model="editOrgData.nom" class="enigma-field" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="enigma-input-wrap">
+                  <label>FORMULE PLAN D'ABONNEMENT <span class="required-star">*</span></label>
+                  <select v-model="editOrgData.plan" class="enigma-field" required>
+                    <option value="Gratuit">Gratuit</option>
+                    <option value="Startup">Startup</option>
+                    <option value="Business">Business</option>
+                    <option value="Enterprise">Enterprise</option>
+                    <option value="EvaluaTech Go">EvaluaTech Go</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="enigma-input-wrap">
+                  <label>STATUT ABONNEMENT</label>
+                  <select v-model="editOrgData.estActif" class="enigma-field" :style="{ color: editOrgData.estActif ? '#10b981' : '#ef4444', 'font-weight': 'bold' }">
+                    <option :value="true">🟢 Actif (Abonnement valide)</option>
+                    <option :value="false">🔴 Inactif (Abonnement expiré / Suspendu)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="enigma-input-wrap">
+                  <label>{{ t('settings.labels.matriculeFiscale').toUpperCase() }}</label>
+                  <input type="text" v-model="editOrgData.matriculeFiscale" class="enigma-field" placeholder="1234567/A/B/C/000">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="enigma-input-wrap">
+                  <label>DOMAINE</label>
+                  <input type="text" v-model="editOrgData.domaine" class="enigma-field" placeholder="entreprise.com">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="enigma-input-wrap">
+                  <label>SECTEUR / INDUSTRIE</label>
+                  <select v-model="editOrgData.secteur" class="enigma-field">
+                    <option value="">Sélectionnez...</option>
+                    <option value="Technologie">Technologie</option>
+                    <option value="Finance">Finance</option>
+                    <option value="Santé">Santé</option>
+                    <option value="Éducation">Éducation</option>
+                    <option value="Commerce">Commerce</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="enigma-input-wrap">
+                  <label>SITE WEB</label>
+                  <input type="url" v-model="editOrgData.siteWeb" class="enigma-field" placeholder="https://example.com">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="enigma-input-wrap">
+                  <label>COULEUR DU LOGO (HEX)</label>
+                  <div class="d-flex gap-2 align-items-center">
+                    <input type="color" v-model="editOrgData.couleurSignature" class="form-control form-control-color p-0 border-0" style="width:38px;height:38px;border-radius:8px;background:none;cursor:pointer">
+                    <input type="text" v-model="editOrgData.couleurSignature" class="enigma-field flex-grow-1" placeholder="#6366f1">
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="enigma-input-wrap">
+                  <label>VILLE</label>
+                  <input type="text" v-model="editOrgData.ville" class="enigma-field" placeholder="Tunis, Paris...">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="enigma-input-wrap">
+                  <label>PAYS</label>
+                  <input type="text" v-model="editOrgData.pays" class="enigma-field" placeholder="Tunisie, France...">
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="enigma-input-wrap">
+                  <label>ADRESSE</label>
+                  <input type="text" v-model="editOrgData.adresse" class="enigma-field" placeholder="Rue, Numéro...">
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="enigma-input-wrap">
+                  <label>DESCRIPTION</label>
+                  <textarea v-model="editOrgData.description" class="enigma-field" rows="2" placeholder="Brève description..."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-3 pt-3 border-top">
+              <button type="button" @click="showEditModal = false" class="btn-qv-cancel">{{ t('cancel').toUpperCase() }}</button>
+              <button type="submit" class="btn-enigma-primary" :disabled="isUpdating">
+                <div class="btn-content">
+                  <span v-if="isUpdating" class="spinner-border spinner-border-sm me-2"></span>
+                  <i v-else class="fa-solid fa-floppy-disk me-2"></i>
+                  ENREGISTRER
+                </div>
+                <div class="btn-glow"></div>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </transition>
+
     <!-- TOAST -->
     <transition name="toast-slide">
       <div v-if="globalToast.active" class="enigma-toast" :class="globalToast.type">
@@ -1114,11 +1354,83 @@ const handleCreateOrg = async () => {
     showPulseToast(t('error'), 'error', 'fa-solid fa-triangle-exclamation');
   } finally { isCreating.value = false; }
 };
+
+const showViewModal = ref(false);
+const showEditModal = ref(false);
+const selectedOrg   = ref(null);
+const isUpdating    = ref(false);
+
+const editOrgData = reactive({
+  id: '',
+  nom: '',
+  plan: '',
+  secteur: '',
+  domaine: '',
+  siteWeb: '',
+  ville: '',
+  pays: '',
+  adresse: '',
+  matriculeFiscale: '',
+  couleurSignature: '',
+  description: '',
+  estActif: true
+});
+
 const viewOrgDetails = (org) => {
-  showPulseToast(`${t('view')} : ${org.nom}`, 'success', 'fa-solid fa-eye');
+  selectedOrg.value = org;
+  showViewModal.value = true;
   addTerminalLog('blue', `Vue détails : <span class="t-hi">${org.nom}</span>`);
 };
-const editOrg  = (org) => showPulseToast(`${t('edit')} : ${org.nom}`, 'warn', 'fa-solid fa-pen-to-square');
+
+const editOrg = (org) => {
+  Object.assign(editOrgData, {
+    id: org.id,
+    nom: org.nom,
+    plan: org.plan || 'Gratuit',
+    secteur: org.secteur || org.industrie || '',
+    domaine: org.domaine || '',
+    siteWeb: org.siteWeb || '',
+    ville: org.ville || org.city || '',
+    pays: org.pays || '',
+    adresse: org.adresse || '',
+    matriculeFiscale: org.matriculeFiscale || '',
+    couleurSignature: org.couleurSignature || org._color || '#6366f1',
+    description: org.description || '',
+    estActif: org.estActif !== false
+  });
+  showViewModal.value = false;
+  showEditModal.value = true;
+  addTerminalLog('amber', `Modification de l'organisation : <span class="t-hi">${org.nom}</span>`);
+};
+
+const handleUpdateOrg = async () => {
+  isUpdating.value = true;
+  try {
+    const payload = {
+      nom: editOrgData.nom,
+      plan: editOrgData.plan,
+      secteur: editOrgData.secteur,
+      domaine: editOrgData.domaine,
+      siteWeb: editOrgData.siteWeb,
+      ville: editOrgData.ville,
+      pays: editOrgData.pays,
+      matriculeFiscale: editOrgData.matriculeFiscale,
+      couleurSignature: editOrgData.couleurSignature,
+      description: editOrgData.description,
+      estActif: editOrgData.estActif
+    };
+    await superAdminApi.updateOrg(editOrgData.id, payload);
+    showPulseToast(`${t('success')} : "${editOrgData.nom}"`, 'success', 'fa-solid fa-floppy-disk');
+    showEditModal.value = false;
+    addTerminalLog('green', `Organisation mise à jour avec succès <span class="t-ok">[ OK ]</span>`);
+    fetchData();
+  } catch (err) {
+    console.error("Erreur mise à jour:", err);
+    showPulseToast(t('error'), 'error', 'fa-solid fa-triangle-exclamation');
+  } finally {
+    isUpdating.value = false;
+  }
+};
 const deleteOrg = async (id) => {
   if (!confirm(t('campaigns.deleteConfirm'))) return;
   try {
@@ -1126,9 +1438,10 @@ const deleteOrg = async (id) => {
     orgs.value = orgs.value.filter(o => o.id !== id);
     showPulseToast(t('success'), 'warn', 'fa-solid fa-trash-can');
     addTerminalLog('amber', `Organisation <span class="t-hi">#${id}</span> supprimée`);
-  } catch {
-    orgs.value = orgs.value.filter(o => o.id !== id);
-    showPulseToast(t('success'), 'warn', 'fa-solid fa-trash-can');
+  } catch (err) {
+    console.error("Erreur lors de la suppression de l'organisation:", err);
+    showPulseToast(t('error'), 'error', 'fa-solid fa-triangle-exclamation');
+    addTerminalLog('red', `Échec de la suppression de l'organisation <span class="t-hi">#${id}</span>`);
   }
 };
 

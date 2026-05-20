@@ -1314,7 +1314,7 @@ RECO_COLORS = ["#6366f1","#f59e0b","#10b981","#ef4444","#8b5cf6","#3b82f6","#ec4
 
 def _build_reco_prompt(role: str, context_data: dict = None) -> str:
     ctx = f"\nContexte: {json.dumps(context_data, ensure_ascii=False)[:400]}" if context_data else ""
-    routes_valides = "/dashboard, /questions, /campaigns, /my-tests, /eval-queue, /analyse-comportementale, /sessions, /cv-library, /candidates-list, /invite, /reporting, /staff-members, /gestion-staff, /super-admin, /gestion-abonnements, /platform-users, /super-admin-analytics"
+    routes_valides = "/dashboard, /questions, /campaigns, /my-tests, /eval-queue, /analyse-comportementale, /sessions, /cv-library, /candidates-list, /invite, /reporting, /staff-members, /gestion-staff, /super-admin, /gestion-abonnements, /platform-users, /super-admin-analytics, /interview-prep, /entretien-ia"
     
     prompts = {
         "Candidat":        f"Coach carrière EvaluaTech. 3 recommandations candidat (score 82%, 2 tests en attente).{ctx}\nJSON: {{\"recommendations\":[{{\"title\":\"...\",\"description\":\"...\",\"actionLabel\":\"...\",\"icon\":\"test|skill|cv|interview|star|letter\",\"priority\":\"urgent|high|medium|low\",\"route\":\"{routes_valides}\"}}]}}",
@@ -1331,7 +1331,7 @@ def _get_fallback_recommendations(role: str) -> list:
     fallbacks = {
         "Candidat": [
             {"title": "Complétez vos tests en attente", "description": "2 tests en attente. Les compléter augmentera votre profil de 15 points.", "actionLabel": "Voir mes tests", "icon": RECO_ICONS["test"], "color": "#3b82f6", "priority": "🔴 Urgent", "priorityBg": "#fee2e2", "priorityColor": "#dc2626", "route": "/my-tests", "scrollTo": None},
-            {"title": "Préparez votre entretien IA", "description": "Entraînez-vous sur des questions comportementales et techniques.", "actionLabel": "Commencer préparation", "icon": RECO_ICONS["interview"], "color": "#8b5cf6", "priority": "🟡 Priorité", "priorityBg": "#fef9ec", "priorityColor": "#d97706", "route": "/my-tests", "scrollTo": None},
+            {"title": "Préparez votre entretien IA", "description": "Entraînez-vous sur des questions comportementales et techniques.", "actionLabel": "Commencer préparation", "icon": RECO_ICONS["interview"], "color": "#8b5cf6", "priority": "🟡 Priorité", "priorityBg": "#fef9ec", "priorityColor": "#d97706", "route": "/interview-prep", "scrollTo": None},
             {"title": "Analysez votre CV avec Gemini", "description": "Obtenez des conseils personnalisés pour augmenter votre score de matching.", "actionLabel": "Analyser mon CV", "icon": RECO_ICONS["cv"], "color": "#10b981", "priority": "🟢 Standard", "priorityBg": "#ecfdf5", "priorityColor": "#059669", "route": None, "scrollTo": "cv-scan-section"},
         ],
         "Evaluateur": [
@@ -1595,9 +1595,21 @@ async def get_lettre_languages():
 # ════════════════════════════════════════════════════════════
 
 def _local_conseils(score: int) -> list:
-    if score >= 85: return ["Excellent profil — passez rapidement en entretien","Mettez en avant vos projets sur GitHub ou Portfolio","Préparez des exemples chiffrés de vos réalisations"]
-    elif score >= 70: return ["Renforcez vos certifications techniques","Ajoutez des projets open-source","Préparez-vous aux questions STAR comportementales"]
-    else: return ["Travaillez les fondamentaux techniques du poste visé","Complétez des formations certifiantes","Pratiquez les exercices sur EvaluaTech avant de postuler"]
+    if score >= 85: return [
+        "Valider sa capacité à gérer l'autonomie et ses ambitions d'évolution en entretien.",
+        "Lui confier des responsabilités techniques de haut niveau ou de mentorat dès son intégration.",
+        "Sonder sa flexibilité face à des changements technologiques ou structurels rapides."
+    ]
+    elif score >= 70: return [
+        "Évaluer sa posture collaborative et sa communication transverse en entretien individuel.",
+        "Planifier un accompagnement technique ciblé sur les points techniques plus faibles lors de l'onboarding.",
+        "Tester sa gestion des priorités et du stress face aux deadlines serrées de l'entreprise."
+    ]
+    else: return [
+        "Creuser en profondeur ses fondamentaux techniques via une évaluation pratique complémentaire.",
+        "Prévoir un plan de formation rigoureux de 30 à 60 jours avant toute affectation autonome.",
+        "Sonder ses motivations réelles et son esprit d'apprentissage continu face aux lacunes identifiées."
+    ]
 
 
 @app.post("/ia/match-cv")
@@ -1666,9 +1678,20 @@ async def match_cv(
         return hit
 
     try:
-        prompt = f"""Analyse ce CV par rapport au poste: {job_description[:400]}
-CV: {cv_text[:2500]}
-JSON valide sans markdown:
+        prompt = f"""Effectue une analyse comportementale prédictive et de personnalité approfondie de ce candidat pour le poste de : {job_description[:400]}.
+Le but est d'aider la direction et les évaluateurs de l'entreprise à comprendre la véritable personnalité du candidat, ses traits comportementaux majeurs (leadership, communication, travail en équipe), sa réaction sous pression, et à obtenir des conseils managériaux stratégiques directs d'onboarding et d'entretien. Ne fais aucune critique sur la forme du CV, son contenu manquant ou sa rédaction.
+Document textuel (CV ou informations de profil) : {cv_text[:2500]}
+
+Génère une réponse au format JSON strict avec les clés suivantes :
+1. "score" : un entier de 0 à 100 représentant le score de compatibilité comportementale globale avec le poste.
+2. "points_forts" : une liste de 3 points forts comportementaux et traits de personnalité majeurs (ex: Autonomie affirmée, communication bienveillante, capacité d'adaptation rapide).
+3. "points_faibles" : une liste de 2-3 points de vigilance comportementaux ou réactions typiques sous stress (ex: Peut avoir du mal à déléguer dans l'urgence, besoin d'un cadre clair pour performer).
+4. "decision" : un verdict de synthèse sur le profil comportemental du candidat (ex: Profil hautement collaboratif, idéal pour un rôle structurant au sein de l'équipe).
+5. "conseils" : une liste de 3 recommandations managériales concrètes pour la direction (onboarding, motivation, style de management adapté à sa personnalité).
+6. "competences_detectees" : une liste de 3 à 5 soft-skills ou comportements clés observés.
+7. "niveau_estime" : style de comportement ou maturité professionnelle estimée (Junior|Mid|Senior).
+
+JSON valide sans markdown :
 {{"score":<0-100>,"points_forts":["...","...","..."],"points_faibles":["...","..."],"decision":"...","conseils":["...","...","..."],"competences_detectees":["...","..."],"niveau_estime":"Junior|Mid|Senior"}}"""
         r = await call_gemini_async(prompt, module="Analyses CV", sem=_sem_cv, retries=1)
         result = json.loads(clean_json(r.text))

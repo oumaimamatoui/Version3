@@ -33,13 +33,6 @@
                 </h2>
                 <p class="brand-subtitle mt-1">{{ t('settings.subtitle', { role: roleDisplay }) }}</p>
               </div>
-              <div class="header-right">
-                <div class="autosave-indicator" :class="{ saving: saving }">
-                  <div class="autosave-dot" :class="{ pulse: saving }"></div>
-                  <i :class="saving ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-cloud-arrow-up'"></i>
-                  <span>{{ saving ? t('settings.actions.syncing') : t('settings.actions.save') }}</span>
-                </div>
-              </div>
             </header>
 
             <div class="row g-4">
@@ -363,47 +356,6 @@
                         </div>
                       </div>
 
-                      <!-- Couleur Signature -->
-                      <div class="col-12">
-                        <div class="enigma-input-wrap">
-                          <label>{{ t('settings.labels.signatureColor').toUpperCase() }}</label>
-                          <div class="color-picker-pro">
-                            <div class="color-swatch-large" :style="{ background: brandForm.color }">
-                              <input type="color" class="color-input-hidden" v-model="brandForm.color">
-                            </div>
-                            <div class="color-meta">
-                              <code class="color-hex fw-900">{{ brandForm.color.toUpperCase() }}</code>
-                              <p class="small text-muted m-0">Cliquez sur la pastille pour modifier</p>
-                            </div>
-                            <div class="color-presets">
-                              <button
-                                v-for="preset in colorPresets"
-                                :key="preset"
-                                class="preset-dot"
-                                :style="{ background: preset }"
-                                :class="{ active: brandForm.color === preset }"
-                                @click="brandForm.color = preset"
-                              ></button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <!-- Aperçu en direct -->
-                      <div class="col-12">
-                        <div class="brand-preview-card">
-                          <div class="brand-preview-label">APERÇU EN DIRECT</div>
-                          <div class="brand-preview-ui" :style="{ '--brand-color': brandForm.color }">
-                            <div class="bp-header" :style="{ background: brandForm.color }">
-                              <span class="fw-900 text-white">{{ brandForm.companyName || 'Votre Entreprise' }}</span>
-                            </div>
-                            <div class="bp-body">
-                              <div class="bp-btn" :style="{ background: brandForm.color }">Démarrer l'évaluation</div>
-                              <div class="bp-tag" :style="{ color: brandForm.color, borderColor: brandForm.color }">Certifié</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
                     </div>
                   </div>
 
@@ -484,7 +436,7 @@
                     <!-- Security Note -->
                     <div class="security-note mt-4">
                       <i class="fa-solid fa-shield-halved me-2 text-amber"></i>
-                      <span>Toutes les connexions sont sécurisées via <strong>OAuth 2.0</strong>. Vos données restent protégées en permanence.</span>
+                      <span>{{ t('settings.integrations.oauthNote') }}</span>
                     </div>
                   </div>
 

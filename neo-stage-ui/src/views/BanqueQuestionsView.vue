@@ -61,7 +61,7 @@
                 <button class="btn-ai-glow" @click="showAIModal = true">
                   <span class="btn-shine-layer"></span>
                   <i class="fa-solid fa-wand-magic-sparkles me-2"></i>
-                  {{ $t('sidebar.links.ai') }}
+                  <span>{{ $t('sidebar.links.ai') }}</span>
                   <span class="lang-badge-pill ms-2">FR/EN</span>
                 </button>
                 <button class="btn-enigma-primary shadow-premium" @click="openModal()">

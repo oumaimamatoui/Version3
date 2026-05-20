@@ -435,7 +435,7 @@ const gererToucheClavier = (e) => {
 const fetchUsageStats = async () => {
   if (!authStore.isAuthenticated) return;
   try {
-    const res = await api.get('/Usage/validate-action?questionCount=0');
+    const res = await api.get('/Usage/status');
     usageCount.value = res.data.current || 0; 
     daysRemaining.value = res.data.daysRemaining || 0;
   } catch (err) {
