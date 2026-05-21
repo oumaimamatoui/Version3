@@ -2689,13 +2689,15 @@ async def generate_interview(job_title: str = Form(...), level: str = Form("Inte
 
 @app.post("/ia/transcribe-audio")
 async def transcribe_audio(file: UploadFile = File(...), langue: str = Form("fr")):
-    if not _gemini_client:
-        raise HTTPException(status_code=503, detail="Gemini non disponible")
-    if not _circuit.is_allowed():
-        raise HTTPException(status_code=503, detail="Service temporairement indisponible")
-    audio_bytes = await file.read()
-    mime = file.content_type or "audio/webm"
     try:
+        if not _gemini_client:
+            return {"transcript": None, "error": "Service de transcription indisponible (Gemini non connecté)"}
+        if not _circuit.is_allowed():
+            return {"transcript": None, "error": "Service temporairement indisponible, réessayez plus tard"}
+        audio_bytes = await file.read()
+        if len(audio_bytes) > 10 * 1024 * 1024:
+            return {"transcript": None, "error": "Fichier audio trop volumineux (max 10 Mo)"}
+        mime = file.content_type or "audio/webm"
         from google.genai import types
         audio_part = types.Part.from_bytes(data=audio_bytes, mime_type=mime)
         prompt = f"Transcris précisément le contenu de cet audio en {langue}. Ne retourne QUE le texte transcrit, sans commentaire ni introduction."
@@ -2714,10 +2716,12 @@ async def transcribe_audio(file: UploadFile = File(...), langue: str = Form("fr"
             transcript = "(Aucun contenu vocal détecté)"
         return {"transcript": transcript, "language": langue}
     except asyncio.TimeoutError:
-        raise HTTPException(status_code=504, detail="Timeout transcription")
+        _circuit.record_failure()
+        return {"transcript": None, "error": "La transcription a pris trop de temps, réessayez"}
     except Exception as e:
         _circuit.record_failure()
-        raise HTTPException(status_code=500, detail=str(e)[:120])
+        logger.error(f"Transcription error: {e}")
+        return {"transcript": None, "error": "Erreur lors de la transcription, réessayez"}
 
 @app.post("/ia/interview/analyze")
 async def interview_analyze(request: Request):
@@ -2761,14 +2765,14 @@ Ne renvoie AUCUN texte en dehors du JSON."""
         log_activity("IA", "Analyse entretien IA terminée", "#10b981", "Interview")
         return {"status": "SUCCESS", "feedback": result}
     except QuotaExceeded:
-        return _fallback_interview_feedback(question_type)
+        return {"status": "ERROR", "error": "Service IA temporairement indisponible (quota atteint). Réessayez plus tard."}
     except Exception as e:
         logger.error(f"Interview analyze error: {e}")
-        return _fallback_interview_feedback(question_type)
+        return {"status": "ERROR", "error": "Erreur interne du service d'analyse. Veuillez réessayer."}
 
 def _fallback_interview_feedback(qtype: str):
     if qtype == "behavioral" or qtype == "comportemental":
-        return {"status": "SUCCESS", "feedback": {
+        return {"status": "DEGRADED", "feedback": {
             "score": 87,
             "communicationProfile": "Leader Empathique & Fédérateur",
             "softSkills": [
@@ -2788,7 +2792,7 @@ def _fallback_interview_feedback(qtype: str):
             ],
             "coachAdvice": "Votre communication verbale est extrêmement chaleureuse et persuasive. Pour maximiser votre leadership, assumez parfois des décisions fermes et non-consensuelles quand la situation l'impose. Votre posture naturelle inspire la confiance."
         }}
-    return {"status": "SUCCESS", "feedback": {
+    return {"status": "DEGRADED", "feedback": {
         "score": 82,
         "communicationProfile": "Architecte Technique Méthodique",
         "softSkills": [
