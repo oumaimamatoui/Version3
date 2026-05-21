@@ -150,4 +150,121 @@ namespace NeoEvaluation.API.DTOs
         [JsonPropertyName("adminLastName")]
         public string AdminLastName { get; set; } = string.Empty;
     }
+
+    public class MailerDiagnosticsDto
+    {
+        [JsonPropertyName("isGoogleConnected")]
+        public bool IsGoogleConnected { get; set; }
+
+        [JsonPropertyName("email")]
+        public string? Email { get; set; }
+
+        [JsonPropertyName("pendingInvitesCount")]
+        public int PendingInvitesCount { get; set; }
+
+        [JsonPropertyName("diagnosticsLogs")]
+        public List<string> DiagnosticsLogs { get; set; } = new();
+    }
+
+    public class ExpiringSubscriptionDto
+    {
+        [JsonPropertyName("id")]
+        public Guid Id { get; set; }
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; } = string.Empty;
+
+        [JsonPropertyName("plan")]
+        public string Plan { get; set; } = string.Empty;
+
+        [JsonPropertyName("expirationDate")]
+        public DateTime? ExpirationDate { get; set; }
+
+        [JsonPropertyName("daysRemaining")]
+        public int DaysRemaining { get; set; }
+
+        [JsonPropertyName("adminEmail")]
+        public string AdminEmail { get; set; } = string.Empty;
+
+        [JsonPropertyName("adminName")]
+        public string AdminName { get; set; } = string.Empty;
+    }
+
+    public class SecurityStatusDto
+    {
+        [JsonPropertyName("lastAuditDate")]
+        public DateTime? LastAuditDate { get; set; }
+
+        [JsonPropertyName("daysSinceLastAudit")]
+        public int? DaysSinceLastAudit { get; set; }
+
+        [JsonPropertyName("isAuditRecommended")]
+        public bool IsAuditRecommended { get; set; }
+
+        [JsonPropertyName("securityScore")]
+        public int SecurityScore { get; set; }
+    }
+
+    public class SecurityScanResultDto
+    {
+        [JsonPropertyName("checkedItems")]
+        public List<SecurityCheckItem> CheckedItems { get; set; } = new();
+
+        [JsonPropertyName("securityScore")]
+        public int SecurityScore { get; set; }
+
+        [JsonPropertyName("weakPasswordsCount")]
+        public int WeakPasswordsCount { get; set; }
+
+        [JsonPropertyName("expiredTokensCleaned")]
+        public int ExpiredTokensCleaned { get; set; }
+    }
+
+    public class SecurityCheckItem
+    {
+        [JsonPropertyName("name")]
+        public string Name { get; set; } = string.Empty;
+
+        [JsonPropertyName("status")]
+        public string Status { get; set; } = "OK"; // "OK", "WARNING", "CRITICAL"
+
+        [JsonPropertyName("details")]
+        public string Details { get; set; } = string.Empty;
+    }
+
+    public class SuperAdminUpdateOrgDto
+    {
+        [JsonPropertyName("nom")]
+        public string Nom { get; set; } = string.Empty;
+
+        [JsonPropertyName("plan")]
+        public string Plan { get; set; } = string.Empty;
+
+        [JsonPropertyName("secteur")]
+        public string? Secteur { get; set; }
+
+        [JsonPropertyName("domaine")]
+        public string? Domaine { get; set; }
+
+        [JsonPropertyName("siteWeb")]
+        public string? SiteWeb { get; set; }
+
+        [JsonPropertyName("ville")]
+        public string? Ville { get; set; }
+
+        [JsonPropertyName("pays")]
+        public string? Pays { get; set; }
+
+        [JsonPropertyName("matriculeFiscale")]
+        public string? MatriculeFiscale { get; set; }
+
+        [JsonPropertyName("couleurSignature")]
+        public string? CouleurSignature { get; set; }
+
+        [JsonPropertyName("description")]
+        public string? Description { get; set; }
+
+        [JsonPropertyName("estActif")]
+        public bool EstActif { get; set; }
+    }
 }

@@ -153,6 +153,7 @@ namespace NeoEvaluation.API.Controllers
             if (existingRole == null) return NotFound();
 
             existingRole.Nom = roleUpdate.Nom;
+            existingRole.ModeleRole = roleUpdate.ModeleRole;
             existingRole.Description = roleUpdate.Description;
             existingRole.Permissions = roleUpdate.Permissions;
 

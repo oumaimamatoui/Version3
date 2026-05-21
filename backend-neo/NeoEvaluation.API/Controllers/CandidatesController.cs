@@ -49,6 +49,7 @@ namespace NeoEvaluation.API.Controllers
                 .IgnoreQueryFilters()
                 .Include(c => c.Candidat)
                 .Include(c => c.Campagne)
+                .Include(c => c.Evaluation)
                 .Where(c => c.Campagne.EntrepriseId == tenantId)
                 .OrderByDescending(c => c.PostuleLe)
                 .Select(c => new {
@@ -56,7 +57,7 @@ namespace NeoEvaluation.API.Controllers
                     name = (c.Candidat.Prenom + " " + c.Candidat.Nom).Trim() == "" ? "Candidat" : (c.Candidat.Prenom + " " + c.Candidat.Nom).Trim(),
                     email = c.Candidat.Email,
                     group = c.Campagne.Nom,
-                    score = 0,
+                    score = c.Evaluation != null ? (int)Math.Round(c.Evaluation.ScorePourcentage) : 0,
                     status = c.Statut.ToString()
                 }).ToListAsync();
 
@@ -177,6 +178,121 @@ namespace NeoEvaluation.API.Controllers
             });
 
             return Ok(new { message = "Invitations envoyées avec succès." });
+        }
+
+        // URL: DELETE http://localhost:5172/api/Candidates/{id}
+        [HttpDelete("{id}")]
+        [RequirePermission("inv_can")]
+        public async Task<IActionResult> DeleteCandidate(Guid id)
+        {
+            var tenantId = _tenantService.GetTenantId();
+            if (tenantId == null) return Unauthorized();
+
+            // Trouve l'utilisateur qui a le rôle de candidat et appartient au même tenant
+            var cand = await _context.Utilisateurs
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.Id == id && u.EntrepriseId == tenantId && u.RoleNom == "Candidat");
+
+            if (cand == null) return NotFound(new { message = "Candidat introuvable." });
+
+            // Trouver toutes les candidatures pour ce candidat appartenant à l'entreprise
+            var candidatures = await _context.Candidatures
+                .IgnoreQueryFilters()
+                .Include(c => c.Evaluation)
+                .Where(c => c.CandidatId == id && c.Campagne.EntrepriseId == tenantId)
+                .ToListAsync();
+
+            foreach (var c in candidatures)
+            {
+                if (c.Evaluation != null)
+                {
+                    // Supprimer le rapport s'il existe
+                    var rapport = await _context.Rapports
+                        .IgnoreQueryFilters()
+                        .FirstOrDefaultAsync(r => r.EvaluationId == c.Evaluation.Id);
+                    if (rapport != null) _context.Rapports.Remove(rapport);
+
+                    // Supprimer les réponses s'il y en a
+                    var reponses = await _context.Reponses
+                        .IgnoreQueryFilters()
+                        .Where(rp => rp.EvaluationId == c.Evaluation.Id)
+                        .ToListAsync();
+                    _context.Reponses.RemoveRange(reponses);
+
+                    _context.Evaluations.Remove(c.Evaluation);
+                }
+                _context.Candidatures.Remove(c);
+            }
+
+            // Supprimer les jetons d'activation s'il y en a
+            var tokens = await _context.TokensActivation
+                .IgnoreQueryFilters()
+                .Where(t => t.UtilisateurId == id)
+                .ToListAsync();
+            _context.TokensActivation.RemoveRange(tokens);
+
+            // Supprimer l'utilisateur lui-même
+            _context.Utilisateurs.Remove(cand);
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Candidat supprimé avec succès." });
+        }
+
+        // URL: POST http://localhost:5172/api/Candidates/{id}/resend
+        [HttpPost("{id}/resend")]
+        [RequirePermission("inv_can")]
+        public async Task<IActionResult> ResendInvitation(Guid id)
+        {
+            var tenantId = _tenantService.GetTenantId();
+            if (tenantId == null) return Unauthorized();
+
+            var cand = await _context.Utilisateurs
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.Id == id && u.EntrepriseId == tenantId);
+
+            if (cand == null) return NotFound(new { message = "Candidat introuvable." });
+
+            // Trouver la dernière candidature et sa campagne pour ce candidat
+            var candidature = await _context.Candidatures
+                .IgnoreQueryFilters()
+                .Include(c => c.Campagne)
+                .Where(c => c.CandidatId == id && c.Campagne.EntrepriseId == tenantId)
+                .OrderByDescending(c => c.PostuleLe)
+                .FirstOrDefaultAsync();
+
+            if (candidature == null) return BadRequest("Aucune candidature trouvée pour ce candidat.");
+
+            string link = "http://localhost:5173/login";
+
+            if (!cand.EstActif)
+            {
+                // Trouver ou recréer le token d'activation
+                var token = await _context.TokensActivation
+                    .IgnoreQueryFilters()
+                    .Where(t => t.UtilisateurId == id && !t.Utilise && t.DateExpiration > DateTime.UtcNow)
+                    .FirstOrDefaultAsync();
+
+                if (token == null)
+                {
+                    token = new TokensActivation { 
+                        Id = Guid.NewGuid(), Token = Guid.NewGuid(), UtilisateurId = cand.Id, 
+                        Email = cand.Email, DateCreation = DateTime.UtcNow, 
+                        DateExpiration = DateTime.UtcNow.AddDays(7), Utilise = false 
+                    };
+                    _context.TokensActivation.Add(token);
+                    await _context.SaveChangesAsync();
+                }
+
+                link = $"http://localhost:5173/activate-role?token={token.Token}";
+            }
+
+            try {
+                await _emailService.SendEmailAsync(cand.Email, $"Relance : {candidature.Campagne.Nom}", $"Vous avez une évaluation en attente. Lien : {link}");
+                return Ok(new { message = "Invitation renvoyée avec succès." });
+            } catch (Exception ex) {
+                return StatusCode(500, new { message = $"Erreur lors de l'envoi de l'email: {ex.Message}" });
+            }
         }
     }
 }

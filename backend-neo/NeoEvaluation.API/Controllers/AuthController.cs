@@ -46,6 +46,7 @@ namespace NeoEvaluation.API.Controllers
             Console.WriteLine($"[AUTH DEBUG] Longueur du mot de passe saisi : {password?.Length ?? 0}");
 
             var allUsers = await _context.Utilisateurs
+                .Include(u => u.Role)
                 .IgnoreQueryFilters()
                 .Where(u => u.Email.ToLower() == email).ToListAsync();
             Console.WriteLine($"[AUTH DEBUG] Tentative pour '{email}' - {allUsers.Count} comptes trouvés.");
@@ -99,6 +100,7 @@ namespace NeoEvaluation.API.Controllers
                 
                 // Recherche de l'utilisateur par l'email renvoyé par Google
                 var user = await _context.Utilisateurs
+                    .Include(u => u.Role)
                     .IgnoreQueryFilters()
                     .FirstOrDefaultAsync(u => u.Email == payload.Email.ToLower());
 
@@ -127,11 +129,27 @@ namespace NeoEvaluation.API.Controllers
 
             var key = Encoding.UTF8.GetBytes(secretKey);
 
-            // Gestion sécurisée du rôle
-            string userRole = string.IsNullOrEmpty(user.RoleNom) ? "Candidat" : user.RoleNom;
-            
-            // Correction pour le frontend : Admin -> AdminEntreprise
-            if (userRole == "Admin") userRole = "AdminEntreprise";
+            // Gestion sécurisée du rôle système
+            string userRole = "Personnalise";
+
+            if (user.RoleNom == "SuperAdmin") 
+            {
+                userRole = "SuperAdmin";
+            }
+            else if (user.Role != null && !string.IsNullOrEmpty(user.Role.ModeleRole) && user.Role.ModeleRole != "Personnalise")
+            {
+                userRole = user.Role.ModeleRole;
+            }
+            else if (user.RoleNom == "Candidat")
+            {
+                userRole = "Candidat";
+            }
+            else if (!string.IsNullOrEmpty(user.RoleNom))
+            {
+                // Fallback de sécurité (pour les anciens comptes avant la migration)
+                userRole = user.RoleNom;
+                if (userRole == "Admin" || userRole == "ADMIN") userRole = "AdminEntreprise";
+            }
 
             // Préparation des Claims (Identité de l'utilisateur)
             var claims = new List<Claim> {
@@ -147,9 +165,17 @@ namespace NeoEvaluation.API.Controllers
             }
 
             // AJOUT DES PRIVILÈGES (Utilise votre nouvelle List<string> Privileges)
-            if (user.Privileges != null && user.Privileges.Any())
+            var privileges = user.Privileges ?? new List<string>();
+            
+            // Garantir que l'Évaluateur puisse voir les candidats (Smart Analysis)
+            if (userRole == "Evaluateur" && !privileges.Contains("view_can"))
             {
-                foreach (var privilege in user.Privileges)
+                privileges.Add("view_can");
+            }
+
+            if (privileges.Any())
+            {
+                foreach (var privilege in privileges)
                 {
                     claims.Add(new Claim("privilege", privilege));
                 }

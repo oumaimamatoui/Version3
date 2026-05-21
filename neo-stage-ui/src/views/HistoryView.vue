@@ -304,7 +304,11 @@ const router = useRouter();
 
 /* ─── THEME ─────────────────────────────────────────────────────── */
 const isDark = inject('isDark', ref(false));
+const globalToggleTheme = inject('toggleTheme', () => {});
 const theme = computed(() => isDark.value ? 'dark' : 'light');
+const toggleTheme = () => {
+  globalToggleTheme();
+};
 
 /* ─── ÉTAT ─────────────────────────────────────────────────────── */
 const historyData  = ref([]);

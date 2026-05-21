@@ -15,6 +15,8 @@ namespace NeoEvaluation.API.Models
         [Required]
         public string Nom { get; set; } = string.Empty;
 
+        public string ModeleRole { get; set; } = "Personnalise";
+
         public string? Prenom { get; set; }
         public string? NomFamille { get; set; }
         public string? Email { get; set; }

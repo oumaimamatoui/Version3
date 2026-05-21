@@ -135,7 +135,7 @@
             <div class="sb-groupe-label">
               <span class="point-label" style="background:#6366F1"></span>Général
             </div>
-            <router-link to="/dashboard" class="sb-lien">
+            <router-link to="/dashboard" class="sb-lien" :title="t('sidebar.links.overview')">
               <span class="sb-lien-icone ic-indigo"><i class="fa-solid fa-gauge-high"></i></span>
               <span class="sb-lien-texte">{{ t('sidebar.links.overview') }}</span>
             </router-link>
@@ -147,15 +147,15 @@
               <div class="sb-groupe-label">
                 <span class="point-label" style="background:#0EA5E9"></span>Recrutement
               </div>
-              <router-link v-if="authStore.hasPermission('view_can')" to="/candidates-list" class="sb-lien">
+              <router-link v-if="authStore.hasPermission('view_can')" to="/candidates-list" class="sb-lien" :title="t('sidebar.links.candidates')">
                 <span class="sb-lien-icone ic-sky"><i class="fa-solid fa-users-viewfinder"></i></span>
                 <span class="sb-lien-texte">{{ t('sidebar.links.candidates') }}</span>
               </router-link>
-              <router-link v-if="authStore.hasPermission('inv_can')" to="/invite" class="sb-lien">
+              <router-link v-if="authStore.hasPermission('inv_can')" to="/invite" class="sb-lien" :title="t('sidebar.links.invitations')">
                 <span class="sb-lien-icone ic-cyan"><i class="fa-solid fa-envelope-open-text"></i></span>
                 <span class="sb-lien-texte">{{ t('sidebar.links.invitations') }}</span>
               </router-link>
-              <router-link v-if="authStore.hasPermission('view_can')" to="/groups" class="sb-lien">
+              <router-link v-if="authStore.hasPermission('view_can')" to="/groups" class="sb-lien" :title="t('sidebar.links.groups')">
                 <span class="sb-lien-icone ic-blue"><i class="fa-solid fa-layer-group"></i></span>
                 <span class="sb-lien-texte">{{ t('sidebar.links.groups') }}</span>
               </router-link>
@@ -163,20 +163,20 @@
           </template>
 
           <!-- Évaluations -->
-          <template v-if="authStore.hasPermission('view_tests') || authStore.hasPermission('edit_bank')">
+          <template v-if="(authStore.hasPermission('view_tests') || authStore.hasPermission('edit_bank')) && roleUtilisateur !== 'AdminEntreprise'">
             <div class="sb-groupe">
               <div class="sb-groupe-label">
                 <span class="point-label" style="background:#F59E0B"></span>Évaluations
               </div>
-              <router-link v-if="authStore.hasPermission('view_tests') || authStore.hasPermission('inv_can')" to="/campaigns" class="sb-lien">
+              <router-link v-if="authStore.hasPermission('view_tests') || authStore.hasPermission('inv_can')" to="/campaigns" class="sb-lien" :title="t('sidebar.links.campaigns')">
                 <span class="sb-lien-icone ic-amber"><i class="fa-solid fa-clipboard-list"></i></span>
                 <span class="sb-lien-texte">{{ t('sidebar.links.campaigns') }}</span>
               </router-link>
-              <router-link v-if="authStore.hasPermission('edit_bank')" to="/questions" class="sb-lien">
+              <router-link v-if="authStore.hasPermission('edit_bank')" to="/questions" class="sb-lien" :title="t('sidebar.links.bank')">
                 <span class="sb-lien-icone ic-gold"><i class="fa-solid fa-vault"></i></span>
                 <span class="sb-lien-texte">{{ t('sidebar.links.bank') }}</span>
               </router-link>
-              <router-link v-if="authStore.hasPermission('edit_bank')" to="/ai-generator" class="sb-lien">
+              <router-link v-if="authStore.hasPermission('edit_bank')" to="/ai-generator" class="sb-lien" :title="t('sidebar.links.ai')">
                 <span class="sb-lien-icone ic-violet"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
                 <span class="sb-lien-texte">{{ t('sidebar.links.ai') }}</span>
               </router-link>
@@ -189,11 +189,11 @@
               <div class="sb-groupe-label">
                 <span class="point-label" style="background:#8B5CF6"></span>Analytique
               </div>
-              <router-link to="/analyse-comportementale" class="sb-lien">
+              <router-link to="/analyse-comportementale" class="sb-lien" :title="t('sidebar.links.smart')">
                 <span class="sb-lien-icone ic-purple"><i class="fa-solid fa-brain"></i></span>
                 <span class="sb-lien-texte">{{ t('sidebar.links.smart') }}</span>
               </router-link>
-              <router-link to="/stats" class="sb-lien">
+              <router-link to="/stats" class="sb-lien" :title="t('sidebar.links.stats')">
                 <span class="sb-lien-icone ic-fuchsia"><i class="fa-solid fa-chart-pie"></i></span>
                 <span class="sb-lien-texte">{{ t('sidebar.links.stats') }}</span>
               </router-link>
@@ -374,21 +374,21 @@ const tousLesLiens = computed(() => {
       vers: '/campaigns',
       icone: 'fa-solid fa-clipboard-list',
       iconeClasse: 'ic-amber',
-      visible: estEntreprise && (authStore.hasPermission('view_tests') || authStore.hasPermission('inv_can')),
+      visible: estEntreprise && (authStore.hasPermission('view_tests') || authStore.hasPermission('inv_can')) && role !== 'AdminEntreprise',
     },
     {
       label: t('sidebar.links.bank'),
       vers: '/questions',
       icone: 'fa-solid fa-vault',
       iconeClasse: 'ic-gold',
-      visible: estEntreprise && authStore.hasPermission('edit_bank'),
+      visible: estEntreprise && authStore.hasPermission('edit_bank') && role !== 'AdminEntreprise',
     },
     {
       label: t('sidebar.links.ai'),
       vers: '/ai-generator',
       icone: 'fa-solid fa-wand-magic-sparkles',
       iconeClasse: 'ic-violet',
-      visible: estEntreprise && authStore.hasPermission('edit_bank'),
+      visible: estEntreprise && authStore.hasPermission('edit_bank') && role !== 'AdminEntreprise',
     },
     // ── Entreprise : Analytique ──
     {

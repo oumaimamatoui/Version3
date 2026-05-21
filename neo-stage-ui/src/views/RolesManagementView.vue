@@ -557,9 +557,21 @@ const applyTemplate = () => {
 const saveRole = async () => {
   if (!form.nom) return showPulseToast(t('rolesView.toast.nameRequired'), 'warn', 'fa-solid fa-triangle-exclamation');
   saving.value = true;
+
+  const templateMap = {
+    manager: 'AdminEntreprise',
+    hr: 'Recruteur',
+    evaluator: 'Evaluateur',
+    viewer: 'Lecteur',
+  };
+  const payload = {
+    ...form,
+    modeleRole: templateMap[selectedTemplate.value] || 'Personnalise'
+  };
+
   try {
-    if (isEditing.value) await api.put(`/Roles/${form.id}`, form);
-    else                 await api.post('/Roles', form);
+    if (isEditing.value) await api.put(`/Roles/${form.id}`, payload);
+    else                 await api.post('/Roles', payload);
     showPulseToast(
       isEditing.value ? t('rolesView.toast.updated') : t('rolesView.toast.deployed'),
       'success', 'fa-solid fa-shield-check'

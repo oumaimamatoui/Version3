@@ -30,6 +30,7 @@ import HistoryView from '../views/HistoryView.vue'
 import ResultsView from '../views/ResultsView.vue'
 import AccueilExamenView from '../views/AccueilExamenView.vue'
 import QuizView from '../views/QuizView.vue'
+import InterviewPrepView from '../views/InterviewPrepView.vue'
 
 // Espace Évaluateur / RH / Recruteur
 import BanqueQuestionsView from '../views/BanqueQuestionsView.vue'
@@ -58,7 +59,6 @@ import GestionStaffView from '../views/GestionStaffView.vue'
 
 // Espace Super Admin
 import SuperAdminView from '../views/SuperAdminView.vue'
-import GestionAbonnementsView from '../views/GestionAbonnementsView.vue'
 import PlatformUsersView from '../views/PlatformUsersView.vue'
 import AnalyticsView from '../views/AnalyticsView.vue'
 import SuperAdminAnalytics from '../views/SuperAdminAnalytics.vue'
@@ -102,6 +102,9 @@ const routes = [
   },
 
   { path: '/history', name: 'history', component: HistoryView, meta: { requiresAuth: true, role: 'Candidat' } },
+
+  { path: '/interview-prep', name: 'interview-prep', component: InterviewPrepView, meta: { requiresAuth: true, role: 'Candidat' } },
+  { path: '/entretien-ia', redirect: { name: 'interview-prep' } },
 
   { path: '/quiz/:id', name: 'quiz', component: QuizView, meta: { requiresAuth: true, role: 'Candidat' } },
   { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView },
@@ -151,7 +154,7 @@ const routes = [
    * ESPACE SUPER ADMIN
    */
   { path: '/super-admin', name: 'super-admin', component: SuperAdminView, meta: { requiresAuth: true, role: 'SuperAdmin' } },
-  { path: '/gestion-abonnements', name: 'gestion-abonnements', component: GestionAbonnementsView, meta: { requiresAuth: true, role: 'SuperAdmin' } },
+
 
   { path: '/platform-users', name: 'platform-users', component: PlatformUsersView, meta: { requiresAuth: true, role: 'SuperAdmin' } },
   { path: '/platform-analytics', name: 'platform-analytics', component: AnalyticsView, meta: { requiresAuth: true, role: 'SuperAdmin' } },

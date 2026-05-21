@@ -395,7 +395,7 @@ function getBarTooltipStyle(bar) {
   if (bar === 'gratuit') leftOffset = '78%';
   return {
     left: leftOffset,
-    top: '40px',
+    top: '10px',
     transform: 'translateX(-50%)',
     zIndex: 10
   };
@@ -829,10 +829,10 @@ onMounted(() => {
   color: #ffffff;
   border-radius: var(--radius-sm);
   z-index: 100;
-  pointer-events: none;
+  pointer-events: none !important;
   backdrop-filter: blur(4px);
   min-width: 80px;
-  transition: left 0.15s ease-out, top 0.15s ease-out;
+  transition: opacity 0.15s ease-out;
 }
 .chart-tooltip::after {
   content: '';

@@ -61,7 +61,7 @@
                 <button class="btn-ai-glow" @click="showAIModal = true">
                   <span class="btn-shine-layer"></span>
                   <i class="fa-solid fa-wand-magic-sparkles me-2"></i>
-                  {{ $t('sidebar.links.ai') }}
+                  <span>{{ $t('sidebar.links.ai') }}</span>
                   <span class="lang-badge-pill ms-2">FR/EN</span>
                 </button>
                 <button class="btn-enigma-primary shadow-premium" @click="openModal()">
@@ -393,9 +393,9 @@
           </div>
 
           <!-- ══════════════════════ PAGINATION ══════════════════════ -->
-          <div v-if="totalPages > 1" class="bq-pagination-wrap mt-5 mb-4 animate__animated animate__fadeIn">
+          <div v-if="totalPages > 1" class="bq-pagination-wrap mt-5 mb-4 animate__animated animate__fadeIn d-flex justify-content-center align-items-center position-relative w-100 p-3 shadow-sm" style="background: var(--surface); border: 1.5px solid var(--bdr); border-radius: 14px;">
             
-            <div class="pagination-controls d-flex align-items-center gap-1 justify-content-center" style="flex: 2;">
+            <div class="pagination-controls d-flex align-items-center gap-1 justify-content-center">
               <button 
                 class="btn-pagination" 
                 :disabled="currentPage === 1" 
@@ -442,16 +442,16 @@
               </button>
             </div>
             
-            <div class="pagination-size-selector d-flex align-items-center gap-2 justify-content-end" style="flex: 1;">
-              <span class="text-muted small">Par page :</span>
+            <div class="pagination-size-selector d-flex align-items-center gap-2 position-absolute" style="right: 1.5rem;">
+              <span class="text-muted small fw-600">Par page :</span>
               <div class="sort-select-wrap pagination-size-select">
-                <select v-model.number="itemsPerPage" class="sort-select-pro">
+                <select v-model.number="itemsPerPage" class="sort-select-pro py-1 px-2 text-dark" style="min-width: 60px; height: 32px; border-radius: 8px;">
                   <option :value="12">12</option>
                   <option :value="24">24</option>
                   <option :value="48">48</option>
                   <option :value="96">96</option>
                 </select>
-                <i class="fa-solid fa-chevron-down sort-arrow"></i>
+                <i class="fa-solid fa-chevron-down sort-arrow text-dark" style="right: 8px; font-size: 10px;"></i>
               </div>
             </div>
           </div>

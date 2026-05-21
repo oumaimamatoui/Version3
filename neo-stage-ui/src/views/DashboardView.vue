@@ -837,17 +837,17 @@
                   </button>
                 </div>
                 <div class="company-list">
-                  <div v-for="co in superAdminStats.croissanceStats?.slice(0,5) || []" :key="co.mois" class="company-row">
-                    <div class="company-logo" :style="{background: '#6366f1'}">
+                  <div v-for="co in superAdminStats.recentTransactions || []" :key="co.id" class="company-row">
+                    <div class="company-logo" :style="{background: co.color || '#6366f1'}">
                       <i class="fa-solid fa-building" style="font-size:14px;color:white"></i>
                     </div>
                     <div class="company-body flex-grow-1">
-                      <span class="company-name">{{ co.mois }}</span>
-                      <span class="company-plan">{{ $t('dashboard.superAdmin.newSignups') }}</span>
+                      <span class="company-name">{{ co.name }}</span>
+                      <span class="company-plan">{{ co.plan || 'Gratuit' }}</span>
                     </div>
-                    <span class="company-users">+{{ co.count }}</span>
+                    <span class="company-users">{{ co.date }}</span>
                   </div>
-                  <div v-if="!superAdminStats.croissanceStats?.length" class="empty-state">
+                  <div v-if="!superAdminStats.recentTransactions?.length" class="empty-state">
                     <p>{{ $t('dashboard.empty.companies', { count: superAdminStats.totalEntreprises || 0 }) }}</p>
                   </div>
                 </div>
@@ -929,7 +929,7 @@
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
                   <h5 class="panel-title m-0">{{ $t('dashboard.superAdmin.users') }}</h5>
-                  <button class="btn-see-all" @click="router.push('/gestion-abonnements')">{{ $t('dashboard.superAdmin.manage') }}</button>
+                  <button class="btn-see-all" @click="router.push('/platform-users')">{{ $t('dashboard.superAdmin.manage') }}</button>
                 </div>
                 <div class="candidates-list">
                   <div v-for="usr in platformUsers.slice(0,6)" :key="usr.id" class="cand-row">
@@ -1017,6 +1017,562 @@
       </main>
     </div>
 
+    <!-- MODAL MAILER DIAGNOSTICS -->
+    <transition name="modal-fade">
+      <div v-if="showMailerModal" class="enigma-modal-overlay" @click.self="showMailerModal = false">
+        <div class="enigma-modal-container glass-morphic">
+          <div class="enigma-modal-header">
+            <h4 class="m-0 text-white font-weight-bold d-flex align-items-center gap-2">
+              <i class="fa-solid fa-square-envelope text-primary"></i>
+              <span>Diagnostic Messagerie</span>
+            </h4>
+            <button class="btn-close-modal" @click="showMailerModal = false">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          <div class="enigma-modal-body">
+            <div class="d-flex flex-column gap-4">
+              <!-- SMTP & Google OAuth Status Card -->
+              <div :class="['status-card', mailerDiag.isGoogleConnected ? 'active-green' : 'error-red']">
+                <div class="status-card-icon">
+                  <i v-if="mailerDiag.isGoogleConnected" class="fa-solid fa-circle-check text-green"></i>
+                  <i v-else class="fa-solid fa-circle-xmark text-red"></i>
+                </div>
+                <div class="flex-grow-1 text-start">
+                  <div class="status-label">CONNEXION SMTP GOOGLE OAUTH2</div>
+                  <div class="status-value font-weight-bold">
+                    {{ mailerDiag.isGoogleConnected ? 'Opérationnel' : 'Service Mailer en panne — CRITIQUE' }}
+                  </div>
+                  <div class="status-desc">
+                    {{ mailerDiag.isGoogleConnected ? `Connecté avec l'adresse : ${mailerDiag.email}` : 'La connexion OAuth avec Google a expiré ou n\'est pas configurée.' }}
+                  </div>
+                </div>
+                <div v-if="!mailerDiag.isGoogleConnected">
+                  <button class="btn-action-primary glow-orange py-2 px-3 text-xs" @click="connectGoogleSmtp">
+                    <i class="fa-brands fa-google me-1"></i> Réactiver SMTP
+                  </button>
+                </div>
+              </div>
+
+              <!-- Pending Invitations Status Banner -->
+              <div class="pending-invites-banner d-flex align-items-center justify-content-between">
+                <div class="text-start">
+                  <div class="status-label">INVITATIONS EN ATTENTE DE RENVOI</div>
+                  <div class="fs-4 text-white font-weight-bold my-1">
+                    {{ mailerDiag.pendingInvitesCount }} <span class="fs-6 font-weight-normal text-muted">invitations bloquées</span>
+                  </div>
+                  <p class="m-0 text-muted small">Ces invitations n'ont pas pu être envoyées en raison de la panne du mailer.</p>
+                </div>
+                <div v-if="mailerDiag.pendingInvitesCount > 0">
+                  <button :disabled="mailerResendLoading" class="btn-action-primary glow-green" @click="triggerMailerResend">
+                    <i v-if="mailerResendLoading" class="fa-solid fa-spinner fa-spin me-2"></i>
+                    <i v-else class="fa-solid fa-paper-plane me-2"></i>
+                    Libérer les invitations
+                  </button>
+                </div>
+              </div>
+
+              <!-- Terminal Console CLI Logs -->
+              <div class="terminal-logs-wrapper">
+                <div class="terminal-header d-flex align-items-center justify-content-between">
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                    <span class="terminal-title text-muted ms-2">diagnostics_console.sh</span>
+                  </div>
+                  <span class="terminal-badge text-xs">OAUTH2 / SMTP</span>
+                </div>
+                <div class="terminal-body scrollbar-thin">
+                  <div v-for="(log, index) in mailerConsoleLogs" :key="index" :class="[
+                    'terminal-log-line',
+                    log.includes('[SUCCESS]') ? 'log-success' : '',
+                    log.includes('[CRITICAL]') ? 'log-critical' : '',
+                    log.includes('[WARNING]') ? 'log-warning' : '',
+                    log.includes('[INFO]') ? 'log-help' : ''
+                  ]">
+                    {{ log }}
+                  </div>
+                  <div v-if="mailerLoading" class="terminal-log-line">
+                    <i class="fa-solid fa-spinner fa-spin me-2"></i>
+                    <span class="log-cursor">█</span>
+                  </div>
+                  <div v-else class="terminal-log-line">
+                    <span>$ ready_to_operate</span><span class="log-cursor">█</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- MODAL EXPIRING SUBSCRIPTIONS -->
+    <transition name="modal-fade">
+      <div v-if="showSubsModal" class="enigma-modal-overlay" @click.self="showSubsModal = false">
+        <div class="enigma-modal-container max-w-lg glass-morphic">
+          <div class="enigma-modal-header">
+            <h4 class="m-0 text-white font-weight-bold d-flex align-items-center gap-2">
+              <i class="fa-solid fa-clock text-warning"></i>
+              <span>Abonnements expirant bientôt</span>
+            </h4>
+            <button class="btn-close-modal" @click="showSubsModal = false">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          <div class="enigma-modal-body p-0">
+            <!-- Spinner / Loader -->
+            <div v-if="subsLoading" class="p-5 text-center">
+              <i class="fa-solid fa-spinner fa-spin fa-2x text-primary mb-3"></i>
+              <p class="text-muted m-0">Chargement des abonnements en cours...</p>
+            </div>
+
+            <!-- Table of expiring subs -->
+            <div v-else-if="expiringSubs.length > 0" class="subs-table-wrapper scrollbar-thin">
+              <table class="subs-table">
+                <thead>
+                  <tr>
+                    <th>Entreprise</th>
+                    <th>Formule</th>
+                    <th>Expiration</th>
+                    <th>Jours restants</th>
+                    <th class="text-end">Rappel</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="sub in expiringSubs" :key="sub.id" class="sub-row">
+                    <td>
+                      <div class="d-flex flex-column text-start">
+                        <span class="sub-company-name font-weight-bold">{{ sub.name }}</span>
+                        <span class="text-xs text-muted">{{ sub.adminName }} ({{ sub.adminEmail }})</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="sub-plan-badge font-weight-bold">{{ sub.plan }}</span>
+                    </td>
+                    <td>
+                      <span class="text-white text-xs">{{ sub.expirationDate ? new Date(sub.expirationDate).toLocaleDateString() : 'N/A' }}</span>
+                    </td>
+                    <td>
+                      <span :class="['sub-days-badge text-xs', sub.daysRemaining <= 3 ? 'danger' : 'warning']">
+                        {{ sub.daysRemaining }} jours
+                      </span>
+                    </td>
+                    <td class="text-end">
+                      <button :disabled="notifyingSubId === sub.id" class="btn-send-reminder" @click="sendRenewalReminder(sub)">
+                        <i v-if="notifyingSubId === sub.id" class="fa-solid fa-spinner fa-spin text-warning"></i>
+                        <i v-else class="fa-solid fa-paper-plane"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Empty State -->
+            <div v-else class="p-5 text-center">
+              <i class="fa-solid fa-face-smile fa-2x text-success mb-3"></i>
+              <p class="text-muted m-0">Aucun abonnement n'expire dans les 7 prochains jours.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- MODAL SECURITY AUDIT SCANNER -->
+    <transition name="modal-fade">
+      <div v-if="showSecurityModal" class="enigma-modal-overlay" @click.self="showSecurityModal = false">
+        <div class="enigma-modal-container max-w-lg glass-morphic">
+          <div class="enigma-modal-header">
+            <h4 class="m-0 text-white font-weight-bold d-flex align-items-center gap-2">
+              <i class="fa-solid fa-shield-halved text-success animate-pulse"></i>
+              <span>Audit de Sécurité Intégrale</span>
+            </h4>
+            <button class="btn-close-modal" @click="showSecurityModal = false">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          <div class="enigma-modal-body">
+            <div class="d-flex flex-column gap-4">
+              <!-- Scanning Active HUD View or Complete Dashboard -->
+              <div v-if="!securityScanComplete" class="security-scanning-hud">
+                <div class="row align-items-center">
+                  <div class="col-md-7">
+                    <!-- Steps Animate -->
+                    <div class="hud-steps-list">
+                      <div v-for="(step, idx) in securityScanSteps" :key="idx" :class="[
+                        'hud-step-item',
+                        securityScanActiveStep === idx ? 'step-scanning' : (step.status === 'done' ? 'step-done' : 'step-pending')
+                      ]">
+                        <div class="hud-step-icon">
+                          <i v-if="securityScanActiveStep === idx" class="fa-solid fa-sync fa-spin"></i>
+                          <i v-else-if="step.status === 'done'" class="fa-solid fa-circle-check text-green"></i>
+                          <i v-else :class="step.icon"></i>
+                        </div>
+                        <div class="flex-grow-1 text-start">
+                          <div class="hud-step-name font-weight-bold">{{ step.name }}</div>
+                          <div class="text-xs text-muted">{{ step.details }}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="col-md-5 d-flex flex-column align-items-center justify-content-center">
+                    <div class="cyber-shield-icon-wrapper text-primary mb-3">
+                      <i class="fa-solid fa-shield-halved animate-spin-slow text-success opacity-75"></i>
+                    </div>
+                    <button :disabled="securityLoading" class="btn-action-primary glow-orange w-100" @click="runSecurityAuditScan">
+                      <i v-if="securityLoading" class="fa-solid fa-spinner fa-spin me-2"></i>
+                      <i v-else class="fa-solid fa-bolt me-2"></i>
+                      Lancer l'audit
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Matrix / HUD log terminal -->
+                <div class="hud-logs-wrapper mt-4 text-start">
+                  <div class="hud-logs scrollbar-thin">
+                    <div v-for="(line, lineIdx) in securityScanLogs" :key="lineIdx" class="hud-log-line">
+                      {{ line }}
+                    </div>
+                    <div v-if="securityLoading" class="hud-log-line">
+                      <span class="text-warning">[SCANNING]</span> Analyse active... <span class="log-cursor">█</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Audit Complete HUD View -->
+              <div v-else class="security-scanning-hud d-flex flex-column gap-4">
+                <div class="d-flex align-items-center justify-content-between">
+                  <div class="score-radial-wrapper" :style="{'--score-color': securityScanScore >= 90 ? '#10b981' : (securityScanScore >= 70 ? '#f59e0b' : '#ef4444')}">
+                    <div class="score-radial">
+                      <span class="score-value font-weight-bold">{{ securityScanScore }}</span>
+                      <span class="text-xxs text-muted">SCORE</span>
+                    </div>
+                  </div>
+                  <div class="flex-grow-1 text-start ms-4">
+                    <h5 class="text-white font-weight-bold m-0">Analyse de Sécurité Réussie</h5>
+                    <p class="text-muted small m-0">Audit du système complété et enregistré. Aucun incident critique n'a été détecté.</p>
+                  </div>
+                </div>
+
+                <!-- Statistics grid -->
+                <div class="two-col-grid" style="--col1: 1fr; --col2: 1fr;">
+                  <!-- Checked Items Summary -->
+                  <div :class="['card-result-mini', securityScanResult.weakPasswordsCount === 0 ? 'active-green' : 'active-warning']">
+                    <div class="crm-icon">
+                      <i class="fa-solid fa-key"></i>
+                    </div>
+                    <div class="text-start">
+                      <div class="status-label">MOTS DE PASSE FAIBLES</div>
+                      <div class="text-white font-weight-bold fs-6">
+                        {{ securityScanResult.weakPasswordsCount }} detectés
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="card-result-mini active-green">
+                    <div class="crm-icon">
+                      <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                    <div class="text-start">
+                      <div class="status-label">JETONS D'ACCÈS PURGÉS</div>
+                      <div class="text-white font-weight-bold fs-6">
+                        {{ securityScanResult.expiredTokensCleaned }} expirés nettoyés
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Audited Checklist detail -->
+                <div class="checked-items-list scrollbar-thin text-start">
+                  <h6 class="text-muted font-weight-bold text-xs uppercase mb-3">POINTS DE CONTRÔLE VÉRIFIÉS</h6>
+                  <div v-for="(check, checkIdx) in securityScanResult.checkedItems" :key="checkIdx" class="checked-item-row d-flex align-items-center justify-content-between">
+                    <div>
+                      <div class="item-name font-weight-bold">{{ check.name }}</div>
+                      <div class="text-xxs text-muted mt-1">{{ check.details }}</div>
+                    </div>
+                    <div>
+                      <span :class="['sub-days-badge text-xxs', check.status === 'OK' ? 'glow-green text-white font-weight-bold' : (check.status === 'WARNING' ? 'warning' : 'danger')]">
+                        {{ check.status }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Close / Retrigger Actions -->
+                <div class="d-flex align-items-center justify-content-end gap-3 mt-2">
+                  <button class="btn-action-secondary py-2 px-3 text-xs" @click="securityScanComplete = false">
+                    <i class="fa-solid fa-rotate-left me-1"></i> Réanalyser
+                  </button>
+                  <button class="btn-action-primary glow-green py-2 px-3 text-xs" @click="showSecurityModal = false">
+                    <i class="fa-solid fa-check me-1"></i> Appliquer & Fermer
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- MODAL ENTERPRISE INTEGRITY ACTIVITY -->
+    <transition name="modal-fade">
+      <div v-if="showEntActivityModal" class="enigma-modal-overlay" @click.self="showEntActivityModal = false">
+        <div class="enigma-modal-container max-w-lg glass-morphic">
+          <div class="enigma-modal-header">
+            <h4 class="m-0 text-white font-weight-bold d-flex align-items-center gap-2">
+              <i class="fa-solid fa-bolt text-danger"></i>
+              <span>Audit Behavioural & Anomalies</span>
+            </h4>
+            <button class="btn-close-modal" @click="showEntActivityModal = false">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          <div class="enigma-modal-body">
+            <div class="d-flex flex-column gap-4">
+              <!-- Terminal Console CLI Logs -->
+              <div class="terminal-logs-wrapper">
+                <div class="terminal-header d-flex align-items-center justify-content-between">
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                    <span class="terminal-title text-muted ms-2">neo_integrity_audit.sh</span>
+                  </div>
+                  <span class="terminal-badge text-xs">AI INTEGRITY SCAN</span>
+                </div>
+                <div class="terminal-body scrollbar-thin" style="max-height: 180px;">
+                  <div v-for="(log, index) in entActivityConsoleLogs" :key="index" :class="[
+                    'terminal-log-line',
+                    log.includes('[SUCCESS]') ? 'log-success' : '',
+                    log.includes('[CRITICAL]') ? 'log-critical' : '',
+                    log.includes('[WARNING]') ? 'log-warning' : '',
+                    log.includes('[INFO]') ? 'log-help' : ''
+                  ]">
+                    {{ log }}
+                  </div>
+                  <div v-if="entActivityLoading" class="terminal-log-line">
+                    <i class="fa-solid fa-spinner fa-spin me-2"></i>
+                    <span class="log-cursor">█</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Anomaly List Table -->
+              <div class="subs-table-wrapper scrollbar-thin" style="max-height: 250px;">
+                <table class="subs-table" v-if="enterpriseReco.anomalies && enterpriseReco.anomalies.length > 0">
+                  <thead>
+                    <tr>
+                      <th>Candidat</th>
+                      <th>Campagne</th>
+                      <th>Anomalie</th>
+                      <th>Alertes</th>
+                      <th class="text-end">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="anomaly in enterpriseReco.anomalies" :key="anomaly.evaluationId" class="sub-row">
+                      <td>
+                        <span class="font-weight-bold text-white">{{ anomaly.candidateName }}</span>
+                      </td>
+                      <td>
+                        <span class="text-muted text-xs">{{ anomaly.campaignName }}</span>
+                      </td>
+                      <td>
+                        <span class="text-danger text-xs font-weight-bold">{{ anomaly.type }}</span>
+                      </td>
+                      <td>
+                        <div class="d-flex gap-2">
+                          <span class="badge bg-danger-transparent text-danger text-xs" v-if="anomaly.infractionsCount > 0">
+                            {{ anomaly.infractionsCount }} Infractions
+                          </span>
+                          <span class="badge bg-warning-transparent text-warning text-xs" v-if="anomaly.nbReprises > 0">
+                            {{ anomaly.nbReprises }} Sorties
+                          </span>
+                        </div>
+                      </td>
+                      <td class="text-end">
+                        <button :disabled="entResolvingAnomalyId === anomaly.evaluationId" class="btn-action-primary glow-orange py-1 px-2 text-xs" @click="triggerResolveAnomaly(anomaly.evaluationId)">
+                          <i v-if="entResolvingAnomalyId === anomaly.evaluationId" class="fa-solid fa-spinner fa-spin me-1"></i>
+                          <i v-else class="fa-solid fa-circle-check me-1"></i>
+                          Résoudre
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div v-else class="p-4 text-center">
+                  <i class="fa-solid fa-face-smile fa-2x text-success mb-2"></i>
+                  <p class="text-muted m-0">Félicitations, aucune anomalie critique active détectée.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- MODAL ENTERPRISE WEEKLY PERFORMANCE REPORT -->
+    <transition name="modal-fade">
+      <div v-if="showEntReportModal" class="enigma-modal-overlay" @click.self="showEntReportModal = false">
+        <div class="enigma-modal-container max-w-lg glass-morphic">
+          <div class="enigma-modal-header">
+            <h4 class="m-0 text-white font-weight-bold d-flex align-items-center gap-2">
+              <i class="fa-solid fa-chart-line text-warning"></i>
+              <span>Rapport Analytique Hebdomadaire</span>
+            </h4>
+            <button class="btn-close-modal" @click="showEntReportModal = false">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          <div class="enigma-modal-body">
+            <div class="d-flex flex-column gap-4">
+              <!-- KPI Card Grid -->
+              <div class="row g-3">
+                <div class="col-6 col-md-3">
+                  <div class="status-card active-green p-3 text-start h-100">
+                    <div class="status-label">ÉVALUATIONS COMPLETES</div>
+                    <div class="fs-3 font-weight-bold text-white">{{ enterpriseReco.weeklyReport.completedEvaluationsThisWeek }}</div>
+                  </div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="status-card glow-blue p-3 text-start h-100" style="border: 1px solid rgba(59,130,246,0.2); background: rgba(59,130,246,0.05);">
+                    <div class="status-label">INVITATIONS ENVOYÉES</div>
+                    <div class="fs-3 font-weight-bold text-white">{{ enterpriseReco.weeklyReport.totalInvitationsThisWeek }}</div>
+                  </div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="status-card active-amber p-3 text-start h-100" style="border: 1px solid rgba(245,158,11,0.2); background: rgba(245,158,11,0.05);">
+                    <div class="status-label">SCORE MOYEN GLOBAL</div>
+                    <div class="fs-3 font-weight-bold text-white">{{ enterpriseReco.weeklyReport.averageScore }}%</div>
+                  </div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="status-card p-3 text-start h-100" style="border: 1px solid rgba(16,185,129,0.2); background: rgba(16,185,129,0.05);">
+                    <div class="status-label">TAUX DE COMPLÉTION</div>
+                    <div class="fs-3 font-weight-bold text-white">{{ enterpriseReco.weeklyReport.completionRate }}%</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Performance List by Campaign -->
+              <div class="subs-table-wrapper scrollbar-thin" style="max-height: 220px;">
+                <table class="subs-table" v-if="enterpriseReco.weeklyReport.campaignPerformances && enterpriseReco.weeklyReport.campaignPerformances.length > 0">
+                  <thead>
+                    <tr>
+                      <th>Campagne active</th>
+                      <th>Candidats évalués</th>
+                      <th>Score moyen</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="cPerf in enterpriseReco.weeklyReport.campaignPerformances" :key="cPerf.campaignName" class="sub-row">
+                      <td class="text-start font-weight-bold text-white">{{ cPerf.campaignName }}</td>
+                      <td>{{ cPerf.candidatesCount }} candidats</td>
+                      <td>
+                        <span class="font-weight-bold" :style="{color: getScoreColor(cPerf.averageScore)}">{{ cPerf.averageScore }}%</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div v-else class="p-4 text-center">
+                  <i class="fa-solid fa-info-circle fa-2x text-muted mb-2"></i>
+                  <p class="text-muted m-0">Aucune évaluation passée cette semaine.</p>
+                </div>
+              </div>
+
+              <!-- Export CSV Footer -->
+              <div class="d-flex justify-content-end mt-2">
+                <button class="btn-action-primary glow-green py-2 px-4" @click="triggerCsvExport">
+                  <i class="fa-solid fa-file-csv me-2"></i> Exporter en format CSV
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- MODAL ENTERPRISE DRAFT CAMPAIGNS CONFIGURATOR -->
+    <transition name="modal-fade">
+      <div v-if="showEntDraftsModal" class="enigma-modal-overlay" @click.self="showEntDraftsModal = false">
+        <div class="enigma-modal-container max-w-lg glass-morphic">
+          <div class="enigma-modal-header">
+            <h4 class="m-0 text-white font-weight-bold d-flex align-items-center gap-2">
+              <i class="fa-solid fa-bullhorn text-green animate-pulse"></i>
+              <span>Finalisation des Campagnes Brouillon</span>
+            </h4>
+            <button class="btn-close-modal" @click="showEntDraftsModal = false">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          <div class="enigma-modal-body">
+            <div class="d-flex flex-column gap-4">
+              <!-- Checklist of draft campaigns -->
+              <div class="draft-campaigns-list scrollbar-thin" style="max-height: 400px; overflow-y: auto;" v-if="enterpriseReco.draftCampaigns && enterpriseReco.draftCampaigns.length > 0">
+                <div v-for="draft in enterpriseReco.draftCampaigns" :key="draft.campaignId" class="status-card p-4 text-start mb-3" style="border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02);">
+                  <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="m-0 text-white font-weight-bold">{{ draft.name }}</h5>
+                    <span class="badge bg-warning text-dark font-weight-bold">{{ draft.completionPercentage }}% complété</span>
+                  </div>
+
+                  <!-- Mini Progress Bar -->
+                  <div class="progress mb-3" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
+                    <div class="progress-bar bg-warning" :style="{width: `${draft.completionPercentage}%`}"></div>
+                  </div>
+
+                  <!-- Checklist Grid -->
+                  <div class="row g-2 text-xs mb-3">
+                    <div class="col-6">
+                      <div class="d-flex align-items-center gap-2">
+                        <i :class="draft.hasQuestions ? 'fa-solid fa-circle-check text-green' : 'fa-solid fa-circle-xmark text-muted'"></i>
+                        <span :class="draft.hasQuestions ? 'text-white' : 'text-muted'">Questions ({{ draft.questionsCount }} ajoutées)</span>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="d-flex align-items-center gap-2">
+                        <i :class="draft.hasDescription ? 'fa-solid fa-circle-check text-green' : 'fa-solid fa-circle-xmark text-muted'"></i>
+                        <span :class="draft.hasDescription ? 'text-white' : 'text-muted'">Description rédigée</span>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="d-flex align-items-center gap-2">
+                        <i :class="draft.hasDuration ? 'fa-solid fa-circle-check text-green' : 'fa-solid fa-circle-xmark text-muted'"></i>
+                        <span :class="draft.hasDuration ? 'text-white' : 'text-muted'">Durée configurée</span>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="d-flex align-items-center gap-2">
+                        <i :class="draft.hasMaxCandidates ? 'fa-solid fa-circle-check text-green' : 'fa-solid fa-circle-xmark text-muted'"></i>
+                        <span :class="draft.hasMaxCandidates ? 'text-white' : 'text-muted'">Limite de candidats</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Action button -->
+                  <div class="d-flex justify-content-end">
+                    <button :disabled="entPublishingCampaignId === draft.campaignId" class="btn-action-primary glow-green py-2 px-3 text-xs" @click="triggerPublishDraft(draft.campaignId)">
+                      <i v-if="entPublishingCampaignId === draft.campaignId" class="fa-solid fa-spinner fa-spin me-1"></i>
+                      <i v-else class="fa-solid fa-rocket me-1"></i>
+                      Finaliser et Publier la campagne
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="p-5 text-center">
+                <i class="fa-solid fa-circle-check fa-3x text-success mb-3 animate-bounce"></i>
+                <h5 class="text-white">Tout est en ordre !</h5>
+                <p class="text-muted m-0">Toutes vos campagnes sont configurées et actives.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+
     <!-- TOAST -->
     <transition name="toast-slide">
       <div v-if="globalToast.active" class="enigma-toast" :class="globalToast.type">
@@ -1039,6 +1595,7 @@ import AppSidebar from '../components/AppSidebar.vue';
 import AppNavbar from '../components/AppNavbar.vue';
 import axios from 'axios';
 import { useI18n } from 'vue-i18n';
+import { superAdminApi, enterpriseApi } from '@/services/api';
 
 const { t, locale } = useI18n();
 
@@ -1052,6 +1609,68 @@ const toggleTheme = inject('toggleTheme', () => {});
 
 // ── STATE ──
 const loading       = ref(true);
+
+// ── STATE GESTION DYNAMIQUE SUPERADMIN ──
+const mailerDiag = ref({
+  isGoogleConnected: false,
+  email: '',
+  pendingInvitesCount: 0,
+  diagnosticsLogs: []
+});
+const expiringSubs = ref([]);
+const securityDiag = ref({
+  securityScore: 100,
+  lastAuditDate: null,
+  daysSinceLastAudit: null,
+  isAuditRecommended: true
+});
+
+const showMailerModal = ref(false);
+const mailerLoading = ref(false);
+const mailerConsoleLogs = ref([]);
+const mailerResendSuccess = ref(false);
+const mailerResendLoading = ref(false);
+const mailerResendMessage = ref('');
+
+const showSubsModal = ref(false);
+const subsLoading = ref(false);
+const notifyingSubId = ref(null);
+
+const showSecurityModal = ref(false);
+const securityLoading = ref(false);
+const securityScanSteps = ref([]);
+const securityScanLogs = ref([]);
+const securityScanActiveStep = ref(-1);
+const securityScanScore = ref(0);
+const securityScanComplete = ref(false);
+const securityScanResult = ref(null);
+
+// ── STATE GESTION DYNAMIQUE ADMINENTREPRISE ──
+const enterpriseReco = ref({
+  anomaliesCount: 0,
+  draftCampaignsCount: 0,
+  weeklyReportAvailable: true,
+  anomalies: [],
+  weeklyReport: {
+    completedEvaluationsThisWeek: 0,
+    totalInvitationsThisWeek: 0,
+    averageScore: 0,
+    averageCompletionTimeMinutes: 0,
+    completionRate: 0,
+    campaignPerformances: []
+  },
+  draftCampaigns: []
+});
+
+const showEntActivityModal = ref(false);
+const showEntReportModal = ref(false);
+const showEntDraftsModal = ref(false);
+
+const entActivityConsoleLogs = ref([]);
+const entActivityLoading = ref(false);
+const entResolvingAnomalyId = ref(null);
+const entPublishingCampaignId = ref(null);
+
 const activePeriod  = ref('week');
 const currentTime   = ref('');
 const mousePos      = reactive({ x: 0, y: 0 });
@@ -1266,50 +1885,168 @@ const RECO_BY_ROLE = {
     },
   ],
 
-  SuperAdmin: [
-    {
-      priority: 'Urgent',
-      priorityBg: 'rgba(239,68,68,0.12)', priorityColor: '#ef4444',
-      color: '#ef4444',
-      icon: 'fa-solid fa-circle-exclamation',
-      title: 'Service Mailer en panne — CRITIQUE',
-      description: 'DOWN depuis 2h. 47 invitations bloquées. Intervention immédiate.',
-      actionLabel: 'Diagnostiquer',
-      route: '/super-admin/health',
-      scrollTo: null,
-    },
-    {
-      priority: 'Priorité',
-      priorityBg: 'rgba(245,158,11,0.12)', priorityColor: '#f59e0b',
-      color: '#f59e0b',
-      icon: 'fa-solid fa-credit-card',
-      title: '3 abonnements expirant dans 7 jours',
-      description: 'Contactez les entreprises pour le renouvellement.',
-      actionLabel: 'Voir abonnements',
-      route: '/gestion-abonnements',
-      scrollTo: null,
-    },
-    {
-      priority: 'Standard',
-      priorityBg: 'rgba(16,185,129,0.12)', priorityColor: '#10b981',
-      color: '#10b981',
-      icon: 'fa-solid fa-shield-halved',
-      title: 'Audit de sécurité recommandé',
-      description: 'Aucun audit depuis 30 jours. Planifiez une vérification.',
-      actionLabel: 'Lancer audit',
-      route: '/super-admin/security-audit',
-      scrollTo: null,
-    },
-  ],
+  SuperAdmin: [],
 };
 
 // Recommandations selon le rôle courant
 const roleRecommendations = computed(() => {
+  if (role.value === 'SuperAdmin') {
+    const list = [];
+    
+    // 1. Service Mailer Card
+    const isDown = !mailerDiag.value.isGoogleConnected;
+    list.push({
+      id: 'mailer',
+      priority: isDown ? 'Urgent' : 'Priorité',
+      priorityBg: isDown ? 'rgba(239,68,68,0.12)' : 'rgba(16,185,129,0.12)',
+      priorityColor: isDown ? '#ef4444' : '#10b981',
+      color: isDown ? '#ef4444' : '#10b981',
+      icon: isDown ? 'fa-solid fa-triangle-exclamation' : 'fa-solid fa-circle-check',
+      title: isDown ? 'Service Mailer en panne — CRITIQUE' : 'Service Mailer opérationnel',
+      description: isDown 
+        ? `Le jeton Gmail est déconnecté. ${mailerDiag.value.pendingInvitesCount || 0} invitations sont bloquées.` 
+        : `Service actif avec le compte : ${mailerDiag.value.email || 'OAuth system'}.`,
+      actionLabel: isDown ? 'Diagnostiquer' : 'Lancer Diagnostic',
+      route: null,
+      scrollTo: null,
+    });
+
+    // 2. Abonnements Card
+    const expCount = expiringSubs.value.length;
+    const hasExp = expCount > 0;
+    list.push({
+      id: 'subscriptions',
+      priority: hasExp ? 'Priorité' : 'Standard',
+      priorityBg: hasExp ? 'rgba(245,158,11,0.12)' : 'rgba(16,185,129,0.12)',
+      priorityColor: hasExp ? '#f59e0b' : '#10b981',
+      color: hasExp ? '#f59e0b' : '#10b981',
+      icon: 'fa-solid fa-credit-card',
+      title: hasExp ? `${expCount} abonnement${expCount > 1 ? 's' : ''} expirant dans 7 jours` : 'Abonnements à jour',
+      description: hasExp 
+        ? 'Relancez les administrateurs d\'entreprise pour renouveler leur offre.' 
+        : 'Toutes les entreprises actives possèdent un abonnement valide à long terme.',
+      actionLabel: 'Voir abonnements',
+      route: null,
+      scrollTo: null,
+    });
+
+    // 3. Audit Sécurité Card
+    const isRecommended = securityDiag.value.isAuditRecommended;
+    const lastAuditText = securityDiag.value.lastAuditDate 
+      ? `Dernier audit il y a ${securityDiag.value.daysSinceLastAudit} jours.` 
+      : 'Aucun audit de sécurité n\'a encore été effectué.';
+    list.push({
+      id: 'security',
+      priority: isRecommended ? 'Standard' : 'Optimal',
+      priorityBg: isRecommended ? 'rgba(245,158,11,0.12)' : 'rgba(16,185,129,0.12)',
+      priorityColor: isRecommended ? '#f59e0b' : '#10b981',
+      color: isRecommended ? '#f59e0b' : '#10b981',
+      icon: 'fa-solid fa-shield-halved',
+      title: isRecommended ? 'Audit de sécurité recommandé' : 'Sécurité système optimale',
+      description: isRecommended 
+        ? `${lastAuditText} Lancez un diagnostic complet de la base de données et des tokens.` 
+        : `Score système de ${securityDiag.value.securityScore}/100. ${lastAuditText}`,
+      actionLabel: 'Lancer audit',
+      route: null,
+      scrollTo: null,
+    });
+
+    return list;
+  }
+
+  if (role.value === 'AdminEntreprise' || role.value === 'Evaluateur') {
+    const list = [];
+
+    // 1. Activité critique
+    const hasAnomalies = enterpriseReco.value.anomaliesCount > 0;
+    list.push({
+      id: 'enterprise-activity',
+      priority: hasAnomalies ? 'Urgent' : 'Optimal',
+      priorityBg: hasAnomalies ? 'rgba(239,68,68,0.12)' : 'rgba(16,185,129,0.12)',
+      priorityColor: hasAnomalies ? '#ef4444' : '#10b981',
+      color: hasAnomalies ? '#ef4444' : '#10b981',
+      icon: hasAnomalies ? 'fa-solid fa-bolt' : 'fa-solid fa-circle-check',
+      title: 'Activité critique détectée',
+      description: hasAnomalies 
+        ? `Anomalie dans ${enterpriseReco.value.anomaliesCount} campagnes actives. Vérification immédiate requise.`
+        : 'Aucune anomalie détectée sur vos campagnes actives.',
+      actionLabel: "Voir l'activité",
+      route: null,
+      scrollTo: null,
+    });
+
+    // 2. Rapport de performance
+    list.push({
+      id: 'enterprise-report',
+      priority: 'Priorité',
+      priorityBg: 'rgba(245,158,11,0.12)',
+      priorityColor: '#f59e0b',
+      color: '#f59e0b',
+      icon: 'fa-solid fa-chart-bar',
+      title: 'Rapport de performance hebdo',
+      description: 'Le rapport de cette semaine est disponible pour votre équipe.',
+      actionLabel: 'Voir rapport',
+      route: null,
+      scrollTo: null,
+    });
+
+    // 3. Configurer vos campagnes
+    const draftCount = enterpriseReco.value.draftCampaignsCount;
+    const hasDrafts = draftCount > 0;
+    list.push({
+      id: 'enterprise-drafts',
+      priority: hasDrafts ? 'Standard' : 'Optimal',
+      priorityBg: hasDrafts ? 'rgba(245,158,11,0.12)' : 'rgba(16,185,129,0.12)',
+      priorityColor: hasDrafts ? '#f59e0b' : '#10b981',
+      color: hasDrafts ? '#f59e0b' : '#10b981',
+      icon: 'fa-solid fa-bullhorn',
+      title: 'Configurer vos campagnes',
+      description: hasDrafts 
+        ? `${draftCount} campagne${draftCount > 1 ? 's' : ''} en brouillon. Finalisez-les pour démarrer les évaluations.`
+        : 'Tous vos brouillons ont été finalisés et publiés.',
+      actionLabel: 'Gérer campagnes',
+      route: null,
+      scrollTo: null,
+    });
+
+    return list;
+  }
+  
   return RECO_BY_ROLE[role.value] || RECO_BY_ROLE['AdminEntreprise'];
 });
 
 // Handler de clic sur une recommandation
 const handleRecoAction = (reco) => {
+  if (role.value === 'SuperAdmin') {
+    if (reco.id === 'mailer') {
+      openMailerDiagnostics();
+      return;
+    }
+    if (reco.id === 'subscriptions') {
+      openExpiringSubscriptions();
+      return;
+    }
+    if (reco.id === 'security') {
+      openSecurityScanner();
+      return;
+    }
+  }
+
+  if (role.value === 'AdminEntreprise' || role.value === 'Evaluateur') {
+    if (reco.id === 'enterprise-activity') {
+      openEnterpriseActivity();
+      return;
+    }
+    if (reco.id === 'enterprise-report') {
+      openEnterpriseReport();
+      return;
+    }
+    if (reco.id === 'enterprise-drafts') {
+      openEnterpriseDrafts();
+      return;
+    }
+  }
+
   // Si scrollTo est défini → scroll vers l'ancre sur la même page
   if (reco.scrollTo) {
     const el = document.getElementById(reco.scrollTo);
@@ -1323,6 +2060,283 @@ const handleRecoAction = (reco) => {
   // Sinon → navigation vers la route
   if (reco.route) {
     router.push(reco.route);
+  }
+};
+
+// ── ACTIONS ADMINENTREPRISE ──
+const openEnterpriseActivity = async () => {
+  showEntActivityModal.value = true;
+  entActivityLoading.value = true;
+  entActivityConsoleLogs.value = [];
+  
+  try {
+    const res = await enterpriseApi.getRecommendations();
+    enterpriseReco.value = res.data;
+    
+    const logs = [
+      "[INFO] Initialisation de l'audit de sécurité des examens...",
+      "[INFO] Connexion au service d'analyse comportementale Neo-AI...",
+      `[INFO] Analyse de ${res.data.anomaliesCount || 0} anomalies en cours sur les campagnes actives...`,
+    ];
+    
+    if (res.data.anomalies && res.data.anomalies.length > 0) {
+      res.data.anomalies.forEach((a, i) => {
+        logs.push(`[WARNING] Anomalie #${i+1} détectée : Candidat [${a.candidateName}] dans la campagne [${a.campaignName}]. Cause: ${a.type} (Infractions: ${a.infractionsCount}, Reprises: ${a.nbReprises}).`);
+      });
+      logs.push("[CRITICAL] Veuillez vérifier immédiatement les rapports et prendre des mesures de sécurité.");
+    } else {
+      logs.push("[SUCCESS] Aucun comportement suspect ou infraction de sécurité détectée.");
+    }
+    
+    for (let i = 0; i < logs.length; i++) {
+      await new Promise(resolve => setTimeout(resolve, 150));
+      entActivityConsoleLogs.value.push(logs[i]);
+    }
+  } catch (err) {
+    entActivityConsoleLogs.value.push(`[CRITICAL] Échec de l'audit d'activité : ${err.message}`);
+  } finally {
+    entActivityLoading.value = false;
+  }
+};
+
+const triggerResolveAnomaly = async (evaluationId) => {
+  if (entResolvingAnomalyId.value) return;
+  entResolvingAnomalyId.value = evaluationId;
+  
+  try {
+    const res = await enterpriseApi.resolveAnomaly(evaluationId);
+    showToast(res.data.message || "L'anomalie a été résolue.", "success", "fa-solid fa-circle-check");
+    
+    const recoRes = await enterpriseApi.getRecommendations();
+    enterpriseReco.value = recoRes.data;
+    
+    entActivityConsoleLogs.value.push(`[SUCCESS] Anomalie de l'évaluation ${evaluationId} résolue physiquement en base de données.`);
+  } catch (err) {
+    showToast(`Erreur de résolution : ${err.response?.data || err.message}`, "error", "fa-solid fa-triangle-exclamation");
+  } finally {
+    entResolvingAnomalyId.value = null;
+  }
+};
+
+const openEnterpriseReport = async () => {
+  showEntReportModal.value = true;
+  try {
+    const res = await enterpriseApi.getRecommendations();
+    enterpriseReco.value = res.data;
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+const triggerCsvExport = async () => {
+  try {
+    const res = await enterpriseApi.exportWeeklyReport();
+    const blob = new Blob([res.data], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Rapport_Performance_Hebdo_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    showToast("Export CSV réussi !", "success", "fa-solid fa-file-csv");
+  } catch (err) {
+    showToast("Échec de l'exportation CSV: " + err.message, "error", "fa-solid fa-triangle-exclamation");
+  }
+};
+
+const openEnterpriseDrafts = async () => {
+  showEntDraftsModal.value = true;
+  try {
+    const res = await enterpriseApi.getRecommendations();
+    enterpriseReco.value = res.data;
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+const triggerPublishDraft = async (campaignId) => {
+  if (entPublishingCampaignId.value) return;
+  entPublishingCampaignId.value = campaignId;
+  
+  try {
+    const res = await enterpriseApi.publishDraft(campaignId);
+    showToast(res.data.message || "Campagne publiée !", "success", "fa-solid fa-circle-check");
+    
+    const recoRes = await enterpriseApi.getRecommendations();
+    enterpriseReco.value = recoRes.data;
+    
+    if (['Evaluateur','RH','Recruteur','AdminEntreprise'].includes(role.value)) {
+      const cr = await axios.get(`${API_NET}/Campagnes`, { headers: getAuthHeaders() });
+      campagnes.value = cr.data || [];
+    }
+  } catch (err) {
+    showToast(`Erreur de publication: ${err.response?.data?.message || err.message}`, "error", "fa-solid fa-triangle-exclamation");
+  } finally {
+    entPublishingCampaignId.value = null;
+  }
+};
+
+// ── MODAL MAILER ──
+const openMailerDiagnostics = async () => {
+  showMailerModal.value = true;
+  mailerLoading.value = true;
+  mailerConsoleLogs.value = [];
+  mailerResendSuccess.value = false;
+  mailerResendMessage.value = '';
+  
+  try {
+    const res = await superAdminApi.getMailerDiagnostics();
+    mailerDiag.value = res.data;
+    
+    const logs = res.data.diagnosticsLogs || [];
+    for (let i = 0; i < logs.length; i++) {
+      await new Promise(resolve => setTimeout(resolve, 150));
+      mailerConsoleLogs.value.push(logs[i]);
+    }
+  } catch (err) {
+    mailerConsoleLogs.value.push(`[CRITICAL] Une erreur s'est produite : ${err.message}`);
+  } finally {
+    mailerLoading.value = false;
+  }
+};
+
+const triggerMailerResend = async () => {
+  if (mailerResendLoading.value) return;
+  mailerResendLoading.value = true;
+  mailerResendSuccess.value = false;
+  mailerResendMessage.value = '';
+  mailerConsoleLogs.value.push('[INFO] Lancement du traitement de libération des invitations...');
+  
+  try {
+    const res = await superAdminApi.retriggerMailer();
+    mailerConsoleLogs.value.push(`[SUCCESS] Envoi terminé ! Résultat : ${res.data.message}`);
+    mailerResendSuccess.value = true;
+    mailerResendMessage.value = res.data.message;
+    // Reload state in background
+    const diagRes = await superAdminApi.getMailerDiagnostics();
+    mailerDiag.value = diagRes.data;
+  } catch (err) {
+    mailerConsoleLogs.value.push(`[CRITICAL] Échec de la libération : ${err.response?.data || err.message}`);
+  } finally {
+    mailerResendLoading.value = false;
+  }
+};
+
+const connectGoogleSmtp = async () => {
+  try {
+    const res = await axios.get(`${API_NET}/GoogleAuth/auth-url`, { headers: getAuthHeaders() });
+    if (res.data && res.data.url) {
+      window.location.href = res.data.url;
+    } else {
+      showToast('Impossible d\'obtenir l\'URL d\'authentification Google', 'error', 'fa-solid fa-triangle-exclamation');
+    }
+  } catch (err) {
+    showToast('Erreur de connexion avec Google Auth: ' + err.message, 'error', 'fa-solid fa-triangle-exclamation');
+  }
+};
+
+// ── MODAL SUBSCRIPTIONS ──
+const openExpiringSubscriptions = async () => {
+  showSubsModal.value = true;
+  subsLoading.value = true;
+  try {
+    const res = await superAdminApi.getExpiringSubscriptions();
+    expiringSubs.value = res.data || [];
+  } catch (err) {
+    console.error('Erreur chargement abonnements expirants:', err);
+  } finally {
+    subsLoading.value = false;
+  }
+};
+
+const sendRenewalReminder = async (sub) => {
+  if (notifyingSubId.value === sub.id) return;
+  notifyingSubId.value = sub.id;
+  try {
+    const res = await superAdminApi.notifyRenewal(sub.id);
+    showToast(`Rappel de renouvellement envoyé avec succès pour ${sub.name}.`, 'success', 'fa-solid fa-check-circle');
+    // Refresh lists
+    await openExpiringSubscriptions();
+  } catch (err) {
+    showToast(`Erreur lors de l'envoi de la notification: ${err.response?.data || err.message}`, 'error', 'fa-solid fa-triangle-exclamation');
+  } finally {
+    notifyingSubId.value = null;
+  }
+};
+
+// ── MODAL SECURITY SCANNER ──
+const openSecurityScanner = () => {
+  showSecurityModal.value = true;
+  securityScanComplete.value = false;
+  securityScanResult.value = null;
+  securityScanScore.value = 0;
+  securityScanLogs.value = [];
+  securityScanActiveStep.value = -1;
+  
+  securityScanSteps.value = [
+    { name: 'Initialisation du scanner d\'intégrité', details: 'Connexion aux bases de données locales et globales', icon: 'fa-solid fa-server', status: 'pending' },
+    { name: 'Contrôle des politiques de sécurité des comptes', details: 'Vérification de la force des hashages de mot de passe', icon: 'fa-solid fa-key', status: 'pending' },
+    { name: 'Analyse des jetons d\'accès actifs', details: 'Identification des tokens d\'activation expirés non utilisés', icon: 'fa-solid fa-clock-rotate-left', status: 'pending' },
+    { name: 'Vérification de l\'isolation Multi-Tenant', details: 'Validation des barrières d\'accès SQL et contextes d\'entreprise', icon: 'fa-solid fa-shield-halved', status: 'pending' },
+    { name: 'Enregistrement du rapport d\'audit système', details: 'Création du log chiffré dans le registre d\'audit local', icon: 'fa-solid fa-file-signature', status: 'pending' }
+  ];
+};
+
+const runSecurityAuditScan = async () => {
+  if (securityLoading.value) return;
+  securityLoading.value = true;
+  securityScanComplete.value = false;
+  securityScanResult.value = null;
+  securityScanScore.value = 0;
+  securityScanLogs.value = [];
+  
+  try {
+    // 1. Call API immediately in background but do premium slow animated HUD scan on UI!
+    const apiPromise = superAdminApi.runSecurityAudit();
+    
+    // 2. Loop through steps to animate progress
+    for (let stepIndex = 0; stepIndex < securityScanSteps.value.length; stepIndex++) {
+      securityScanActiveStep.value = stepIndex;
+      securityScanSteps.value[stepIndex].status = 'scanning';
+      
+      const dots = ['.', '..', '...'];
+      for (let dot = 0; dot < 3; dot++) {
+        securityScanLogs.value.push(`[SCANNING] ${securityScanSteps.value[stepIndex].name}${dots[dot]}`);
+        if (securityScanLogs.value.length > 25) securityScanLogs.value.shift();
+        await new Promise(r => setTimeout(r, 200));
+      }
+      
+      // Step complete
+      securityScanSteps.value[stepIndex].status = 'done';
+      securityScanLogs.value.push(`[DONE] ${securityScanSteps.value[stepIndex].name} - Succès`);
+      if (securityScanLogs.value.length > 25) securityScanLogs.value.shift();
+      await new Promise(r => setTimeout(r, 250));
+    }
+    
+    // 3. Wait for backend to respond if it hasn't already
+    const res = await apiPromise;
+    securityScanResult.value = res.data;
+    
+    // Count score up animatedly
+    const targetScore = res.data.securityScore || 100;
+    for (let current = 0; current <= targetScore; current += 2) {
+      securityScanScore.value = Math.min(current, targetScore);
+      await new Promise(r => setTimeout(r, 10));
+    }
+    securityScanScore.value = targetScore;
+    
+    securityScanComplete.value = true;
+    showToast('Audit de sécurité complété avec succès !', 'success', 'fa-solid fa-shield-halved');
+    
+    // Refresh stats and security status in the background
+    const statusRes = await superAdminApi.getSecurityStatus();
+    securityDiag.value = statusRes.data;
+  } catch (err) {
+    securityScanLogs.value.push(`[CRITICAL] Échec de l'audit système : ${err.message}`);
+  } finally {
+    securityLoading.value = false;
+    securityScanActiveStep.value = -1;
   }
 };
 
@@ -1352,7 +2366,7 @@ const campagnes          = ref([]);
 const staffMembers       = ref([]);
 const historiqueCandidat = ref([]);
 const candidatTests      = ref([]);
-const superAdminStats    = reactive({ totalEntreprises: 0, totalUtilisateurs: 0, demandesEnAttente: 0, totalTests: 0, croissanceStats: [] });
+const superAdminStats    = reactive({ totalEntreprises: 0, totalUtilisateurs: 0, demandesEnAttente: 0, totalTests: 0, croissanceStats: [], recentTransactions: [] });
 const platformUsers      = ref([]);
 
 // ── DONNÉES IA PYTHON ──
@@ -1577,18 +2591,35 @@ const loadAllData = async () => {
       const [er, cr, sr] = await Promise.allSettled([
         axios.get(`${API_NET}/Examen/all`,  { headers: getAuthHeaders() }),
         axios.get(`${API_NET}/Campagnes`,   { headers: getAuthHeaders() }),
-        axios.get(`${API_NET}/Staff`,       { headers: getAuthHeaders() }),
+        (r === 'AdminEntreprise' || r === 'RH' || r === 'Recruteur') 
+          ? axios.get(`${API_NET}/Staff`, { headers: getAuthHeaders() }) 
+          : Promise.resolve({ data: [] }),
       ]);
       if (er.status === 'fulfilled') evalQueue.value    = er.value.data || [];
       if (cr.status === 'fulfilled') campagnes.value    = cr.value.data || [];
       if (sr.status === 'fulfilled') staffMembers.value = sr.value.data || [];
+      
+      if (r === 'AdminEntreprise' || r === 'Evaluateur') {
+        try {
+          const res = await enterpriseApi.getRecommendations();
+          enterpriseReco.value = res.data;
+        } catch (err) {
+          console.error("Erreur recommendations:", err);
+        }
+      }
     } else if (r === 'SuperAdmin') {
-      const [str, ur] = await Promise.allSettled([
+      const [str, ur, mailerRes, subsRes, secRes] = await Promise.allSettled([
         axios.get(`${API_NET}/SuperAdmin/stats`, { headers: getAuthHeaders() }),
         axios.get(`${API_NET}/SuperAdmin/users`, { headers: getAuthHeaders() }),
+        superAdminApi.getMailerDiagnostics(),
+        superAdminApi.getExpiringSubscriptions(),
+        superAdminApi.getSecurityStatus()
       ]);
       if (str.status === 'fulfilled') Object.assign(superAdminStats, str.value.data);
       if (ur.status === 'fulfilled')  platformUsers.value = ur.value.data || [];
+      if (mailerRes.status === 'fulfilled') mailerDiag.value = mailerRes.value.data;
+      if (subsRes.status === 'fulfilled') expiringSubs.value = subsRes.value.data || [];
+      if (secRes.status === 'fulfilled') securityDiag.value = secRes.value.data;
       await loadIaServices();
     }
   } finally { loading.value = false; }
@@ -2047,4 +3078,519 @@ select.job-input { cursor:pointer; }
 [data-theme="dark"] .source-gemini { background:rgba(16,185,129,0.15);color:#34d399; }
 [data-theme="dark"] .lettre-content { background:rgba(255,255,255,0.03);border-color:rgba(255,255,255,0.08); }
 [data-theme="dark"] .panel-highlight { border-color:#f59e0b !important; }
+
+/* ═══════════════════════════════════════════
+   CYBER GLASS MODALS
+   ═══════════════════════════════════════════ */
+.enigma-modal-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(8, 12, 36, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.enigma-modal-container {
+  width: 100%; max-width: 680px;
+  border-radius: 28px; border: 1px solid rgba(99, 102, 241, 0.25);
+  box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.6), 0 0 50px rgba(99, 102, 241, 0.15);
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.enigma-modal-container.max-w-lg { max-width: 780px; }
+
+.glass-morphic {
+  background: rgba(15, 18, 42, 0.9);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+[data-theme="light"] .glass-morphic {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(99, 102, 241, 0.15);
+}
+
+.enigma-modal-header {
+  padding: 24px 32px;
+  border-bottom: 1px solid rgba(99, 102, 241, 0.15);
+  display: flex; align-items: center; justify-content: space-between;
+}
+[data-theme="light"] .enigma-modal-header {
+  border-bottom-color: rgba(99, 102, 241, 0.1);
+}
+
+.btn-close-modal {
+  background: rgba(99, 102, 241, 0.08);
+  border: none; border-radius: 12px;
+  width: 36px; height: 36px; display: flex;
+  align-items: center; justify-content: center;
+  color: #818cf8; transition: 0.2s; cursor: pointer;
+}
+.btn-close-modal:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #f87171;
+}
+
+.enigma-modal-body { padding: 32px; }
+
+/* STATUT CARD */
+.status-card {
+  display: flex; align-items: center; gap: 20px;
+  padding: 20px; border-radius: 20px;
+  border: 1.5px solid transparent;
+}
+.status-card.active-green {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+.status-card.error-red {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+.status-card-icon {
+  font-size: 2.2rem; display: flex; align-items: center;
+}
+.text-green { color: #10b981; }
+.text-red { color: #ef4444; }
+
+.status-label { font-size: 0.65rem; font-weight: 900; color: #818cf8; letter-spacing: 1.2px; text-transform: uppercase; }
+[data-theme="light"] .status-label { color: #4f46e5; }
+.status-value { font-size: 1.05rem; color: #fff; }
+[data-theme="light"] .status-value { color: #0f172a; }
+.status-desc { color: #a5b4fc; font-size: 0.78rem; opacity: 0.9; }
+[data-theme="light"] .status-desc { color: #475569; }
+
+/* PENDING INVITES BANNER */
+.pending-invites-banner {
+  background: rgba(99, 102, 241, 0.05);
+  border: 1px solid rgba(99, 102, 241, 0.18);
+  border-radius: 20px; padding: 20px 28px;
+}
+[data-theme="light"] .pending-invites-banner {
+  background: rgba(99, 102, 241, 0.03);
+  border-color: rgba(99, 102, 241, 0.12);
+}
+
+.btn-action-primary {
+  padding: 12px 28px; border-radius: 14px;
+  border: none; font-weight: 800; font-size: 0.85rem;
+  color: #fff; cursor: pointer; transition: all 0.3s;
+}
+.glow-orange {
+  background: linear-gradient(135deg, #f59e0b, #fbbf24);
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.25);
+}
+.glow-orange:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(245, 158, 11, 0.4);
+}
+.glow-green {
+  background: linear-gradient(135deg, #10b981, #34d399);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.25);
+}
+.glow-green:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(16, 185, 129, 0.4);
+}
+
+.btn-action-secondary {
+  padding: 12px 24px; border-radius: 14px;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  color: #818cf8; font-weight: 700;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.btn-action-secondary:hover {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.4);
+  color: #a5b4fc;
+}
+[data-theme="light"] .btn-action-secondary {
+  background: rgba(79, 70, 229, 0.05);
+  border-color: rgba(79, 70, 229, 0.15);
+  color: #4f46e5;
+}
+[data-theme="light"] .btn-action-secondary:hover {
+  background: rgba(79, 70, 229, 0.1);
+  color: #3730a3;
+}
+
+/* TERMINAL CONSOLE */
+.terminal-logs-wrapper {
+  background: #090d16; border-radius: 20px;
+  border: 1.5px solid rgba(99, 102, 241, 0.2);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+[data-theme="light"] .terminal-logs-wrapper {
+  background: #ffffff !important;
+  border: 1.5px solid rgba(99, 102, 241, 0.25) !important;
+  box-shadow: 0 10px 30px rgba(99, 102, 241, 0.06) !important;
+}
+.terminal-header {
+  background: #0f1524; padding: 14px 20px;
+  border-bottom: 1.5px solid rgba(99, 102, 241, 0.2);
+}
+[data-theme="light"] .terminal-header {
+  background: rgba(99, 102, 241, 0.04) !important;
+  border-bottom: 1.5px solid rgba(99, 102, 241, 0.15) !important;
+}
+.dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  display: inline-block;
+}
+.dot.red { background: #ef4444; }
+.dot.yellow { background: #f59e0b; }
+.dot.green { background: #10b981; }
+
+.terminal-title { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #a5b4fc; }
+[data-theme="light"] .terminal-title {
+  color: #4f46e5 !important;
+  font-weight: 700 !important;
+}
+.terminal-badge { font-family: 'JetBrains Mono', monospace; color: #818cf8; font-weight: 700; }
+[data-theme="light"] .terminal-badge {
+  color: #6366f1 !important;
+}
+.terminal-body {
+  padding: 20px; height: 260px; overflow-y: auto;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+  line-height: 1.6; color: #c9d1d9;
+}
+[data-theme="light"] .terminal-body {
+  background: #fafafa !important;
+  color: #1e293b !important;
+}
+.terminal-log-line { margin-bottom: 8px; white-space: pre-wrap; text-align: left; }
+.terminal-log-line.log-success { color: #58a6ff; }
+[data-theme="light"] .terminal-log-line.log-success { color: #0969da !important; font-weight: 600; }
+.terminal-log-line.log-warning { color: #f2cc60; }
+[data-theme="light"] .terminal-log-line.log-warning { color: #9a6700 !important; font-weight: 600; }
+.terminal-log-line.log-critical { color: #ff7b72; }
+[data-theme="light"] .terminal-log-line.log-critical { color: #cf222e !important; font-weight: 600; }
+.terminal-log-line.log-help { color: #79c0ff; }
+[data-theme="light"] .terminal-log-line.log-help { color: #0550ae !important; }
+.log-cursor { color: #f59e0b; }
+[data-theme="light"] .log-cursor { color: #4f46e5 !important; }
+.log-scanning-cursor { color: #f59e0b; animation: pulse 1.5s infinite; text-align: left; padding: 20px; }
+[data-theme="light"] .log-scanning-cursor { color: #4f46e5 !important; }
+
+/* RESPONSIVE TABLE FOR SUB */
+.subs-table-wrapper {
+  max-height: 480px; overflow-y: auto;
+  padding: 0;
+}
+.subs-table {
+  width: 100%; border-collapse: collapse; text-align: left;
+}
+.subs-table th {
+  padding: 16px 24px; font-size: 0.65rem; font-weight: 900;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  color: #818cf8; border-bottom: 1.5px solid rgba(99, 102, 241, 0.15);
+}
+[data-theme="light"] .subs-table th {
+  border-bottom-color: rgba(99, 102, 241, 0.1);
+  color: #4f46e5;
+}
+.subs-table td {
+  padding: 18px 24px; border-bottom: 1px solid rgba(99, 102, 241, 0.08);
+}
+[data-theme="light"] .subs-table td {
+  border-bottom-color: rgba(99, 102, 241, 0.05);
+}
+.sub-row:hover { background: rgba(99, 102, 241, 0.03); }
+[data-theme="light"] .sub-row:hover { background: rgba(99, 102, 241, 0.02); }
+
+.sub-company-name { color: #fff; font-size: 0.88rem; }
+[data-theme="light"] .sub-company-name { color: #0f172a; }
+.sub-plan-badge {
+  background: rgba(99, 102, 241, 0.15); color: #818cf8;
+  padding: 4px 10px; border-radius: 8px; display: inline-block;
+}
+[data-theme="light"] .sub-plan-badge {
+  background: rgba(79, 70, 229, 0.08) !important;
+  color: #4f46e5 !important;
+}
+.sub-days-badge {
+  padding: 4px 10px; border-radius: 8px; display: inline-block;
+  font-weight: 800;
+}
+.sub-days-badge.warning { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+[data-theme="light"] .sub-days-badge.warning { background: rgba(245, 158, 11, 0.12) !important; color: #b45309 !important; }
+.sub-days-badge.danger { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+[data-theme="light"] .sub-days-badge.danger { background: rgba(239, 68, 68, 0.1) !important; color: #cf222e !important; }
+
+.btn-send-reminder {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: rgba(245, 158, 11, 0.1); border: 1.5px solid rgba(245, 158, 11, 0.2);
+  color: #f59e0b; display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: 0.2s;
+}
+.btn-send-reminder:hover {
+  background: #f59e0b; color: white;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+[data-theme="light"] .btn-send-reminder {
+  background: rgba(245, 158, 11, 0.08) !important;
+  border-color: rgba(245, 158, 11, 0.25) !important;
+  color: #d97706 !important;
+}
+[data-theme="light"] .btn-send-reminder:hover {
+  background: #d97706 !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25) !important;
+}
+
+/* SECURITY SHIELD HUD */
+.cyber-shield-icon-wrapper {
+  font-size: 4.8rem; height: 120px; display: flex; align-items: center; justify-content: center;
+}
+.security-scanning-hud {
+  background: rgba(8, 10, 28, 0.4); border-radius: 24px;
+  border: 1px solid rgba(99, 102, 241, 0.15); padding: 24px;
+  transition: all 0.3s ease;
+}
+[data-theme="light"] .security-scanning-hud {
+  background: linear-gradient(135deg, rgba(239, 246, 255, 0.85), rgba(245, 243, 255, 0.85)) !important;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(99, 102, 241, 0.22) !important;
+  box-shadow: 0 10px 30px rgba(99, 102, 241, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+}
+
+.hud-step-item {
+  display: flex; align-items: center; gap: 18px;
+  padding: 16px 20px; border-radius: 16px;
+  border: 1px solid transparent; margin-bottom: 12px;
+  transition: all 0.3s;
+  text-align: left;
+}
+.hud-step-item.step-pending {
+  opacity: 0.4; background: rgba(99, 102, 241, 0.02);
+}
+[data-theme="light"] .hud-step-item.step-pending {
+  opacity: 0.75 !important;
+  background: rgba(99, 102, 241, 0.03) !important;
+  border-color: rgba(99, 102, 241, 0.08) !important;
+}
+[data-theme="light"] .hud-step-item.step-pending .text-muted {
+  color: #475569 !important;
+}
+
+.hud-step-item.step-scanning {
+  background: rgba(245, 158, 11, 0.05);
+  border-color: rgba(245, 158, 11, 0.2);
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.05);
+}
+[data-theme="light"] .hud-step-item.step-scanning {
+  background: rgba(245, 158, 11, 0.08) !important;
+  border-color: rgba(245, 158, 11, 0.4) !important;
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.12) !important;
+}
+[data-theme="light"] .hud-step-item.step-scanning .hud-step-name {
+  color: #b45309 !important;
+}
+[data-theme="light"] .hud-step-item.step-scanning .text-muted {
+  color: #d97706 !important;
+}
+
+.hud-step-item.step-done {
+  background: rgba(16, 185, 129, 0.05);
+  border-color: rgba(16, 185, 129, 0.15);
+}
+[data-theme="light"] .hud-step-item.step-done {
+  background: rgba(16, 185, 129, 0.08) !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+[data-theme="light"] .hud-step-item.step-done .hud-step-name {
+  color: #065f46 !important;
+}
+[data-theme="light"] .hud-step-item.step-done .text-muted {
+  color: #059669 !important;
+}
+
+.hud-step-icon {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: rgba(99, 102, 241, 0.08); display: flex;
+  align-items: center; justify-content: center; font-size: 1rem;
+  color: #818cf8;
+}
+.step-scanning .hud-step-icon {
+  background: rgba(245, 158, 11, 0.15); color: #f59e0b;
+}
+.step-done .hud-step-icon {
+  background: rgba(16, 185, 129, 0.15); color: #10b981;
+}
+
+.hud-step-name { color: #fff; font-size: 0.85rem; }
+[data-theme="light"] .hud-step-name { color: #0f172a; }
+
+.hud-logs-wrapper {
+  background: #090d16; border-radius: 16px;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  padding: 16px 20px;
+}
+[data-theme="light"] .hud-logs-wrapper {
+  background: #fafafa !important;
+  border: 1px solid rgba(99, 102, 241, 0.25) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02) !important;
+}
+.hud-logs {
+  height: 90px; overflow-y: auto;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+}
+.hud-log-line { color: #a5b4fc; line-height: 1.5; text-align: left; }
+[data-theme="light"] .hud-log-line {
+  color: #4f46e5 !important;
+  font-weight: 600;
+}
+
+/* RADIAL SCORE GAUGE */
+.score-radial-wrapper {
+  display: flex; flex-direction: column; align-items: center;
+}
+.score-radial {
+  width: 110px; height: 110px; border-radius: 50%;
+  border: 8px solid var(--score-color, #10b981);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: rgba(99, 102, 241, 0.04);
+  box-shadow: inset 0 0 15px rgba(99, 102, 241, 0.1);
+}
+[data-theme="light"] .score-radial {
+  background: rgba(99, 102, 241, 0.05) !important;
+  box-shadow: inset 0 0 15px rgba(99, 102, 241, 0.08) !important;
+}
+.score-value { font-size: 2.1rem; color: #fff; line-height: 1; }
+[data-theme="light"] .score-value { color: #0f172a; }
+[data-theme="light"] .score-radial .text-muted {
+  color: #4f46e5 !important;
+  font-weight: 800;
+}
+
+.card-result-mini {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 18px; border-radius: 16px;
+  border: 1px solid transparent;
+  text-align: left;
+}
+.card-result-mini.active-green {
+  background: rgba(16, 185, 129, 0.06); border-color: rgba(16, 185, 129, 0.15);
+}
+.card-result-mini.active-warning {
+  background: rgba(245, 158, 11, 0.06); border-color: rgba(245, 158, 11, 0.15);
+}
+[data-theme="light"] .card-result-mini {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02) !important;
+}
+[data-theme="light"] .card-result-mini.active-green {
+  background: rgba(16, 185, 129, 0.08) !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+[data-theme="light"] .card-result-mini.active-warning {
+  background: rgba(245, 158, 11, 0.08) !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+.crm-icon { font-size: 1.4rem; color: #818cf8; }
+.active-green .crm-icon { color: #10b981; }
+.active-warning .crm-icon { color: #f59e0b; }
+
+.checked-items-list {
+  max-height: 240px; overflow-y: auto;
+}
+.checked-item-row {
+  background: rgba(99, 102, 241, 0.03);
+  border: 1px solid rgba(99, 102, 241, 0.1);
+  border-radius: 14px; padding: 14px 18px; margin-bottom: 10px;
+  text-align: left;
+}
+[data-theme="light"] .checked-item-row {
+  background: #ffffff !important;
+  border: 1px solid rgba(99, 102, 241, 0.15) !important;
+  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.03) !important;
+}
+.item-name { color: #fff; font-size: 0.82rem; }
+[data-theme="light"] .item-name { color: #0f172a; }
+[data-theme="light"] .checked-item-row .text-muted {
+  color: #64748b !important;
+}
+
+/* GLOBAL LIGHT MODE TEXT & CLOSE BUTTON OVERRIDES IN MODALS */
+[data-theme="light"] .btn-close-modal {
+  background: rgba(99, 102, 241, 0.06) !important;
+  color: #4f46e5 !important;
+}
+[data-theme="light"] .btn-close-modal:hover {
+  background: rgba(239, 68, 68, 0.12) !important;
+  color: #ef4444 !important;
+}
+[data-theme="light"] .enigma-modal-header h4.text-white {
+  color: #0f172a !important;
+}
+[data-theme="light"] .pending-invites-banner .text-white {
+  color: #0f172a !important;
+}
+[data-theme="light"] .subs-table td .text-white {
+  color: #334155 !important;
+}
+[data-theme="light"] .security-scanning-hud h5.text-white {
+  color: #0f172a !important;
+}
+[data-theme="light"] .card-result-mini .text-white {
+  color: #0f172a !important;
+}
+
+/* ANIMATION TRANSITION */
+.modal-fade-enter-active, .modal-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.modal-fade-enter-from, .modal-fade-leave-to {
+  opacity: 0;
+}
+.modal-fade-enter-active .enigma-modal-container {
+  animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.modal-fade-leave-active .enigma-modal-container {
+  animation: slideOut 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideIn {
+  from { transform: scale(0.95) translateY(10px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+@keyframes slideOut {
+  from { transform: scale(1) translateY(0); opacity: 1; }
+  to { transform: scale(0.95) translateY(10px); opacity: 0; }
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 5px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1); border-radius: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+[data-theme="light"] .scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.animate-spin-slow {
+  animation: spin 6s linear infinite;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
 </style>

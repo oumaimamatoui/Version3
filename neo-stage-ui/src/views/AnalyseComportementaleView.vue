@@ -102,8 +102,9 @@
               :style="{ animationDelay: (idx * 0.05) + 's' }"
               @click="openDetailModal(a)"
             >
-              <div v-if="a.iaAnalyzed" class="ac-ia-tag-float">
-                <i class="fa-solid fa-robot me-1"></i> IA ANALYSÉ
+              <div v-if="a.iaAnalyzed" class="ac-ia-tag-float" :style="{ background: a.ai_details?.is_Cv !== false ? '#8b5cf6' : '#2563eb' }">
+                <i :class="a.ai_details?.is_Cv !== false ? 'fa-solid fa-robot' : 'fa-solid fa-graduation-cap'" class="me-1"></i>
+                {{ a.ai_details?.is_Cv !== false ? 'IA CV' : 'IA TEST' }}
               </div>
 
               <div class="ac-card-top">
@@ -174,7 +175,16 @@
           <div v-else class="ac-modal-body">
             <!-- CAS 1 : ANALYSE DISPONIBLE -->
             <div v-if="detailModal.analysis?.ai_details">
-              <div class="text-center mb-5">
+              <div class="text-center mb-4">
+                <div class="mb-3">
+                  <span 
+                    class="badge px-3 py-2 text-uppercase fw-bold text-white shadow-sm" 
+                    :style="{ background: detailModal.analysis.ai_details.is_Cv !== false ? '#8b5cf6' : '#2563eb', borderRadius: '30px', fontSize: '0.72rem', letterSpacing: '1px' }"
+                  >
+                    <i :class="detailModal.analysis.ai_details.is_Cv !== false ? 'fa-solid fa-file-invoice' : 'fa-solid fa-graduation-cap'" class="me-1"></i>
+                    {{ detailModal.analysis.ai_details.is_Cv !== false ? 'Analyse Prédictive de CV' : 'Analyse Prédictive de Test' }}
+                  </span>
+                </div>
                 <div
                   class="ac-big-score"
                   :style="{ color: scoreColor(detailModal.analysis.global_score) }"
@@ -182,7 +192,7 @@
                   {{ detailModal.analysis.global_score }}%
                 </div>
                 <p class="text-muted small uppercase fw-bold letter-spacing-2">
-                  Score de compatibilité globale
+                  Adéquation comportementale globale
                 </p>
               </div>
 
@@ -190,7 +200,7 @@
                 <div class="col-md-6">
                   <div class="ac-insight-box ac-insight-force">
                     <div class="ac-insight-title">
-                      <i class="fa-solid fa-thumbs-up me-2"></i>Points Forts
+                      <i class="fa-solid fa-thumbs-up me-2"></i>Forces Comportementales & Soft Skills
                     </div>
                     <ul class="ac-insight-list">
                       <li
@@ -203,7 +213,7 @@
                 <div class="col-md-6">
                   <div class="ac-insight-box ac-insight-axe">
                     <div class="ac-insight-title">
-                      <i class="fa-solid fa-triangle-exclamation me-2"></i>Axes d'amélioration
+                      <i class="fa-solid fa-triangle-exclamation me-2"></i>Points de Vigilance & Risques
                     </div>
                     <ul class="ac-insight-list">
                       <li
@@ -216,7 +226,7 @@
                 <div class="col-12">
                   <div class="ac-insight-box ac-insight-tips">
                     <div class="ac-insight-title">
-                      <i class="fa-solid fa-lightbulb me-2"></i>Recommandations Stratégiques
+                      <i class="fa-solid fa-lightbulb me-2"></i>Lecture comportementale & Management prédictif
                     </div>
                     <ul class="ac-insight-list">
                       <li
@@ -230,7 +240,7 @@
 
               <div class="ac-decision-strip mt-4">
                 <i class="fa-solid fa-gavel me-2"></i>
-                <strong>Conclusion IA :</strong> {{ detailModal.analysis.ai_details.decision }}
+                <strong>Conclusion IA & Personnalité :</strong> {{ detailModal.analysis.ai_details.decision }}
               </div>
 
               <!-- DATE D'ANALYSE -->
@@ -357,11 +367,17 @@ const onUploadCv = async (event, specificCandidatId = null) => {
   const jobDesc  = detailModal.analysis?.profile_type ?? 'Poste Fullstack';
   const formData = new FormData();
   formData.append('file', file);
+  formData.append('File', file);
   formData.append('lang', 'fr');
+  formData.append('Lang', 'fr');
   formData.append('job_description', jobDesc);
+  formData.append('jobDescription', jobDesc);
+  formData.append('JobDescription', jobDesc);
 
   if (specificCandidatId) {
     formData.append('candidat_id', specificCandidatId);
+    formData.append('candidatId', specificCandidatId);
+    formData.append('CandidatId', specificCandidatId);
     detailModal.loading = true;
   }
 
@@ -371,6 +387,12 @@ const onUploadCv = async (event, specificCandidatId = null) => {
     const { data } = await api.post('/Ai/analyze-cv', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
+
+    if (data.is_cv === false || data.isCv === false || data.status === 'NOT_A_CV') {
+      const msg = data.alert?.subtitle || data.alert?.title || "Ce document n'est pas reconnu comme un CV.";
+      showToast(msg, 'error');
+      return;
+    }
 
     showToast('Analyse terminée avec succès !', 'success');
 

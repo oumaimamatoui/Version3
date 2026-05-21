@@ -172,8 +172,8 @@
                 <button @click="goToDetails(c.id)" class="btn-icon-sm btn-view-cand" :title="t('candidatListe.viewProfile')">
                   <i class="fa-solid fa-eye"></i>
                 </button>
-                <button class="btn-icon-sm" :title="t('candidatListe.moreOptions')">
-                  <i class="fa-solid fa-ellipsis-vertical"></i>
+                <button @click="confirmDeleteCandidate(c)" class="btn-icon-sm btn-delete-cand" :title="t('candidatListe.actionDelete') || 'Supprimer'">
+                  <i class="fa-solid fa-trash-can"></i>
                 </button>
               </div>
             </div>
@@ -198,6 +198,14 @@
         </div>
       </main>
     </div>
+
+    <!-- TOAST NOTIFICATIONS -->
+    <transition name="toast-anim">
+      <div v-if="toast.active" class="custom-toast animate__animated animate__fadeIn" :class="'toast-' + toast.type">
+        <i :class="toast.icon" class="fs-5"></i>
+        <span>{{ toast.message }}</span>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -217,6 +225,30 @@ const search     = ref('');
 const selectedFilter = ref('');
 const loading    = ref(false);
 const mousePos   = reactive({ x: 0, y: 0 });
+
+const toast = reactive({ active: false, message: '', type: 'success', icon: '' });
+let toastTimer = null;
+
+const showToast = (message, type = 'success', icon = 'fa-solid fa-circle-check') => {
+  clearTimeout(toastTimer);
+  Object.assign(toast, { message, type, icon, active: true });
+  toastTimer = setTimeout(() => { toast.active = false; }, 4000);
+};
+
+const confirmDeleteCandidate = async (candidate) => {
+  const isConfirmed = confirm(`${t('candidatListe.confirmDelete') || 'Voulez-vous vraiment supprimer ce candidat et toutes ses données associées ?'} (${candidate.name || candidate.email})`);
+  if (!isConfirmed) return;
+
+  showToast(t('candidatListe.deleting') || 'Suppression en cours...', 'info', 'fa-solid fa-spinner fa-spin');
+  try {
+    await api.delete(`/Candidates/${candidate.id}`);
+    showToast(t('candidatListe.deleteSuccess') || 'Candidat supprimé avec succès.', 'success', 'fa-solid fa-trash-can');
+    fetchCandidates();
+  } catch (err) {
+    console.error('Erreur lors de la suppression du candidat:', err);
+    showToast(err.response?.data?.message || 'Erreur lors de la suppression.', 'error', 'fa-solid fa-circle-exclamation');
+  }
+};
 
 /* ── Navigation ── */
 const goToDetails = (id) => {
@@ -707,4 +739,52 @@ const handleParallax = (e) => {
 [data-theme="dark"] .btn-page:not(:disabled):not(.active):hover { background: rgba(255,255,255,0.08); color: #f0f6fc; }
 
 [data-theme="dark"] .empty-state-pro { border-color: rgba(255,255,255,0.08); }
+
+/* DELETE BUTTON ACTIONS */
+.btn-delete-cand {
+  background: #fff5f5;
+  color: #ef4444;
+  border-color: #fee2e2;
+}
+.btn-delete-cand:hover {
+  background: #ef4444;
+  color: white;
+  border-color: #ef4444;
+}
+
+[data-theme="dark"] .btn-delete-cand {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ff6b6b;
+  border-color: rgba(239, 68, 68, 0.2);
+}
+[data-theme="dark"] .btn-delete-cand:hover {
+  background: #ef4444;
+  color: white;
+  border-color: #ef4444;
+}
+
+/* TOAST */
+.custom-toast {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  padding: 16px 24px;
+  border-radius: 16px;
+  color: white;
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  z-index: 9999;
+}
+.toast-success { background: #10b981; }
+.toast-error   { background: #f43f5e; }
+.toast-info    { background: #3b82f6; }
+
+.toast-anim-enter-active,
+.toast-anim-leave-active { transition: all 0.3s ease; }
+.toast-anim-enter-from,
+.toast-anim-leave-to { opacity: 0; transform: translateY(15px); }
 </style>
