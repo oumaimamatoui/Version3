@@ -62,12 +62,17 @@ namespace NeoEvaluation.API.Controllers
                           && qq.Question.DureeSecondes > 0)
                 .CountAsync();
 
+            // Fetch dynamic ScoreReussite from the linked questionnaire
+            var scoreReussite = cand.Campagne?.CampagneQuestionnaires
+                .Select(cq => cq.Questionnaire?.ScoreReussite)
+                .FirstOrDefault() ?? 70;
+
             return Ok(new
             {
                 Titre = cand.Campagne?.Nom ?? "Certification",
                 TotalQuestions = totalQuestions,
                 DureeMinutes = cand.Campagne?.DureeMinutes ?? 45,
-                ScoreReussite = 70,
+                ScoreReussite = scoreReussite,
                 Theme = cand.Campagne?.Nom ?? "Général",
                 AnticheatEnabled = true,
                 SendNotifications = true,
@@ -126,13 +131,18 @@ namespace NeoEvaluation.API.Controllers
                 })
                 .ToListAsync();
 
+            // Fetch dynamic ScoreReussite from the linked questionnaire
+            var scoreReussiteSetup = cand.Campagne?.CampagneQuestionnaires
+                .Select(cq => cq.Questionnaire?.ScoreReussite)
+                .FirstOrDefault() ?? 70;
+
             return Ok(new
             {
                 EvaluationId = cand.Evaluation.Id,
                 Titre = cand.Campagne?.Nom,
                 TempsLimite = (cand.Campagne?.DureeMinutes ?? 45) * 60,
                 Questions = questions,
-                ScoreReussite = 70,
+                ScoreReussite = scoreReussiteSetup,
                 AnticheatEnabled = true,
                 SendNotifications = true
             });
@@ -408,20 +418,30 @@ namespace NeoEvaluation.API.Controllers
                 .IgnoreQueryFilters()
                 .Include(e => e.Candidature)
                     .ThenInclude(c => c!.Campagne)
+                        .ThenInclude(cp => cp!.CampagneQuestionnaires)
+                            .ThenInclude(cq => cq.Questionnaire)
                 .Where(e => e.CandidatId == userId)
                 .OrderByDescending(e => e.DateDebut)
-                .Select(e => new
+                .ToListAsync();
+
+            var result = historique.Select(e =>
+            {
+                var seuil = e.Candidature?.Campagne?.CampagneQuestionnaires
+                    .Select(cq => cq.Questionnaire?.ScoreReussite)
+                    .FirstOrDefault() ?? 70;
+                return new
                 {
                     e.Id,
                     TitreExamen = (e.Candidature != null && e.Candidature.Campagne != null) ? e.Candidature.Campagne.Nom : "Examen",
                     Date = e.DateDebut,
                     Score = Math.Round(e.ScorePourcentage, 1),
                     Statut = e.Statut.ToString(),
-                    Resultat = e.ScorePourcentage >= 70 ? "Succès" : "Échec"
-                })
-                .ToListAsync();
+                    ScoreReussite = seuil,
+                    Resultat = e.ScorePourcentage >= seuil ? "Succès" : "Échec"
+                };
+            }).ToList();
 
-            return Ok(historique);
+            return Ok(result);
         }
 
         // ─────────────────────────────────────────────────────────────────
@@ -433,22 +453,31 @@ namespace NeoEvaluation.API.Controllers
         {
             var tenantId = _tenantService.GetTenantId();
 
-            var query = _context.Evaluations
+            var evaluations = await _context.Evaluations
                 .IgnoreQueryFilters()
                 .Include(e => e.Candidature)
                     .ThenInclude(c => c!.Campagne)
-                .Where(e => e.Candidature != null && 
-                            e.Candidature.Campagne != null && 
-                            e.Candidature.Campagne.EntrepriseId == tenantId);
+                        .ThenInclude(cp => cp!.CampagneQuestionnaires)
+                            .ThenInclude(cq => cq.Questionnaire)
+                .Where(e => e.Candidature != null &&
+                            e.Candidature.Campagne != null &&
+                            e.Candidature.Campagne.EntrepriseId == tenantId)
+                .ToListAsync();
 
-            var total = await query.CountAsync();
-            var reussites = await query.CountAsync(e => e.ScorePourcentage >= 70 && e.Statut == StatutPassage.TERMINE);
-            var enCours = await query.CountAsync(e => e.Statut == StatutPassage.EN_COURS);
+            var total = evaluations.Count;
+            var reussites = evaluations.Count(e =>
+            {
+                var seuil = e.Candidature?.Campagne?.CampagneQuestionnaires
+                    .Select(cq => cq.Questionnaire?.ScoreReussite)
+                    .FirstOrDefault() ?? 70;
+                return e.ScorePourcentage >= seuil && e.Statut == StatutPassage.TERMINE;
+            });
+            var enCours = evaluations.Count(e => e.Statut == StatutPassage.EN_COURS);
 
-            var scoresTermines = await query
+            var scoresTermines = evaluations
                 .Where(e => e.Statut == StatutPassage.TERMINE)
                 .Select(e => e.ScorePourcentage)
-                .ToListAsync();
+                .ToList();
 
             double moyenne = scoresTermines.Any() ? scoresTermines.Average() : 0;
 
@@ -470,12 +499,21 @@ namespace NeoEvaluation.API.Controllers
                 .IgnoreQueryFilters()
                 .Include(e => e.Candidature)
                     .ThenInclude(c => c!.Campagne)
+                        .ThenInclude(cp => cp!.CampagneQuestionnaires)
+                            .ThenInclude(cq => cq.Questionnaire)
                 .Include(e => e.Candidat)
-                .Where(e => e.Candidature != null && 
-                            e.Candidature.Campagne != null && 
+                .Where(e => e.Candidature != null &&
+                            e.Candidature.Campagne != null &&
                             e.Candidature.Campagne.EntrepriseId == tenantId)
                 .OrderByDescending(e => e.DateDebut)
-                .Select(e => new
+                .ToListAsync();
+
+            var result = list.Select(e =>
+            {
+                var seuil = e.Candidature?.Campagne?.CampagneQuestionnaires
+                    .Select(cq => cq.Questionnaire?.ScoreReussite)
+                    .FirstOrDefault() ?? 70;
+                return new
                 {
                     e.Id,
                     TitreExamen = (e.Candidature != null && e.Candidature.Campagne != null) ? e.Candidature.Campagne.Nom : "N/A",
@@ -483,11 +521,12 @@ namespace NeoEvaluation.API.Controllers
                     Date = e.DateDebut,
                     Score = Math.Round(e.ScorePourcentage, 1),
                     Statut = e.Statut.ToString(),
-                    Resultat = e.ScorePourcentage >= 70 ? "Succès" : "Échec"
-                })
-                .ToListAsync();
+                    ScoreReussite = seuil,
+                    Resultat = e.ScorePourcentage >= seuil ? "Succès" : "Échec"
+                };
+            }).ToList();
 
-            return Ok(list);
+            return Ok(result);
         }
 
         [HttpDelete("{id}")]
@@ -564,8 +603,15 @@ namespace NeoEvaluation.API.Controllers
             
             var candidature = await _context.Candidatures
                 .IgnoreQueryFilters()
-                .Include(c => c.Campagne).ThenInclude(cp => cp!.CampagneQuestionnaires)
+                .Include(c => c.Campagne)
+                    .ThenInclude(cp => cp!.CampagneQuestionnaires)
+                        .ThenInclude(cq => cq.Questionnaire)
                 .FirstOrDefaultAsync(c => c.Id == lastEval.CandidatureId);
+
+            // Fetch dynamic ScoreReussite from the linked questionnaire
+            var scoreReussiteReport = candidature?.Campagne?.CampagneQuestionnaires
+                .Select(cq => cq.Questionnaire?.ScoreReussite)
+                .FirstOrDefault() ?? 70;
 
             var qIds = candidature?.Campagne?.CampagneQuestionnaires.Select(cq => cq.QuestionnaireId).ToList();
             
@@ -604,8 +650,9 @@ namespace NeoEvaluation.API.Controllers
             {
                 FullName = "Candidat", 
                 ScoreGlobal = Math.Round(avgScore),
+                ScoreReussite = scoreReussiteReport,
                 IntegrityScore = 100,
-                IaVerdict = avgScore >= 70 ? "Profil technique solide." : "Besoins de formation identifiés.",
+                IaVerdict = avgScore >= scoreReussiteReport ? "Profil technique solide." : "Besoins de formation identifiés.",
                 DetailedCorrection = detailedCorrection,
                 History = allSessions.Select(s => new {
                     Id = s.Id,
@@ -623,22 +670,32 @@ namespace NeoEvaluation.API.Controllers
                 .IgnoreQueryFilters()
                 .Include(e => e.Candidature)
                     .ThenInclude(c => c!.Campagne)
+                        .ThenInclude(cp => cp!.CampagneQuestionnaires)
+                            .ThenInclude(cq => cq.Questionnaire)
                 .Where(e => e.CandidatId == candidateId)
                 .OrderByDescending(e => e.DateDebut)
-                .Select(e => new
+                .ToListAsync();
+
+            var result = historique.Select(e =>
+            {
+                var seuil = e.Candidature?.Campagne?.CampagneQuestionnaires
+                    .Select(cq => cq.Questionnaire?.ScoreReussite)
+                    .FirstOrDefault() ?? 70;
+                return new
                 {
                     e.Id,
-                    TitreExamen = (e.Candidature != null && e.Candidature.Campagne != null) 
+                    TitreExamen = (e.Candidature != null && e.Candidature.Campagne != null)
                                   ? e.Candidature.Campagne.Nom : "Examen",
                     Date = e.DateDebut,
                     Score = Math.Round(e.ScorePourcentage, 1),
                     Statut = e.Statut.ToString(),
-                    Resultat = e.ScorePourcentage >= 70 ? "Succès" : "Échec",
-                    Infractions = 0 
-                })
-                .ToListAsync();
+                    ScoreReussite = seuil,
+                    Resultat = e.ScorePourcentage >= seuil ? "Succès" : "Échec",
+                    Infractions = 0
+                };
+            }).ToList();
 
-            return Ok(historique);
+            return Ok(result);
         }
 
         // ─────────────────────────────────────────────────────────────────

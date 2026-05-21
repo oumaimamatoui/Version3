@@ -39,6 +39,27 @@ export const aiService = {
       }
     });
     return response.data;
+  },
+
+  async transcribeAudio(audioBlob, langue = 'fr') {
+    const fd = new FormData();
+    fd.append('file', audioBlob, 'recording.webm');
+    fd.append('langue', langue);
+    const response = await aiApi.post('/ia/transcribe-audio', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 30000
+    });
+    return response.data;
+  },
+
+  async analyzeInterview(question, response, type, langue = 'fr') {
+    const res = await aiApi.post('/ia/interview/analyze', {
+      question,
+      response,
+      type,
+      langue
+    }, { timeout: 30000 });
+    return res.data;
   }
 };
 
