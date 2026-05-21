@@ -17,6 +17,7 @@ namespace NeoEvaluation.API.Models
 
         public string Description { get; set; } = string.Empty;
         public int DureeMinutes { get; set; } = 60;
+        public int ScoreReussite { get; set; } = 70;
         public DateTime? DebutDispo { get; set; }
         public DateTime? FinDispo { get; set; }
         public bool ReprisesAutorisees { get; set; } = false;

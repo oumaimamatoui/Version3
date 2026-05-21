@@ -50,6 +50,7 @@ namespace NeoEvaluation.API.Controllers
                     Titre = dto.Titre,
                     Description = dto.Description ?? "",
                     DureeMinutes = dto.DureeMinutes,
+                    ScoreReussite = dto.ScoreReussite ?? 70,
                     AntitricheActif = dto.AntitricheActif,
                     RandomiserQuestions = dto.RandomiserQuestions,
                     EstPublie = dto.EstPublie,

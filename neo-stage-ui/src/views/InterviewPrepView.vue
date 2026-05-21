@@ -63,7 +63,7 @@
               </div>
               <span class="recording-timer mt-3" v-if="isRecording">{{ formatTime(recordingSeconds) }}</span>
               <span class="recorder-status mt-2">
-                {{ isRecording ? "Enregistrement en cours... Parlez naturellement." : "Cliquez sur le micro pour enregistrer votre réponse" }}
+                {{ isTranscribing ? "Transcription en cours..." : isRecording ? "Enregistrement en cours... Parlez naturellement." : "Cliquez sur le micro pour enregistrer votre réponse" }}
               </span>
             </div>
 
@@ -91,7 +91,7 @@
             </button>
             <button 
               class="btn-primary-reco" 
-              :disabled="isRecording || (!typedResponse.trim() && recordingSeconds === 0) || isAnalyzing"
+              :disabled="isRecording || isTranscribing || (!typedResponse.trim() && recordingSeconds === 0) || isAnalyzing"
               @click="submitResponse"
             >
               <i class="fa-solid fa-wand-magic-sparkles me-2"></i>
@@ -203,6 +203,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
+import aiService from '@/services/ai.service';
 
 const router = useRouter();
 
@@ -212,9 +213,15 @@ const currentQuestionIndex = ref(0);
 
 // États micro & enregistrement
 const isRecording = ref(false);
+const isTranscribing = ref(false);
 const recordingSeconds = ref(0);
 const typedResponse = ref('');
 let timerInterval = null;
+
+// MediaRecorder state
+let mediaRecorder = null;
+let audioChunks = [];
+let audioStream = null;
 
 // États Analyse
 const isAnalyzing = ref(false);
@@ -289,47 +296,104 @@ const nextQuestion = () => {
   resetRecording();
 };
 
-// Simulation enregistreur vocal
-const toggleRecording = () => {
+// Enregistreur vocal réel avec MediaRecorder + transcription Gemini
+const toggleRecording = async () => {
   if (isRecording.value) {
-    stopRecording();
+    await stopRecording();
   } else {
-    startRecording();
+    await startRecording();
   }
 };
 
-const startRecording = () => {
-  isRecording.value = true;
-  recordingSeconds.value = 0;
-  typedResponse.value = '';
-  
-  // Démarrer chrono
-  timerInterval = setInterval(() => {
-    recordingSeconds.value++;
-  }, 1000);
+const startRecording = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioStream = stream;
+    isRecording.value = true;
+    recordingSeconds.value = 0;
+    typedResponse.value = '';
+    audioChunks = [];
 
-  // Animer forme d'onde
-  waveStyles.value = Array.from({ length: 12 }, () => ({ height: '10px' }));
-  waveInterval = setInterval(() => {
-    waveStyles.value = waveStyles.value.map(() => {
-      const h = Math.floor(Math.random() * 45) + 12;
-      return { height: `${h}px`, transition: 'height 0.12s ease' };
-    });
-  }, 120);
+    const mimeType = MediaRecorder.isTypeSupported('audio/webm; codecs=opus')
+      ? 'audio/webm; codecs=opus'
+      : 'audio/webm';
+    mediaRecorder = new MediaRecorder(stream, { mimeType });
+
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) audioChunks.push(e.data);
+    };
+
+    mediaRecorder.start(250);
+
+    // Démarrer chrono
+    timerInterval = setInterval(() => {
+      recordingSeconds.value++;
+    }, 1000);
+
+    // Animer forme d'onde
+    waveStyles.value = Array.from({ length: 12 }, () => ({ height: '10px' }));
+    waveInterval = setInterval(() => {
+      waveStyles.value = waveStyles.value.map(() => {
+        const h = Math.floor(Math.random() * 45) + 12;
+        return { height: `${h}px`, transition: 'height 0.12s ease' };
+      });
+    }, 120);
+  } catch (err) {
+    console.error('Microphone access denied:', err);
+    alert("Veuillez autoriser l'accès au microphone pour enregistrer votre réponse.");
+  }
 };
 
-const stopRecording = () => {
+const stopRecording = async () => {
   isRecording.value = false;
   clearInterval(timerInterval);
   clearInterval(waveInterval);
-  typedResponse.value = "Simulation d'enregistrement audio effectuée avec succès (" + formatTime(recordingSeconds.value) + "). La réponse vocale a été encodée et transcrite par notre service d'analyse linguistique.";
+
+  if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
+
+  return new Promise((resolve) => {
+    mediaRecorder.onstop = async () => {
+      if (audioStream) {
+        audioStream.getTracks().forEach(t => t.stop());
+        audioStream = null;
+      }
+      if (audioChunks.length === 0) {
+        resolve();
+        return;
+      }
+      const blob = new Blob(audioChunks, { type: 'audio/webm' });
+      isTranscribing.value = true;
+      try {
+        const result = await aiService.transcribeAudio(blob);
+        typedResponse.value = result.transcript || "(Transcription vide)";
+      } catch (e) {
+        console.error('Transcription error:', e);
+        typedResponse.value = "(Erreur de transcription. Veuillez écrire votre réponse manuellement.)";
+      }
+      isTranscribing.value = false;
+      mediaRecorder = null;
+      audioChunks = [];
+      resolve();
+    };
+    mediaRecorder.stop();
+  });
 };
 
 const resetRecording = () => {
   isRecording.value = false;
   recordingSeconds.value = 0;
+  isTranscribing.value = false;
   clearInterval(timerInterval);
   clearInterval(waveInterval);
+  if (audioStream) {
+    audioStream.getTracks().forEach(t => t.stop());
+    audioStream = null;
+  }
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop();
+  }
+  mediaRecorder = null;
+  audioChunks = [];
 };
 
 const formatTime = (sec) => {
@@ -338,16 +402,15 @@ const formatTime = (sec) => {
   return `${m}:${s}`;
 };
 
-// Simulation Analyse comportementale IA avec Gemini
-const submitResponse = () => {
+// Analyse comportementale IA avec Gemini (réelle)
+const submitResponse = async () => {
   isAnalyzing.value = true;
   loadingProgress.value = 0;
   feedbackResult.value = null;
 
   const steps = [
-    { text: "Traitement de l'audio et transcription textuelle...", progress: 20 },
-    { text: "Extraction des marqueurs d'éloquence et prosodiques...", progress: 45 },
-    { text: "Analyse sémantique comportementale via Gemini...", progress: 75 },
+    { text: "Analyse sémantique du discours...", progress: 30 },
+    { text: "Extraction des marqueurs comportementaux via Gemini...", progress: 60 },
     { text: "Génération du rapport prédictif et recommandations...", progress: 100 }
   ];
 
@@ -356,18 +419,33 @@ const submitResponse = () => {
 
   const interval = setInterval(() => {
     loadingProgress.value += 2;
-    
     if (loadingProgress.value >= steps[stepIdx].progress && stepIdx < steps.length - 1) {
       stepIdx++;
       currentLoadingStep.value = steps[stepIdx].text;
     }
-
     if (loadingProgress.value >= 100) {
       clearInterval(interval);
-      generateMockFeedback();
-      isAnalyzing.value = false;
     }
   }, 80);
+
+  try {
+    const result = await aiService.analyzeInterview(
+      currentQuestion.value.text,
+      typedResponse.value,
+      activeTab.value
+    );
+    if (result.status === 'SUCCESS' && result.feedback) {
+      await new Promise(r => setTimeout(r, 500));
+      feedbackResult.value = result.feedback;
+    } else {
+      generateMockFeedback();
+    }
+  } catch (e) {
+    console.error('Analysis error:', e);
+    generateMockFeedback();
+  }
+
+  isAnalyzing.value = false;
 };
 
 const generateMockFeedback = () => {
