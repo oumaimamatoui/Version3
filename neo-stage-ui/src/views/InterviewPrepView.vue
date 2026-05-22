@@ -79,9 +79,15 @@
                 placeholder="Rédigez ou complétez votre réponse ici..."
                 rows="4"
                 maxlength="1000"
-                :disabled="isRecording"
+                :disabled="isBusy"
               ></textarea>
             </div>
+          </div>
+
+          <!-- Erreur de transcription -->
+          <div v-if="transcriptionError" class="transcription-error-banner mb-3">
+            <i class="fa-solid fa-microphone-slash me-2"></i>
+            {{ transcriptionError }}
           </div>
 
           <!-- Contrôles -->
@@ -91,7 +97,7 @@
             </button>
             <button 
               class="btn-primary-reco" 
-              :disabled="isRecording || isTranscribing || (!typedResponse.trim() && recordingSeconds === 0) || isAnalyzing"
+              :disabled="isBusy || isRecording || (!typedResponse.trim() && recordingSeconds === 0) || isAnalyzing"
               @click="submitResponse"
             >
               <i class="fa-solid fa-wand-magic-sparkles me-2"></i>
@@ -113,8 +119,20 @@
           <span class="neural-badge-reco">Propulsé par Gemini AI</span>
         </div>
 
+        <!-- Erreur d'analyse -->
+        <div v-if="analysisError" class="analysis-error-panel d-flex flex-column align-items-center justify-content-center py-5 text-center">
+          <div class="error-icon-wrap mb-4">
+            <i class="fa-solid fa-circle-exclamation"></i>
+          </div>
+          <h5 class="error-title">Analyse indisponible</h5>
+          <p class="error-message">{{ analysisError }}</p>
+          <button class="btn-retry" @click="submitResponse">
+            <i class="fa-solid fa-rotate me-2"></i>Réessayer
+          </button>
+        </div>
+
         <!-- Chargement Analyse -->
-        <div v-if="isAnalyzing" class="analysis-loading d-flex flex-column align-items-center justify-content-center py-5">
+        <div v-else-if="isAnalyzing" class="analysis-loading d-flex flex-column align-items-center justify-content-center py-5">
           <div class="spinner-premium mb-4">
             <div class="double-bounce1"></div>
             <div class="double-bounce2"></div>
@@ -136,6 +154,11 @@
 
         <!-- Rapport de feedback complet -->
         <div v-else class="feedback-results-wrap animate-fade-in">
+          <!-- Badge mode dégradé -->
+          <div v-if="showDegradedWarning" class="degraded-badge mb-3">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>
+            Mode dégradé — résultats génériques (non personnalisés)
+          </div>
           <!-- Score global et Badge de profil -->
           <div class="d-flex align-items-center gap-4 mb-4 p-3 glass-card">
             <div class="score-ring-wrap">
@@ -211,9 +234,11 @@ const router = useRouter();
 const activeTab = ref('behavioral');
 const currentQuestionIndex = ref(0);
 
-// États micro & enregistrement
-const isRecording = ref(false);
-const isTranscribing = ref(false);
+// Recording lifecycle — Layer 3: finite state machine
+const recState = ref('idle'); // 'idle' | 'recording' | 'stopping' | 'transcribing'
+const isRecording = computed(() => recState.value === 'recording');
+const isTranscribing = computed(() => recState.value === 'transcribing');
+const isBusy = computed(() => recState.value === 'stopping' || recState.value === 'transcribing');
 const recordingSeconds = ref(0);
 const typedResponse = ref('');
 let timerInterval = null;
@@ -223,11 +248,20 @@ let mediaRecorder = null;
 let audioChunks = [];
 let audioStream = null;
 
+// Layer 1: session isolation
+let sessionId = 0;
+
+// Layer 2: Promise-based lifecycle
+let stopPromise = Promise.resolve();
+
 // États Analyse
 const isAnalyzing = ref(false);
 const currentLoadingStep = ref('');
 const loadingProgress = ref(0);
 const feedbackResult = ref(null);
+const analysisError = ref(null);
+const showDegradedWarning = ref(false);
+const transcriptionError = ref(null);
 
 // Styles d'ondes sonores dynamiques simulés
 const waveStyles = ref([]);
@@ -277,15 +311,18 @@ const currentQuestion = computed(() => {
   return questionsList.value[currentQuestionIndex.value] || null;
 });
 
-const switchTab = (tab) => {
+const switchTab = async (tab) => {
   activeTab.value = tab;
   currentQuestionIndex.value = 0;
   typedResponse.value = '';
   feedbackResult.value = null;
-  resetRecording();
+  analysisError.value = null;
+  showDegradedWarning.value = false;
+  transcriptionError.value = null;
+  await resetRecording();
 };
 
-const nextQuestion = () => {
+const nextQuestion = async () => {
   if (currentQuestionIndex.value < questionsList.value.length - 1) {
     currentQuestionIndex.value++;
   } else {
@@ -293,26 +330,35 @@ const nextQuestion = () => {
   }
   typedResponse.value = '';
   feedbackResult.value = null;
-  resetRecording();
+  analysisError.value = null;
+  showDegradedWarning.value = false;
+  transcriptionError.value = null;
+  await resetRecording();
 };
 
 // Enregistreur vocal réel avec MediaRecorder + transcription Gemini
 const toggleRecording = async () => {
-  if (isRecording.value) {
+  if (recState.value === 'recording') {
     await stopRecording();
-  } else {
+  } else if (recState.value === 'idle') {
     await startRecording();
   }
 };
 
 const startRecording = async () => {
+  if (recState.value !== 'idle') return;
+  const mySession = ++sessionId;
+  recState.value = 'recording';
+  recordingSeconds.value = 0;
+  typedResponse.value = '';
+  audioChunks = [];
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    if (mySession !== sessionId) {
+      stream.getTracks().forEach(t => t.stop());
+      return;
+    }
     audioStream = stream;
-    isRecording.value = true;
-    recordingSeconds.value = 0;
-    typedResponse.value = '';
-    audioChunks = [];
 
     const mimeType = MediaRecorder.isTypeSupported('audio/webm; codecs=opus')
       ? 'audio/webm; codecs=opus'
@@ -325,12 +371,10 @@ const startRecording = async () => {
 
     mediaRecorder.start(250);
 
-    // Démarrer chrono
     timerInterval = setInterval(() => {
       recordingSeconds.value++;
     }, 1000);
 
-    // Animer forme d'onde
     waveStyles.value = Array.from({ length: 12 }, () => ({ height: '10px' }));
     waveInterval = setInterval(() => {
       waveStyles.value = waveStyles.value.map(() => {
@@ -340,60 +384,83 @@ const startRecording = async () => {
     }, 120);
   } catch (err) {
     console.error('Microphone access denied:', err);
+    recState.value = 'idle';
     alert("Veuillez autoriser l'accès au microphone pour enregistrer votre réponse.");
   }
 };
 
 const stopRecording = async () => {
-  isRecording.value = false;
+  if (recState.value !== 'recording') return;
+  recState.value = 'stopping';
   clearInterval(timerInterval);
   clearInterval(waveInterval);
-
-  if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
-
-  return new Promise((resolve) => {
+  if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+    recState.value = 'idle';
+    return;
+  }
+  const mySession = sessionId;
+  stopPromise = new Promise((resolve) => {
     mediaRecorder.onstop = async () => {
+      if (mySession !== sessionId) {
+        resolve();
+        return;
+      }
       if (audioStream) {
         audioStream.getTracks().forEach(t => t.stop());
         audioStream = null;
       }
       if (audioChunks.length === 0) {
+        mediaRecorder = null;
+        recState.value = 'idle';
         resolve();
         return;
       }
-      const blob = new Blob(audioChunks, { type: 'audio/webm' });
-      isTranscribing.value = true;
+      const chunks = audioChunks.slice();
+      recState.value = 'transcribing';
       try {
-        const result = await aiService.transcribeAudio(blob);
-        typedResponse.value = result.transcript || "(Transcription vide)";
+        const result = await aiService.transcribeAudio(new Blob(chunks, { type: 'audio/webm' }));
+        if (mySession === sessionId) {
+          if (result.transcript) {
+            typedResponse.value = result.transcript;
+            transcriptionError.value = null;
+          } else {
+            transcriptionError.value = result.error || "Aucun texte détecté";
+          }
+        }
       } catch (e) {
         console.error('Transcription error:', e);
-        typedResponse.value = "(Erreur de transcription. Veuillez écrire votre réponse manuellement.)";
+        if (mySession === sessionId) {
+          const msg = e.response?.data?.error || e.response?.data?.detail || "Erreur de transcription. Écrivez votre réponse manuellement.";
+          transcriptionError.value = msg;
+        }
       }
-      isTranscribing.value = false;
       mediaRecorder = null;
       audioChunks = [];
+      recState.value = 'idle';
       resolve();
     };
     mediaRecorder.stop();
   });
+  return stopPromise;
 };
 
-const resetRecording = () => {
-  isRecording.value = false;
-  recordingSeconds.value = 0;
-  isTranscribing.value = false;
+const resetRecording = async () => {
   clearInterval(timerInterval);
   clearInterval(waveInterval);
+  timerInterval = null;
+  waveInterval = null;
+  if (recState.value === 'recording' && mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop();
+  }
+  await stopPromise;
   if (audioStream) {
     audioStream.getTracks().forEach(t => t.stop());
     audioStream = null;
   }
-  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-    mediaRecorder.stop();
-  }
   mediaRecorder = null;
   audioChunks = [];
+  recordingSeconds.value = 0;
+  recState.value = 'idle';
 };
 
 const formatTime = (sec) => {
@@ -404,9 +471,11 @@ const formatTime = (sec) => {
 
 // Analyse comportementale IA avec Gemini (réelle)
 const submitResponse = async () => {
+  analysisError.value = null;
+  showDegradedWarning.value = false;
+  feedbackResult.value = null;
   isAnalyzing.value = true;
   loadingProgress.value = 0;
-  feedbackResult.value = null;
 
   const steps = [
     { text: "Analyse sémantique du discours...", progress: 30 },
@@ -434,68 +503,37 @@ const submitResponse = async () => {
       typedResponse.value,
       activeTab.value
     );
-    if (result.status === 'SUCCESS' && result.feedback) {
-      await new Promise(r => setTimeout(r, 500));
-      feedbackResult.value = result.feedback;
-    } else {
-      generateMockFeedback();
+    if (!result) throw new Error("Réponse vide du service");
+    switch (result.status) {
+      case "SUCCESS":
+        if (result.feedback) {
+          await new Promise(r => setTimeout(r, 500));
+          feedbackResult.value = result.feedback;
+        } else {
+          throw new Error("Feedback vide");
+        }
+        break;
+      case "DEGRADED":
+        await new Promise(r => setTimeout(r, 500));
+        feedbackResult.value = result.feedback;
+        showDegradedWarning.value = true;
+        break;
+      case "ERROR":
+        analysisError.value = result.error || "Service indisponible";
+        break;
+      default:
+        analysisError.value = "Réponse inattendue du service";
     }
   } catch (e) {
     console.error('Analysis error:', e);
-    generateMockFeedback();
+    analysisError.value = e.message || "Erreur de connexion au service d'analyse";
   }
 
   isAnalyzing.value = false;
 };
 
-const generateMockFeedback = () => {
-  if (activeTab.value === 'behavioral') {
-    feedbackResult.value = {
-      score: 87,
-      communicationProfile: "Leader Empathique & Fédérateur",
-      softSkills: [
-        { name: "Intelligence Émotionnelle", value: 92 },
-        { name: "Gestion du Stress", value: 78 },
-        { name: "Négociation & Médiation", value: 85 },
-        { name: "Clarté d'expression", value: 89 }
-      ],
-      pointsForts: [
-        "Excellente capacité de décentrage et d'écoute active du besoin de l'autre.",
-        "Posture calme et structurée face à l'hostilité verbale.",
-        "Recherche active de solutions gagnant-gagnant pragmatiques."
-      ],
-      vigilances: [
-        "Tendance à vouloir plaire à tout le monde pouvant ralentir la décision finale.",
-        "Prendre soin de préserver sa propre charge mentale lors de médiations intenses."
-      ],
-      coachAdvice: "Votre communication verbale est extrêmement chaleureuse et persuasive. Pour maximiser votre leadership, assumez parfois des décisions fermes et non-consensuelles quand la situation l'impose. Votre posture naturelle inspire la confiance."
-    };
-  } else {
-    feedbackResult.value = {
-      score: 82,
-      communicationProfile: "Architecte Technique Méthodique",
-      softSkills: [
-        { name: "Rigueur Analytique", value: 95 },
-        { name: "Vulgarisation Pédagogique", value: 80 },
-        { name: "Résolution de Problèmes", value: 88 },
-        { name: "Synthèse & Structure", value: 72 }
-      ],
-      pointsForts: [
-        "Compréhension approfondie et rigoureuse des paradigmes d'architecture.",
-        "Explication technique de haute précision étayée par des exemples concrets.",
-        "Bonne sensibilisation aux contraintes de sécurité et de robustesse système."
-      ],
-      vigilances: [
-        "Risque de s'enferrer dans des détails d'implémentation trop bas niveau.",
-        "Veillez à bien synthétiser vos réponses au début pour ne pas perdre votre auditeur."
-      ],
-      coachAdvice: "Votre rigueur technique est incontestable et rassurante. Pour sublimer vos prochains entretiens d'embauche devant des profils mixtes (RH + Techniques), commencez toujours par une vue d'ensemble business avant de plonger dans le code."
-    };
-  }
-};
-
-onUnmounted(() => {
-  resetRecording();
+onUnmounted(async () => {
+  await resetRecording();
 });
 </script>
 
@@ -1084,5 +1122,79 @@ onUnmounted(() => {
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* Error state */
+.analysis-error-panel {
+  padding: 2rem 1rem;
+}
+
+.error-icon-wrap {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+}
+
+.error-title {
+  font-weight: 700;
+  color: #991b1b;
+  margin-bottom: 0.5rem;
+}
+
+.error-message {
+  font-size: 0.88rem;
+  color: #64748b;
+  max-width: 280px;
+  line-height: 1.5;
+  margin-bottom: 1.25rem;
+}
+
+.btn-retry {
+  background: #ef4444;
+  color: white;
+  border: none;
+  font-weight: 600;
+  font-size: 0.88rem;
+  padding: 0.6rem 1.4rem;
+  border-radius: 8px;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.btn-retry:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+/* Degraded mode badge */
+.degraded-badge {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  color: #d97706;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+}
+
+/* Transcription error banner */
+.transcription-error-banner {
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
 }
 </style>
