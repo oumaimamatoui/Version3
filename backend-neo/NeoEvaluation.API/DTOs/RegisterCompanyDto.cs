@@ -20,5 +20,8 @@ namespace NeoEvaluation.API.DTOs
 
         [JsonPropertyName("matriculeFiscale")]
         public string? MatriculeFiscale { get; set; }
+
+        [JsonPropertyName("plan")]
+        public string? Plan { get; set; }
     }
 }

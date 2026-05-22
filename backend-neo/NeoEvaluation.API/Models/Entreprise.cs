@@ -24,6 +24,7 @@ namespace NeoEvaluation.API.Models
         public string? Description { get; set; }
 
         public string Plan { get; set; } = "Gratuit";
+        public DateTime? AbonnementDebut { get; set; }
         public DateTime? AbonnementFin { get; set; }
         public string Langue { get; set; } = "fr";
         public DateTime CreeLe { get; set; } = DateTime.UtcNow;

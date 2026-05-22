@@ -1197,4 +1197,140 @@ onUnmounted(async () => {
   display: flex;
   align-items: center;
 }
+
+/* ═══════════════════════════════════════
+   DARK MODE
+════════════════════════════════════════ */
+[data-theme="dark"] .interview-prep-container { color: #e2e8f0; }
+
+[data-theme="dark"] .prep-title { color: #f0f6fc; }
+[data-theme="dark"] .prep-subtitle { color: #8b949e; }
+[data-theme="dark"] .prep-category { color: #f59e0b; }
+
+[data-theme="dark"] .btn-back {
+  background: #161b22;
+  border-color: rgba(255,255,255,.07);
+  color: #8b949e;
+}
+[data-theme="dark"] .btn-back:hover {
+  background: #0d1117;
+  color: #f0f6fc;
+  border-color: rgba(255,255,255,.12);
+}
+
+[data-theme="dark"] .panel {
+  background: rgba(22,27,34,.92);
+  border-color: rgba(255,255,255,.07);
+  box-shadow: 0 8px 30px rgba(0,0,0,.3);
+}
+
+[data-theme="dark"] .tabs-header { background: rgba(255,255,255,.05); }
+[data-theme="dark"] .tab-btn { color: #6e7681; }
+[data-theme="dark"] .tab-btn.active {
+  background: rgba(22,27,34,.9);
+  color: #f59e0b;
+  box-shadow: 0 2px 8px rgba(0,0,0,.2);
+}
+
+[data-theme="dark"] .question-card {
+  background: linear-gradient(135deg, rgba(245,158,11,.08) 0%, rgba(245,158,11,.02) 100%);
+  border-color: rgba(245,158,11,.2);
+}
+[data-theme="dark"] .question-text { color: #f0f6fc; }
+[data-theme="dark"] .question-context { color: #8b949e; }
+
+[data-theme="dark"] .voice-recorder-wrap {
+  background: rgba(255,255,255,.03);
+  border-color: rgba(255,255,255,.08);
+}
+[data-theme="dark"] .voice-recorder-wrap.recording {
+  background: rgba(239,68,68,.06);
+  border-color: rgba(239,68,68,.25);
+}
+[data-theme="dark"] .recorder-status { color: #8b949e; }
+
+[data-theme="dark"] .text-alternative { border-top-color: rgba(255,255,255,.07); }
+[data-theme="dark"] .text-label { color: #b0b8c1; }
+[data-theme="dark"] .char-counter { color: #6e7681; }
+
+[data-theme="dark"] .premium-textarea {
+  background: rgba(255,255,255,.05);
+  border-color: rgba(255,255,255,.08);
+  color: #e2e8f0;
+}
+[data-theme="dark"] .premium-textarea:focus {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245,158,11,.15);
+}
+
+[data-theme="dark"] .btn-primary-reco:disabled {
+  background: rgba(255,255,255,.06);
+  color: #6e7681;
+}
+
+[data-theme="dark"] .btn-secondary-reco {
+  color: #8b949e;
+  border-color: rgba(255,255,255,.07);
+}
+[data-theme="dark"] .btn-secondary-reco:hover {
+  background: rgba(255,255,255,.05);
+  color: #f0f6fc;
+  border-color: rgba(255,255,255,.12);
+}
+
+[data-theme="dark"] .insight-icon-wrap { background: rgba(245,158,11,.1); }
+
+[data-theme="dark"] .empty-icon {
+  background: rgba(255,255,255,.04);
+  color: #6e7681;
+  border-color: rgba(255,255,255,.08);
+}
+[data-theme="dark"] .feedback-empty-state h5 { color: #e2e8f0; }
+[data-theme="dark"] .feedback-empty-state p { color: #8b949e; }
+
+[data-theme="dark"] .loading-step { color: #b0b8c1; }
+[data-theme="dark"] .loading-bar-wrap { background: rgba(255,255,255,.07); }
+
+[data-theme="dark"] .score-text { fill: #f0f6fc; }
+[data-theme="dark"] .verdict-label { color: #8b949e; }
+[data-theme="dark"] .verdict-title { color: #f0f6fc; }
+
+[data-theme="dark"] .section-sub-title { color: #b0b8c1; }
+
+[data-theme="dark"] .skill-card-reco {
+  background: rgba(255,255,255,.04);
+  border-color: rgba(255,255,255,.07);
+}
+[data-theme="dark"] .skill-name { color: #b0b8c1; }
+[data-theme="dark"] .skill-pct { color: #f0f6fc; }
+[data-theme="dark"] .skill-bar-wrap { background: rgba(255,255,255,.08); }
+
+[data-theme="dark"] .card-forts,
+[data-theme="dark"] .card-vigilance {
+  background: rgba(255,255,255,.04);
+  border-color: rgba(255,255,255,.07);
+}
+[data-theme="dark"] .subsection-title { color: #e2e8f0; }
+[data-theme="dark"] .forts-list,
+[data-theme="dark"] .vigilances-list { color: #b0b8c1; }
+
+[data-theme="dark"] .coach-speech {
+  background: rgba(245,158,11,.06);
+  border-color: rgba(245,158,11,.15);
+}
+[data-theme="dark"] .coach-text { color: #b0b8c1; }
+
+[data-theme="dark"] .glass-card {
+  background: rgba(245,158,11,.06);
+  border-color: rgba(245,158,11,.15);
+}
+
+[data-theme="dark"] .error-title { color: #fca5a5; }
+[data-theme="dark"] .error-message { color: #8b949e; }
+
+[data-theme="dark"] .degraded-badge {
+  background: rgba(245,158,11,.1);
+  border-color: rgba(245,158,11,.2);
+  color: #fbbf24;
+}
 </style>

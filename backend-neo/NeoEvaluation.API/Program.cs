@@ -41,6 +41,7 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IUsageService, UsageService>(); 
 
 builder.Services.AddSingleton<IAuditLogService, AuditLogService>();
+builder.Services.AddHostedService<PlanResetService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantService, TenantService>();
 builder.Services.AddEndpointsApiExplorer();

@@ -202,7 +202,7 @@
                 </div>
 
                 <!--  SUBSCRIPTION CARD (Uniquement pour AdminEntreprise) -->
-                <div v-if="authStore.role === 'AdminEntreprise' && user.subscriptionPlan && user.subscriptionPlan !== 'Starter'" class="enigma-card p-5 border-amber shadow-premium">
+                <div v-if="authStore.role === 'AdminEntreprise' && user.subscriptionPlan === 'EvaluaTech Go'" class="enigma-card p-5 border-amber shadow-premium">
                   <div class="d-flex align-items-center gap-4 pb-4 mb-4" style="border-bottom:1px solid #f1f5f9">
                     <div class="pane-icon-box amber-glow">
                       <i class="fa-solid fa-crown"></i>

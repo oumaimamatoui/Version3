@@ -164,7 +164,8 @@ namespace NeoEvaluation.API.Controllers
                 if (enterprise != null)
                 {
                     enterprise.Plan = planName;
-                    enterprise.AbonnementFin = DateTime.UtcNow.AddDays(30);
+                    enterprise.AbonnementDebut ??= DateTime.UtcNow;
+                    enterprise.AbonnementFin = (enterprise.AbonnementFin ?? DateTime.UtcNow).AddDays(30);
                     await _context.SaveChangesAsync();
                 }
             }

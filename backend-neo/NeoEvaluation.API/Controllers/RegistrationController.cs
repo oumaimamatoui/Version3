@@ -35,6 +35,7 @@ namespace NeoEvaluation.API.Controllers
                 PrenomResponsable = prenom,
                 EmailResponsable = dto.EmailResponsable,
                 MatriculeFiscale = dto.MatriculeFiscale,
+                Plan = string.IsNullOrEmpty(dto.Plan) ? "Starter" : dto.Plan,
                 Statut = 0 // En attente
             };
 
