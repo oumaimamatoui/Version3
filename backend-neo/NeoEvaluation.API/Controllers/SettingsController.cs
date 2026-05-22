@@ -48,7 +48,7 @@ namespace NeoEvaluation.API.Controllers
                 ThemePreference = user.ThemePreference,
                 EntrepriseNom = entreprise?.Nom,
                 SubscriptionPlan = entreprise?.Plan,
-                SubscriptionDate = entreprise?.CreeLe.ToString("dd/MM/yyyy"),
+                SubscriptionDate = (entreprise?.AbonnementDebut ?? entreprise?.CreeLe)?.ToString("dd/MM/yyyy"),
                 SubscriptionExpiry = entreprise?.AbonnementFin?.ToString("dd/MM/yyyy")
             });
         }

@@ -504,11 +504,176 @@ namespace NeoEvaluation.API.Controllers
             var ent = await _context.Entreprises.IgnoreQueryFilters().FirstOrDefaultAsync(e => e.Id == id);
             if (ent == null) return NotFound();
 
+            var orgName = ent.Nom;
+
+            // 1. Récupérer les IDs des utilisateurs de l'organisation
+            var userIds = await _context.Utilisateurs
+                .IgnoreQueryFilters()
+                .Where(u => u.EntrepriseId == id)
+                .Select(u => u.Id)
+                .ToListAsync();
+
+            // 2. Récupérer les IDs des campagnes de l'organisation
+            var campagneIds = await _context.Campagnes
+                .IgnoreQueryFilters()
+                .Where(c => c.EntrepriseId == id)
+                .Select(c => c.Id)
+                .ToListAsync();
+
+            // 3. Récupérer les IDs des candidatures liées à ces campagnes
+            var candidatureIds = await _context.Candidatures
+                .IgnoreQueryFilters()
+                .Where(c => campagneIds.Contains(c.CampagneId))
+                .Select(c => c.Id)
+                .ToListAsync();
+
+            // 4. Récupérer les IDs des évaluations liées à ces candidatures
+            var evaluationIds = await _context.Evaluations
+                .IgnoreQueryFilters()
+                .Where(e => candidatureIds.Contains(e.CandidatureId))
+                .Select(e => e.Id)
+                .ToListAsync();
+
+            // 5. Récupérer les IDs des questionnaires de l'organisation
+            var questionnaireIds = await _context.Questionnaires
+                .IgnoreQueryFilters()
+                .Where(q => q.EntrepriseId == id)
+                .Select(q => q.Id)
+                .ToListAsync();
+
+            // 6. Récupérer les IDs des questions de l'organisation
+            var questionIds = await _context.Questions
+                .IgnoreQueryFilters()
+                .Where(q => q.EntrepriseId == id)
+                .Select(q => q.Id)
+                .ToListAsync();
+
+            // 7. Récupérer les IDs des rôles de l'organisation
+            var roleIds = await _context.Roles
+                .IgnoreQueryFilters()
+                .Where(r => r.EntrepriseId == id && r.Id != null)
+                .Select(r => r.Id!.Value)
+                .ToListAsync();
+
+            // 8. Nettoyage en cascade : du plus dépendant au moins dépendant
+
+            // TokensActivation liés aux utilisateurs de l'org
+            var tokens = await _context.TokensActivation
+                .IgnoreQueryFilters()
+                .Where(t => t.UtilisateurId != null && userIds.Contains(t.UtilisateurId.Value))
+                .ToListAsync();
+            _context.TokensActivation.RemoveRange(tokens);
+
+            // Reponses liées aux évaluations
+            var reponses = await _context.Reponses
+                .IgnoreQueryFilters()
+                .Where(r => evaluationIds.Contains(r.EvaluationId))
+                .ToListAsync();
+            _context.Reponses.RemoveRange(reponses);
+
+            // Rapports liés aux évaluations
+            var rapports = await _context.Rapports
+                .IgnoreQueryFilters()
+                .Where(r => evaluationIds.Contains(r.EvaluationId))
+                .ToListAsync();
+            _context.Rapports.RemoveRange(rapports);
+
+            // Evaluations liées aux candidatures
+            var evaluations = await _context.Evaluations
+                .IgnoreQueryFilters()
+                .Where(e => candidatureIds.Contains(e.CandidatureId))
+                .ToListAsync();
+            _context.Evaluations.RemoveRange(evaluations);
+
+            // Candidatures liées aux campagnes
+            var candidatures = await _context.Candidatures
+                .IgnoreQueryFilters()
+                .Where(c => campagneIds.Contains(c.CampagneId))
+                .ToListAsync();
+            _context.Candidatures.RemoveRange(candidatures);
+
+            // CampagneQuestionnaires liées aux campagnes
+            var campagneQuestionnaires = await _context.CampagneQuestionnaires
+                .IgnoreQueryFilters()
+                .Where(cq => campagneIds.Contains(cq.CampagneId))
+                .ToListAsync();
+            _context.CampagneQuestionnaires.RemoveRange(campagneQuestionnaires);
+
+            // Campagnes liées à l'organisation
+            var campagnes = await _context.Campagnes
+                .IgnoreQueryFilters()
+                .Where(c => c.EntrepriseId == id)
+                .ToListAsync();
+            _context.Campagnes.RemoveRange(campagnes);
+
+            // Documents liés aux utilisateurs
+            var docs = await _context.Set<DocumentCandidat>()
+                .IgnoreQueryFilters()
+                .Where(d => userIds.Contains(d.CandidatId))
+                .ToListAsync();
+            _context.Set<DocumentCandidat>().RemoveRange(docs);
+
+            // QuestionnaireQuestions liés aux questionnaires de l'org
+            var qq = await _context.QuestionnaireQuestions
+                .IgnoreQueryFilters()
+                .Where(q => questionnaireIds.Contains(q.QuestionnaireId) || questionIds.Contains(q.QuestionId))
+                .ToListAsync();
+            _context.QuestionnaireQuestions.RemoveRange(qq);
+
+            // Questions liées à l'org
+            var questions = await _context.Questions
+                .IgnoreQueryFilters()
+                .Where(q => q.EntrepriseId == id)
+                .ToListAsync();
+            _context.Questions.RemoveRange(questions);
+
+            // Questionnaires liés à l'org
+            var questionnaires = await _context.Questionnaires
+                .IgnoreQueryFilters()
+                .Where(q => q.EntrepriseId == id)
+                .ToListAsync();
+            _context.Questionnaires.RemoveRange(questionnaires);
+
+            // Catégories / SousCatégories liées à l'org
+            var categories = await _context.Categories
+                .IgnoreQueryFilters()
+                .Where(c => c.EntrepriseId == id)
+                .ToListAsync();
+            var categorieIds = categories.Select(c => c.Id).ToList();
+            var sousCategories = await _context.SousCategories
+                .IgnoreQueryFilters()
+                .Where(s => categorieIds.Contains(s.CategorieId))
+                .ToListAsync();
+            _context.SousCategories.RemoveRange(sousCategories);
+            _context.Categories.RemoveRange(categories);
+
+            // Utilisateurs liés à l'org
+            var users = await _context.Utilisateurs
+                .IgnoreQueryFilters()
+                .Where(u => u.EntrepriseId == id)
+                .ToListAsync();
+            _context.Utilisateurs.RemoveRange(users);
+
+            // Rôles liés à l'org
+            var roles = await _context.Roles
+                .IgnoreQueryFilters()
+                .Where(r => r.EntrepriseId == id)
+                .ToListAsync();
+            _context.Roles.RemoveRange(roles);
+
+            // UsageLogs liés à l'org
+            var logs = await _context.UsageLogs
+                .IgnoreQueryFilters()
+                .Where(l => l.EntrepriseId == id)
+                .ToListAsync();
+            _context.UsageLogs.RemoveRange(logs);
+
+            // Enfin, supprimer l'organisation elle-même
             _context.Entreprises.Remove(ent);
             await _context.SaveChangesAsync();
 
-            await _auditLogService.LogActionAsync("DELETE_ORG", "SuperAdmin", $"Suppression de l'organisation : {ent.Nom}");
-            return Ok(new { message = "Organisation supprimée." });
+            await _auditLogService.LogActionAsync("DELETE_ORG", "SuperAdmin", $"Suppression définitive de l'organisation : {orgName}");
+            return Ok(new { message = "Organisation et toutes ses données liées supprimées définitivement." });
         }
 
         [HttpPut("organizations/{id}")]
@@ -531,8 +696,9 @@ namespace NeoEvaluation.API.Controllers
 
                 if (dto.EstActif)
                 {
-                    if (ent.AbonnementFin != null && ent.AbonnementFin <= DateTime.UtcNow)
+                    if (ent.AbonnementFin == null || ent.AbonnementFin <= DateTime.UtcNow)
                     {
+                        ent.AbonnementDebut = DateTime.UtcNow;
                         ent.AbonnementFin = DateTime.UtcNow.AddYears(1);
                     }
                 }

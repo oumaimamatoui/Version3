@@ -69,6 +69,7 @@
               v-model="pass" 
               class="cyber-input" 
               placeholder="••••••••" 
+              maxlength="20"
               required
             >
             <div class="eye-toggle" @click="showPass = !showPass">
@@ -150,7 +151,8 @@ const strengthScore = computed(() => {
 
 const strengthText = computed(() => {
   if (pass.value.length > 20) return "Trop long (max 20)";
-  return ["Trop court (min 8)", "Faible", "Moyen", "Robuste"][strengthScore.value];
+  if (pass.value.length < 8) return "Trop court (min 8)";
+  return ["Faible", "Moyen", "Robuste"][strengthScore.value - 1];
 });
 const strengthColor = computed(() => ["#94a3b8", "#ef4444", "#f59e0b", "#10b981"][strengthScore.value]);
 

@@ -114,8 +114,9 @@ namespace NeoEvaluation.API.Controllers
                 CodePostal = reg.CodePostal,
                 Adresse = reg.Adresse,
                 Description = reg.Description,
-                AbonnementFin = DateTime.UtcNow.AddYears(1), // 1 an d'essai gratuit
-                Plan = "Starter"
+                AbonnementDebut = reg.Plan == "EvaluaTech Go" ? DateTime.UtcNow : null,
+                AbonnementFin = reg.Plan == "EvaluaTech Go" ? DateTime.UtcNow.AddDays(30) : null,
+                Plan = string.IsNullOrEmpty(reg.Plan) ? "Starter" : reg.Plan
             };
             _context.Entreprises.Add(entreprise);
 

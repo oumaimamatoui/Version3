@@ -26,6 +26,8 @@ public class InscriptionsEntreprise
     public string? Adresse { get; set; }
     public string? Description { get; set; }
 
+    public string? Plan { get; set; }
+
     public int Statut { get; set; } = 0;
     public DateTime CreeLe { get; set; } = DateTime.UtcNow;
 }

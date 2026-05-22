@@ -935,15 +935,7 @@
                   <input type="url" v-model="editOrgData.siteWeb" class="enigma-field" placeholder="https://example.com">
                 </div>
               </div>
-              <div class="col-md-6">
-                <div class="enigma-input-wrap">
-                  <label>COULEUR DU LOGO (HEX)</label>
-                  <div class="d-flex gap-2 align-items-center">
-                    <input type="color" v-model="editOrgData.couleurSignature" class="form-control form-control-color p-0 border-0" style="width:38px;height:38px;border-radius:8px;background:none;cursor:pointer">
-                    <input type="text" v-model="editOrgData.couleurSignature" class="enigma-field flex-grow-1" placeholder="#6366f1">
-                  </div>
-                </div>
-              </div>
+
               <div class="col-md-6">
                 <div class="enigma-input-wrap">
                   <label>VILLE</label>

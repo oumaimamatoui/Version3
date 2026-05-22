@@ -8,8 +8,13 @@
         <!-- HEADER WITH CONTROLS -->
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
           <div>
-            <h2 class="fw-800 text-navy mb-1">
-              Analytics <span class="text-primary font-gradient">Global</span>
+            <div class="breadcrumb-pro mb-2">
+              <span class="root">Administration</span>
+              <i class="fa-solid fa-chevron-right mx-2 separator"></i>
+              <span class="current">Analytics Global</span>
+            </div>
+            <h2 class="premium-title mb-1">
+              Analytics <span class="gradient-text">Global</span>
             </h2>
             <p class="text-muted tiny mb-0">Statistiques en temps réel et performance financière de la plateforme.</p>
           </div>
@@ -17,24 +22,33 @@
           <div class="d-flex align-items-center gap-2">
             <!-- Period Selector -->
             <div class="dropdown">
-              <button class="btn btn-glass dropdown-toggle tiny fw-bold px-3 py-2" type="button" data-bs-toggle="dropdown">
-                <i class="fa-solid fa-calendar-days me-2 text-primary"></i> {{ activePeriodLabel }}
+              <button class="btn-glass-pro dropdown-toggle tiny fw-bold px-3 py-2" type="button" data-bs-toggle="dropdown">
+                <i class="fa-solid fa-calendar-days me-2 text-amber"></i> {{ activePeriodLabel }}
               </button>
-              <ul class="dropdown-menu dropdown-menu-end shadow border-0 glass-dropdown">
-                <li><a class="dropdown-item tiny fw-semibold" href="#" @click.prevent="setPeriod('month')">7 Derniers Jours</a></li>
-                <li><a class="dropdown-item tiny fw-semibold" href="#" @click.prevent="setPeriod('quarter')">30 Derniers Jours</a></li>
-                <li><a class="dropdown-item tiny fw-semibold" href="#" @click.prevent="setPeriod('year')">Cette Année (12 mois)</a></li>
+              <ul class="dropdown-menu dropdown-menu-end shadow border-0 glass-dropdown-pro">
+                <li><a class="dropdown-item tiny fw-semibold" href="#" @click.prevent="setPeriod('month')">
+                  <i class="fa-solid fa-clock me-2 text-amber"></i>7 Derniers Jours
+                </a></li>
+                <li><a class="dropdown-item tiny fw-semibold" href="#" @click.prevent="setPeriod('quarter')">
+                  <i class="fa-solid fa-calendar me-2 text-amber"></i>30 Derniers Jours
+                </a></li>
+                <li><a class="dropdown-item tiny fw-semibold" href="#" @click.prevent="setPeriod('year')">
+                  <i class="fa-solid fa-chart-line me-2 text-amber"></i>Cette Année (12 mois)
+                </a></li>
               </ul>
             </div>
 
             <!-- Export Button -->
-            <button class="btn btn-primary btn-glow tiny fw-bold px-3 py-2" @click="simulateExport" :disabled="exporting">
-              <i v-if="exporting" class="fa-solid fa-circle-notch fa-spin me-2"></i>
-              <i v-else class="fa-solid fa-download me-2"></i> Exporter
+            <button class="btn-enigma-primary-sm" @click="simulateExport" :disabled="exporting">
+              <div class="btn-content-sm">
+                <i v-if="exporting" class="fa-solid fa-circle-notch fa-spin me-2"></i>
+                <i v-else class="fa-solid fa-download me-2"></i> Exporter
+              </div>
+              <div class="btn-glow-sm"></div>
             </button>
 
             <!-- Refresh Button -->
-            <button class="btn btn-glass btn-icon" @click="refreshData" :class="{ 'fa-spin-active': loading }">
+            <button class="btn-refresh-pro" @click="refreshData" :class="{ 'fa-spin-active': loading }">
               <i class="fa-solid fa-rotate"></i>
             </button>
           </div>
@@ -42,27 +56,27 @@
 
         <!-- LOADING OVERLAY -->
         <div v-if="loading" class="d-flex align-items-center justify-content-center py-5 my-5">
-          <div class="spinner-loader"></div>
+          <div class="spinner-pro-premium"></div>
         </div>
 
         <div v-else class="animate-fade-in">
           <!-- MASTER KPI CARDS -->
           <div class="row g-4 mb-4">
             <div class="col-md-3 col-sm-6" v-for="(stat, i) in currentStats" :key="stat.label">
-              <div class="kpi-card p-4 shadow-sm relative overflow-hidden transition-all">
-                <div class="card-glow" :style="{ background: stat.glowColor }"></div>
+              <div class="stat-card-premium p-4 relative overflow-hidden">
+                <div class="stat-glow-orb" :style="{ background: stat.glowColor }"></div>
                 
                 <div class="d-flex justify-content-between align-items-start mb-3">
-                  <div class="tiny fw-800 text-muted uppercase tracking-wider">{{ stat.label }}</div>
-                  <div class="kpi-icon" :style="{ background: stat.bg, color: stat.color }">
+                  <div class="tiny fw-900 text-muted uppercase tracking-wider stat-label-top">{{ stat.label }}</div>
+                  <div class="stat-icon-wrapper" :style="{ background: stat.bg, color: stat.color }">
                     <i :class="stat.icon"></i>
                   </div>
                 </div>
 
-                <div class="h2 fw-800 text-navy tracking-tight mb-2">{{ stat.val }}</div>
+                <div class="stat-value mb-2">{{ stat.val }}</div>
                 
-                <div class="d-flex align-items-center gap-1.5 tiny">
-                  <span class="fw-bold px-2 py-0.5 rounded-full" :class="stat.trend >= 0 ? 'trend-up' : 'trend-down'">
+                <div class="d-flex align-items-center gap-1 tiny">
+                  <span class="trend-badge fw-bold px-2 py-1 rounded-pill" :class="stat.trend >= 0 ? 'trend-up' : 'trend-down'">
                     <i :class="stat.trend >= 0 ? 'fa-solid fa-arrow-trend-up' : 'fa-solid fa-arrow-trend-down'"></i>
                     {{ Math.abs(stat.trend) }}%
                   </span>
@@ -76,16 +90,15 @@
           <div class="row g-4 mb-4">
             <!-- Line Chart: Revenue Evolution -->
             <div class="col-lg-8">
-              <div class="glass-card p-4 h-100">
+              <div class="enigma-card p-4 h-100">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                   <div>
-                    <h6 class="fw-800 text-navy mb-0">Évolution des Revenus (€)</h6>
+                    <h6 class="fw-900 text-navy mb-0">Évolution des Revenus <span class="text-muted fw-600">(€)</span></h6>
                     <p class="text-muted super-tiny mb-0">Courbe de croissance récurrente mensuelle.</p>
                   </div>
-                  <div class="d-flex align-items-center gap-3">
-                    <div class="d-flex align-items-center gap-1.5 tiny text-muted">
-                      <span class="legend-dot" style="background: #8b5cf6;"></span> Revenus récurrents
-                    </div>
+                  <div class="d-flex align-items-center gap-2 tiny text-muted">
+                    <span class="legend-dot-sm" style="background: #8b5cf6;"></span>
+                    <span class="fw-700">Revenus récurrents</span>
                   </div>
                 </div>
 
@@ -93,16 +106,16 @@
                 <div class="chart-container relative" style="height: 220px;">
                   <svg viewBox="0 0 500 240" class="w-100 h-100 overflow-visible" preserveAspectRatio="none">
                     <!-- Y-Axis Grid Lines -->
-                    <line x1="40" y1="40" x2="480" y2="40" stroke="var(--border-color)" stroke-dasharray="4" />
-                    <line x1="40" y1="90" x2="480" y2="90" stroke="var(--border-color)" stroke-dasharray="4" />
-                    <line x1="40" y1="140" x2="480" y2="140" stroke="var(--border-color)" stroke-dasharray="4" />
-                    <line x1="40" y1="190" x2="480" y2="190" stroke="var(--border-color)" />
+                    <line x1="40" y1="40" x2="480" y2="40" stroke="var(--border-chart)" stroke-dasharray="4" />
+                    <line x1="40" y1="90" x2="480" y2="90" stroke="var(--border-chart)" stroke-dasharray="4" />
+                    <line x1="40" y1="140" x2="480" y2="140" stroke="var(--border-chart)" stroke-dasharray="4" />
+                    <line x1="40" y1="190" x2="480" y2="190" stroke="var(--border-chart)" />
 
                     <!-- Y-Axis Labels -->
-                    <text x="10" y="45" font-size="9" fill="var(--text-light)" font-weight="bold">15k</text>
-                    <text x="10" y="95" font-size="9" fill="var(--text-light)" font-weight="bold">10k</text>
-                    <text x="10" y="145" font-size="9" fill="var(--text-light)" font-weight="bold">5k</text>
-                    <text x="10" y="195" font-size="9" fill="var(--text-light)" font-weight="bold">0</text>
+                    <text x="10" y="45" font-size="9" fill="var(--text-chart)" font-weight="bold">15k</text>
+                    <text x="10" y="95" font-size="9" fill="var(--text-chart)" font-weight="bold">10k</text>
+                    <text x="10" y="145" font-size="9" fill="var(--text-chart)" font-weight="bold">5k</text>
+                    <text x="10" y="195" font-size="9" fill="var(--text-chart)" font-weight="bold">0</text>
 
                     <!-- Area under the Curve -->
                     <path :d="curveAreaPath" fill="url(#area-grad)" class="area-transition" />
@@ -113,13 +126,13 @@
                     <!-- Grid Definitions -->
                     <defs>
                       <linearGradient id="area-grad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.35" />
-                        <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.0" />
+                        <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.3" />
+                        <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.0" />
                       </linearGradient>
                       <linearGradient id="line-grad" x1="0" y1="0" x2="1" y2="0">
                         <stop offset="0%" stop-color="#3b82f6" />
-                        <stop offset="50%" stop-color="#8b5cf6" />
-                        <stop offset="100%" stop-color="#ec4899" />
+                        <stop offset="50%" stop-color="#f59e0b" />
+                        <stop offset="100%" stop-color="#fb923c" />
                       </linearGradient>
                     </defs>
 
@@ -128,24 +141,24 @@
                        @mouseenter="hoveredPoint = idx" 
                        @mouseleave="hoveredPoint = null"
                        class="cursor-pointer">
-                      <circle :cx="pt.x" :cy="pt.y" r="5" fill="var(--bg-card)" stroke="#8b5cf6" stroke-width="3" class="transition-all" />
-                      <circle :cx="pt.x" :cy="pt.y" r="12" fill="transparent" />
+                      <circle :cx="pt.x" :cy="pt.y" r="5" fill="white" stroke="#f59e0b" stroke-width="3" class="transition-all chart-point" />
+                      <circle :cx="pt.x" :cy="pt.y" r="14" fill="transparent" />
                     </g>
                   </svg>
 
                   <!-- Tooltip Float -->
                   <div v-if="hoveredPoint !== null" 
-                       class="chart-tooltip p-2 text-center absolute shadow"
+                       class="chart-tooltip-pro p-2 text-center absolute shadow"
                        :style="{ 
                          left: (currentCurvePoints[hoveredPoint].x / 5) + '%', 
-                         top: (currentCurvePoints[hoveredPoint].y - 50) + 'px'
+                         top: (currentCurvePoints[hoveredPoint].y - 55) + 'px'
                        }">
-                    <div class="super-tiny text-muted fw-bold">{{ monthsLabels[hoveredPoint] }}</div>
-                    <div class="tiny fw-800 text-navy">{{ currentLineData[hoveredPoint] }} €</div>
+                    <div class="super-tiny text-muted fw-800">{{ monthsLabels[hoveredPoint] }}</div>
+                    <div class="tiny fw-900" style="color:#f59e0b;">{{ currentLineData[hoveredPoint] }} €</div>
                   </div>
                 </div>
 
-                <div class="d-flex justify-content-between px-4 mt-3 tiny fw-bold text-muted">
+                <div class="d-flex justify-content-between px-4 mt-3 tiny fw-800 text-muted">
                   <span v-for="m in monthsLabels" :key="m">{{ m }}</span>
                 </div>
               </div>
@@ -153,9 +166,9 @@
 
             <!-- Bar Chart: Subscription Distribution -->
             <div class="col-lg-4">
-              <div class="glass-card p-4 h-100">
+              <div class="enigma-card p-4 h-100">
                 <div class="mb-4">
-                  <h6 class="fw-800 text-navy mb-0">Répartition des abonnements</h6>
+                  <h6 class="fw-900 text-navy mb-0">Répartition des abonnements</h6>
                   <p class="text-muted super-tiny mb-0">Pourcentage et volume d'organisations par offre active.</p>
                 </div>
 
@@ -176,63 +189,62 @@
                         <stop offset="100%" stop-color="#059669" />
                       </linearGradient>
                       <linearGradient id="grad-gratuit" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="#9ca3af" />
-                        <stop offset="100%" stop-color="#6b7280" />
+                        <stop offset="0%" stop-color="#94a3b8" />
+                        <stop offset="100%" stop-color="#64748b" />
                       </linearGradient>
                     </defs>
 
                     <!-- Horizontal Grid Lines -->
-                    <line x1="30" y1="40" x2="280" y2="40" stroke="var(--border-color)" stroke-dasharray="2" />
-                    <line x1="30" y1="100" x2="280" y2="100" stroke="var(--border-color)" stroke-dasharray="2" />
-                    <line x1="30" y1="160" x2="280" y2="160" stroke="var(--border-color)" />
+                    <line x1="30" y1="40" x2="280" y2="40" stroke="var(--border-chart)" stroke-dasharray="2" />
+                    <line x1="30" y1="100" x2="280" y2="100" stroke="var(--border-chart)" stroke-dasharray="2" />
+                    <line x1="30" y1="160" x2="280" y2="160" stroke="var(--border-chart)" />
 
-                    <!-- Bars with responsive dynamic animations -->
                     <!-- STARTUP -->
-                    <rect x="25" :y="160 - (120 * currentBarScale.startup)" width="30" :height="120 * currentBarScale.startup" rx="4" fill="url(#grad-startup)" class="chart-bar" @mouseenter="hoveredBar = 'startup'" @mouseleave="hoveredBar = null" />
+                    <rect x="25" :y="160 - (120 * currentBarScale.startup)" width="30" :height="120 * currentBarScale.startup" rx="6" fill="url(#grad-startup)" class="chart-bar" @mouseenter="hoveredBar = 'startup'" @mouseleave="hoveredBar = null" />
                     <!-- BUSINESS -->
-                    <rect x="90" :y="160 - (120 * currentBarScale.business)" width="30" :height="120 * currentBarScale.business" rx="4" fill="url(#grad-business)" class="chart-bar" @mouseenter="hoveredBar = 'business'" @mouseleave="hoveredBar = null" />
+                    <rect x="90" :y="160 - (120 * currentBarScale.business)" width="30" :height="120 * currentBarScale.business" rx="6" fill="url(#grad-business)" class="chart-bar" @mouseenter="hoveredBar = 'business'" @mouseleave="hoveredBar = null" />
                     <!-- ENTERPRISE -->
-                    <rect x="155" :y="160 - (120 * currentBarScale.enterprise)" width="30" :height="120 * currentBarScale.enterprise" rx="4" fill="url(#grad-enterprise)" class="chart-bar" @mouseenter="hoveredBar = 'enterprise'" @mouseleave="hoveredBar = null" />
+                    <rect x="155" :y="160 - (120 * currentBarScale.enterprise)" width="30" :height="120 * currentBarScale.enterprise" rx="6" fill="url(#grad-enterprise)" class="chart-bar" @mouseenter="hoveredBar = 'enterprise'" @mouseleave="hoveredBar = null" />
                     <!-- GRATUIT -->
-                    <rect x="220" :y="160 - (120 * currentBarScale.gratuit)" width="30" :height="120 * currentBarScale.gratuit" rx="4" fill="url(#grad-gratuit)" class="chart-bar" @mouseenter="hoveredBar = 'gratuit'" @mouseleave="hoveredBar = null" />
+                    <rect x="220" :y="160 - (120 * currentBarScale.gratuit)" width="30" :height="120 * currentBarScale.gratuit" rx="6" fill="url(#grad-gratuit)" class="chart-bar" @mouseenter="hoveredBar = 'gratuit'" @mouseleave="hoveredBar = null" />
                   </svg>
 
                   <!-- Tooltip Float for Bars -->
                   <div v-if="hoveredBar !== null" 
-                       class="chart-tooltip p-2 text-center absolute shadow"
+                       class="chart-tooltip-pro p-2 text-center absolute shadow"
                        :style="getBarTooltipStyle(hoveredBar)">
-                     <div class="super-tiny text-muted fw-bold uppercase">{{ hoveredBar }}</div>
-                     <div class="tiny fw-800 text-navy">{{ getBarStats(hoveredBar).pct }}%</div>
+                     <div class="super-tiny text-muted fw-800 uppercase">{{ hoveredBar }}</div>
+                     <div class="tiny fw-900" style="color:#f59e0b;">{{ getBarStats(hoveredBar).pct }}%</div>
                      <div class="super-tiny text-muted">{{ getBarStats(hoveredBar).count }} orgs</div>
                   </div>
                 </div>
 
-                <div class="d-flex justify-content-around mt-2 tiny fw-800 text-muted flex-wrap gap-1">
-                  <span class="badge-tag tag-primary">STARTUP</span>
-                  <span class="badge-tag tag-amber">BUSINESS</span>
-                  <span class="badge-tag tag-emerald">ENTERPRISE</span>
-                  <span class="badge-tag tag-secondary" style="background-color: #6b7280; color: #fff;">GRATUIT</span>
+                <div class="d-flex justify-content-around mt-2 flex-wrap gap-1">
+                  <span class="plan-tag tag-blue">STARTUP</span>
+                  <span class="plan-tag tag-amber">BUSINESS</span>
+                  <span class="plan-tag tag-emerald">ENTERPRISE</span>
+                  <span class="plan-tag tag-slate">GRATUIT</span>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- DETAILED DATA TABLE -->
-          <div class="glass-card p-4">
+          <div class="enigma-card p-4">
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
               <div>
-                <h6 class="fw-800 text-navy mb-1">Dernières Activités Financières</h6>
+                <h6 class="fw-900 text-navy mb-1">Dernières Activités Financières</h6>
                 <p class="text-muted super-tiny mb-0">Historique des transactions et abonnements récemment validés.</p>
               </div>
-              <button class="btn btn-glass tiny fw-bold px-3 py-1.5" @click="router.push('/super-admin')">
+              <button class="btn-outline-pro tiny fw-bold px-3 py-2" @click="router.push('/super-admin')">
                 <i class="fa-solid fa-list me-2"></i> Gérer Organisations
               </button>
             </div>
 
             <div class="table-responsive">
-              <table class="table custom-table align-middle">
+              <table class="table custom-table-pro align-middle">
                 <thead>
-                  <tr class="text-muted tiny uppercase font-weight-bold">
+                  <tr>
                     <th scope="col">Organisation</th>
                     <th scope="col">Formule</th>
                     <th scope="col">Moyen de paiement</th>
@@ -242,33 +254,38 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="org in recentActivities" :key="org.id" class="hover-row">
+                  <tr v-for="org in recentActivities" :key="org.id" class="table-row-pro">
                     <td>
-                      <div class="d-flex align-items-center gap-2.5">
-                        <div class="avatar-circle font-weight-bold shadow-sm" :style="{ background: org.color + '15', color: org.color }">
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="org-avatar fw-bold" :style="{ background: org.color + '18', color: org.color }">
                           {{ org.name[0] }}
                         </div>
                         <div>
-                          <div class="fw-bold text-navy tiny">{{ org.name }}</div>
+                          <div class="fw-800 text-navy tiny">{{ org.name }}</div>
                           <div class="super-tiny text-muted">ID: {{ org.code }}</div>
                         </div>
                       </div>
                     </td>
                     <td>
-                      <span class="badge-tag" :class="getPlanTagClass(org.plan)">
+                      <span class="plan-tag" :class="getPlanTagClass(org.plan)">
                         {{ org.plan }}
                       </span>
                     </td>
                     <td>
                       <div class="d-flex align-items-center gap-2 tiny">
                         <i :class="org.paymentIcon + ' text-muted'"></i>
-                        <span class="fw-semibold text-muted">{{ org.paymentMethod }}</span>
+                        <span class="fw-700 text-muted">{{ org.paymentMethod }}</span>
                       </div>
                     </td>
-                    <td class="tiny fw-bold text-navy">{{ org.date }}</td>
-                    <td class="tiny fw-800 text-navy">{{ org.price }} €<span class="text-muted super-tiny fw-semibold">/mois</span></td>
+                    <td class="tiny fw-800 text-navy">{{ org.date }}</td>
+                    <td>
+                      <span class="tiny fw-900 text-navy">{{ org.price }} €</span>
+                      <span class="text-muted super-tiny fw-600">/mois</span>
+                    </td>
                     <td class="text-center">
-                      <span class="status-pill status-success tiny">Actif</span>
+                      <span class="status-pill-pro status-active tiny">
+                        <span class="status-dot-pro"></span> Actif
+                      </span>
                     </td>
                   </tr>
                 </tbody>
@@ -307,28 +324,26 @@ const recentActivities = ref([]);
 
 const statsByPeriod = ref({
   month: [
-    { label: 'Organisations', val: '0', trend: 12, bg: '#e0e7ff', color: '#6366f1', glowColor: 'rgba(99, 102, 241, 0.15)', icon: 'fa-solid fa-building' },
-    { label: 'Utilisateurs', val: '0', trend: 8, bg: '#fef3c7', color: '#d97706', glowColor: 'rgba(217, 119, 6, 0.15)', icon: 'fa-solid fa-users' },
-    { label: 'Tests Passés', val: '0', trend: 25, bg: '#d1fae5', color: '#059669', glowColor: 'rgba(5, 150, 105, 0.15)', icon: 'fa-solid fa-wand-magic-sparkles' },
-    { label: 'Abonnements', val: '0 €', trend: 5, bg: '#fee2e2', color: '#dc2626', glowColor: 'rgba(220, 38, 38, 0.15)', icon: 'fa-solid fa-coins' }
+    { label: 'Organisations', val: '0', trend: 12, bg: '#e0e7ff', color: '#6366f1', glowColor: 'rgba(99, 102, 241, 0.12)', icon: 'fa-solid fa-building' },
+    { label: 'Utilisateurs', val: '0', trend: 8, bg: '#fef3c7', color: '#d97706', glowColor: 'rgba(217, 119, 6, 0.12)', icon: 'fa-solid fa-users' },
+    { label: 'Tests Passés', val: '0', trend: 25, bg: '#d1fae5', color: '#059669', glowColor: 'rgba(5, 150, 105, 0.12)', icon: 'fa-solid fa-wand-magic-sparkles' },
+    { label: 'Abonnements', val: '0 €', trend: 5, bg: '#fee2e2', color: '#dc2626', glowColor: 'rgba(220, 38, 38, 0.12)', icon: 'fa-solid fa-coins' }
   ],
   quarter: [
-    { label: 'Organisations', val: '0', trend: 18, bg: '#e0e7ff', color: '#6366f1', glowColor: 'rgba(99, 102, 241, 0.15)', icon: 'fa-solid fa-building' },
-    { label: 'Utilisateurs', val: '0', trend: 15, bg: '#fef3c7', color: '#d97706', glowColor: 'rgba(217, 119, 6, 0.15)', icon: 'fa-solid fa-users' },
-    { label: 'Tests Passés', val: '0', trend: 32, bg: '#d1fae5', color: '#059669', glowColor: 'rgba(5, 150, 105, 0.15)', icon: 'fa-solid fa-wand-magic-sparkles' },
-    { label: 'Abonnements', val: '0 €', trend: 12, bg: '#fee2e2', color: '#dc2626', glowColor: 'rgba(220, 38, 38, 0.15)', icon: 'fa-solid fa-coins' }
+    { label: 'Organisations', val: '0', trend: 18, bg: '#e0e7ff', color: '#6366f1', glowColor: 'rgba(99, 102, 241, 0.12)', icon: 'fa-solid fa-building' },
+    { label: 'Utilisateurs', val: '0', trend: 15, bg: '#fef3c7', color: '#d97706', glowColor: 'rgba(217, 119, 6, 0.12)', icon: 'fa-solid fa-users' },
+    { label: 'Tests Passés', val: '0', trend: 32, bg: '#d1fae5', color: '#059669', glowColor: 'rgba(5, 150, 105, 0.12)', icon: 'fa-solid fa-wand-magic-sparkles' },
+    { label: 'Abonnements', val: '0 €', trend: 12, bg: '#fee2e2', color: '#dc2626', glowColor: 'rgba(220, 38, 38, 0.12)', icon: 'fa-solid fa-coins' }
   ],
   year: [
-    { label: 'Organisations', val: '0', trend: 45, bg: '#e0e7ff', color: '#6366f1', glowColor: 'rgba(99, 102, 241, 0.15)', icon: 'fa-solid fa-building' },
-    { label: 'Utilisateurs', val: '0', trend: 38, bg: '#fef3c7', color: '#d97706', glowColor: 'rgba(217, 119, 6, 0.15)', icon: 'fa-solid fa-users' },
-    { label: 'Tests Passés', val: '0', trend: 78, bg: '#d1fae5', color: '#059669', glowColor: 'rgba(5, 150, 105, 0.15)', icon: 'fa-solid fa-wand-magic-sparkles' },
-    { label: 'Abonnements', val: '0 €', trend: 28, bg: '#fee2e2', color: '#dc2626', glowColor: 'rgba(220, 38, 38, 0.15)', icon: 'fa-solid fa-coins' }
+    { label: 'Organisations', val: '0', trend: 45, bg: '#e0e7ff', color: '#6366f1', glowColor: 'rgba(99, 102, 241, 0.12)', icon: 'fa-solid fa-building' },
+    { label: 'Utilisateurs', val: '0', trend: 38, bg: '#fef3c7', color: '#d97706', glowColor: 'rgba(217, 119, 6, 0.12)', icon: 'fa-solid fa-users' },
+    { label: 'Tests Passés', val: '0', trend: 78, bg: '#d1fae5', color: '#059669', glowColor: 'rgba(5, 150, 105, 0.12)', icon: 'fa-solid fa-wand-magic-sparkles' },
+    { label: 'Abonnements', val: '0 €', trend: 28, bg: '#fee2e2', color: '#dc2626', glowColor: 'rgba(220, 38, 38, 0.12)', icon: 'fa-solid fa-coins' }
   ]
 });
 
-const currentStats = computed(() => {
-  return statsByPeriod.value[activePeriod.value];
-});
+const currentStats = computed(() => statsByPeriod.value[activePeriod.value]);
 
 const curveLineDataByPeriod = ref({
   month: [4200, 6800, 5100, 9400, 8200, 14200],
@@ -336,23 +351,16 @@ const curveLineDataByPeriod = ref({
   year: [18000, 24000, 29000, 38000, 42000, 54200]
 });
 
-const currentLineData = computed(() => {
-  return curveLineDataByPeriod.value[activePeriod.value];
-});
-
+const currentLineData = computed(() => curveLineDataByPeriod.value[activePeriod.value]);
 const monthsLabels = ref(['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun']);
 
 const currentCurvePoints = computed(() => {
   const data = currentLineData.value;
   const maxVal = Math.max(...data, 1000) * 1.15;
-  const points = [];
-  for (let i = 0; i < data.length; i++) {
-    const x = 40 + (440 / (data.length - 1)) * i;
-    const ratio = data[i] / maxVal;
-    const y = 190 - (150 * ratio);
-    points.push({ x, y });
-  }
-  return points;
+  return data.map((val, i) => ({
+    x: 40 + (440 / (data.length - 1)) * i,
+    y: 190 - (150 * (val / maxVal))
+  }));
 });
 
 const curveLinePath = computed(() => {
@@ -360,11 +368,8 @@ const curveLinePath = computed(() => {
   if (pts.length < 2) return '';
   let d = `M ${pts[0].x} ${pts[0].y}`;
   for (let i = 0; i < pts.length - 1; i++) {
-    const cpX1 = pts[i].x + (pts[i+1].x - pts[i].x) / 2;
-    const cpY1 = pts[i].y;
-    const cpX2 = pts[i].x + (pts[i+1].x - pts[i].x) / 2;
-    const cpY2 = pts[i+1].y;
-    d += ` C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${pts[i+1].x} ${pts[i+1].y}`;
+    const cpX = pts[i].x + (pts[i+1].x - pts[i].x) / 2;
+    d += ` C ${cpX} ${pts[i].y}, ${cpX} ${pts[i+1].y}, ${pts[i+1].x} ${pts[i+1].y}`;
   }
   return d;
 });
@@ -372,9 +377,7 @@ const curveLinePath = computed(() => {
 const curveAreaPath = computed(() => {
   const pts = currentCurvePoints.value;
   if (pts.length < 2) return '';
-  let d = curveLinePath.value;
-  d += ` L ${pts[pts.length - 1].x} 190 L ${pts[0].x} 190 Z`;
-  return d;
+  return curveLinePath.value + ` L ${pts[pts.length - 1].x} 190 L ${pts[0].x} 190 Z`;
 });
 
 const barScaleByPeriod = ref({
@@ -383,53 +386,26 @@ const barScaleByPeriod = ref({
   year: { startup: 0.0, business: 0.0, enterprise: 0.0, gratuit: 0.0 }
 });
 
-const currentBarScale = computed(() => {
-  return barScaleByPeriod.value[activePeriod.value];
-});
+const currentBarScale = computed(() => barScaleByPeriod.value[activePeriod.value]);
 
 function getBarTooltipStyle(bar) {
-  let leftOffset = '50%';
-  if (bar === 'startup') leftOffset = '18%';
-  if (bar === 'business') leftOffset = '38%';
-  if (bar === 'enterprise') leftOffset = '58%';
-  if (bar === 'gratuit') leftOffset = '78%';
-  return {
-    left: leftOffset,
-    top: '10px',
-    transform: 'translateX(-50%)',
-    zIndex: 10
-  };
+  const leftMap = { startup: '18%', business: '38%', enterprise: '58%', gratuit: '78%' };
+  return { left: leftMap[bar] || '50%', top: '10px', transform: 'translateX(-50%)', zIndex: 10 };
 }
 
 const planStats = ref({
-  month: {
-    startup: { pct: 0, count: 0 },
-    business: { pct: 0, count: 0 },
-    enterprise: { pct: 0, count: 0 },
-    gratuit: { pct: 0, count: 0 }
-  },
-  quarter: {
-    startup: { pct: 0, count: 0 },
-    business: { pct: 0, count: 0 },
-    enterprise: { pct: 0, count: 0 },
-    gratuit: { pct: 0, count: 0 }
-  },
-  year: {
-    startup: { pct: 0, count: 0 },
-    business: { pct: 0, count: 0 },
-    enterprise: { pct: 0, count: 0 },
-    gratuit: { pct: 0, count: 0 }
-  }
+  month: { startup: { pct: 0, count: 0 }, business: { pct: 0, count: 0 }, enterprise: { pct: 0, count: 0 }, gratuit: { pct: 0, count: 0 } },
+  quarter: { startup: { pct: 0, count: 0 }, business: { pct: 0, count: 0 }, enterprise: { pct: 0, count: 0 }, gratuit: { pct: 0, count: 0 } },
+  year: { startup: { pct: 0, count: 0 }, business: { pct: 0, count: 0 }, enterprise: { pct: 0, count: 0 }, gratuit: { pct: 0, count: 0 } }
 });
 
-function getBarStats(bar) {
-  return planStats.value[activePeriod.value][bar];
-}
+function getBarStats(bar) { return planStats.value[activePeriod.value][bar]; }
 
 function getPlanTagClass(plan) {
   if (plan === 'ENTERPRISE') return 'tag-emerald';
   if (plan === 'BUSINESS') return 'tag-amber';
-  return 'tag-primary';
+  if (plan === 'GRATUIT') return 'tag-slate';
+  return 'tag-blue';
 }
 
 async function loadRealStats() {
@@ -442,40 +418,34 @@ async function loadRealStats() {
     const totalUsers = statsData.value.totalUtilisateurs || 0;
     const totalT = statsData.value.totalTests || 0;
     const totalRev = statsData.value.totalRevenus || 0;
-
     const totalEnt7 = statsData.value.totalEntreprises7Days || 0;
     const totalUsers7 = statsData.value.totalUtilisateurs7Days || 0;
     const totalT7 = statsData.value.totalTests7Days || 0;
     const totalRev7 = statsData.value.totalRevenus7Days || 0;
-
     const totalEnt30 = statsData.value.totalEntreprises30Days || 0;
     const totalUsers30 = statsData.value.totalUtilisateurs30Days || 0;
     const totalT30 = statsData.value.totalTests30Days || 0;
     const totalRev30 = statsData.value.totalRevenus30Days || 0;
 
-    // Load active period real values
     statsByPeriod.value.month = [
-      { label: 'Organisations', val: totalEnt7.toString(), trend: 0, bg: '#e0e7ff', color: '#6366f1', glowColor: 'rgba(99, 102, 241, 0.15)', icon: 'fa-solid fa-building' },
-      { label: 'Utilisateurs', val: formatNumber(totalUsers7), trend: 0, bg: '#fef3c7', color: '#d97706', glowColor: 'rgba(217, 119, 6, 0.15)', icon: 'fa-solid fa-users' },
-      { label: 'Tests Passés', val: formatNumber(totalT7), trend: 0, bg: '#d1fae5', color: '#059669', glowColor: 'rgba(5, 150, 105, 0.15)', icon: 'fa-solid fa-wand-magic-sparkles' },
-      { label: 'Abonnements', val: `${totalRev7.toLocaleString()} €`, trend: 0, bg: '#fee2e2', color: '#dc2626', glowColor: 'rgba(220, 38, 38, 0.15)', icon: 'fa-solid fa-coins' }
+      { label: 'Organisations', val: totalEnt7.toString(), trend: 0, bg: '#e0e7ff', color: '#6366f1', glowColor: 'rgba(99, 102, 241, 0.12)', icon: 'fa-solid fa-building' },
+      { label: 'Utilisateurs', val: formatNumber(totalUsers7), trend: 0, bg: '#fef3c7', color: '#d97706', glowColor: 'rgba(217, 119, 6, 0.12)', icon: 'fa-solid fa-users' },
+      { label: 'Tests Passés', val: formatNumber(totalT7), trend: 0, bg: '#d1fae5', color: '#059669', glowColor: 'rgba(5, 150, 105, 0.12)', icon: 'fa-solid fa-wand-magic-sparkles' },
+      { label: 'Abonnements', val: `${totalRev7.toLocaleString()} €`, trend: 0, bg: '#fee2e2', color: '#dc2626', glowColor: 'rgba(220, 38, 38, 0.12)', icon: 'fa-solid fa-coins' }
     ];
-
     statsByPeriod.value.quarter = [
-      { label: 'Organisations', val: totalEnt30.toString(), trend: 0, bg: '#e0e7ff', color: '#6366f1', glowColor: 'rgba(99, 102, 241, 0.15)', icon: 'fa-solid fa-building' },
-      { label: 'Utilisateurs', val: formatNumber(totalUsers30), trend: 0, bg: '#fef3c7', color: '#d97706', glowColor: 'rgba(217, 119, 6, 0.15)', icon: 'fa-solid fa-users' },
-      { label: 'Tests Passés', val: formatNumber(totalT30), trend: 0, bg: '#d1fae5', color: '#059669', glowColor: 'rgba(5, 150, 105, 0.15)', icon: 'fa-solid fa-wand-magic-sparkles' },
-      { label: 'Abonnements', val: `${totalRev30.toLocaleString()} €`, trend: 0, bg: '#fee2e2', color: '#dc2626', glowColor: 'rgba(220, 38, 38, 0.15)', icon: 'fa-solid fa-coins' }
+      { label: 'Organisations', val: totalEnt30.toString(), trend: 0, bg: '#e0e7ff', color: '#6366f1', glowColor: 'rgba(99, 102, 241, 0.12)', icon: 'fa-solid fa-building' },
+      { label: 'Utilisateurs', val: formatNumber(totalUsers30), trend: 0, bg: '#fef3c7', color: '#d97706', glowColor: 'rgba(217, 119, 6, 0.12)', icon: 'fa-solid fa-users' },
+      { label: 'Tests Passés', val: formatNumber(totalT30), trend: 0, bg: '#d1fae5', color: '#059669', glowColor: 'rgba(5, 150, 105, 0.12)', icon: 'fa-solid fa-wand-magic-sparkles' },
+      { label: 'Abonnements', val: `${totalRev30.toLocaleString()} €`, trend: 0, bg: '#fee2e2', color: '#dc2626', glowColor: 'rgba(220, 38, 38, 0.12)', icon: 'fa-solid fa-coins' }
     ];
-
     statsByPeriod.value.year = [
-      { label: 'Organisations', val: totalEnt.toString(), trend: 0, bg: '#e0e7ff', color: '#6366f1', glowColor: 'rgba(99, 102, 241, 0.15)', icon: 'fa-solid fa-building' },
-      { label: 'Utilisateurs', val: formatNumber(totalUsers), trend: 0, bg: '#fef3c7', color: '#d97706', glowColor: 'rgba(217, 119, 6, 0.15)', icon: 'fa-solid fa-users' },
-      { label: 'Tests Passés', val: formatNumber(totalT), trend: 0, bg: '#d1fae5', color: '#059669', glowColor: 'rgba(5, 150, 105, 0.15)', icon: 'fa-solid fa-wand-magic-sparkles' },
-      { label: 'Abonnements', val: `${totalRev.toLocaleString()} €`, trend: 0, bg: '#fee2e2', color: '#dc2626', glowColor: 'rgba(220, 38, 38, 0.15)', icon: 'fa-solid fa-coins' }
+      { label: 'Organisations', val: totalEnt.toString(), trend: 0, bg: '#e0e7ff', color: '#6366f1', glowColor: 'rgba(99, 102, 241, 0.12)', icon: 'fa-solid fa-building' },
+      { label: 'Utilisateurs', val: formatNumber(totalUsers), trend: 0, bg: '#fef3c7', color: '#d97706', glowColor: 'rgba(217, 119, 6, 0.12)', icon: 'fa-solid fa-users' },
+      { label: 'Tests Passés', val: formatNumber(totalT), trend: 0, bg: '#d1fae5', color: '#059669', glowColor: 'rgba(5, 150, 105, 0.12)', icon: 'fa-solid fa-wand-magic-sparkles' },
+      { label: 'Abonnements', val: `${totalRev.toLocaleString()} €`, trend: 0, bg: '#fee2e2', color: '#dc2626', glowColor: 'rgba(220, 38, 38, 0.12)', icon: 'fa-solid fa-coins' }
     ];
 
-    // Real active plan distribution counts
     const stCount = statsData.value.startupCount || 0;
     const bsCount = statsData.value.businessCount || 0;
     const epCount = statsData.value.enterpriseCount || 0;
@@ -488,7 +458,6 @@ async function loadRealStats() {
       enterprise: { pct: Math.round((epCount / totalPlans) * 100), count: epCount },
       gratuit: { pct: Math.round((grCount / totalPlans) * 100), count: grCount }
     };
-
     planStats.value.month = actualStats;
     planStats.value.quarter = actualStats;
     planStats.value.year = actualStats;
@@ -499,12 +468,10 @@ async function loadRealStats() {
       enterprise: epCount / totalPlans,
       gratuit: grCount / totalPlans
     };
-
     barScaleByPeriod.value.month = actualScales;
     barScaleByPeriod.value.quarter = actualScales;
     barScaleByPeriod.value.year = actualScales;
 
-    // Load recent activities
     if (statsData.value.recentTransactions && statsData.value.recentTransactions.length > 0) {
       recentActivities.value = statsData.value.recentTransactions.map((t, idx) => ({
         id: t.id || idx,
@@ -521,7 +488,6 @@ async function loadRealStats() {
       recentActivities.value = [];
     }
 
-    // Dynamic line/area curve from database registration history!
     if (statsData.value.monthlyRevenues && statsData.value.monthlyRevenues.length > 0) {
       curveLineDataByPeriod.value.month = statsData.value.monthlyRevenues;
       curveLineDataByPeriod.value.quarter = statsData.value.monthlyRevenues;
@@ -532,13 +498,11 @@ async function loadRealStats() {
       curveLineDataByPeriod.value.year = [0, 0, 0, 0, 0, 0];
     }
 
-    // Dynamically calculate month names labels for the last 6 months
     const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jui', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
     const labels = [];
     const currentM = new Date().getMonth();
     for (let i = 5; i >= 0; i--) {
-      let mIdx = (currentM - i + 12) % 12;
-      labels.push(monthNames[mIdx]);
+      labels.push(monthNames[(currentM - i + 12) % 12]);
     }
     monthsLabels.value = labels;
 
@@ -573,13 +537,7 @@ function simulateExport() {
   exporting.value = true;
   setTimeout(() => {
     exporting.value = false;
-    
-    // Generate beautiful real report content
-    const dateStr = new Date().toLocaleDateString('fr-FR', {
-      year: 'numeric', month: 'long', day: 'numeric',
-      hour: '2-digit', minute: '2-digit'
-    });
-    
+    const dateStr = new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     const reportHtml = `<!DOCTYPE html>
 <html>
 <head>
@@ -588,11 +546,11 @@ function simulateExport() {
   <style>
     body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0f172a; padding: 40px; line-height: 1.6; background-color: #f8fafc; }
     .container { max-width: 900px; margin: 0 auto; background: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); border: 1px solid #e2e8f0; }
-    .header { border-bottom: 2px solid #3b82f6; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+    .header { border-bottom: 2px solid #f59e0b; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
     .title { font-size: 28px; font-weight: 800; color: #1e3a8a; margin: 0; }
     .subtitle { font-size: 13px; color: #64748b; margin-top: 5px; }
-    .logo { font-size: 24px; font-weight: 900; color: #3b82f6; }
-    .section-title { font-size: 16px; font-weight: 800; color: #1e293b; margin-top: 35px; margin-bottom: 15px; border-left: 4px solid #3b82f6; padding-left: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .logo { font-size: 24px; font-weight: 900; color: #f59e0b; }
+    .section-title { font-size: 16px; font-weight: 800; color: #1e293b; margin-top: 35px; margin-bottom: 15px; border-left: 4px solid #f59e0b; padding-left: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
     .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
     .card { background: #f1f5f9; border: 1px solid #e2e8f0; padding: 18px; border-radius: 8px; text-align: center; }
     .card-label { font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; }
@@ -600,70 +558,23 @@ function simulateExport() {
     table { width: 100%; border-collapse: collapse; margin-top: 15px; }
     th { background: #f8fafc; text-align: left; padding: 12px; font-size: 11px; font-weight: 800; color: #475569; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; }
     td { padding: 14px 12px; font-size: 13px; border-bottom: 1px solid #e2e8f0; }
-    .badge { padding: 4px 8px; font-size: 10px; font-weight: 800; border-radius: 4px; display: inline-block; text-transform: uppercase; }
-    .badge-startup { background: rgba(59, 130, 246, 0.12); color: #2563eb; }
-    .badge-business { background: rgba(245, 158, 11, 0.12); color: #d97706; }
-    .badge-enterprise { background: rgba(16, 185, 129, 0.12); color: #059669; }
-    .badge-gratuit { background: #6b7280; color: #ffffff; }
     .footer { margin-top: 60px; font-size: 11px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 20px; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <div>
-        <div class="title">Rapport Financier Global</div>
-        <div class="subtitle">Généré le ${dateStr} par le Super Administrateur d'EvaluaTech</div>
-      </div>
-      <div class="logo">Evalua<span style="color:#0f172a;">Tech</span></div>
+      <div><div class="title">Rapport Financier Global</div><div class="subtitle">Généré le ${dateStr}</div></div>
+      <div class="logo">EvaluaTech</div>
     </div>
-    
     <div class="section-title">Métriques Clés (Période : ${activePeriodLabel.value})</div>
     <div class="grid">
-      ${currentStats.value.map(s => `
-        <div class="card">
-          <div class="card-label">${s.label}</div>
-          <div class="card-value">${s.val}</div>
-        </div>
-      `).join('')}
+      ${currentStats.value.map(s => `<div class="card"><div class="card-label">${s.label}</div><div class="card-value">${s.val}</div></div>`).join('')}
     </div>
-    
-    <div class="section-title">Dernières Activités & Transactions</div>
-    <table>
-      <thead>
-        <tr>
-          <th>Organisation</th>
-          <th>Formule</th>
-          <th>Moyen de paiement</th>
-          <th>Date d'activation</th>
-          <th>Facturation</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${recentActivities.value.length === 0 ? `
-          <tr>
-            <td colspan="5" style="text-align: center; color: #94a3b8; padding: 20px;">Aucune transaction récente enregistrée en base de données.</td>
-          </tr>
-        ` : recentActivities.value.map(org => `
-          <tr>
-            <td><strong>${org.name}</strong><br><small style="color: #64748b;">${org.code}</small></td>
-            <td><span class="badge badge-${org.plan.toLowerCase()}">${org.plan}</span></td>
-            <td>${org.paymentMethod}</td>
-            <td>${org.date}</td>
-            <td><strong>${org.price} €/mois</strong></td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
-    
-    <div class="footer">
-      EvaluaTech SaaS Platform &copy; ${new Date().getFullYear()} - Document Confidentiel Réservé à l'Administration.
-    </div>
+    <div class="footer">EvaluaTech SaaS Platform &copy; ${new Date().getFullYear()} — Document Confidentiel.</div>
   </div>
 </body>
 </html>`;
-    
-    // Create blob and trigger a real file download!
     const blob = new Blob([reportHtml], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -673,7 +584,6 @@ function simulateExport() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-
     toast.success("Rapport exporté et téléchargé avec succès !");
   }, 1000);
 }
@@ -684,157 +594,317 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* GENERAL STYLES */
+/* ═══════════════════════════════════════════════════════
+   CSS VARIABLES
+═══════════════════════════════════════════════════════ */
+:root {
+  --border-chart: #eef2f6;
+  --text-chart: #94a3b8;
+}
+
+/* ═══════════════════════════════════════════════════════
+   LAYOUT
+═══════════════════════════════════════════════════════ */
 .admin-body {
   min-height: 100vh;
-  background-color: var(--bg-page);
+  background-color: var(--bg-page, #f8fafc);
 }
 
-.font-gradient {
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
+/* ═══════════════════════════════════════════════════════
+   BREADCRUMB & HEADER
+═══════════════════════════════════════════════════════ */
+.breadcrumb-pro {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #94a3b8;
+}
+.breadcrumb-pro .root {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.breadcrumb-pro .root:hover { color: #f59e0b; }
+.breadcrumb-pro .separator { font-size: 0.55rem; opacity: 0.5; }
+.breadcrumb-pro .current { color: #0f172a; font-weight: 800; }
+
+.premium-title {
+  font-weight: 900;
+  font-size: 2rem;
+  letter-spacing: -1px;
+  color: #0f172a;
+}
+.gradient-text {
+  background: linear-gradient(135deg, #f59e0b 0%, #fb923c 50%, #fbbf24 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-/* BUTTONS */
-.btn-glass {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  color: var(--text-main);
-  backdrop-filter: blur(10px);
-  transition: var(--transition);
+/* ═══════════════════════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════════════════════ */
+.btn-glass-pro {
+  background: white;
+  border: 1.5px solid #eef2f6;
+  color: #0f172a;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 0.78rem;
+  transition: all 0.25s;
+  cursor: pointer;
 }
-.btn-glass:hover {
-  background: var(--bg-hover);
-  border-color: var(--text-light);
-}
-
-.btn-icon {
-  width: 38px;
-  height: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-sm);
-}
-
-.btn-glow:hover {
-  box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+.btn-glass-pro:hover {
+  border-color: #f59e0b;
+  background: #fffbeb;
   transform: translateY(-1px);
 }
 
-.fa-spin-active i {
-  animation: spin 0.8s linear infinite;
+.btn-enigma-primary-sm {
+  background: #0f172a;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 14px;
+  font-weight: 800;
+  font-size: 0.78rem;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.3s;
 }
-@keyframes spin {
-  100% { transform: rotate(360deg); }
+.btn-content-sm {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
 }
-
-/* LOADER */
-.spinner-loader {
-  width: 50px;
-  height: 50px;
-  border: 4px solid var(--border-color);
-  border-top-color: var(--primary);
-  border-radius: 50%;
-  animation: spin 1s ease-in-out infinite;
-}
-
-/* KPI CARDS */
-.kpi-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+.btn-glow-sm {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #f59e0b, #fb923c, #fbbf24);
+  opacity: 0;
+  transition: opacity 0.3s;
   z-index: 1;
 }
-.kpi-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--primary-light);
+.btn-enigma-primary-sm:hover .btn-glow-sm { opacity: 1; }
+.btn-enigma-primary-sm:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(245, 158, 11, 0.3);
 }
+.btn-enigma-primary-sm:hover .btn-content-sm { color: #0f172a; }
+.btn-enigma-primary-sm:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
 
-.card-glow {
-  position: absolute;
-  top: -30px;
-  right: -30px;
-  width: 90px;
-  height: 90px;
-  border-radius: 50%;
-  filter: blur(40px);
-  z-index: -1;
-  pointer-events: none;
-}
-
-.kpi-icon {
-  width: 44px;
-  height: 44px;
+.btn-refresh-pro {
+  width: 40px;
+  height: 40px;
+  background: white;
+  border: 1.5px solid #eef2f6;
+  border-radius: 14px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.3s;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-md);
-  font-size: 1.15rem;
-  box-shadow: var(--shadow-xs);
+}
+.btn-refresh-pro:hover {
+  background: #fffbeb;
+  border-color: #f59e0b;
+  color: #f59e0b;
+  transform: rotate(180deg) scale(1.05);
+}
+.btn-refresh-pro:hover i { animation: none; }
+.fa-spin-active i { animation: spin 0.8s linear infinite; }
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+.btn-outline-pro {
+  background: white;
+  color: #0f172a;
+  border: 1.5px solid #eef2f6;
+  padding: 9px 16px;
+  border-radius: 14px;
+  font-weight: 800;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.btn-outline-pro:hover {
+  border-color: #0f172a;
+  transform: translateY(-1px);
 }
 
-/* TREND BADGES */
-.trend-up {
-  background: rgba(16, 185, 129, 0.12);
-  color: #059669;
+/* ═══════════════════════════════════════════════════════
+   DROPDOWN
+═══════════════════════════════════════════════════════ */
+.glass-dropdown-pro {
+  background: white;
+  border: 1.5px solid #eef2f6 !important;
+  border-radius: 18px !important;
+  padding: 8px !important;
+  min-width: 200px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1) !important;
 }
-.trend-down {
-  background: rgba(239, 68, 68, 0.12);
-  color: #dc2626;
+.glass-dropdown-pro .dropdown-item {
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #0f172a;
+  transition: all 0.2s;
+}
+.glass-dropdown-pro .dropdown-item:hover {
+  background: #fffbeb;
+  color: #f59e0b;
+}
+.text-amber { color: #f59e0b !important; }
+
+/* ═══════════════════════════════════════════════════════
+   SPINNER
+═══════════════════════════════════════════════════════ */
+.spinner-pro-premium {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f1f5f9;
+  border-top: 4px solid #f59e0b;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
-/* GLASS CARD & TRANSITIONS */
-.glass-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+/* ═══════════════════════════════════════════════════════
+   KPI STAT CARDS — matching Campagne.vue premium style
+═══════════════════════════════════════════════════════ */
+.stat-card-premium {
+  background: white;
+  border-radius: 28px;
+  border: 1px solid #eef2f6;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+.stat-card-premium::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #f59e0b, transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.stat-card-premium:hover::before { opacity: 1; }
+.stat-card-premium:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 24px 48px rgba(0,0,0,0.08);
+  border-color: rgba(245,158,11,0.2);
 }
 
-/* SVG Line chart styles */
-.area-transition {
-  transition: d 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.line-transition {
-  transition: d 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+.stat-glow-orb {
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  filter: blur(50px);
+  z-index: 0;
+  pointer-events: none;
 }
 
+.stat-label-top {
+  position: relative;
+  z-index: 1;
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stat-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.06);
+  transition: transform 0.3s;
+}
+.stat-card-premium:hover .stat-icon-wrapper {
+  transform: scale(1.1) rotate(-5deg);
+}
+
+.stat-value {
+  font-size: 1.9rem;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -1px;
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.trend-badge {
+  font-size: 0.62rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.trend-up { background: rgba(16, 185, 129, 0.1); color: #059669; }
+.trend-down { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
+
+/* ═══════════════════════════════════════════════════════
+   GLASS CARDS — matching Campagne.vue enigma-card
+═══════════════════════════════════════════════════════ */
+.enigma-card {
+  background: white;
+  border: 1px solid #eef2f6;
+  border-radius: 30px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  transition: box-shadow 0.3s;
+}
+.text-navy { color: #0f172a; }
+
+/* ═══════════════════════════════════════════════════════
+   CHARTS
+═══════════════════════════════════════════════════════ */
+.chart-container { position: relative; }
+.area-transition { transition: d 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+.line-transition { transition: d 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
 .chart-point {
   transition: r 0.2s ease, stroke-width 0.2s ease;
+  cursor: pointer;
 }
 .chart-point:hover {
   r: 8px;
-  stroke-width: 4px;
-  filter: drop-shadow(0 0 6px #8b5cf6);
+  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.6));
 }
-
-/* SVG Bar chart styles */
 .chart-bar {
   cursor: pointer;
-  transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1), y 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+  transition: opacity 0.2s ease, filter 0.2s ease;
 }
 .chart-bar:hover {
-  opacity: 0.9;
-  filter: brightness(1.1) drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+  opacity: 0.85;
+  filter: brightness(1.1) drop-shadow(0 6px 10px rgba(0,0,0,0.15));
 }
 
-/* TOOLTIPS */
-.chart-tooltip {
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-  border-radius: var(--radius-sm);
+.chart-tooltip-pro {
+  position: absolute;
+  background: #0f172a;
+  border: 1px solid rgba(255,255,255,0.08);
+  color: white;
+  border-radius: 12px;
   z-index: 100;
-  pointer-events: none !important;
-  backdrop-filter: blur(4px);
+  pointer-events: none;
   min-width: 80px;
+  font-size: 0.7rem;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
   transition: opacity 0.15s ease-out;
 }
-.chart-tooltip::after {
+.chart-tooltip-pro::after {
   content: '';
   position: absolute;
   bottom: -5px;
@@ -842,95 +912,166 @@ onMounted(() => {
   transform: translateX(-50%);
   border-width: 5px 5px 0;
   border-style: solid;
-  border-color: rgba(15, 23, 42, 0.95) transparent;
-  display: block;
+  border-color: #0f172a transparent;
   width: 0;
+  display: block;
 }
 
-/* TABLE STYLING */
-.custom-table {
-  margin-bottom: 0;
-}
-.custom-table th {
-  border-bottom: 1.5px solid var(--border-color);
-  padding: 12px 16px;
-  font-size: 0.72rem;
-  letter-spacing: 0.05em;
-}
-.custom-table td {
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.hover-row {
-  transition: background 0.15s ease;
-}
-.hover-row:hover {
-  background-color: var(--bg-hover) !important;
-}
-
-/* AVATARS & PINS */
-.avatar-circle {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.95rem;
-}
-
-.badge-tag {
-  font-size: 0.68rem;
-  font-weight: 800;
-  padding: 4px 8px;
-  border-radius: var(--radius-xs);
-  display: inline-block;
-  letter-spacing: 0.02em;
-}
-
-.tag-primary { background: rgba(59, 130, 246, 0.12); color: #2563eb; }
-.tag-amber { background: rgba(245, 158, 11, 0.12); color: #d97706; }
-.tag-emerald { background: rgba(16, 185, 129, 0.12); color: #059669; }
-
-.status-pill {
-  padding: 3px 10px;
-  border-radius: var(--radius-full);
-  font-weight: 700;
-  font-size: 0.65rem;
-  display: inline-block;
-}
-.status-success {
-  background: rgba(16, 185, 129, 0.12);
-  color: #059669;
-}
-
-.legend-dot {
+.legend-dot-sm {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   display: inline-block;
+  flex-shrink: 0;
 }
 
-/* ANIMATION UTILS */
-.animate-fade-in {
-  animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+/* ═══════════════════════════════════════════════════════
+   PLAN TAGS
+═══════════════════════════════════════════════════════ */
+.plan-tag {
+  font-size: 0.62rem;
+  font-weight: 900;
+  padding: 4px 10px;
+  border-radius: 8px;
+  display: inline-block;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
+.tag-blue     { background: rgba(59, 130, 246, 0.1);  color: #2563eb; }
+.tag-amber    { background: rgba(245, 158, 11, 0.1);  color: #d97706; }
+.tag-emerald  { background: rgba(16, 185, 129, 0.1);  color: #059669; }
+.tag-slate    { background: rgba(100, 116, 139, 0.1); color: #475569; }
+
+/* ═══════════════════════════════════════════════════════
+   TABLE
+═══════════════════════════════════════════════════════ */
+.custom-table-pro {
+  margin-bottom: 0;
+}
+.custom-table-pro thead tr th {
+  border-bottom: 2px solid #eef2f6;
+  padding: 10px 16px;
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  background: transparent;
+}
+.custom-table-pro tbody td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+.table-row-pro {
+  transition: background 0.15s ease;
+}
+.table-row-pro:hover td {
+  background-color: #fffbeb !important;
+}
+.table-row-pro:last-child td {
+  border-bottom: none;
+}
+
+.org-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  font-weight: 900;
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+.table-row-pro:hover .org-avatar {
+  transform: scale(1.08);
+}
+
+.status-pill-pro {
+  padding: 5px 12px;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 0.62rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.status-active {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  animation: statusPulse 3s ease-in-out infinite;
+}
+@keyframes statusPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  50% { box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08); }
+}
+.status-dot-pro {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: blink 1.5s ease-in-out infinite;
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   ANIMATION
+═══════════════════════════════════════════════════════ */
+.animate-fade-in {
+  animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-.glass-dropdown {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  backdrop-filter: blur(15px);
-}
-.glass-dropdown .dropdown-item {
-  color: var(--text-main);
-  transition: var(--transition-fast);
-}
-.glass-dropdown .dropdown-item:hover {
-  background: var(--bg-hover);
-}
+/* ═══════════════════════════════════════════════════════
+   UTILITY
+═══════════════════════════════════════════════════════ */
+.tiny       { font-size: 0.78rem; }
+.super-tiny { font-size: 0.65rem; }
+.uppercase  { text-transform: uppercase; }
+.fw-600 { font-weight: 600 !important; }
+.fw-700 { font-weight: 700 !important; }
+.fw-800 { font-weight: 800 !important; }
+.fw-900 { font-weight: 900 !important; }
+.relative { position: relative; }
+.overflow-hidden { overflow: hidden; }
+.w-100 { width: 100%; }
+.h-100 { height: 100%; }
+
+/* ═══════════════════════════════════════════════════════
+   DARK MODE
+═══════════════════════════════════════════════════════ */
+[data-theme="dark"] .admin-body { background: #0d1117; }
+[data-theme="dark"] .premium-title { color: #f0f6fc; }
+[data-theme="dark"] .breadcrumb-pro .current { color: #f0f6fc; }
+[data-theme="dark"] .stat-card-premium { background: #161b22; border-color: rgba(255,255,255,0.07); }
+[data-theme="dark"] .stat-value { color: #f0f6fc; }
+[data-theme="dark"] .enigma-card { background: #161b22; border-color: rgba(255,255,255,0.07); }
+[data-theme="dark"] .text-navy { color: #f0f6fc; }
+[data-theme="dark"] .btn-glass-pro { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); color: #f0f6fc; }
+[data-theme="dark"] .btn-glass-pro:hover { background: rgba(245,158,11,0.1); border-color: #f59e0b; }
+[data-theme="dark"] .btn-refresh-pro { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); color: #8b949e; }
+[data-theme="dark"] .btn-refresh-pro:hover { background: rgba(245,158,11,0.1); border-color: #f59e0b; color: #f59e0b; }
+[data-theme="dark"] .btn-outline-pro { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); color: #f0f6fc; }
+[data-theme="dark"] .btn-outline-pro:hover { border-color: #f59e0b; background: rgba(245,158,11,0.1); }
+[data-theme="dark"] .glass-dropdown-pro { background: #161b22 !important; border-color: rgba(255,255,255,0.1) !important; }
+[data-theme="dark"] .glass-dropdown-pro .dropdown-item { color: #f0f6fc; }
+[data-theme="dark"] .glass-dropdown-pro .dropdown-item:hover { background: rgba(245,158,11,0.1); color: #f59e0b; }
+[data-theme="dark"] .custom-table-pro thead tr th { color: #8b949e; border-bottom-color: rgba(255,255,255,0.07); }
+[data-theme="dark"] .custom-table-pro tbody td { border-bottom-color: rgba(255,255,255,0.05); }
+[data-theme="dark"] .table-row-pro:hover td { background-color: rgba(245,158,11,0.05) !important; }
+[data-theme="dark"] .plan-tag.tag-blue    { background: rgba(59,130,246,0.15);  color: #93c5fd; }
+[data-theme="dark"] .plan-tag.tag-amber   { background: rgba(245,158,11,0.15);  color: #fcd34d; }
+[data-theme="dark"] .plan-tag.tag-emerald { background: rgba(16,185,129,0.15);  color: #6ee7b7; }
+[data-theme="dark"] .plan-tag.tag-slate   { background: rgba(100,116,139,0.15); color: #94a3b8; }
+[data-theme="dark"] .spinner-pro-premium { border-color: rgba(255,255,255,0.08); border-top-color: #f59e0b; }
+[data-theme="dark"] :root { --border-chart: rgba(255,255,255,0.07); --text-chart: #8b949e; }
 </style>

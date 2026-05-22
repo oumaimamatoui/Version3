@@ -34,11 +34,13 @@ namespace NeoEvaluation.API.Services
                 return (false, "MAX_QUESTIONS_EXCEEDED");
             }
 
-            // ✅ LIMITE 2: Starter ou Abonnement Expiré -> 3 fois par 24h
-            bool isStarter = string.Equals(ent.Plan, "Starter", StringComparison.OrdinalIgnoreCase);
-            bool isExpired = ent.AbonnementFin.HasValue && ent.AbonnementFin.Value < DateTime.UtcNow;
+            // ✅ LIMITE 2: Starter, Gratuit ou Abonnement Expiré -> 3 fois par 24h
+            bool isFreeOrExpired = 
+                string.Equals(ent.Plan, "Starter", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(ent.Plan, "Gratuit", StringComparison.OrdinalIgnoreCase) ||
+                (ent.AbonnementFin.HasValue && ent.AbonnementFin.Value < DateTime.UtcNow);
 
-            if (isStarter || isExpired) 
+            if (isFreeOrExpired) 
             {
                 var rollingLimit = DateTime.UtcNow.AddHours(-24);
                 var usageCount = await _context.UsageLogs.IgnoreQueryFilters()
@@ -81,10 +83,12 @@ namespace NeoEvaluation.API.Services
             var ent = await _context.Entreprises.IgnoreQueryFilters().FirstOrDefaultAsync(e => e.Id == enterpriseId);
             if (ent == null) return (false, "Entreprise introuvable.");
 
-            bool isStarter = string.Equals(ent.Plan, "Starter", StringComparison.OrdinalIgnoreCase);
-            bool isExpired = ent.AbonnementFin.HasValue && ent.AbonnementFin.Value < DateTime.UtcNow;
+            bool isFreeOrExpired = 
+                string.Equals(ent.Plan, "Starter", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(ent.Plan, "Gratuit", StringComparison.OrdinalIgnoreCase) ||
+                (ent.AbonnementFin.HasValue && ent.AbonnementFin.Value < DateTime.UtcNow);
 
-            if (isStarter || isExpired) 
+            if (isFreeOrExpired) 
             {
                 var campaignCount = await _context.Campagnes.IgnoreQueryFilters().CountAsync(c => c.EntrepriseId == enterpriseId);
                 
@@ -124,11 +128,15 @@ namespace NeoEvaluation.API.Services
             var currentUsage = await _context.UsageLogs.IgnoreQueryFilters()
                 .CountAsync(u => u.EntrepriseId == enterpriseId && u.Date > rollingLimit && u.Feature == "AI_GENERATION");
 
-            bool isStarter = string.Equals(ent.Plan, "Starter", StringComparison.OrdinalIgnoreCase);
-            bool isExpired = ent.AbonnementFin.HasValue && ent.AbonnementFin.Value < DateTime.UtcNow;
+            bool isFreeOrExpired = 
+                string.Equals(ent.Plan, "Starter", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(ent.Plan, "Gratuit", StringComparison.OrdinalIgnoreCase) ||
+                (ent.AbonnementFin.HasValue && ent.AbonnementFin.Value < DateTime.UtcNow);
+
+            bool isExpiredSub = ent.AbonnementFin.HasValue && ent.AbonnementFin.Value < DateTime.UtcNow;
 
             int daysRemaining = 0;
-            if (ent.AbonnementFin.HasValue && !isExpired)
+            if (ent.AbonnementFin.HasValue && !isExpiredSub)
             {
                 daysRemaining = (int)(ent.AbonnementFin.Value - DateTime.UtcNow).TotalDays;
                 if (daysRemaining < 0) daysRemaining = 0;
@@ -137,8 +145,8 @@ namespace NeoEvaluation.API.Services
             return new UsageStatusDto
             {
                 Current = currentUsage,
-                Max = (isStarter || isExpired) ? 3 : 999,
-                Plan = isExpired ? "Expiré (Starter)" : (ent.Plan ?? "Starter"),
+                Max = isFreeOrExpired ? 3 : 999,
+                Plan = isFreeOrExpired && isExpiredSub ? "Expiré (Starter)" : (ent.Plan ?? "Starter"),
                 MaxQuestions = 100,
                 DaysRemaining = daysRemaining
             };
