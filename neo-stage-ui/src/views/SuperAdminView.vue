@@ -1304,7 +1304,9 @@ const fetchData = async () => {
 // ─── ACTIONS ───────────────────────────────────────────────────────
 const handleApprove = async (id) => {
   if (!isGoogleConnected.value) {
-    showPulseToast("⚠️ Gmail non connecté — l'email d'activation ne sera pas envoyé.", 'warn', 'fa-brands fa-google');
+    showPulseToast("Allez dans Paramètres > INTÉGRATIONS pour connecter Gmail et pouvoir accepter/refuser les demandes.", "error", "fa-brands fa-google");
+    addTerminalLog('amber', 'Action bloquée: Connexion Gmail requise');
+    return;
   }
   try {
     await superAdminApi.approveRequest(id);
@@ -1318,7 +1320,9 @@ const handleApprove = async (id) => {
 };
 const handleReject = async (id) => {
   if (!isGoogleConnected.value) {
-    showPulseToast("⚠️ Gmail non connecté — l'email de refus ne sera pas envoyé.", 'warn', 'fa-brands fa-google');
+    showPulseToast("Allez dans Paramètres > INTÉGRATIONS pour connecter Gmail et pouvoir accepter/refuser les demandes.", "error", "fa-brands fa-google");
+    addTerminalLog('amber', 'Action bloquée: Connexion Gmail requise');
+    return;
   }
   if (!confirm(t('campaigns.deleteConfirm'))) return;
   try {
@@ -1332,7 +1336,9 @@ const handleReject = async (id) => {
 };
 const handleCreateOrg = async () => {
   if (!isGoogleConnected.value) {
-    showPulseToast("⚠️ Gmail non connecté — l'email d'invitation ne sera pas envoyé.", 'warn', 'fa-brands fa-google');
+    showPulseToast("Allez dans Paramètres > INTÉGRATIONS pour connecter Gmail et pouvoir envoyer des invitations.", "error", "fa-brands fa-google");
+    addTerminalLog('amber', 'Action bloquée: Connexion Gmail requise');
+    return;
   }
   isCreating.value = true;
   try {

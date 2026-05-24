@@ -61,8 +61,10 @@ namespace NeoEvaluation.API.Controllers
             candidature.Evaluation = new Evaluation 
             { 
                 Id = Guid.NewGuid(), 
+                CandidatureId = candidature.Id,
                 Statut = StatutPassage.NON_COMMENCE,
-                ScoreTotal = 0 
+                ScoreTotal = 0,
+                CandidatId = candidature.CandidatId
             };
 
             _context.Candidatures.Add(candidature);

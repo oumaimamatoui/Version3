@@ -262,5 +262,25 @@ namespace NeoEvaluation.API.Controllers
                 .Select(c => new { c.Id, Nom = c.Nom })
                 .ToListAsync());
         }
+
+        [HttpGet("success-rate")]
+        public async Task<IActionResult> GetSuccessRate()
+        {
+            var entId = _tenantService.GetTenantId();
+            if (entId == null) return BadRequest(new { message = "Tenant ID introuvable." });
+
+            var sentCount = await _context.Candidatures
+                .CountAsync(c => c.Campagne.EntrepriseId == entId);
+
+            var completedCount = await _context.Evaluations
+                .CountAsync(e => e.Candidature.Campagne.EntrepriseId == entId
+                              && e.Statut == StatutPassage.TERMINE);
+
+            var successRate = sentCount > 0
+                ? (int)Math.Round((double)completedCount / sentCount * 100)
+                : 0;
+
+            return Ok(new { sentCount, completedCount, successRate });
+        }
     }
 }

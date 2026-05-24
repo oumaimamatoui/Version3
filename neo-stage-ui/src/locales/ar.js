@@ -86,4 +86,8 @@ export default {
   "settings.account": "الحساب",
   "settings.security": "الأمان",
   "settings.notifications": "الإشعارات",
+  "notifications.title": "الإشعارات",
+  "notifications.new": "{count} جديد",
+  "notifications.empty": "لا توجد إشعارات",
+  "notifications.markRead": "تحديد الكل كمقروء",
 };

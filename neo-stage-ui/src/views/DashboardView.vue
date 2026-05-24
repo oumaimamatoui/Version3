@@ -428,7 +428,7 @@
                     </button>
                   </div>
                 </div>
-                <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
+                <div class="chart-wrap"><canvas class="js-main-chart"></canvas><div class="chart-no-data" style="display:none;padding:40px;text-align:center;color:#94a3b8;font-size:14px">Aucune donnée de performance.</div></div>
               </div>
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
@@ -621,7 +621,7 @@
                     </button>
                   </div>
                 </div>
-                <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
+                <div class="chart-wrap"><canvas class="js-main-chart"></canvas><div class="chart-no-data" style="display:none;padding:40px;text-align:center;color:#94a3b8;font-size:14px">Aucune donnée de performance.</div></div>
               </div>
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
@@ -788,7 +788,7 @@
                     </button>
                   </div>
                 </div>
-                <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
+                <div class="chart-wrap"><canvas class="js-main-chart"></canvas><div class="chart-no-data" style="display:none;padding:40px;text-align:center;color:#94a3b8;font-size:14px">Aucune donnée de performance.</div></div>
               </div>
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
@@ -966,7 +966,7 @@
                     </button>
                   </div>
                 </div>
-                <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
+                <div class="chart-wrap"><canvas class="js-main-chart"></canvas><div class="chart-no-data" style="display:none;padding:40px;text-align:center;color:#94a3b8;font-size:14px">Aucune donnée de performance.</div></div>
               </div>
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
@@ -992,7 +992,7 @@
             <div class="two-col-grid pb-5">
               <div class="panel">
                 <div class="panel-header mb-4"><h5 class="panel-title m-0">{{ $t('dashboard.sections.performance') }}</h5></div>
-                <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
+                <div class="chart-wrap"><canvas class="js-main-chart"></canvas><div class="chart-no-data" style="display:none;padding:40px;text-align:center;color:#94a3b8;font-size:14px">Aucune donnée de performance.</div></div>
               </div>
               <div class="panel">
                 <div class="panel-header d-flex align-items-center justify-content-between mb-4">
@@ -1484,10 +1484,17 @@
                 </div>
               </div>
 
-              <!-- Export CSV Footer -->
-              <div class="d-flex justify-content-end mt-2">
-                <button class="btn-action-primary glow-green py-2 px-4" @click="triggerCsvExport">
-                  <i class="fa-solid fa-file-csv me-2"></i> Exporter en format CSV
+              <!-- Export Footer -->
+              <div class="d-flex justify-content-end gap-3 mt-2">
+                <button class="btn-action-primary glow-green py-2 px-4" @click="triggerCsvExport" :disabled="isExporting">
+                  <i v-if="isExporting" class="fa-solid fa-spinner fa-spin me-2"></i>
+                  <i v-else class="fa-solid fa-file-csv me-2"></i>
+                  {{ isExporting ? 'Export en cours...' : 'CSV' }}
+                </button>
+                <button class="btn-action-primary glow-red py-2 px-4" @click="triggerPdfExport" :disabled="isExportingPdf">
+                  <i v-if="isExportingPdf" class="fa-solid fa-spinner fa-spin me-2"></i>
+                  <i v-else class="fa-solid fa-file-pdf me-2"></i>
+                  {{ isExportingPdf ? 'Export en cours...' : 'PDF' }}
                 </button>
               </div>
             </div>
@@ -1588,6 +1595,8 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed, nextTick, watch, inject, reactive } from 'vue';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import Chart from 'chart.js/auto';
@@ -2128,9 +2137,16 @@ const openEnterpriseReport = async () => {
   }
 };
 
+const isExporting = ref(false);
 const triggerCsvExport = async () => {
+  if (isExporting.value) return;
+  isExporting.value = true;
   try {
     const res = await enterpriseApi.exportWeeklyReport();
+    if (!res.data || res.data.size === 0) {
+      showToast("Aucune donnée à exporter cette semaine.", "warn", "fa-solid fa-file-csv");
+      return;
+    }
     const blob = new Blob([res.data], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -2139,9 +2155,115 @@ const triggerCsvExport = async () => {
     document.body.appendChild(link);
     link.click();
     link.remove();
+    window.URL.revokeObjectURL(url);
     showToast("Export CSV réussi !", "success", "fa-solid fa-file-csv");
   } catch (err) {
-    showToast("Échec de l'exportation CSV: " + err.message, "error", "fa-solid fa-triangle-exclamation");
+    const msg = err.response?.data
+      ? typeof err.response.data === 'object'
+        ? err.response.data.message || err.message
+        : err.response.data
+      : err.message;
+    showToast("Échec de l'exportation CSV: " + msg, "error", "fa-solid fa-triangle-exclamation");
+  } finally {
+    isExporting.value = false;
+  }
+};
+
+const isExportingPdf = ref(false);
+const triggerPdfExport = async () => {
+  if (isExportingPdf.value) return;
+  isExportingPdf.value = true;
+  try {
+    const report = enterpriseReco.value.weeklyReport;
+    const dateStr = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    const container = document.createElement('div');
+    container.style.cssText = 'position:fixed;left:-9999px;top:0;width:780px;padding:40px;font-family:Arial,sans-serif;background:#fff;color:#1e293b;';
+    container.innerHTML = `
+      <div style="text-align:center;margin-bottom:30px">
+        <h1 style="color:#f59e0b;font-size:24px;margin:0">Rapport Analytique Hebdomadaire</h1>
+        <p style="color:#64748b;font-size:14px;margin:8px 0 0">${dateStr}</p>
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:24px">
+        <div style="flex:1;background:#f0fdf4;border-radius:10px;padding:16px;text-align:center;border:1px solid #bbf7d0">
+          <div style="font-size:11px;color:#64748b;font-weight:700">ÉVALUATIONS COMPLÈTES</div>
+          <div style="font-size:28px;font-weight:900;color:#16a34a;margin-top:4px">${report.completedEvaluationsThisWeek}</div>
+        </div>
+        <div style="flex:1;background:#eff6ff;border-radius:10px;padding:16px;text-align:center;border:1px solid #bfdbfe">
+          <div style="font-size:11px;color:#64748b;font-weight:700">INVITATIONS ENVOYÉES</div>
+          <div style="font-size:28px;font-weight:900;color:#2563eb;margin-top:4px">${report.totalInvitationsThisWeek}</div>
+        </div>
+        <div style="flex:1;background:#fffbeb;border-radius:10px;padding:16px;text-align:center;border:1px solid #fde68a">
+          <div style="font-size:11px;color:#64748b;font-weight:700">SCORE MOYEN GLOBAL</div>
+          <div style="font-size:28px;font-weight:900;color:#d97706;margin-top:4px">${report.averageScore}%</div>
+        </div>
+        <div style="flex:1;background:#f0fdfa;border-radius:10px;padding:16px;text-align:center;border:1px solid #99f6e4">
+          <div style="font-size:11px;color:#64748b;font-weight:700">TAUX DE COMPLÉTION</div>
+          <div style="font-size:28px;font-weight:900;color:#0d9488;margin-top:4px">${report.completionRate}%</div>
+        </div>
+      </div>
+      ${report.campaignPerformances?.length ? `
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead>
+            <tr style="background:#f8fafc">
+              <th style="padding:10px 12px;text-align:left;border-bottom:2px solid #e2e8f0;color:#64748b;font-size:11px">CAMPAGNE</th>
+              <th style="padding:10px 12px;text-align:center;border-bottom:2px solid #e2e8f0;color:#64748b;font-size:11px">CANDIDATS</th>
+              <th style="padding:10px 12px;text-align:center;border-bottom:2px solid #e2e8f0;color:#64748b;font-size:11px">SCORE MOYEN</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${report.campaignPerformances.map(c => `
+              <tr>
+                <td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;font-weight:600">${c.campaignName}</td>
+                <td style="padding:10px 12px;text-align:center;border-bottom:1px solid #f1f5f9">${c.candidatesCount} candidats</td>
+                <td style="padding:10px 12px;text-align:center;border-bottom:1px solid #f1f5f9;font-weight:700;color:${c.averageScore >= 75 ? '#16a34a' : c.averageScore >= 50 ? '#d97706' : '#dc2626'}">${c.averageScore}%</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      ` : '<p style="color:#94a3b8;text-align:center;padding:20px;border:1px dashed #cbd5e1;border-radius:8px">Aucune donnée cette semaine.</p>'}
+      <div style="text-align:center;margin-top:30px;padding-top:20px;border-top:1px solid #e2e8f0">
+        <p style="color:#94a3b8;font-size:11px">Rapport généré par NeoEvaluation — ${dateStr}</p>
+      </div>
+    `;
+    document.body.appendChild(container);
+
+    const canvas = await html2canvas(container, { scale: 2, useCORS: true, logging: false });
+    document.body.removeChild(container);
+
+    const imgData = canvas.toDataURL('image/jpeg', 0.85);
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdfW = 210;
+    const imgW = canvas.width;
+    const imgH = canvas.height;
+    const ratio = pdfW / imgW;
+    const pdfH = imgH * ratio;
+
+    if (pdfH <= 297) {
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
+    } else {
+      let y = 0;
+      const pageH = 297;
+      const pageImgH = pageH / ratio;
+      while (y < imgH) {
+        if (y > 0) pdf.addPage();
+        const h = Math.min(pageImgH, imgH - y);
+        const clipCanvas = document.createElement('canvas');
+        clipCanvas.width = canvas.width;
+        clipCanvas.height = h * ratio;
+        const ctx = clipCanvas.getContext('2d');
+        ctx.drawImage(canvas, 0, y * ratio, canvas.width, clipCanvas.height, 0, 0, canvas.width, clipCanvas.height);
+        pdf.addImage(clipCanvas.toDataURL('image/jpeg', 0.85), 'JPEG', 0, 0, pdfW, pageH);
+        y += h;
+      }
+    }
+
+    pdf.save(`Rapport_Performance_Hebdo_${new Date().toISOString().slice(0,10)}.pdf`);
+    showToast("Export PDF réussi !", "success", "fa-solid fa-file-pdf");
+  } catch (err) {
+    showToast("Échec de l'exportation PDF: " + (err.message || err), "error", "fa-solid fa-triangle-exclamation");
+  } finally {
+    isExportingPdf.value = false;
   }
 };
 
@@ -2162,6 +2284,13 @@ const triggerPublishDraft = async (campaignId) => {
   try {
     const res = await enterpriseApi.publishDraft(campaignId);
     showToast(res.data.message || "Campagne publiée !", "success", "fa-solid fa-circle-check");
+    
+    // Update local campaign immediately if returned
+    if (res.data.campaign) {
+      const idx = campagnes.value.findIndex(c => c.id === res.data.campaign.id);
+      if (idx >= 0) campagnes.value[idx] = res.data.campaign;
+      else campagnes.value.push(res.data.campaign);
+    }
     
     const recoRes = await enterpriseApi.getRecommendations();
     enterpriseReco.value = recoRes.data;
@@ -2644,32 +2773,30 @@ const handleParallax = (e) => { mousePos.x = (e.clientX - window.innerWidth / 2)
 let chartInstance = null;
 const initChart = async (period = 'week') => {
   await nextTick();
-  const canvas = document.getElementById('mainChart');
-  if (!canvas) return;
+  const canvases = document.querySelectorAll('.js-main-chart');
+  if (!canvases.length) return;
+  const canvas = canvases[0];
+  const noDataMsg = canvas.parentElement?.querySelector('.chart-no-data');
+
+  if (!dotnetStats.chart?.length) {
+    canvas.style.display = 'none';
+    if (noDataMsg) noDataMsg.style.display = 'block';
+    return;
+  }
+  canvas.style.display = 'block';
+  if (noDataMsg) noDataMsg.style.display = 'none';
+
   if (chartInstance) chartInstance.destroy();
 
   const accent = roleAccent.value;
   const dark   = isDark.value;
-  let labels = [], values = [];
-
-  if (dotnetStats.chart?.length) {
-    labels = dotnetStats.chart.map(c => c.name || c.nom || '');
-    values = dotnetStats.chart.map(c => c.score || c.moyenne || 0);
-  } else {
-    const days = period === 'week' ? 7 : period === 'month' ? 30 : 90;
-    for (let i = days - 1; i >= 0; i--) {
-      const d = new Date(); d.setDate(d.getDate() - i);
-      labels.push(days > 7 ? `${d.getDate()}/${d.getMonth()+1}` : d.toLocaleDateString(locale.value, {weekday:'short'}));
-      values.push(Math.floor(Math.random() * 40) + 50);
-    }
-  }
 
   chartInstance = new Chart(canvas, {
     type: 'line',
     data: {
-      labels,
+      labels: dotnetStats.chart.map(c => c.name || c.nom || ''),
       datasets: [{
-        data: values,
+        data: dotnetStats.chart.map(c => c.score || c.moyenne || 0),
         borderColor: accent,
         backgroundColor: accent + '18',
         tension: 0.4,
@@ -3193,6 +3320,14 @@ select.job-input { cursor:pointer; }
 .glow-green:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 28px rgba(16, 185, 129, 0.4);
+}
+.glow-red {
+  background: linear-gradient(135deg, #ef4444, #f87171);
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.25);
+}
+.glow-red:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(239, 68, 68, 0.4);
 }
 
 .btn-action-secondary {

@@ -86,4 +86,8 @@ export default {
   'settings.account': 'Account',
   'settings.security': 'Security',
   'settings.notifications': 'Notifications',
+  'notifications.title': 'Notifications',
+  'notifications.new': '{count} new',
+  'notifications.empty': 'No notifications',
+  'notifications.markRead': 'Mark all as read',
 };

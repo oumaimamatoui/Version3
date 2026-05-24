@@ -13,6 +13,33 @@ api.interceptors.request.use(config => {
   return config;
 });
 
+// Intercepteur pour normaliser les erreurs blob en JSON + 401 auto-logout
+api.interceptors.response.use(
+  res => res,
+  err => {
+    if (err.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    if (err.config?.responseType === 'blob' && err.response?.data instanceof Blob) {
+      return new Promise((_, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const parsed = JSON.parse(reader.result);
+            err.response.data = parsed;
+          } catch { /* pas du JSON, garder le blob */ }
+          reject(err);
+        };
+        reader.onerror = () => reject(err);
+        reader.readAsText(err.response.data);
+      });
+    }
+    return Promise.reject(err);
+  }
+);
+
 // --- SERVICES SUPERADMIN ---
 export const superAdminApi = {
   getStats: () => api.get('/SuperAdmin/stats'),

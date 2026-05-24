@@ -36,14 +36,6 @@
                   <span class="pill-dot"></span>
                   <span>{{ t('statistiquesView.liveDatastream') }}</span>
                 </div>
-                <div class="status-pill latency">
-                  <i class="fa-solid fa-bolt-lightning me-1"></i>
-                  <span>{{ responseTime }}{{ t('statistiquesView.responseMs') }}</span>
-                </div>
-                <div class="status-pill" :class="systemStatus === t('statistiquesView.status.optimal') ? 'status-ok' : 'status-warn'">
-                  <i class="fa-solid fa-shield-halved me-1"></i>
-                  <span>{{ systemStatus }}</span>
-                </div>
               </div>
             </div>
 
@@ -83,11 +75,6 @@
                   :title="t('statistiquesView.views.analytics')">
                   <i class="fa-solid fa-chart-simple"></i>
                 </button>
-                <button :class="['btn-view-toggle', { active: viewMode === 'system' }]"
-                  @click="viewMode = 'system'"
-                  :title="t('statistiquesView.views.system')">
-                  <i class="fa-solid fa-server"></i>
-                </button>
               </div>
 
               <button class="btn-refresh-pro" @click="refreshData" :disabled="refreshing"
@@ -112,11 +99,6 @@
                     <span v-else class="skeleton-val"></span>
                   </div>
                   <div class="stat-label">{{ t(stat.labelKey) }}</div>
-                </div>
-                <div v-if="stat.trend !== undefined" class="stat-trend ms-auto"
-                  :class="stat.trend >= 0 ? 'trend-up' : 'trend-down'">
-                  <i :class="stat.trend >= 0 ? 'fa-solid fa-arrow-trend-up' : 'fa-solid fa-arrow-trend-down'"></i>
-                  <span>{{ Math.abs(stat.trend) }}%</span>
                 </div>
               </div>
             </div>
@@ -149,20 +131,20 @@
                     </div>
                   </div>
 
-                  <div class="chart-stage">
+                    <div class="chart-stage">
                     <div class="stage-grid-bg"></div>
                     <div v-if="loading" class="chart-loader"><div class="spinner-pro-premium"></div></div>
-                    <div v-else-if="apiChartData.length === 0" class="chart-empty text-center text-muted py-5">
-                      <i class="fa-solid fa-chart-bar fa-2x mb-2"></i>
+                    <div v-else-if="!chartHasData" class="chart-empty text-center text-muted py-5">
+                      <i class="fa-solid fa-clock fa-2x mb-2"></i>
                       <p class="small fw-700">{{ t('statistiquesView.overview.noData') }}</p>
                     </div>
                     <div v-else class="glow-pillars-container">
                       <div v-for="(item, i) in apiChartData" :key="i" class="pillar-group">
-                        <div class="pillar-value">{{ item.score }}%</div>
+                        <div class="pillar-value">{{ item.score != null ? item.score + '%' : '—' }}</div>
                         <div class="pillar-vessel">
                           <div class="pillar-fill"
-                            :style="{ height: item.score + '%', background: getPillarColor(item.score) }">
-                            <div class="pillar-light-beam"></div>
+                            :style="{ height: (item.score || 0) + '%', background: item.score != null ? getPillarColor(item.score) : '#e2e8f0', opacity: item.score != null ? 1 : 0.3 }">
+                            <div class="pillar-light-beam" v-if="item.score != null"></div>
                           </div>
                         </div>
                         <span class="pillar-label" :title="item.name">{{ item.name }}</span>
@@ -174,21 +156,7 @@
 
               <div class="col-lg-4">
                 <div class="enigma-card p-4 h-100">
-                  <h6 class="fw-800 mb-4">{{ t('statistiquesView.overview.infra') }}</h6>
-                  <div class="resource-gauges">
-                    <div class="gauge-item-pro mb-4" v-for="res in resources" :key="res.nameKey">
-                      <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="gauge-name">{{ t(res.nameKey) }}</span>
-                        <span class="gauge-val" :style="{ color: getGaugeColor(res.usage) }">{{ res.usage }}%</span>
-                      </div>
-                      <div class="g-track">
-                        <div class="g-fill-pro"
-                          :style="{ width: res.usage + '%', background: getGaugeColor(res.usage) }"></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="talent-stream mt-4">
+                  <div class="talent-stream">
                     <h6 class="fw-800 mb-3" style="font-size:0.7rem;letter-spacing:1px;color:#94a3b8;">
                       {{ t('statistiquesView.overview.topTalents') }}
                     </h6>
@@ -216,77 +184,6 @@
               </div>
             </div>
 
-            <!-- DONUT + ACTIVITY -->
-            <div class="row g-4 mb-4">
-              <div class="col-lg-4">
-                <div class="enigma-card p-4">
-                  <h6 class="fw-800 mb-4">{{ t('statistiquesView.overview.donutTitle') }}</h6>
-                  <div class="donut-chart-container">
-                    <svg viewBox="0 0 120 120" width="130">
-                      <circle v-for="(seg, i) in orgDonutSegments" :key="i"
-                        cx="60" cy="60" r="45"
-                        :stroke="seg.color" stroke-width="20" fill="none"
-                        :stroke-dasharray="`${seg.dash} ${283 - seg.dash}`"
-                        :stroke-dashoffset="seg.offset"
-                        style="transition: stroke-dasharray 0.8s ease"/>
-                      <text x="60" y="58" text-anchor="middle" class="donut-center-text">
-                        {{ statsData.totalEntreprises || 0 }}
-                      </text>
-                      <text x="60" y="72" text-anchor="middle" class="donut-sub-text">
-                        {{ t('statistiquesView.overview.donutOrgs') }}
-                      </text>
-                    </svg>
-                    <div class="donut-legend">
-                      <div v-for="seg in orgDonutSegments" :key="seg.labelKey" class="donut-legend-item">
-                        <span class="legend-dot-sm" :style="{ background: seg.color }"></span>
-                        <span class="small">{{ t(seg.labelKey) }}</span>
-                        <span class="ms-auto fw-800 small">{{ seg.count }}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-lg-8">
-                <div class="enigma-card p-4">
-                  <h6 class="fw-800 mb-4">{{ t('statistiquesView.overview.activityTitle') }}</h6>
-                  <div class="bar-chart-v2">
-                    <div v-for="(bar, i) in weekActivityData" :key="i" class="bar-col">
-                      <div class="bar-wrap">
-                        <div class="bar-fill bar-amber" :style="{ height: bar.sessions + '%' }"></div>
-                        <div class="bar-fill bar-indigo" :style="{ height: bar.users + '%' }"></div>
-                      </div>
-                      <span class="bar-label">{{ bar.label }}</span>
-                    </div>
-                  </div>
-                  <div class="d-flex gap-3 mt-3 justify-content-center">
-                    <div class="d-flex align-items-center gap-2">
-                      <span class="legend-dot dot-amber"></span>
-                      <span class="small text-muted fw-700">{{ t('statistiquesView.overview.legendSessions') }}</span>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                      <span class="legend-dot dot-indigo"></span>
-                      <span class="small text-muted fw-700">{{ t('statistiquesView.overview.legendUsers') }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- NEURAL FOOTER -->
-            <div class="neural-footer-bar">
-              <div class="feed-label">{{ t('statistiquesView.neural.stream') }}</div>
-              <div class="feed-ticker" v-if="lastAudit">
-                <span class="feed-time">[{{ lastSyncTime }}]</span>
-                <span class="feed-user">{{ lastAudit.utilisateur }}</span>
-                <i class="fa-solid fa-chevron-right mx-2 opacity-50"></i>
-                <span class="feed-action">{{ lastAudit.action }}</span>
-                <span class="mx-1 opacity-50">:</span>
-                <span class="feed-detail">{{ lastAudit.details }}</span>
-              </div>
-              <div class="feed-ticker" v-else>{{ t('statistiquesView.neural.waiting') }}</div>
-              <div class="feed-time-badge">{{ lastSyncTime || '--:--' }}</div>
-            </div>
           </div>
 
           <!-- ═══════════════════════════════════════════
@@ -321,200 +218,10 @@
               </div>
             </div>
 
-            <div class="row g-4">
-              <div class="col-lg-6">
-                <div class="enigma-card p-4">
-                  <h6 class="fw-800 mb-4">{{ t('statistiquesView.analytics.metricsTitle') }}</h6>
-                  <div class="metrics-table">
-                    <div class="metric-row" v-for="m in detailedMetrics" :key="m.labelKey">
-                      <div class="metric-icon-box" :style="{ background: m.bg, color: m.color }">
-                        <i :class="m.icon"></i>
-                      </div>
-                      <div class="metric-info">
-                        <span class="metric-name">{{ t(m.labelKey) }}</span>
-                        <div class="metric-progress-thin">
-                          <div :style="{ width: m.pct + '%', background: m.color }"></div>
-                        </div>
-                      </div>
-                      <div class="metric-val fw-800">{{ m.value }}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="col-lg-6">
-                <div class="enigma-card p-4">
-                  <h6 class="fw-800 mb-4">{{ t('statistiquesView.analytics.logsTitle') }}</h6>
-                  <div class="activity-timeline" v-if="auditLogs.length > 0">
-                    <div class="timeline-item" v-for="log in auditLogs.slice(0,5)" :key="log.id">
-                      <div class="tl-dot" :style="{ background: getAuditColor(log.action) }"></div>
-                      <div class="tl-content">
-                        <strong class="small">{{ log.utilisateur }}</strong>
-                        <p class="text-muted m-0" style="font-size:0.72rem">
-                          {{ log.action }} — {{ log.details }}
-                        </p>
-                      </div>
-                      <span class="tl-time">{{ formatTime(log.timestamp) }}</span>
-                    </div>
-                  </div>
-                  <div v-else-if="loading" class="text-center py-4">
-                    <div class="spinner-pro-premium"></div>
-                  </div>
-                  <div v-else class="text-center text-muted py-4 small">
-                    {{ t('statistiquesView.analytics.noLogs') }}
-                  </div>
-                </div>
-              </div>
-            </div>
+
           </div>
 
-          <!-- ═══════════════════════════════════════════
-               SYSTEM VIEW
-          ═══════════════════════════════════════════ -->
-          <div v-if="viewMode === 'system'" class="animate__animated animate__fadeIn">
-            <div class="row g-4 mb-4">
-              <div class="col-12">
-                <div class="system-health-banner p-4"
-                  :class="systemStatus === t('statistiquesView.status.optimal') ? 'banner-ok' : 'banner-warn'">
-                  <div class="d-flex align-items-center gap-4">
-                    <div class="health-icon-ring">
-                      <i class="fa-solid fa-shield-halved fa-2x"
-                        :class="systemStatus === t('statistiquesView.status.optimal') ? 'text-success' : 'text-amber'">
-                      </i>
-                    </div>
-                    <div>
-                      <h5 class="fw-900 m-0">
-                        {{ t('statistiquesView.system.statusTitle') }} {{ systemStatus }}
-                      </h5>
-                      <p class="m-0 text-muted small">
-                        {{ t('statistiquesView.system.lastCheck') }} {{ lastSyncTime }}
-                      </p>
-                    </div>
-                    <div class="ms-auto d-flex gap-4">
-                      <div class="sys-stat-box text-center">
-                        <div class="sys-stat-val fw-900">{{ responseTime }}ms</div>
-                        <div class="sys-stat-label">{{ t('statistiquesView.system.latency') }}</div>
-                      </div>
-                      <div class="sys-stat-box text-center">
-                        <div class="sys-stat-val fw-900">99.8%</div>
-                        <div class="sys-stat-label">{{ t('statistiquesView.system.uptime') }}</div>
-                      </div>
-                      <div class="sys-stat-box text-center">
-                        <div class="sys-stat-val fw-900">v6.5</div>
-                        <div class="sys-stat-label">{{ t('statistiquesView.system.version') }}</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
 
-            <div class="row g-4">
-              <div class="col-lg-6">
-                <div class="enigma-card p-4">
-                  <h6 class="fw-800 mb-4">
-                    <i class="fa-solid fa-server me-2 text-amber"></i>
-                    {{ t('statistiquesView.system.serverTitle') }}
-                  </h6>
-                  <div class="gauge-item-pro mb-4" v-for="res in extendedResources" :key="res.nameKey">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                      <div class="d-flex align-items-center gap-2">
-                        <i :class="res.icon + ' text-muted'" style="font-size:0.75rem"></i>
-                        <span class="gauge-name">{{ t(res.nameKey) }}</span>
-                      </div>
-                      <span class="gauge-val fw-900" :style="{ color: getGaugeColor(res.usage) }">
-                        {{ res.usage }}%
-                      </span>
-                    </div>
-                    <div class="g-track">
-                      <div class="g-fill-pro"
-                        :style="{ width: res.usage + '%', background: getGaugeColor(res.usage) }"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-lg-6">
-                <div class="enigma-card p-4">
-                  <h6 class="fw-800 mb-4">
-                    <i class="fa-solid fa-plug me-2 text-indigo"></i>
-                    {{ t('statistiquesView.system.servicesTitle') }}
-                  </h6>
-                  <div class="services-list">
-                    <div class="service-row" v-for="srv in activeServices" :key="srv.nameKey">
-                      <div class="service-status-dot"
-                        :class="srv.status === 'running' ? 'dot-ok' : 'dot-err'"></div>
-                      <div class="service-info flex-grow-1">
-                        <div class="fw-700 small">{{ t(srv.nameKey) }}</div>
-                        <div class="text-muted" style="font-size:0.65rem">{{ t(srv.descKey) }}</div>
-                      </div>
-                      <div class="service-badge"
-                        :class="srv.status === 'running' ? 'badge-ok' : 'badge-err'">
-                        {{ srv.status === 'running'
-                          ? t('statistiquesView.system.running')
-                          : t('statistiquesView.system.stopped') }}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- AUDIT TABLE -->
-              <div class="col-12">
-                <div class="enigma-card p-4">
-                  <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h6 class="fw-800 m-0">
-                      <i class="fa-solid fa-list-check me-2 text-amber"></i>
-                      {{ t('statistiquesView.system.auditTitle') }}
-                    </h6>
-                    <div class="search-inline-box" style="width:240px">
-                      <i class="fa-solid fa-magnifying-glass"></i>
-                      <input type="text" v-model="auditSearch"
-                        :placeholder="t('statistiquesView.system.auditSearch')"
-                        class="search-inline-input">
-                    </div>
-                  </div>
-                  <div v-if="loading" class="text-center py-4">
-                    <div class="spinner-pro-premium"></div>
-                  </div>
-                  <div v-else>
-                    <div class="list-header-row d-flex align-items-center px-4 py-2 mb-2">
-                      <span style="width:160px" class="list-col-label">
-                        {{ t('statistiquesView.system.cols.user') }}
-                      </span>
-                      <span class="flex-grow-1 list-col-label">
-                        {{ t('statistiquesView.system.cols.action') }}
-                      </span>
-                      <span style="width:200px" class="list-col-label">
-                        {{ t('statistiquesView.system.cols.details') }}
-                      </span>
-                      <span style="width:120px" class="list-col-label text-center">
-                        {{ t('statistiquesView.system.cols.timestamp') }}
-                      </span>
-                    </div>
-                    <div v-if="filteredAuditLogs.length === 0"
-                      class="text-center text-muted py-4 small">
-                      {{ t('statistiquesView.system.noLogs') }}
-                    </div>
-                    <div v-else v-for="log in filteredAuditLogs" :key="log.id"
-                      class="list-row-item d-flex align-items-center px-4 py-3 mb-2">
-                      <div style="width:160px">
-                        <div class="fw-800 small">{{ log.utilisateur }}</div>
-                      </div>
-                      <div class="flex-grow-1">
-                        <span class="audit-action-badge" :class="getAuditBadgeClass(log.action)">
-                          {{ log.action }}
-                        </span>
-                      </div>
-                      <div style="width:200px" class="small text-muted text-truncate">{{ log.details }}</div>
-                      <div style="width:120px" class="text-center small text-muted">
-                        {{ formatTime(log.timestamp) }}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
 
         </div>
       </main>
@@ -535,7 +242,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import api from '@/services/api';
 import AppSidebar from '../components/AppSidebar.vue';
@@ -549,75 +256,41 @@ const refreshing   = ref(false);
 const viewMode     = ref('overview');
 const timeRange    = ref('7j');
 const lastSyncTime = ref('');
-const systemStatus = ref('');
-const responseTime = ref(12);
-const auditSearch  = ref('');
 
-const statsData    = ref({});
 const apiChartData = ref([]);
 const leaders      = ref([]);
-const auditLogs    = ref([]);
 const mousePos     = reactive({ x: 0, y: 0 });
 const globalToast  = reactive({ active: false, message: '', type: '', icon: '' });
-const lastAudit    = ref(null);
+
+const chartHasData = computed(() =>
+  apiChartData.value.length > 0 && apiChartData.value.some(item => item.score != null)
+);
 
 /* ─── KPI ────────────────────────────────────────────────────────── */
 const masterKpis = ref([
   {
-    labelKey: 'statistiquesView.kpis.orgsActives',
-    value: '—', icon: 'fa-solid fa-building-shield',
-    color: '#f59e0b', bg: '#fffbeb', trend: 12,
+    labelKey: 'statistiquesView.kpis.totalSessions',
+    value: '—', icon: 'fa-solid fa-chart-simple',
+    color: '#f59e0b', bg: '#fffbeb',
   },
   {
-    labelKey: 'statistiquesView.kpis.talentsAi',
-    value: '—', icon: 'fa-solid fa-microchip',
-    color: '#6366f1', bg: '#eef2ff', trend: 8,
+    labelKey: 'statistiquesView.kpis.reussites',
+    value: '—', icon: 'fa-solid fa-check-circle',
+    color: '#10b981', bg: '#ecfdf5',
   },
   {
-    labelKey: 'statistiquesView.kpis.sessionsFlow',
-    value: '—', icon: 'fa-solid fa-wave-square',
-    color: '#10b981', bg: '#ecfdf5', trend: -2,
+    labelKey: 'statistiquesView.kpis.enCours',
+    value: '—', icon: 'fa-solid fa-spinner',
+    color: '#6366f1', bg: '#eef2ff',
   },
   {
-    labelKey: 'statistiquesView.kpis.securite',
-    value: 'MAX', icon: 'fa-solid fa-shield-halved',
-    color: '#f43f5e', bg: '#fff1f2', trend: 5,
+    labelKey: 'statistiquesView.kpis.scoreMoyen',
+    value: '—', icon: 'fa-solid fa-trophy',
+    color: '#f43f5e', bg: '#fff1f2',
   },
-]);
-
-/* ─── RESSOURCES ─────────────────────────────────────────────────── */
-const resources = ref([
-  { nameKey: 'statistiquesView.system.resources.cpu',      usage: 68 },
-  { nameKey: 'statistiquesView.system.resources.uptime',   usage: 99 },
-  { nameKey: 'statistiquesView.system.resources.disk',     usage: 42 },
-]);
-
-const extendedResources = ref([
-  { nameKey: 'statistiquesView.system.resources.cpu',       usage: 68,  icon: 'fa-solid fa-microchip' },
-  { nameKey: 'statistiquesView.system.resources.ram',       usage: 54,  icon: 'fa-solid fa-memory' },
-  { nameKey: 'statistiquesView.system.resources.disk',      usage: 42,  icon: 'fa-solid fa-hard-drive' },
-  { nameKey: 'statistiquesView.system.resources.bandwidth', usage: 87,  icon: 'fa-solid fa-network-wired' },
-  { nameKey: 'statistiquesView.system.resources.uptime',    usage: 99,  icon: 'fa-solid fa-server' },
-]);
-
-const activeServices = ref([
-  { nameKey: 'statistiquesView.system.services.gateway.name',   descKey: 'statistiquesView.system.services.gateway.desc',   status: 'running' },
-  { nameKey: 'statistiquesView.system.services.evaluabot.name', descKey: 'statistiquesView.system.services.evaluabot.desc', status: 'running' },
-  { nameKey: 'statistiquesView.system.services.queue.name',     descKey: 'statistiquesView.system.services.queue.desc',     status: 'running' },
-  { nameKey: 'statistiquesView.system.services.email.name',     descKey: 'statistiquesView.system.services.email.desc',     status: 'running' },
-  { nameKey: 'statistiquesView.system.services.analytics.name', descKey: 'statistiquesView.system.services.analytics.desc', status: 'running' },
-  { nameKey: 'statistiquesView.system.services.backup.name',    descKey: 'statistiquesView.system.services.backup.desc',    status: 'stopped' },
 ]);
 
 /* ─── CHART DATA ─────────────────────────────────────────────────── */
-const weekActivityData = ref(
-  ['L','M','M','J','V','S','D'].map(d => ({
-    label: d,
-    sessions: Math.floor(Math.random() * 80 + 20),
-    users:    Math.floor(Math.random() * 60 + 10),
-  }))
-);
-
 const analyticsChartData = ref(
   ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'].map(l => ({
     label:    l,
@@ -627,110 +300,35 @@ const analyticsChartData = ref(
   }))
 );
 
-/* ─── DETAILED METRICS ───────────────────────────────────────────── */
-const detailedMetrics = computed(() => [
-  {
-    labelKey: 'statistiquesView.analytics.metrics.tauxReussite',
-    value: statsData.value.tauxReussite    || '—',
-    pct:   statsData.value.tauxReussite    || 74,
-    icon: 'fa-solid fa-chart-line', color: '#10b981', bg: '#ecfdf5',
-  },
-  {
-    labelKey: 'statistiquesView.analytics.metrics.candidatsActifs',
-    value: statsData.value.candidatsActifs || '—',
-    pct:   Math.min((statsData.value.candidatsActifs / 500) * 100, 100) || 60,
-    icon: 'fa-solid fa-user-tie', color: '#6366f1', bg: '#eef2ff',
-  },
-  {
-    labelKey: 'statistiquesView.analytics.metrics.totalQuestions',
-    value: statsData.value.totalQuestions  || '—',
-    pct:   Math.min((statsData.value.totalQuestions / 1000) * 100, 100) || 45,
-    icon: 'fa-solid fa-database', color: '#f59e0b', bg: '#fffbeb',
-  },
-  {
-    labelKey: 'statistiquesView.analytics.metrics.sessionsTermin',
-    value: statsData.value.sessionsTermin  || '—',
-    pct:   statsData.value.sessionsTermin  || 82,
-    icon: 'fa-solid fa-flag-checkered', color: '#f43f5e', bg: '#fff1f2',
-  },
-]);
-
-/* ─── DONUT SEGMENTS ─────────────────────────────────────────────── */
-const orgDonutSegments = computed(() => {
-  const total = statsData.value.totalEntreprises || 4;
-  const circ  = 283;
-  const data  = [
-    { labelKey: 'statistiquesView.overview.donutActive',   count: Math.ceil(total * 0.6),   color: '#f59e0b' },
-    { labelKey: 'statistiquesView.overview.donutInactive', count: Math.ceil(total * 0.25),  color: '#6366f1' },
-    { labelKey: 'statistiquesView.overview.donutPending',  count: Math.floor(total * 0.15), color: '#10b981' },
-  ];
-  let cumulative = circ / 4;
-  return data.map(d => {
-    const dash   = (d.count / total) * circ;
-    const offset = cumulative;
-    cumulative  -= dash;
-    return { ...d, dash, offset };
-  });
-});
-
-/* ─── AUDIT LOGS FILTERED ────────────────────────────────────────── */
-const filteredAuditLogs = computed(() => {
-  if (!auditSearch.value) return auditLogs.value;
-  const q = auditSearch.value.toLowerCase();
-  return auditLogs.value.filter(l =>
-    (l.utilisateur || '').toLowerCase().includes(q) ||
-    (l.action || '').toLowerCase().includes(q) ||
-    (l.details || '').toLowerCase().includes(q)
-  );
-});
-
 /* ─── DATA FETCHING ──────────────────────────────────────────────── */
 const fetchData = async () => {
   loading.value = true;
-  const start   = Date.now();
   try {
-    const [statsRes, globalRes, auditRes] = await Promise.allSettled([
-      api.get('/SuperAdmin/stats'),
-      api.get('/Dashboard/global-stats'),
-      api.get('/SuperAdmin/audit-logs'),
+    const periodMap = { '24h': '24h', '7j': '7d', '30j': '30d' };
+    const [globalRes, kpiRes] = await Promise.allSettled([
+      api.get(`/Dashboard/global-stats?period=${periodMap[timeRange.value] || '7d'}`),
+      api.get('/Examen/dashboard-stats'),
     ]);
 
-    if (statsRes.status === 'fulfilled') {
-      statsData.value = statsRes.value.data;
-      masterKpis.value[0].value = statsRes.value.data.totalEntreprises  || '0';
-      masterKpis.value[1].value = statsRes.value.data.totalUtilisateurs || '0';
-      masterKpis.value[2].value = statsRes.value.data.totalTests        || '0';
-    }
-
     if (globalRes.status === 'fulfilled') {
-      apiChartData.value = globalRes.value.data.chart   || generateMockChart();
+      apiChartData.value = globalRes.value.data.chart   || [];
       leaders.value      = globalRes.value.data.leaders || [];
-    } else {
-      apiChartData.value = generateMockChart();
     }
 
-    if (auditRes.status === 'fulfilled') {
-      auditLogs.value = auditRes.value.data || [];
-      if (auditLogs.value.length > 0)
-        lastAudit.value = auditLogs.value[auditLogs.value.length - 1];
-    }
-
-    responseTime.value = Date.now() - start;
-    systemStatus.value = t('statistiquesView.status.optimal');
-
-    if (statsRes.status === 'rejected' && globalRes.status === 'rejected') {
-      systemStatus.value = t('statistiquesView.status.degraded');
-      showPulseToast(
-        t('statistiquesView.toast.offlineMode'),
-        'warn',
-        'fa-solid fa-plug-circle-xmark'
-      );
-      generateAllMocks();
+    if (kpiRes.status === 'fulfilled') {
+      const d = kpiRes.value.data;
+      masterKpis.value[0].value = d.totalSessions || '0';
+      masterKpis.value[1].value = d.reussites    || '0';
+      masterKpis.value[2].value = d.enCours      || '0';
+      masterKpis.value[3].value = d.scoreMoyen   != null ? d.scoreMoyen + '%' : '—';
     }
   } catch (err) {
-    console.error('Critical Sync Failure', err);
-    systemStatus.value = t('statistiquesView.status.degraded');
-    generateAllMocks();
+    console.error('Sync Failure', err);
+    showPulseToast(
+      t('statistiquesView.toast.offlineMode'),
+      'warn',
+      'fa-solid fa-plug-circle-xmark'
+    );
   } finally {
     loading.value    = false;
     refreshing.value = false;
@@ -750,46 +348,8 @@ const refreshData = async () => {
   );
 };
 
-/* ─── MOCKS ──────────────────────────────────────────────────────── */
-const generateMockChart = () => [
-  { name: 'Vue.js Pro',  score: 82 },
-  { name: 'React Audit', score: 67 },
-  { name: 'SQL Expert',  score: 91 },
-  { name: 'DevOps',      score: 55 },
-  { name: 'AI Logic',    score: 78 },
-  { name: 'Cyber',       score: 43 },
-];
-
-const generateAllMocks = () => {
-  masterKpis.value[0].value = '12';
-  masterKpis.value[1].value = '348';
-  masterKpis.value[2].value = '87';
-  statsData.value = {
-    totalEntreprises: 12, totalUtilisateurs: 348, totalTests: 87,
-    tauxReussite: 74, candidatsActifs: 210,
-  };
-  apiChartData.value = generateMockChart();
-  leaders.value = [
-    { name: 'Alice Dupont', score: 98 },
-    { name: 'Mehdi Karim',  score: 95 },
-    { name: 'Sara Ndiaye',  score: 92 },
-  ];
-  auditLogs.value = [
-    { id: 1, utilisateur: 'admin@evalua.io', action: 'LOGIN',  details: 'Connexion réussie',          timestamp: new Date().toISOString() },
-    { id: 2, utilisateur: 'hr@acme.com',     action: 'CREATE', details: 'Campagne "Frontend Senior"', timestamp: new Date().toISOString() },
-    { id: 3, utilisateur: 'cto@startup.io',  action: 'DEPLOY', details: 'Déploiement questionnaire',  timestamp: new Date().toISOString() },
-    { id: 4, utilisateur: 'admin@evalua.io', action: 'DELETE', details: 'Suppression candidat #12',   timestamp: new Date().toISOString() },
-    { id: 5, utilisateur: 'rh@corp.fr',      action: 'EXPORT', details: 'Export JSON campagne #5',    timestamp: new Date().toISOString() },
-  ];
-  lastAudit.value = auditLogs.value[auditLogs.value.length - 1];
-};
-
 /* ─── HELPERS ────────────────────────────────────────────────────── */
-const getPillarColor     = (s) => s >= 80 ? '#10b981' : s >= 60 ? '#f59e0b' : '#f43f5e';
-const getGaugeColor      = (p) => p >= 90 ? '#f43f5e' : p >= 70 ? '#f59e0b' : '#10b981';
-const getAuditColor      = (a) => ({ LOGIN:'#10b981', CREATE:'#6366f1', DEPLOY:'#f59e0b', DELETE:'#f43f5e', EXPORT:'#06b6d4' }[a] || '#94a3b8');
-const getAuditBadgeClass = (a) => ({ LOGIN:'audit-login', CREATE:'audit-create', DEPLOY:'audit-deploy', DELETE:'audit-delete', EXPORT:'audit-export' }[a] || 'audit-default');
-const formatTime         = (ts) => ts ? new Date(ts).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' }) : '—';
+const getPillarColor = (s) => s >= 80 ? '#10b981' : s >= 60 ? '#f59e0b' : '#f43f5e';
 
 let _toastTimer = null;
 const showPulseToast = (msg, type = 'success', icon = 'fa-solid fa-check') => {
@@ -804,8 +364,11 @@ const handleParallax = (e) => {
   mousePos.y = (e.clientY - window.innerHeight / 2) / 20;
 };
 
+watch(timeRange, () => {
+  fetchData();
+});
+
 onMounted(() => {
-  systemStatus.value = t('statistiquesView.status.optimal');
   fetchData();
 });
 </script>

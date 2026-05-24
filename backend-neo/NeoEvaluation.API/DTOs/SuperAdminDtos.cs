@@ -10,6 +10,12 @@ namespace NeoEvaluation.API.DTOs
         [JsonPropertyName("totalUtilisateurs")]
         public int TotalUtilisateurs { get; set; }
 
+        [JsonPropertyName("activeCount")]
+        public int ActiveCount { get; set; }
+
+        [JsonPropertyName("inactiveCount")]
+        public int InactiveCount { get; set; }
+
         [JsonPropertyName("demandesEnAttente")]
         public int DemandesEnAttente { get; set; }
 
@@ -266,5 +272,23 @@ namespace NeoEvaluation.API.DTOs
 
         [JsonPropertyName("estActif")]
         public bool EstActif { get; set; }
+    }
+
+    public class SystemHealthDto
+    {
+        [JsonPropertyName("cpu")]
+        public double Cpu { get; set; }
+
+        [JsonPropertyName("ram")]
+        public double Ram { get; set; }
+
+        [JsonPropertyName("disk")]
+        public double Disk { get; set; }
+
+        [JsonPropertyName("uptime")]
+        public double Uptime { get; set; }
+
+        [JsonPropertyName("os")]
+        public string? Os { get; set; }
     }
 }

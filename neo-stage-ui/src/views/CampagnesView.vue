@@ -519,7 +519,7 @@
                           <div class="drag-node-handle"><i class="fa-solid fa-grip-vertical"></i></div>
                           <div class="asset-index-v8">{{ String(index + 1).padStart(2, '0') }}</div>
                           <div class="asset-core-v8 flex-grow-1">
-                            <h6 class="asset-title-v8 text-truncate">{{ element.texte || element.enonce }}</h6>
+                            <h6 class="asset-title-v8 text-truncate-2">{{ element.texte || element.enonce }}</h6>
                             <div class="d-flex gap-2 mt-1 flex-wrap">
                               <span class="t-pill weight">{{ element.poids || element.points }} PTS</span>
                               <span v-if="element.duree && element.duree > 0" class="t-pill time">
@@ -1042,6 +1042,7 @@ const bankGlobalReference   = ref([]);
 const categoriesList        = ref([]);
 const selectedItemsInBank   = ref([]);
 const selectedCandidatesIds = ref([]);
+const santeMoy              = ref(null);
 const pinnedCampaigns       = ref([]);
 const selectedQuestions     = ref([]);
 const previewData           = ref(null);
@@ -1152,6 +1153,7 @@ const fetchInitialData = async () => {
       api.get(`/Questionnaires`),
       api.get(`/Candidates`),
       api.get(`/Questions`),
+      api.get(`/Dashboard/global-stats`),
     ]);
 
     if (results[0].status === 'fulfilled') campaigns.value = results[0].value.data;
@@ -1176,6 +1178,10 @@ const fetchInitialData = async () => {
       const resCat = await api.get(`/Categories`);
       categoriesList.value = resCat.data;
     } catch { /* silencieux */ }
+
+    if (results[4].status === 'fulfilled') {
+      santeMoy.value = results[4].value.data.kpis?.completionRate ?? null;
+    }
 
     if (results.every(r => r.status === 'rejected')) {
       console.warn("API Offline, utilisation des mocks");
@@ -1223,7 +1229,7 @@ const kpiStats = computed(() => [
   { label: t('dashboard.kpis.campaigns'),  value: campaigns.value.length,           icon: 'fa-solid fa-layer-group', color: '#f59e0b', bg: '#fffbeb', trend: 12 },
   { label: t('dashboard.kpis.candidates'), value: candidateMasterPool.value.length,  icon: 'fa-solid fa-user-tie',    color: '#6366f1', bg: '#eef2ff', trend: 8  },
   { label: t('dashboard.kpis.evaluations'),value: bankGlobalReference.value.length,  icon: 'fa-solid fa-database',    color: '#10b981', bg: '#ecfdf5', trend: -2 },
-  { label: 'Santé Moy.',                   value: '94%',                             icon: 'fa-solid fa-chart-line',  color: '#f43f5e', bg: '#fff1f2', trend: 5  },
+  { label: 'Santé Moy.',                   value: santeMoy.value != null ? santeMoy.value+'%' : '—', icon: 'fa-solid fa-chart-line',  color: '#f43f5e', bg: '#fff1f2', trend: 5  },
 ]);
 
 const donutSegments = computed(() => {
@@ -1730,6 +1736,7 @@ const generateMocks = () => {
     { id: '103', texte: "Qu'est-ce que le SOLID ?",          poids: 12, points: 3, difficulty: 'MEDIUM', type: 1, theme: 'Backend Specialist', sousTheme: 'API REST', reponses: [] },
   ];
   categoriesList.value = [];
+  santeMoy.value = 94;
 };
 
 /* ─── LIFECYCLE ───────────────────────────────────────────────── */
@@ -2108,7 +2115,7 @@ onUnmounted(() => {
 /* ═══════════════════════════════════════
    ASSET CARDS + TIMER — amélioration CSS
 ═══════════════════════════════════════ */
-.assets-scroll-v8 { overflow-y: visible; padding-right: 4px; padding-bottom: 100px; }
+.assets-scroll-v8 { max-height: calc(100vh - 320px); overflow-y: auto; padding-right: 4px; padding-bottom: 20px; }
 .asset-card-v8 {
   background: white; border: 1.5px solid #eef2f6; border-radius: 20px; padding: 15px 20px;
   display: flex; align-items: center; gap: 12px; margin-bottom: 12px; transition: all 0.2s;

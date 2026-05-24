@@ -1,3 +1,6 @@
+using System.Diagnostics;
+using System.Globalization;
+using System.Runtime.InteropServices;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -34,11 +37,18 @@ namespace NeoEvaluation.API.Controllers
             try {
                 // Initialisation des stats de base
                 // Exclure SYSTEM_PLATFORM des comptes
+                var now = DateTime.UtcNow;
+
+                var allOrgs = await _context.Entreprises
+                    .IgnoreQueryFilters()
+                    .Where(e => e.Nom != "SYSTEM_PLATFORM")
+                    .ToListAsync();
+
                 var stats = new SuperAdminStatsDto
                 {
-                    TotalEntreprises = await _context.Entreprises
-                        .IgnoreQueryFilters()
-                        .CountAsync(e => e.Nom != "SYSTEM_PLATFORM"),
+                    TotalEntreprises = allOrgs.Count,
+                    ActiveCount = allOrgs.Count(e => e.AbonnementFin == null || e.AbonnementFin > now),
+                    InactiveCount = allOrgs.Count(e => e.AbonnementFin != null && e.AbonnementFin <= now),
                     TotalUtilisateurs = await _context.Utilisateurs
                         .IgnoreQueryFilters()
                         .CountAsync(u => u.RoleNom != "SuperAdmin"),
@@ -101,7 +111,6 @@ namespace NeoEvaluation.API.Controllers
                 stats.GratuitCount    = await _context.Entreprises.IgnoreQueryFilters().CountAsync(e => e.Nom != "SYSTEM_PLATFORM" && (e.Plan.ToLower() == "gratuit" || e.Plan.ToLower() == "starter" || string.IsNullOrEmpty(e.Plan)));
                 stats.TotalRevenus    = (stats.StartupCount * 79.0) + (stats.BusinessCount * 199.0) + (stats.EnterpriseCount * 499.0);
 
-                var now = DateTime.UtcNow;
                 var sevenDaysAgo  = now.AddDays(-7);
                 var thirtyDaysAgo = now.AddDays(-30);
 
@@ -1098,6 +1107,80 @@ namespace NeoEvaluation.API.Controllers
             {
                 return StatusCode(500, ex.Message);
             }
+        }
+
+        [HttpGet("system-health")]
+        public async Task<ActionResult<SystemHealthDto>> GetSystemHealth()
+        {
+            var proc = Process.GetCurrentProcess();
+
+            // CPU : snapshot delta sur ~1s
+            var startCpu = proc.TotalProcessorTime;
+            var startTime = DateTime.UtcNow;
+            await Task.Delay(1000);
+            proc.Refresh();
+            var endCpu = proc.TotalProcessorTime;
+            var endTime = DateTime.UtcNow;
+
+            var cpuUsedMs = (endCpu - startCpu).TotalMilliseconds;
+            var totalMsPassed = (endTime - startTime).TotalMilliseconds * Environment.ProcessorCount;
+            var cpu = Math.Round(cpuUsedMs / totalMsPassed * 100, 1);
+
+            // RAM : Application-level (WorkingSet vs GC available memory)
+            var gcInfo = GC.GetGCMemoryInfo();
+            var ram = gcInfo.TotalAvailableMemoryBytes > 0
+                ? Math.Round((double)proc.WorkingSet64 / gcInfo.TotalAvailableMemoryBytes * 100, 1)
+                : 0;
+
+            // DISK : somme des disques prêts
+            var drives = DriveInfo.GetDrives().Where(d => d.IsReady);
+            var totalDisk = drives.Sum(d => d.TotalSize);
+            var freeDisk = drives.Sum(d => d.AvailableFreeSpace);
+            var disk = totalDisk > 0
+                ? Math.Round((double)(totalDisk - freeDisk) / totalDisk * 100, 1)
+                : 0;
+
+            // UPTIME : process uptime en % de 30 jours
+            var uptimeDays = (DateTime.UtcNow - proc.StartTime.ToUniversalTime()).TotalDays;
+            var uptime = Math.Round(uptimeDays / 30 * 100, 1);
+
+            return Ok(new SystemHealthDto
+            {
+                Cpu = cpu,
+                Ram = ram,
+                Disk = disk,
+                Uptime = Math.Min(uptime, 100),
+                Os = RuntimeInformation.OSDescription
+            });
+        }
+
+        [HttpGet("recent-activity")]
+        public async Task<IActionResult> GetRecentActivity()
+        {
+            var since = DateTime.UtcNow.AddDays(-7);
+
+            var dailyStats = await _context.Evaluations
+                .IgnoreQueryFilters()
+                .Where(e => e.DateFin >= since && e.Statut == StatutPassage.TERMINE)
+                .GroupBy(e => e.DateFin!.Value.Date)
+                .Select(g => new {
+                    Date = g.Key,
+                    Sessions = g.Count(),
+                    Users = g.Select(e => e.CandidatId).Distinct().Count()
+                })
+                .ToListAsync();
+
+            var weekData = Enumerable.Range(0, 7).Select(i => {
+                var day = DateTime.UtcNow.AddDays(-6 + i).Date;
+                var stats = dailyStats.FirstOrDefault(d => d.Date == day);
+                return new {
+                    Label = day.ToString("ddd", new CultureInfo("fr-FR")),
+                    Sessions = stats?.Sessions ?? 0,
+                    Users = stats?.Users ?? 0
+                };
+            }).ToList();
+
+            return Ok(weekData);
         }
     }
 }

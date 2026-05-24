@@ -47,7 +47,7 @@
               <!-- BOUTON UPLOAD GÉNÉRIQUE -->
               <label class="ac-btn-upload" title="Analyser un nouveau CV">
                 <i class="fa-solid fa-file-arrow-up me-2"></i>Analyser un CV
-                <input type="file" @change="(e) => onUploadCv(e)" hidden accept=".pdf,.docx" />
+                <input type="file" @change="(e) => onUploadCv(e)" hidden accept=".pdf,.docx,.csv" />
               </label>
               
               <button class="ac-btn-icon" @click="initOrchestrator" :disabled="loading">
@@ -263,12 +263,12 @@
               <label class="ac-btn-upload-big">
                 <i class="fa-solid fa-wand-magic-sparkles me-2"></i> 
                 Analyser le CV de {{ firstName(detailModal.analysis?.candidat_nom) }}
-                <input
-                  type="file"
-                  @change="(e) => onUploadCv(e, detailModal.analysis?.id)"
-                  hidden
-                  accept=".pdf,.docx"
-                />
+                  <input
+                    type="file"
+                    @change="(e) => onUploadCv(e, detailModal.analysis?.id)"
+                    hidden
+                    accept=".pdf,.docx,.csv"
+                  />
               </label>
             </div>
           </div>
@@ -343,8 +343,16 @@ const initOrchestrator = async () => {
         global_score:  score,
         tier_raw:      score >= 85 ? 'élite' : score >= 70 ? 'standard' : 'basique',
         iaAnalyzed:    !!latestAi,
-        ai_details:    latestAi,   // contient points_forts, points_faibles, conseils, decision
-        quick_insight: latestAi ? latestAi.decision : 'Analyse requise'
+        ai_details:    latestAi ? {
+          ...latestAi,
+          points_forts:       latestAi.points_forts ?? [],
+          points_faibles:     latestAi.points_faibles ?? [],
+          conseils:           latestAi.conseils ?? [],
+          competences_detectees: latestAi.competences_detectees ?? [],
+          decision:           latestAi.decision ?? '',
+          score:              latestAi.score ?? 0,
+        } : null,
+        quick_insight: latestAi ? (latestAi.decision || 'Analyse requise') : 'Analyse requise'
       };
     }));
 
@@ -361,23 +369,17 @@ const onUploadCv = async (event, specificCandidatId = null) => {
   const file = event.target.files?.[0];
   if (!file) return;
 
-  // Réinitialise l'input pour permettre un re-upload du même fichier
   event.target.value = '';
 
   const jobDesc  = detailModal.analysis?.profile_type ?? 'Poste Fullstack';
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('File', file);
-  formData.append('lang', 'fr');
-  formData.append('Lang', 'fr');
+
   formData.append('job_description', jobDesc);
-  formData.append('jobDescription', jobDesc);
-  formData.append('JobDescription', jobDesc);
+  formData.append('lang', 'fr');
 
   if (specificCandidatId) {
-    formData.append('candidat_id', specificCandidatId);
     formData.append('candidatId', specificCandidatId);
-    formData.append('CandidatId', specificCandidatId);
     detailModal.loading = true;
   }
 
@@ -396,7 +398,6 @@ const onUploadCv = async (event, specificCandidatId = null) => {
 
     showToast('Analyse terminée avec succès !', 'success');
 
-    // Mise à jour locale si on est dans la modale
     if (specificCandidatId && detailModal.analysis?.id === specificCandidatId) {
       detailModal.analysis.ai_details   = data;
       detailModal.analysis.global_score  = data.score ?? 0;
@@ -405,8 +406,9 @@ const onUploadCv = async (event, specificCandidatId = null) => {
     }
 
     await initOrchestrator();
-  } catch {
-    showToast("Erreur lors de l'analyse du document", 'error');
+  } catch (err) {
+    const msg = err.response?.data?.message || err.response?.data?.alert?.subtitle || err.response?.data?.alert?.title || err.message || "Erreur lors de l'analyse du document";
+    showToast(msg, 'error');
   } finally {
     if (specificCandidatId) detailModal.loading = false;
   }

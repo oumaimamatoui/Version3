@@ -23,70 +23,172 @@ namespace NeoEvaluation.API.Controllers
         }
 
         [HttpGet("global-stats")]
-        public async Task<IActionResult> GetGlobalStats()
+        public async Task<IActionResult> GetGlobalStats([FromQuery] string period = "7d")
         {
             try 
             {
-                // 1. KPIs : Calculs simples et robustes
-                var totalTests = await _context.Evaluations.CountAsync();
-                var totalCampagnes = await _context.Campagnes.CountAsync();
-                
-                // On utilise ToLower() pour ignorer la casse du rôle
-                var totalTalents = await _context.Utilisateurs
-                    .CountAsync(u => u.RoleNom.ToLower() == "candidat");
-                
-                var scores = await _context.Evaluations.Select(e => (double)e.ScoreTotal).ToListAsync();
-                double moyenne = scores.Any() ? Math.Round(scores.Average(), 1) : 0;
+                var entId = _tenantService.GetTenantId();
+                var userId = _tenantService.GetUserId();
+                var userRole = _tenantService.GetUserRole();
+                var isCandidat = userRole?.Equals("Candidat", StringComparison.OrdinalIgnoreCase) == true;
 
-                // 2. Histogramme : Performance par campagne
-                var chartDataRaw = await _context.Campagnes
-                    .OrderByDescending(c => c.Id)
-                    .Take(5)
-                    .Select(c => new {
-                        c.Nom,
-                        Moyenne = _context.Evaluations
-                            .Where(e => e.Candidature.CampagneId == c.Id)
-                            .Select(e => (double?)e.ScoreTotal)
-                            .Average() ?? 0
-                    })
-                    .ToListAsync();
+                var since = period switch
+                {
+                    "24h" => DateTime.UtcNow.AddHours(-24),
+                    "30d" => DateTime.UtcNow.AddDays(-30),
+                    _     => DateTime.UtcNow.AddDays(-7),
+                };
 
-                var chart = chartDataRaw.Select(c => new {
-                    name = c.Nom,
-                    score = Math.Round(c.Moyenne, 1)
-                }).ToList();
+                int totalTests, totalCampagnes, totalTalents, completionRate;
+                double moyenne;
+                List<object> chart = new();
+                List<object> leaders = new();
+                List<object> recentResults = new();
 
-                // 3. Leaderboard & 4. Résultats récents
-                // On récupère tout en une fois avec les jointures nécessaires
-                var evaluationsQuery = await _context.Evaluations
-                    .Include(e => e.Candidature)
-                        .ThenInclude(can => can.Candidat)
-                    .Include(e => e.Candidature)
-                        .ThenInclude(can => can.Campagne)
-                    .OrderByDescending(e => e.Id)
-                    .Take(10) // On en prend assez pour les leaders et le tableau
-                    .ToListAsync();
+                if (isCandidat && userId.HasValue)
+                {
+                    // ── CANDIDAT : voit uniquement ses propres stats ──
+                    totalTests = await _context.Evaluations
+                        .CountAsync(e => e.Candidature.CandidatId == userId);
 
-                // Formatage des leaders (les 4 meilleurs)
-                var leaders = evaluationsQuery
-                    .OrderByDescending(e => e.ScoreTotal)
-                    .Take(4)
-                    .Select(e => new {
-                        name = e.Candidature?.Candidat != null ? $"{e.Candidature.Candidat.Prenom} {e.Candidature.Candidat.Nom}" : "Anonyme",
-                        test = e.Candidature?.Campagne?.Nom ?? "Évaluation",
-                        score = (int)e.ScoreTotal
+                    totalCampagnes = await _context.Candidatures
+                        .CountAsync(c => c.CandidatId == userId);
+
+                    totalTalents = 1;
+
+                    var scores = await _context.Evaluations
+                        .Where(e => e.Candidature.CandidatId == userId)
+                        .Select(e => (double)e.ScorePourcentage)
+                        .ToListAsync();
+                    moyenne = scores.Any() ? Math.Round(scores.Average(), 1) : 0;
+
+                    var completedEvals = await _context.Evaluations
+                        .CountAsync(e => e.Candidature.CandidatId == userId
+                                      && e.Statut == StatutPassage.TERMINE);
+                    completionRate = totalTests > 0 ? (int)Math.Round((double)completedEvals / totalTests * 100) : 0;
+
+                    var chartRaw = await _context.Candidatures
+                        .Where(c => c.CandidatId == userId)
+                        .Include(c => c.Campagne)
+                        .Select(c => new {
+                            name = c.Campagne != null ? c.Campagne.Nom : "Campagne",
+                            score = _context.Evaluations
+                                .Where(e => e.CandidatureId == c.Id)
+                                .Select(e => (double?)e.ScorePourcentage)
+                                .FirstOrDefault() ?? 0.0
+                        })
+                        .ToListAsync();
+                    chart = chartRaw.Select(c => (object)c).ToList();
+
+                    var candidatesEvals = await _context.Evaluations
+                        .Include(e => e.Candidature)
+                            .ThenInclude(can => can.Campagne)
+                        .Where(e => e.Candidature.CandidatId == userId)
+                        .OrderByDescending(e => e.Id)
+                        .Take(10)
+                        .ToListAsync();
+
+                    leaders = candidatesEvals
+                        .OrderByDescending(e => e.ScorePourcentage)
+                        .Take(4)
+                        .Select(e => (object)new {
+                            name = "Moi",
+                            test = e.Candidature?.Campagne?.Nom ?? "Évaluation",
+                            score = (int)e.ScorePourcentage
+                        }).ToList();
+
+                    recentResults = candidatesEvals.Select(e => (object)new {
+                        id = e.Id,
+                        candidateId = e.Candidature?.CandidatId,
+                        candidateName = "Moi",
+                        testName = e.Candidature?.Campagne?.Nom ?? "Test",
+                        date = DateTime.Now.ToString("dd MMM yyyy"),
+                        score = (int)e.ScorePourcentage,
+                        integrity = 100
+                    }).ToList();
+                }
+                else
+                {
+                    // ── ADMIN / ÉVALUATEUR / RH : voit les stats de son entreprise ──
+                    var usersQuery = _context.Utilisateurs.IgnoreQueryFilters();
+                    var evalsQuery = _context.Evaluations.IgnoreQueryFilters();
+                    var campagnesQuery = _context.Campagnes.IgnoreQueryFilters();
+                    totalTests = await evalsQuery
+                        .CountAsync(e => e.Candidature.Campagne.EntrepriseId == entId);
+
+                    totalCampagnes = await campagnesQuery
+                        .CountAsync(c => c.EntrepriseId == entId);
+
+                    totalTalents = await usersQuery
+                        .CountAsync(u => u.RoleNom.ToLower() == "candidat"
+                                      && u.EntrepriseId == entId);
+
+                    var scoresByCandidat = await evalsQuery
+                        .Where(e => e.Candidature.Campagne.EntrepriseId == entId)
+                        .GroupBy(e => e.Candidature.CandidatId)
+                        .Select(g => new {
+                            CandidatId = g.Key,
+                            AvgScore = g.Average(e => (double)e.ScorePourcentage)
+                        })
+                        .ToListAsync();
+                    moyenne = scoresByCandidat.Any()
+                        ? Math.Round(scoresByCandidat.Average(x => x.AvgScore), 1)
+                        : 0;
+
+                    var completedEvals = await evalsQuery
+                        .CountAsync(e => e.Candidature.Campagne.EntrepriseId == entId
+                                      && e.Statut == StatutPassage.TERMINE);
+                    completionRate = totalTests > 0 ? (int)Math.Round((double)completedEvals / totalTests * 100) : 0;
+
+                    // Histogramme (filtré par période)
+                    var chartDataRaw = await campagnesQuery
+                        .Where(c => c.EntrepriseId == entId)
+                        .OrderByDescending(c => c.Id)
+                        .Take(5)
+                        .Select(c => new {
+                            c.Nom,
+                            Moyenne = evalsQuery
+                                .Where(e => e.Candidature.CampagneId == c.Id
+                                         && e.DateFin >= since)
+                                .Average(e => (double?)e.ScorePourcentage)
+                        })
+                        .ToListAsync();
+
+                    chart = chartDataRaw.Select(c => (object)new {
+                        name = c.Nom,
+                        score = c.Moyenne.HasValue ? Math.Round(c.Moyenne.Value, 1) : (double?)null
                     }).ToList();
 
-                // Formatage des résultats récents (tableau du bas)
-                var recentResults = evaluationsQuery.Select(e => new {
-                    id = e.Id,
-                    candidateId = e.Candidature?.CandidatId,
-                    candidateName = e.Candidature?.Candidat != null ? $"{e.Candidature.Candidat.Prenom} {e.Candidature.Candidat.Nom}" : "Candidat",
-                    testName = e.Candidature?.Campagne?.Nom ?? "Test",
-                    date = DateTime.Now.ToString("dd MMM yyyy"), // Remplacez par e.DateCreation si disponible
-                    score = (int)e.ScoreTotal,
-                    integrity = 100 // Valeur par défaut
-                }).ToList();
+                    // Leaderboard & Résultats récents
+                    var evaluationsQuery = await evalsQuery
+                        .Include(e => e.Candidature)
+                            .ThenInclude(can => can.Candidat)
+                        .Include(e => e.Candidature)
+                            .ThenInclude(can => can.Campagne)
+                        .Where(e => e.Candidature.Campagne.EntrepriseId == entId)
+                        .OrderByDescending(e => e.Id)
+                        .Take(10)
+                        .ToListAsync();
+
+                    leaders = evaluationsQuery
+                        .OrderByDescending(e => e.ScorePourcentage)
+                        .Take(4)
+                        .Select(e => (object)new {
+                            name = e.Candidature?.Candidat != null ? $"{e.Candidature.Candidat.Prenom} {e.Candidature.Candidat.Nom}" : "Anonyme",
+                            test = e.Candidature?.Campagne?.Nom ?? "Évaluation",
+                            score = (int)e.ScorePourcentage
+                        }).ToList();
+
+                    recentResults = evaluationsQuery.Select(e => (object)new {
+                        id = e.Id,
+                        candidateId = (object?)e.Candidature?.CandidatId,
+                        candidateName = e.Candidature?.Candidat != null ? $"{e.Candidature.Candidat.Prenom} {e.Candidature.Candidat.Nom}" : "Candidat",
+                        testName = e.Candidature?.Campagne?.Nom ?? "Test",
+                        date = DateTime.Now.ToString("dd MMM yyyy"),
+                        score = (int)e.ScorePourcentage,
+                        integrity = 100
+                    }).ToList();
+                }
 
                 return Ok(new {
                     kpis = new { 
@@ -94,12 +196,13 @@ namespace NeoEvaluation.API.Controllers
                         totalCampagnes,
                         totalTalents,
                         moyenne, 
+                        completionRate,
                         iaProcessed = totalTests,
                         tauxEchec = Math.Max(0, 100 - (int)moyenne) 
                     },
-                    chart = chart,
-                    leaders = leaders,
-                    recentResults = recentResults
+                    chart,
+                    leaders,
+                    recentResults
                 });
             } 
             catch (Exception ex) 
@@ -175,10 +278,10 @@ namespace NeoEvaluation.API.Controllers
                 var weeklyReport = new WeeklyPerformanceReportDto
                 {
                     CompletedEvaluationsThisWeek = weeklyEvaluations.Count,
-                    TotalInvitationsThisWeek = totalInvitationsCount > 0 ? totalInvitationsCount : weeklyEvaluations.Count + 3,
+                    TotalInvitationsThisWeek = totalInvitationsCount,
                     AverageScore = (float)Math.Round(avgScore, 1),
                     AverageCompletionTimeMinutes = (float)Math.Round(avgDuration, 1),
-                    CompletionRate = totalInvitationsCount > 0 ? (float)Math.Round((float)weeklyEvaluations.Count / totalInvitationsCount * 100, 1) : 75.0f,
+                    CompletionRate = totalInvitationsCount > 0 ? (float)Math.Round((float)weeklyEvaluations.Count / totalInvitationsCount * 100, 1) : 0f,
                     CampaignPerformances = campaignPerformances
                 };
 
@@ -293,7 +396,19 @@ namespace NeoEvaluation.API.Controllers
                 campaign.DateDebut = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
 
-                return Ok(new { message = $"La campagne '{campaign.Nom}' a été publiée avec succès !" });
+                return Ok(new { 
+                    campaign = new {
+                        campaign.Id,
+                        campaign.Nom,
+                        campaign.Description,
+                        Statut = (int)campaign.Statut,
+                        campaign.DateDebut,
+                        campaign.DateFin,
+                        campaign.DureeMinutes,
+                        campaign.MaxCandidats
+                    },
+                    message = $"La campagne '{campaign.Nom}' a été publiée avec succès !"
+                });
             }
             catch (Exception ex)
             {
@@ -309,7 +424,7 @@ namespace NeoEvaluation.API.Controllers
                 var entId = _tenantService.GetTenantId();
                 if (entId == null)
                 {
-                    return BadRequest("Tenant ID introuvable.");
+                    return BadRequest(new { message = "Tenant ID introuvable." });
                 }
 
                 var sevenDaysAgo = DateTime.UtcNow.AddDays(-7);
@@ -325,16 +440,20 @@ namespace NeoEvaluation.API.Controllers
 
                 foreach (var e in evaluations)
                 {
+                    var campNom = e.Candidature?.Campagne?.Nom ?? "Inconnue";
                     var candName = e.Candidat != null ? $"{e.Candidat.Prenom} {e.Candidat.Nom}" : "Anonyme";
                     var dateStr = e.DateFin?.ToString("dd/MM/yyyy HH:mm") ?? "";
-                    csv.AppendLine($"\"{candName}\",\"{e.Candidature.Campagne.Nom}\",{e.ScorePourcentage:F1}%,{dateStr},{e.InfractionsCount},{e.NbReprises}");
+                    csv.AppendLine($"\"{candName}\",\"{campNom}\",{e.ScorePourcentage:F1}%,{dateStr},{e.InfractionsCount},{e.NbReprises}");
                 }
 
-                var bytes = System.Text.Encoding.UTF8.GetBytes(csv.ToString());
-                return File(bytes, "text/csv", "Rapport_Performance_Hebdo.csv");
+                var preamble = System.Text.Encoding.UTF8.GetPreamble();
+                var csvBytes = System.Text.Encoding.UTF8.GetBytes(csv.ToString());
+                var bytes = preamble.Concat(csvBytes).ToArray();
+                return File(bytes, "text/csv; charset=utf-8", "Rapport_Performance_Hebdo.csv");
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[CSV EXPORT ERROR] {ex.Message}");
                 return StatusCode(500, new { message = ex.Message });
             }
         }

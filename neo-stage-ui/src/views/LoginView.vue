@@ -32,6 +32,10 @@
           <div class="header-line"></div>
         </div>
 
+        <div class="social-login-area" v-show="!requestSent">
+          <div id="google-signin-btn" class="google-btn-custom"></div>
+        </div>
+
         <Transition name="fade-slide" mode="out-in">
 
           <!-- ✅ ÉTAT SUCCÈS AMÉLIORÉ -->
@@ -52,10 +56,6 @@
 
           <!-- FORMULAIRE -->
           <div v-else key="form" class="form-content">
-            
-            <div class="social-login-area">
-              <GoogleLogin :callback="handleGoogleLogin" class="google-btn-custom" />
-            </div>
 
             <div class="auth-divider">
               <span>OU IDENTIFICATION MANUELLE</span>
@@ -117,10 +117,9 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
+import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
-import { GoogleLogin } from 'vue3-google-login';
 import axios from 'axios';
 
 const router = useRouter();
@@ -168,6 +167,49 @@ const handleGoogleLogin = async (response) => {
     errorMessage.value = "Échec de l'identification Google.";
   } finally { isLoading.value = false; }
 };
+
+// ── Google GIS — module-level guard (single initialize) ──
+let _gisInitialized = false;
+let _gisCurrentCallback = null;
+let _gisPoll = null;
+
+onMounted(() => {
+  _gisCurrentCallback = handleGoogleLogin;
+
+  if (!document.querySelector('script[src*="gsi/client"]')) {
+    const s = document.createElement('script');
+    s.src = 'https://accounts.google.com/gsi/client';
+    s.async = true; s.defer = true;
+    document.head.appendChild(s);
+  }
+
+  nextTick(() => {
+    _gisPoll = setInterval(() => {
+      if (!window.google?.accounts?.id) return;
+      clearInterval(_gisPoll); _gisPoll = null;
+
+      if (!_gisInitialized) {
+        google.accounts.id.initialize({
+          client_id: '900574679253-6srju48d84teupohd1op1c43g80hdoor.apps.googleusercontent.com',
+          callback: (resp) => _gisCurrentCallback?.(resp),
+        });
+        _gisInitialized = true;
+      }
+
+      const el = document.getElementById('google-signin-btn');
+      if (el) {
+        el.innerHTML = '';
+        google.accounts.id.renderButton(el, {
+          theme: 'outline', size: 'large', type: 'standard', shape: 'pill', width: 280,
+        });
+      }
+    }, 200);
+  });
+});
+
+onUnmounted(() => {
+  if (_gisPoll) clearInterval(_gisPoll);
+});
 </script>
 
 <style scoped>

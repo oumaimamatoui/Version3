@@ -632,15 +632,63 @@
 
     <!-- CONFIRM DIALOG -->
     <Transition name="scale-fade">
-      <div v-if="confirmDialog.show" class="confirm-overlay" @click.self="confirmDialog.show = false">
+      <div v-if="confirmDialog.show" class="confirm-overlay" @click.self="!confirmDialog.submitting && (confirmDialog.show = false)">
         <div class="confirm-card">
-          <i :class="confirmDialog.icon" class="confirm-icon"></i>
-          <h4>{{ confirmDialog.title }}</h4>
-          <p>{{ confirmDialog.message }}</p>
-          <div class="confirm-actions">
-            <button @click="confirmDialog.show = false" class="btn-cancel">ANNULER</button>
-            <button @click="runConfirm" class="btn-confirm-ok">CONFIRMER</button>
-          </div>
+
+          <!-- MODE CONFIRMATION -->
+          <template v-if="!confirmDialog.submitting">
+            <i :class="confirmDialog.icon" class="confirm-icon"></i>
+            <h4>{{ confirmDialog.title }}</h4>
+            <p>{{ confirmDialog.message }}</p>
+            <div class="confirm-actions">
+              <button @click="confirmDialog.show = false" class="btn-cancel">ANNULER</button>
+              <button @click="runConfirm" class="btn-confirm-ok">CONFIRMER</button>
+            </div>
+          </template>
+
+          <!-- MODE SUBMISSION -->
+          <template v-else-if="!confirmDialog.submissionError">
+            <div class="submission-anim">
+              <div class="pulse-ring">
+                <i class="fa-solid fa-circle-notch fa-spin submission-spinner"></i>
+              </div>
+              <h4 class="submission-title">Analyse en cours...</h4>
+              <div class="submission-steps">
+                <div class="step" :class="{ done: step > 1, active: step === 1 }">
+                  <i :class="step > 1 ? 'fa-solid fa-check-circle' : 'fa-solid fa-spinner fa-spin'"></i>
+                  Envoi des réponses
+                </div>
+                <div class="step" :class="{ done: step > 2, active: step === 2 }">
+                  <i :class="step > 2 ? 'fa-solid fa-check-circle' : step === 2 ? 'fa-solid fa-spinner fa-spin' : 'fa-regular fa-circle'"></i>
+                  Correction IA
+                </div>
+                <div class="step" :class="{ done: step > 3, active: step === 3 }">
+                  <i :class="step > 3 ? 'fa-solid fa-check-circle' : step === 3 ? 'fa-solid fa-spinner fa-spin' : 'fa-regular fa-circle'"></i>
+                  Calcul des résultats
+                </div>
+              </div>
+              <p class="submission-hint">
+                <i class="fa-solid fa-circle-info"></i>
+                Ne fermez pas cette page...
+              </p>
+            </div>
+          </template>
+
+          <!-- MODE ERREUR -->
+          <template v-else>
+            <div class="submission-anim">
+              <div class="submission-error-icon">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+              <h4 class="submission-title">Une erreur est survenue</h4>
+              <p class="submission-error-msg">{{ confirmDialog.submissionMessage }}</p>
+              <div class="confirm-actions">
+                <button @click="confirmDialog.show = false; confirmDialog.submitting = false; confirmDialog.submissionError = false" class="btn-cancel">FERMER</button>
+                <button @click="retrySubmission" class="btn-confirm-ok">RÉESSAYER</button>
+              </div>
+            </div>
+          </template>
+
         </div>
       </div>
     </Transition>
@@ -648,7 +696,7 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive, onMounted, onUnmounted } from 'vue';
+import { ref, computed, reactive, nextTick, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import api from '@/services/api';
 
@@ -696,7 +744,8 @@ let _toastTimer      = null;
 const toast = reactive({ active: false, message: '', type: 'success', icon: '' });
 
 /* ─── CONFIRM ────────────────────────────────────────────────── */
-const confirmDialog = reactive({ show: false, title: '', message: '', icon: '', _cb: null });
+const confirmDialog = reactive({ show: false, title: '', message: '', icon: '', _cb: null, submitting: false, submissionError: false, submissionMessage: '' });
+const step = ref(0);
 
 /* ─── COMPUTED ───────────────────────────────────────────────── */
 const currentQ = computed(() => questions.value[currentIndex.value]);
@@ -1078,8 +1127,11 @@ const finishExam = async () => {
   }
 
   try {
+    step.value = 1;
     await api.post(`/Examen/terminer/${evalId}`);
+    step.value = 2;
     const res = await api.get(`/Examen/results/${evalId}`);
+    step.value = 3;
     const raw = res.data;
 
     // Enrichissement correction
@@ -1118,7 +1170,6 @@ const finishExam = async () => {
     });
 
     results.value = { ...raw, detailedCorrection: correction };
-    phase.value = 'results';
 
     // ── ENVOI NOTIFICATION EMAIL ──
     if (examMeta.value?.notificationsEnabled) {
@@ -1136,13 +1187,24 @@ const finishExam = async () => {
 
     try { if (document.fullscreenElement) document.exitFullscreen(); } catch {}
 
-  } catch {
-    computeLocalResults();
+    confirmDialog.show = false;
+    confirmDialog.submitting = false;
+    phase.value = 'results';
+
+  } catch (e) {
+    confirmDialog.submissionError = true;
+    confirmDialog.submissionMessage = e?.response?.data?.message || e?.message || 'Impossible de contacter le serveur.';
   }
 };
 
 /* ─── CALCUL LOCAL (fallback si API indisponible) ────────────── */
-const computeLocalResults = () => {
+const computeLocalResults = async () => {
+  step.value = 1;
+  await nextTick();
+  step.value = 2;
+  await nextTick();
+  step.value = 3;
+  await nextTick();
   let totalPts = 0;
   let maxPts   = 0;
 
@@ -1186,6 +1248,8 @@ const computeLocalResults = () => {
 
   const pourcentage = maxPts > 0 ? Math.round((totalPts / maxPts) * 100) : 0;
   results.value = { scoreTotal: totalPts, pourcentage, detailedCorrection: correction };
+  confirmDialog.show = false;
+  confirmDialog.submitting = false;
   phase.value = 'results';
   try { if (document.fullscreenElement) document.exitFullscreen(); } catch {}
 };
@@ -1219,10 +1283,18 @@ const showToast = (message, type = 'success', icon = 'fa-solid fa-check') => {
 };
 
 const showConfirmDialog = (title, message, icon, cb) => {
-  Object.assign(confirmDialog, { title, message, icon, _cb: cb, show: true });
+  Object.assign(confirmDialog, { title, message, icon, _cb: cb, show: true, submitting: false, submissionError: false });
+  step.value = 0;
 };
 const runConfirm = () => {
-  confirmDialog.show = false;
+  confirmDialog.submitting = true;
+  confirmDialog.submissionError = false;
+  step.value = 0;
+  if (confirmDialog._cb) confirmDialog._cb();
+};
+const retrySubmission = () => {
+  confirmDialog.submissionError = false;
+  step.value = 0;
   if (confirmDialog._cb) confirmDialog._cb();
 };
 </script>
@@ -1912,6 +1984,47 @@ const runConfirm = () => {
   cursor: pointer; font-family: inherit; transition: 0.2s;
 }
 .btn-confirm-ok:hover { background: #f43f5e; }
+
+/* ══ SUBMISSION PROGRESS ══ */
+.submission-anim { text-align: center; }
+.pulse-ring {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  width: 80px; height: 80px; margin: 0 auto 20px;
+}
+.pulse-ring::before {
+  content: ''; position: absolute; inset: 0; border-radius: 50%;
+  border: 3px solid #f59e0b; animation: pulse-expand 1.4s ease-out infinite;
+}
+.pulse-ring::after {
+  content: ''; position: absolute; inset: 8px; border-radius: 50%;
+  border: 3px solid #f59e0b; animation: pulse-expand 1.4s ease-out 0.7s infinite;
+}
+@keyframes pulse-expand {
+  0% { transform: scale(0.6); opacity: 0.8; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+.submission-spinner { font-size: 2.2rem; color: #f59e0b; z-index: 1; }
+.submission-title { font-weight: 900; margin-bottom: 24px; font-size: 1.1rem; }
+.submission-steps { display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px; }
+.step {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 0.88rem; font-weight: 700; color: #94a3b8;
+  transition: all 0.4s ease;
+}
+.step i { font-size: 1.1rem; width: 22px; text-align: center; }
+.step.active { color: #0f172a; }
+.step.done { color: #10b981; }
+.step.done i { color: #10b981; }
+.submission-hint {
+  font-size: 0.78rem; color: #94a3b8; font-weight: 600;
+  animation: hint-pulse 2s ease-in-out infinite;
+}
+@keyframes hint-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+.submission-error-icon { font-size: 3rem; color: #f43f5e; margin-bottom: 12px; }
+.submission-error-msg { color: #64748b; font-size: 0.85rem; font-weight: 600; margin-bottom: 24px; }
 
 /* ══ TRANSITIONS ══ */
 .scale-fade-enter-active { animation: scaleIn 0.3s ease-out; }

@@ -2,19 +2,39 @@
   <nav class="barre-top" role="banner">
     <div class="barre-top-interieur">
       <!-- ── GAUCHE : RECHERCHE ── -->
-      <div class="zone-recherche">
+      <div class="zone-recherche" ref="searchZoneRef">
         <div class="recherche-wrap">
           <Search :size="14" class="recherche-ico" />
           <input
             ref="champRecherche"
+            v-model="searchQuery"
             type="text"
             :placeholder="t('search')"
             class="champ-recherche"
-            @focus="rechercheFocalisee = true"
-            @blur="rechercheFocalisee = false"
+            @keydown.escape="closeSearch"
           />
-          <kbd class="recherche-raccourci">⌘K</kbd>
+          <kbd v-if="!searchQuery" class="recherche-raccourci">⌘K</kbd>
+          <button v-else class="btn-clear-search" @click="clearSearch">
+            <X :size="14" />
+          </button>
         </div>
+        <Transition name="menu-fondu">
+          <div v-if="searchResults.length > 0" class="search-dropdown">
+            <router-link
+              v-for="(link, i) in searchResults"
+              :key="i"
+              :to="link.vers"
+              class="search-item"
+              @click="clearSearch"
+            >
+              <span :class="['search-item-icon', link.iconeClasse]">
+                <i :class="link.icone"></i>
+              </span>
+              <span class="search-item-label">{{ link.label }}</span>
+              <i class="fa-solid fa-arrow-right search-item-arrow"></i>
+            </router-link>
+          </div>
+        </Transition>
       </div>
    <!-- ── DROITE : ACTIONS ── -->
       <div class="barre-top-actions">
@@ -120,8 +140,8 @@
                     <Bell :size="12" />
                   </div>
                   <div class="corps-notif">
-                    <p class="texte-notif">{{ n.text }}</p>
-                    <span class="heure-notif">{{ n.time }}</span>
+                    <p class="texte-notif">{{ n.title || n.message }}</p>
+                    <span class="heure-notif">{{ timeAgo(n.createdAt) }}</span>
                   </div>
                 </div>
                 <div v-if="!notifStore.notifications?.length" class="notif-vide">
@@ -239,11 +259,12 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useNotificationStore } from '@/stores/notification';
 import { useAuthStore }         from '@/stores/auth';
+import { useNavigationLinks } from '@/composables/useNavigationLinks';
 import api from '@/services/api';
 
 import {
   Search, Sun, Moon, Globe, Bell, BellOff, ChevronDown,
-  Check, UserCircle, Settings, LogOut, Shield,
+  Check, UserCircle, Settings, LogOut, Shield, X,
 } from 'lucide-vue-next';
 
 // ── Importation des helpers i18n (ajustez le chemin selon votre projet) ──
@@ -266,9 +287,10 @@ const { t, locale } = useI18n();
 // ════════════════════════════════════════════════════════════
 //  REFS UI
 // ════════════════════════════════════════════════════════════
-const champRecherche     = ref(null);
-const rechercheFocalisee = ref(false);
-const menuOuvert         = ref(null);
+const champRecherche  = ref(null);
+const searchZoneRef   = ref(null);
+const searchQuery     = ref('');
+const menuOuvert      = ref(null);
 const estSombre          = ref(false);
 const usageCount         = ref(0); // Restored usage count
 const daysRemaining      = ref(0); // Countdown days
@@ -412,8 +434,42 @@ const urlPhotoProfil = computed(() => {
 });
 
 // ════════════════════════════════════════════════════════════
+//  RECHERCHE NAVIGATION
+// ════════════════════════════════════════════════════════════
+const { tousLesLiens } = useNavigationLinks();
+
+const searchResults = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase();
+  if (!q) return [];
+  return tousLesLiens.value.filter(l => l.visible && l.label.toLowerCase().includes(q));
+});
+
+const closeSearch = () => {
+  searchQuery.value = '';
+  champRecherche.value?.blur();
+};
+
+const clearSearch = () => {
+  searchQuery.value = '';
+};
+
+const handleClickOutside = (e) => {
+  if (searchZoneRef.value && !searchZoneRef.value.contains(e.target)) {
+    closeSearch();
+  }
+};
+
+// ════════════════════════════════════════════════════════════
 //  DÉCONNEXION
 // ════════════════════════════════════════════════════════════
+function timeAgo(date) {
+  const diff = Math.floor((Date.now() - new Date(date)) / 1000)
+  if (diff < 60) return "À l'instant"
+  if (diff < 3600) return `Il y a ${Math.floor(diff / 60)} min`
+  if (diff < 86400) return `Il y a ${Math.floor(diff / 3600)} h`
+  return `Il y a ${Math.floor(diff / 86400)} j`
+}
+
 const deconnexion = () => {
   const themeActuel = estSombre.value ? 'dark' : 'light';
   localStorage.setItem('theme_invite', themeActuel);
@@ -429,7 +485,10 @@ const gererToucheClavier = (e) => {
     e.preventDefault();
     champRecherche.value?.focus();
   }
-  if (e.key === 'Escape') fermerMenu();
+  if (e.key === 'Escape') {
+    if (searchQuery.value) { closeSearch(); return; }
+    fermerMenu();
+  }
 };
 
 const fetchUsageStats = async () => {
@@ -466,6 +525,7 @@ onMounted(() => {
   // Listeners
   window.addEventListener('keydown', gererToucheClavier);
   window.addEventListener('storage', onStorageChange);   // cross-tab sync
+  document.addEventListener('click', handleClickOutside);
 });
 
 // Rafraîchir l'usage quand on ouvre le menu plan
@@ -476,6 +536,7 @@ watch(() => menuOuvert.value, (newVal) => {
 onUnmounted(() => {
   window.removeEventListener('keydown', gererToucheClavier);
   window.removeEventListener('storage', onStorageChange);
+  document.removeEventListener('click', handleClickOutside);
 });
 </script>
 
@@ -664,7 +725,7 @@ onUnmounted(() => {
 /* ════════════════════════════════
    RECHERCHE
 ════════════════════════════════ */
-.zone-recherche { flex: 1; max-width: 420px; }
+.zone-recherche { flex: 1; max-width: 420px; position: relative; }
 .recherche-wrap { position: relative; display: flex; align-items: center; }
 .recherche-ico  { position: absolute; left: 13px; color: #9ca3af; pointer-events: none; flex-shrink: 0; }
 
@@ -711,6 +772,83 @@ onUnmounted(() => {
   pointer-events: none;
 }
 [data-theme="dark"] .recherche-raccourci { background: rgba(255,255,255,0.08); color: #6b7280; }
+
+.btn-clear-search {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+.btn-clear-search:hover { color: #374151; background: #edf0f4; }
+[data-theme="dark"] .btn-clear-search:hover { color: #f0f6fc; background: rgba(255,255,255,0.08); }
+
+.search-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #edf0f4;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(13, 17, 23, 0.1), 0 2px 8px rgba(13, 17, 23, 0.06);
+  z-index: 2100;
+  max-height: 360px;
+  overflow-y: auto;
+  padding: 6px;
+}
+[data-theme="dark"] .search-dropdown {
+  background: #161b22;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+.search-dropdown::-webkit-scrollbar { width: 3px; }
+.search-dropdown::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 3px; }
+
+.search-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  text-decoration: none;
+  transition: background 0.13s;
+  cursor: pointer;
+}
+.search-item:hover { background: #f6f8fa; }
+[data-theme="dark"] .search-item:hover { background: rgba(255,255,255,0.05); }
+
+.search-item-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 12px;
+}
+.search-item-label {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0d1117;
+}
+[data-theme="dark"] .search-item-label { color: #e2e8f0; }
+.search-item-arrow {
+  font-size: 10px;
+  color: #9ca3af;
+  opacity: 0;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.search-item:hover .search-item-arrow { opacity: 1; transform: translateX(3px); }
 
 /* ════════════════════════════════
    ACTIONS
@@ -1183,4 +1321,22 @@ onUnmounted(() => {
 .echange-icone-leave-active { transition: all 0.2s ease; }
 .echange-icone-enter-from,
 .echange-icone-leave-to     { opacity: 0; transform: scale(0.6) rotate(30deg); }
+</style>
+
+<style>
+/* icônes de navigation partagées (définies aussi dans AppSidebar) */
+.ic-indigo { background:#EEF2FF; color:#6366F1; }
+.ic-sky    { background:#E0F2FE; color:#0EA5E9; }
+.ic-cyan   { background:#ECFEFF; color:#06B6D4; }
+.ic-blue   { background:#EFF6FF; color:#3B82F6; }
+.ic-amber  { background:#FEF3C7; color:#F59E0B; }
+.ic-gold   { background:#FEF9C3; color:#EAB308; }
+.ic-orange { background:#FFF7ED; color:#F97316; }
+.ic-violet { background:#EEF2FF; color:#818CF8; }
+.ic-purple { background:#F5F3FF; color:#8B5CF6; }
+.ic-fuchsia{ background:#FDF4FF; color:#D946EF; }
+.ic-emerald{ background:#ECFDF5; color:#10B981; }
+.ic-teal   { background:#F0FDFA; color:#14B8A6; }
+.ic-green  { background:#F0FDF4; color:#22C55E; }
+.ic-slate  { background:#F8FAFC; color:#64748B; }
 </style>
