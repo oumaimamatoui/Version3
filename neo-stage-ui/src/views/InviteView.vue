@@ -583,6 +583,7 @@ const bulkEmailsRaw    = ref('');
 const isLoading        = ref(false);
 const loadingCampagnes = ref(false);
 const recentInvites    = ref([]);
+const successRate      = ref(null);
 const recycleItems     = ref([]);
 const logsSearch       = ref('');
 const activeView       = ref('send');
@@ -668,7 +669,7 @@ const kpiStats = computed(() => [
   { label: t('invite.kpi.sent'),      value: recentInvites.value.length,   icon: 'fa-solid fa-paper-plane', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
   { label: t('invite.kpi.campaigns'), value: campagnes.value.length,        icon: 'fa-solid fa-rocket',      color: '#6366f1', bg: 'rgba(99,102,241,0.12)' },
   { label: t('invite.kpi.recycle'),   value: recycleItems.value.length,     icon: 'fa-solid fa-trash-can',   color: '#f43f5e', bg: 'rgba(244,63,94,0.12)'  },
-  { label: t('invite.kpi.success'),   value: recentInvites.value.length ? '100%' : '—', icon: 'fa-solid fa-chart-line', color: '#10b981', bg: 'rgba(16,185,129,0.12)' },
+  { label: t('invite.kpi.success'),   value: successRate.value != null ? successRate.value+'%' : '—', icon: 'fa-solid fa-chart-line', color: '#10b981', bg: 'rgba(16,185,129,0.12)' },
 ]);
 
 const infoFeatures = computed(() => [
@@ -681,8 +682,12 @@ const infoFeatures = computed(() => [
 onMounted(async () => {
   loadingCampagnes.value = true;
   try {
-    const res = await api.get('/Invitations/campagnes');
-    campagnes.value = res.data;
+    const [campRes, srRes] = await Promise.allSettled([
+      api.get('/Invitations/campagnes'),
+      api.get('/Invitations/success-rate'),
+    ]);
+    if (campRes.status === 'fulfilled') campagnes.value = campRes.value.data;
+    if (srRes.status === 'fulfilled') successRate.value = srRes.value.data.successRate;
   } catch {
     campagnes.value = [];
   } finally {

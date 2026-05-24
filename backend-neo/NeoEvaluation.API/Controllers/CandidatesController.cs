@@ -166,6 +166,16 @@ namespace NeoEvaluation.API.Controllers
                 try {
                     await _emailService.SendEmailAsync(email, $"Invitation : {campagne.Nom}", $"Vous avez été assigné à une nouvelle évaluation. Lien : {link}");
                 } catch { }
+
+                try {
+                    await _notificationService.NotifyUserAsync(cand.Id, new NotificationPayload
+                    {
+                        Type = "info",
+                        Title = "Nouveau test",
+                        Message = $"Vous avez un nouveau test : \"{campagne.Nom}\"",
+                        Link = "/login"
+                    });
+                } catch { }
             }
 
             // Notification en temps réel pour l'entreprise

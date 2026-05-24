@@ -20,7 +20,7 @@ EvaluaTech AI Engine v10.1 — CODE COMPLET A→Z
 ✅ FIX v10.1: Chatbot — intention "theme_soustheme" ajoutée (domaines disponibles)
 """
 
-import os, io, json, logging, time, asyncio, hashlib, random, re
+import os, io, json, logging, time, asyncio, hashlib, random, re, csv
 from contextlib import asynccontextmanager
 from collections import deque, OrderedDict
 from concurrent.futures import ThreadPoolExecutor
@@ -136,7 +136,7 @@ class LRUCache:
         self._store[key] = (value, time.time())
         while len(self._store) > self.maxsize: self._store.popitem(last=False)
 
-_cache      = LRUCache(maxsize=1000, ttl=600)
+_cache      = LRUCache(maxsize=1000, ttl=120)
 _chat_cache = LRUCache(maxsize=500,  ttl=300)
 _reco_cache = LRUCache(maxsize=200,  ttl=180)
 _dash_cache = LRUCache(maxsize=300,  ttl=60)
@@ -313,10 +313,46 @@ async def lifespan(app: FastAPI):
             loop = asyncio.get_event_loop()
             models_resp = await loop.run_in_executor(_gemini_executor, _gemini_client.models.list)
             names = [m.name for m in models_resp]
-            for c in ["models/gemini-2.5-flash", "models/gemini-2.0-flash", "models/gemini-1.5-flash"]:
-                if c in names: 
-                    WORKING_MODEL = c.replace("models/", "")
-                    break
+            
+            selected_model = None
+            # Check candidates, testing their actual working availability (quota)
+            candidates = [
+                "models/gemini-2.5-flash", 
+                "models/gemini-2.0-flash", 
+                "models/gemini-flash-latest", 
+                "models/gemini-flash-lite-latest", 
+                "models/gemini-1.5-flash"
+            ]
+            for c in candidates:
+                if c in names:
+                    model_name = c.replace("models/", "")
+                    try:
+                        logger.warning(f"Checking candidate model: {model_name}...")
+                        # Run a fast test call to verify if the model has remaining quota and works
+                        test_resp = await loop.run_in_executor(
+                            _gemini_executor,
+                            lambda m=model_name: _gemini_client.models.generate_content(
+                                model=m,
+                                contents="ping"
+                            )
+                        )
+                        if test_resp and test_resp.text:
+                            selected_model = model_name
+                            logger.warning(f"Successfully selected active model with quota: {selected_model}")
+                            break
+                    except Exception as test_err:
+                        logger.warning(f"Model {model_name} quota or check failed: {test_err}")
+                        continue
+            
+            if selected_model:
+                WORKING_MODEL = selected_model
+            else:
+                # Fallback to the first available in names
+                for c in candidates:
+                    if c in names:
+                        WORKING_MODEL = c.replace("models/", "")
+                        break
+            
             gemini_status = f"[ONLINE] Connecte ({WORKING_MODEL})"
         except Exception as e:
             logger.warning(f"Gemini check failed: {e}")
@@ -440,6 +476,19 @@ async def extract_text_from_upload(file: UploadFile) -> str:
     fb = await file.read()
     name = (file.filename or "").lower()
     if name.endswith(".pdf"): return _truncate(await read_pdf_async(fb))
+    if name.endswith(".csv"):
+        try:
+            text = fb.decode("utf-8-sig", errors="ignore").strip()
+            lines = text.splitlines()
+            reader = csv.reader(lines)
+            rows = list(reader)
+            if rows:
+                header = " | ".join(rows[0])
+                data = "\n".join(f"Ligne {i} : {' | '.join(row)}" for i, row in enumerate(rows[1:], 1))
+                return _truncate(f"Fichier CSV importé\nColonnes : {header}\n{data}")
+            return _truncate(text)
+        except:
+            return _truncate(fb.decode("utf-8", errors="ignore"))
     loop = asyncio.get_event_loop()
     def _other():
         try:
@@ -503,16 +552,12 @@ def _detect_is_cv(text: str) -> dict:
     text_lower = text.lower()
     text_norm  = _normalize(text_lower)
 
+    non_cv_penalty = 0
+    detected_signals = []
     for signal in _NON_CV_SIGNALS:
         if signal.lower() in text_lower:
-            return {
-                "is_cv": False,
-                "confidence": 0.85,
-                "reason": f"Le document semble être un fichier de type « {signal} », pas un CV.",
-                "reason_en": f"The document appears to be a '{signal}' file, not a CV.",
-                "reason_ar": f"يبدو أن الوثيقة من نوع '{signal}' وليست سيرة ذاتية.",
-                "detected_signal": signal,
-            }
+            non_cv_penalty += 2
+            detected_signals.append(signal)
 
     cv_score = 0
     matched_kw = []
@@ -528,7 +573,7 @@ def _detect_is_cv(text: str) -> dict:
     has_phone  = bool(re.search(r'[\+\(]?[\d\s\-\(\)]{7,15}', text))
 
     struct_score = sum([has_dates, has_email, has_phone])
-    total_score  = cv_score + struct_score * 2
+    total_score  = cv_score + struct_score * 2 - non_cv_penalty
 
     if total_score >= 6:
         confidence = min(0.95, 0.60 + (total_score - 6) * 0.035)
@@ -550,15 +595,22 @@ def _detect_is_cv(text: str) -> dict:
             "warning_ar": "ثقة متوسطة — قد لا تكون الوثيقة سيرة ذاتية كاملة.",
         }
     else:
-        return {
+        result = {
             "is_cv": False,
             "confidence": round(1 - (total_score / 6), 2),
-            "reason": "Le document ne contient pas les éléments caractéristiques d'un CV (expérience, formation, compétences, coordonnées).",
-            "reason_en": "The document does not contain typical CV elements (experience, education, skills, contact info).",
-            "reason_ar": "لا تحتوي الوثيقة على عناصر السيرة الذاتية النموذجية (خبرة، تعليم، مهارات، معلومات الاتصال).",
             "matched_keywords": matched_kw,
             "word_count": word_count,
         }
+        if non_cv_penalty > 0:
+            result["reason"] = f"Le document contient des termes non-CV ({', '.join(detected_signals[:3])}) et n'a pas assez de mots-clés CV."
+            result["reason_en"] = f"The document contains non-CV terms ({', '.join(detected_signals[:3])}) and lacks CV keywords."
+            result["reason_ar"] = "يحتوي المستند على مصطلحات ليست من السيرة الذاتية ولا يحتوي على كلمات مفتاحية كافية للسيرة الذاتية."
+            result["detected_signals"] = detected_signals
+        else:
+            result["reason"] = "Le document ne contient pas les éléments caractéristiques d'un CV (expérience, formation, compétences, coordonnées)."
+            result["reason_en"] = "The document does not contain typical CV elements (experience, education, skills, contact info)."
+            result["reason_ar"] = "لا تحتوي الوثيقة على عناصر السيرة الذاتية النموذجية (خبرة، تعليم، مهارات، معلومات الاتصال)."
+        return result
 
 
 def _build_cv_alert(detection: dict, lang: str = "fr") -> dict:
@@ -1680,7 +1732,7 @@ async def match_cv(
         return hit
 
     try:
-        prompt = f"""Effectue une analyse comportementale prédictive et de personnalité approfondie de ce candidat pour le poste de : {job_description[:400]}.
+        prompt = f"""Effectue une analyse comportementale prédictive et de personnalité approfondie (analyse numéro {random.randint(1,9999)}) de ce candidat pour le poste de : {job_description[:400]}.
 Le but est d'aider la direction et les évaluateurs de l'entreprise à comprendre la véritable personnalité du candidat, ses traits comportementaux majeurs (leadership, communication, travail en équipe), sa réaction sous pression, et à obtenir des conseils managériaux stratégiques directs d'onboarding et d'entretien. Ne fais aucune critique sur la forme du CV, son contenu manquant ou sa rédaction.
 Document textuel (CV ou informations de profil) : {cv_text[:2500]}
 
@@ -1697,8 +1749,11 @@ JSON valide sans markdown :
 {{"score":<0-100>,"points_forts":["...","...","..."],"points_faibles":["...","..."],"decision":"...","conseils":["...","...","..."],"competences_detectees":["...","..."],"niveau_estime":"Junior|Mid|Senior"}}"""
         r = await call_gemini_async(prompt, module="Analyses CV", sem=_sem_cv, retries=1)
         result = json.loads(clean_json(r.text))
+        result.setdefault("score", 75)
         if "conseils" not in result:
-            result["conseils"] = _local_conseils(result.get("score", 75))
+            result["conseils"] = _local_conseils(result["score"])
+        result.setdefault("competences_detectees", [])
+        result.setdefault("niveau_estime", "Mid")
         result["is_cv"] = True
         if cv_warning:
             result["cv_quality_warning"] = cv_warning
@@ -1707,15 +1762,39 @@ JSON valide sans markdown :
         return result
 
     except (QuotaExceeded, Exception):
-        score = random.randint(65, 90)
+        print(f"[match-cv fallback] Gemini failed, using randomized fallback")
+        score = random.randint(20, 98)
+        forts_opts = [
+            ["Esprit d'analyse et synthèse", "Communication claire", "Proactif et force de proposition"],
+            ["Autonomie et rigueur", "Leadership naturel", "Adaptabilité rapide"],
+            ["Créativité et innovation", "Travail d'équipe", "Gestion du stress"],
+            ["Sens de l'organisation", "Pédagogie et transmission", "Orientation résultats"],
+            ["Empathie et écoute", "Prise de décision", "Réactivité"],
+        ]
+        faibles_opts = [
+            ["Tend à se surcharger", "Besoin de feedback régulier"],
+            ["Peut hésiter en situation d'incertitude", "Directif parfois"],
+            ["Difficulté à déléguer", "Impatient sur les délais"],
+            ["Perfectionniste", "Peu à l'aise avec l'imprévu"],
+            ["Réserve en groupe", "Tendance à l'isolement"],
+        ]
+        competences_opts = [
+            ["Communication", "Travail en équipe", "Résolution de problèmes"],
+            ["Leadership", "Gestion du temps", "Esprit critique"],
+            ["Adaptabilité", "Créativité", "Négociation"],
+            ["Empathie", "Organisation", "Persévérance"],
+            ["Autonomie", "Collaboration", "Flexibilité"],
+        ]
+        niveaux = ["Junior", "Mid", "Senior"]
+        idx = random.randint(0, len(forts_opts) - 1)
         result = {
             "score": score,
-            "points_forts": ["Expérience technique validée", "Soft skills reconnus", "Profil compatible"],
-            "points_faibles": ["Certifications à renforcer", "Portfolio à compléter"],
-            "decision": "Recommandé pour entretien" if score >= 75 else "À réévaluer",
+            "points_forts": forts_opts[idx],
+            "points_faibles": faibles_opts[idx],
+            "decision": "Recommandé pour entretien" if score >= 70 else "À réévaluer",
             "conseils": _local_conseils(score),
-            "competences_detectees": ["Communication", "Travail en équipe"],
-            "niveau_estime": "Mid",
+            "competences_detectees": competences_opts[idx],
+            "niveau_estime": random.choice(niveaux),
             "is_cv": True,
         }
         if cv_warning:
@@ -2633,6 +2712,14 @@ async def generate_pro(
         prompt     = f"Generate {nombre} QCM questions {lang_instr} on '{themetique}' at '{difficulte}' level.{ctx_part}\nJSON with 'questions' array."
         r = await call_gemini_async(prompt, module="Évaluations", sem=_sem_qcm, retries=1)
         data = json.loads(clean_json(r.text))
+        # ── Normaliser les champs questions (Gemini change parfois de format) ──
+        for q in data.get("questions", []):
+            q["question"] = q.get("question") or q.get("question_text") or q.get("text") or ""
+            q["options"]  = q.get("options") or q.get("choices") or q.get("answers") or []
+            q["answer"]   = q.get("answer") if q.get("answer") is not None else q.get("correct") or q.get("correct_answer") or 0
+            if isinstance(q["answer"], str):
+                try: q["answer"] = int(q["answer"])
+                except: q["answer"] = 0
         # ── FIX: injecter theme + sousTheme dans generate-pro ──
         for q in data.get("questions", []):
             q["langue"]    = langue

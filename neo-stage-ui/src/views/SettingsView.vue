@@ -544,7 +544,7 @@ const filteredTabs = computed(() => {
 
 const roleDisplay = computed(() => {
   if (!role.value) return t('roles.User');
-  return t(`roles.${role.value}`);
+  return t(`roles.${role.value}`, role.value);
 });
 
 const passwordStrength = computed(() => {

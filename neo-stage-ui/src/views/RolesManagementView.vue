@@ -818,6 +818,8 @@ onMounted(fetchData);
 }
 .btn-enigma-primary:hover .btn-content { color: #0f172a; }
 .btn-enigma-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+[data-theme="dark"] .elite-roles-root .btn-enigma-primary,
+[data-theme="dark"] .elite-roles-root .nav-tab-btn-modern.active { background: #0d1117; }
 .shadow-premium { box-shadow: var(--roles-shadow-premium) !important; }
 
 .btn-refresh-pro {

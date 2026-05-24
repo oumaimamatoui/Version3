@@ -464,7 +464,7 @@ const profileDisplayUrl = computed(() => {
 
 const roleDisplay = computed(() => {
   if (!authStore.role) return '...';
-  return t(`roles.${authStore.role}`);
+  return t(`roles.${authStore.role}`, authStore.role);
 });
 
 const daysRemaining = computed(() => {

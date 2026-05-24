@@ -12,7 +12,6 @@ public class InscriptionsEntreprise
     public required string NomResponsable { get; set; }
     public required string PrenomResponsable { get; set; } // Nouveau
     public required string EmailResponsable { get; set; }
-    public string? TelephoneResponsable { get; set; } // Nouveau
     
     public string? MatriculeFiscale { get; set; }
 

@@ -50,14 +50,14 @@ namespace NeoEvaluation.API.Services
 
                 if (usageCount >= 3)
                 {
-                    var newestUsage = await _context.UsageLogs.IgnoreQueryFilters()
+                    var oldestUsage = await _context.UsageLogs.IgnoreQueryFilters()
                         .Where(u => u.EntrepriseId == enterpriseId && u.Date > rollingLimit && u.Feature == "AI_GENERATION")
-                        .OrderByDescending(u => u.Date)
+                        .OrderBy(u => u.Date)
                         .FirstOrDefaultAsync();
 
-                    if (newestUsage != null)
+                    if (oldestUsage != null)
                     {
-                        var remaining = TimeSpan.FromHours(24) - (DateTime.UtcNow - newestUsage.Date);
+                        var remaining = TimeSpan.FromHours(24) - (DateTime.UtcNow - oldestUsage.Date);
                         return (false, $"RETRY_IN_{(int)remaining.TotalSeconds}");
                     }
                     return (false, "DAILY_LIMIT_REACHED");

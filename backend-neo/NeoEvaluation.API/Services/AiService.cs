@@ -70,17 +70,20 @@ namespace NeoEvaluation.API.Services
             var fileContent = new StreamContent(file.OpenReadStream());
             fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(file.ContentType ?? "application/octet-stream");
             content.Add(fileContent, "file", file.FileName);
-            content.Add(new StringContent(jobDesc), "job_description");
-            content.Add(new StringContent(lang), "lang");
+            content.Add(new StringContent(jobDesc ?? ""), "job_description");
+            content.Add(new StringContent(lang ?? "fr"), "lang");
 
             var resp = await _http.PostAsync("/ia/match-cv", content);
+            var json = await resp.Content.ReadAsStringAsync();
+
             if (!resp.IsSuccessStatusCode && resp.StatusCode != System.Net.HttpStatusCode.UnprocessableEntity)
             {
+                Console.WriteLine($"[AiService] FastAPI error {resp.StatusCode}: {json}");
                 throw new Exception("FastAPI unreachable");
             }
 
-            var json = await resp.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<CvAnalysisResult>(json, _jsonOpts) ?? new();
+            var result = JsonSerializer.Deserialize<CvAnalysisResult>(json, _jsonOpts) ?? new();
+            return result;
         }
 
         public async Task<AiEvaluationResponse> EvaluateExamAsync(object payload)

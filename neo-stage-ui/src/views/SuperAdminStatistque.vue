@@ -395,7 +395,7 @@
                         <div class="sys-stat-label">{{ t('statistiquesView.system.latency') }}</div>
                       </div>
                       <div class="sys-stat-box text-center">
-                        <div class="sys-stat-val fw-900">99.8%</div>
+                        <div class="sys-stat-val fw-900">{{ systemUptime }}%</div>
                         <div class="sys-stat-label">{{ t('statistiquesView.system.uptime') }}</div>
                       </div>
                       <div class="sys-stat-box text-center">
@@ -409,7 +409,7 @@
             </div>
 
             <div class="row g-4">
-              <div class="col-lg-6">
+              <div class="col-lg-12">
                 <div class="enigma-card p-4">
                   <h6 class="fw-800 mb-4">
                     <i class="fa-solid fa-server me-2 text-amber"></i>
@@ -433,30 +433,7 @@
                 </div>
               </div>
 
-              <div class="col-lg-6">
-                <div class="enigma-card p-4">
-                  <h6 class="fw-800 mb-4">
-                    <i class="fa-solid fa-plug me-2 text-indigo"></i>
-                    {{ t('statistiquesView.system.servicesTitle') }}
-                  </h6>
-                  <div class="services-list">
-                    <div class="service-row" v-for="srv in activeServices" :key="srv.nameKey">
-                      <div class="service-status-dot"
-                        :class="srv.status === 'running' ? 'dot-ok' : 'dot-err'"></div>
-                      <div class="service-info flex-grow-1">
-                        <div class="fw-700 small">{{ t(srv.nameKey) }}</div>
-                        <div class="text-muted" style="font-size:0.65rem">{{ t(srv.descKey) }}</div>
-                      </div>
-                      <div class="service-badge"
-                        :class="srv.status === 'running' ? 'badge-ok' : 'badge-err'">
-                        {{ srv.status === 'running'
-                          ? t('statistiquesView.system.running')
-                          : t('statistiquesView.system.stopped') }}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+
 
               <!-- AUDIT TABLE -->
               <div class="col-12">
@@ -550,9 +527,10 @@ const refreshing   = ref(false);
 const viewMode     = ref('overview');
 const timeRange    = ref('7j');
 const lastSyncTime = ref('');
-const systemStatus = ref('');
-const responseTime = ref(12);
-const auditSearch  = ref('');
+const systemStatus  = ref('');
+const responseTime  = ref(12);
+const systemUptime  = ref('99.8');
+const auditSearch   = ref('');
 
 const statsData    = ref({});
 const apiChartData = ref([]);
@@ -588,36 +566,21 @@ const masterKpis = ref([
 
 /* ─── RESSOURCES ─────────────────────────────────────────────────── */
 const resources = ref([
-  { nameKey: 'statistiquesView.system.resources.cpu',      usage: 68 },
-  { nameKey: 'statistiquesView.system.resources.uptime',   usage: 99 },
-  { nameKey: 'statistiquesView.system.resources.disk',     usage: 42 },
+  { nameKey: 'statistiquesView.system.resources.cpu',     usage: 0 },
+  { nameKey: 'statistiquesView.system.resources.ram',     usage: 0 },
+  { nameKey: 'statistiquesView.system.resources.disk',    usage: 0 },
+  { nameKey: 'statistiquesView.system.resources.uptime',  usage: 0 },
 ]);
 
 const extendedResources = ref([
-  { nameKey: 'statistiquesView.system.resources.cpu',       usage: 68,  icon: 'fa-solid fa-microchip' },
-  { nameKey: 'statistiquesView.system.resources.ram',       usage: 54,  icon: 'fa-solid fa-memory' },
-  { nameKey: 'statistiquesView.system.resources.disk',      usage: 42,  icon: 'fa-solid fa-hard-drive' },
-  { nameKey: 'statistiquesView.system.resources.bandwidth', usage: 87,  icon: 'fa-solid fa-network-wired' },
-  { nameKey: 'statistiquesView.system.resources.uptime',    usage: 99,  icon: 'fa-solid fa-server' },
-]);
-
-const activeServices = ref([
-  { nameKey: 'statistiquesView.system.services.gateway.name',   descKey: 'statistiquesView.system.services.gateway.desc',   status: 'running' },
-  { nameKey: 'statistiquesView.system.services.evaluabot.name', descKey: 'statistiquesView.system.services.evaluabot.desc', status: 'running' },
-  { nameKey: 'statistiquesView.system.services.queue.name',     descKey: 'statistiquesView.system.services.queue.desc',     status: 'running' },
-  { nameKey: 'statistiquesView.system.services.email.name',     descKey: 'statistiquesView.system.services.email.desc',     status: 'running' },
-  { nameKey: 'statistiquesView.system.services.analytics.name', descKey: 'statistiquesView.system.services.analytics.desc', status: 'running' },
-  { nameKey: 'statistiquesView.system.services.backup.name',    descKey: 'statistiquesView.system.services.backup.desc',    status: 'stopped' },
+  { nameKey: 'statistiquesView.system.resources.cpu',     usage: 0,  icon: 'fa-solid fa-microchip' },
+  { nameKey: 'statistiquesView.system.resources.ram',     usage: 0,  icon: 'fa-solid fa-memory' },
+  { nameKey: 'statistiquesView.system.resources.disk',    usage: 0,  icon: 'fa-solid fa-hard-drive' },
+  { nameKey: 'statistiquesView.system.resources.uptime',  usage: 0,  icon: 'fa-solid fa-server' },
 ]);
 
 /* ─── CHART DATA ─────────────────────────────────────────────────── */
-const weekActivityData = ref(
-  ['L','M','M','J','V','S','D'].map(d => ({
-    label: d,
-    sessions: Math.floor(Math.random() * 80 + 20),
-    users:    Math.floor(Math.random() * 60 + 10),
-  }))
-);
+const weekActivityData = ref([]);
 
 const analyticsChartData = ref(
   ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'].map(l => ({
@@ -661,9 +624,9 @@ const orgDonutSegments = computed(() => {
   const total = statsData.value.totalEntreprises || 4;
   const circ  = 283;
   const data  = [
-    { labelKey: 'statistiquesView.overview.donutActive',   count: Math.ceil(total * 0.6),   color: '#f59e0b' },
-    { labelKey: 'statistiquesView.overview.donutInactive', count: Math.ceil(total * 0.25),  color: '#6366f1' },
-    { labelKey: 'statistiquesView.overview.donutPending',  count: Math.floor(total * 0.15), color: '#10b981' },
+    { labelKey: 'statistiquesView.overview.donutActive',   count: statsData.value.activeCount || 0,   color: '#f59e0b' },
+    { labelKey: 'statistiquesView.overview.donutInactive', count: statsData.value.inactiveCount || 0,  color: '#6366f1' },
+    { labelKey: 'statistiquesView.overview.donutPending',  count: statsData.value.demandesEnAttente || 0, color: '#10b981' },
   ];
   let cumulative = circ / 4;
   return data.map(d => {
@@ -690,15 +653,17 @@ const fetchData = async () => {
   loading.value = true;
   const start   = Date.now();
   try {
-    const [statsRes, globalRes, auditRes] = await Promise.allSettled([
+    const [statsRes, globalRes, auditRes, healthRes, activityRes] = await Promise.allSettled([
       api.get('/SuperAdmin/stats'),
       api.get('/Dashboard/global-stats'),
       api.get('/SuperAdmin/audit-logs'),
+      api.get('/SuperAdmin/system-health'),
+      api.get('/SuperAdmin/recent-activity'),
     ]);
 
     if (statsRes.status === 'fulfilled') {
       statsData.value = statsRes.value.data;
-      masterKpis.value[0].value = statsRes.value.data.totalEntreprises  || '0';
+      masterKpis.value[0].value = statsRes.value.data.activeCount  || '0';
       masterKpis.value[1].value = statsRes.value.data.totalUtilisateurs || '0';
       masterKpis.value[2].value = statsRes.value.data.totalTests        || '0';
     }
@@ -714,6 +679,27 @@ const fetchData = async () => {
       auditLogs.value = auditRes.value.data || [];
       if (auditLogs.value.length > 0)
         lastAudit.value = auditLogs.value[auditLogs.value.length - 1];
+    }
+
+    if (healthRes.status === 'fulfilled') {
+      const h = healthRes.value.data;
+      systemUptime.value = h.uptime;
+      resources.value = [
+        { nameKey: 'statistiquesView.system.resources.cpu',     usage: h.cpu },
+        { nameKey: 'statistiquesView.system.resources.ram',     usage: h.ram },
+        { nameKey: 'statistiquesView.system.resources.disk',    usage: h.disk },
+        { nameKey: 'statistiquesView.system.resources.uptime',  usage: h.uptime },
+      ];
+      extendedResources.value = [
+        { nameKey: 'statistiquesView.system.resources.cpu',     usage: h.cpu,  icon: 'fa-solid fa-microchip' },
+        { nameKey: 'statistiquesView.system.resources.ram',     usage: h.ram,  icon: 'fa-solid fa-memory' },
+        { nameKey: 'statistiquesView.system.resources.disk',    usage: h.disk, icon: 'fa-solid fa-hard-drive' },
+        { nameKey: 'statistiquesView.system.resources.uptime',  usage: h.uptime, icon: 'fa-solid fa-server' },
+      ];
+    }
+
+    if (activityRes.status === 'fulfilled') {
+      weekActivityData.value = activityRes.value.data || [];
     }
 
     responseTime.value = Date.now() - start;
@@ -762,11 +748,11 @@ const generateMockChart = () => [
 ];
 
 const generateAllMocks = () => {
-  masterKpis.value[0].value = '12';
+  masterKpis.value[0].value = '8';
   masterKpis.value[1].value = '348';
   masterKpis.value[2].value = '87';
   statsData.value = {
-    totalEntreprises: 12, totalUtilisateurs: 348, totalTests: 87,
+    totalEntreprises: 12, activeCount: 8, inactiveCount: 4, demandesEnAttente: 3, totalUtilisateurs: 348, totalTests: 87,
     tauxReussite: 74, candidatsActifs: 210,
   };
   apiChartData.value = generateMockChart();
@@ -783,6 +769,27 @@ const generateAllMocks = () => {
     { id: 5, utilisateur: 'rh@corp.fr',      action: 'EXPORT', details: 'Export JSON campagne #5',    timestamp: new Date().toISOString() },
   ];
   lastAudit.value = auditLogs.value[auditLogs.value.length - 1];
+  resources.value = [
+    { nameKey: 'statistiquesView.system.resources.cpu',     usage: 38 },
+    { nameKey: 'statistiquesView.system.resources.ram',     usage: 62 },
+    { nameKey: 'statistiquesView.system.resources.disk',    usage: 45 },
+    { nameKey: 'statistiquesView.system.resources.uptime',  usage: 97 },
+  ];
+  extendedResources.value = [
+    { nameKey: 'statistiquesView.system.resources.cpu',     usage: 38,  icon: 'fa-solid fa-microchip' },
+    { nameKey: 'statistiquesView.system.resources.ram',     usage: 62,  icon: 'fa-solid fa-memory' },
+    { nameKey: 'statistiquesView.system.resources.disk',    usage: 45,  icon: 'fa-solid fa-hard-drive' },
+    { nameKey: 'statistiquesView.system.resources.uptime',  usage: 97,  icon: 'fa-solid fa-server' },
+  ];
+  weekActivityData.value = [
+    { label: 'Lun', sessions: 45, users: 22 },
+    { label: 'Mar', sessions: 62, users: 31 },
+    { label: 'Mer', sessions: 38, users: 18 },
+    { label: 'Jeu', sessions: 71, users: 35 },
+    { label: 'Ven', sessions: 53, users: 27 },
+    { label: 'Sam', sessions: 12, users: 8 },
+    { label: 'Dim', sessions: 8,  users: 4 },
+  ];
 };
 
 /* ─── HELPERS ────────────────────────────────────────────────────── */

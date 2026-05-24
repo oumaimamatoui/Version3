@@ -61,7 +61,7 @@
                 <div class="section-title-pro mb-4">
                   <div class="icon-pill bg-navy"><i class="fa-solid fa-file-arrow-up"></i></div>
                   <div>
-                    <h6 class="card-section-title">{{ t('iaGenerator.contextDoc') }}</h6>
+                    <h6 class="card-section-title">{{ t('iaGenerator.contextDoc') }} <span class="required-badge">Requis</span></h6>
                     <p class="card-section-sub">{{ t('iaGenerator.contextDocSub') }}</p>
                   </div>
                 </div>
@@ -74,7 +74,7 @@
                     </div>
                     <div v-else class="upload-success-msg">{{ files[0].name }}</div>
                   </div>
-                  <input type="file" ref="fileRef" hidden @change="handleFile" accept=".pdf,.docx">
+                  <input type="file" ref="fileRef" hidden @change="handleFile" accept=".pdf,.docx,.csv">
                 </div>
               </div>
 
@@ -199,7 +199,7 @@
                   </div>
                 </div>
 
-                <button class="btn-generate w-100" @click="startGeneration" :disabled="isGenerating || !settings.theme">
+                <button class="btn-generate w-100" @click="startGeneration" :disabled="isGenerating || !settings.theme || files.length === 0">
                   <span v-if="!isGenerating">
                     <i class="fa-solid fa-wand-magic-sparkles me-2"></i>
                     {{ t('iaGenerator.generateBtn') }}
@@ -210,7 +210,11 @@
                   </span>
                 </button>
 
-                <p v-if="!settings.theme" class="btn-hint mt-2">
+                <p v-if="!files.length" class="btn-hint mt-2">
+                  <i class="fa-solid fa-circle-info me-1"></i>
+                  Uploader un CV ou une fiche de poste pour activer la génération.
+                </p>
+                <p v-else-if="!settings.theme" class="btn-hint mt-2">
                   <i class="fa-solid fa-circle-info me-1"></i>
                   Sélectionnez un thème pour activer la génération.
                 </p>
@@ -260,11 +264,13 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import api from '@/services/api';
 
 const { t, locale } = useI18n();
+const router = useRouter();
 
 // ══════════════════════════════════════════════════════════════
 // STATE
@@ -461,8 +467,21 @@ const startGeneration = async () => {
     return;
   }
 
+  if (!files.value.length) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Document requis',
+      text: 'Veuillez uploader un CV ou une fiche de poste (PDF/DOCX).',
+    });
+    return;
+  }
+
   isGenerating.value = true;
   try {
+    // VÉRIFICATION QUOTA
+    await api.post('/Usage/validate-action?questionCount=' + settings.count);
+
+    // GÉNÉRATION IA
     const fd = new FormData();
     if (files.value.length) fd.append('file', files.value[0].raw);
     fd.append('nombre',     settings.count);
@@ -477,7 +496,56 @@ const startGeneration = async () => {
       generatedQuestions.value = res.data.questions;
     }
   } catch (err) {
-    Swal.fire({ icon: 'error', title: 'Error', text: 'Generation failed' });
+    if (err.response?.status === 403) {
+      if (err.response.data?.error === 'MAX_QUESTIONS_EXCEEDED') {
+        Swal.fire({ icon: 'error', title: 'Limite dépassée', text: 'Maximum 100 questions par génération.' });
+        return;
+      }
+      const secondsLeft = err.response.data?.retryAfterSeconds || 0;
+      const h = Math.floor(secondsLeft / 3600);
+      const m = Math.floor((secondsLeft % 3600) / 60);
+      const s = secondsLeft % 60;
+      const timeStr = h > 0 ? `${h}h ${m}m ${s}s` : `${m}m ${s}s`;
+
+      Swal.fire({
+        title: '<h2 style="font-size:2rem;font-weight:600;color:#1e293b;margin-top:1rem">Limite atteinte</h2>',
+        html: `
+          <div style="padding:1rem 2rem">
+            <p style="color:#64748b;font-size:1.05rem;margin-bottom:1.5rem">
+              Le plan Starter est limité à <b>3 générations</b> par 24h.
+            </p>
+            <div style="background:#fff1f2;border:1px solid #fecaca;border-radius:8px;
+                        padding:1.2rem;margin-bottom:1.5rem;display:flex;
+                        align-items:center;justify-content:center;gap:12px">
+              <i class="fa-solid fa-rotate-left" style="color:#ef4444;font-size:1.3rem"></i>
+              <span style="color:#be123c;font-size:1.1rem;font-weight:500">Réessayez dans :</span>
+              <span style="background:#ef4444;color:white;padding:4px 12px;
+                           border-radius:6px;font-weight:700">${timeStr}</span>
+            </div>
+            <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:1.2rem">
+              <p style="color:#92400e;margin:0;line-height:1.6">
+                Passez à <b>EvaluaTech Go</b> pour des questions illimitées.
+              </p>
+            </div>
+          </div>`,
+        showCancelButton: true,
+        confirmButtonText: 'Passer à EvaluaTech Go',
+        cancelButtonText:  'Annuler',
+        confirmButtonColor: '#eab308',
+        cancelButtonColor:  '#f1f5f9',
+        background: '#fff',
+        width: '580px',
+        customClass: { popup: 'rounded-4 border-0 shadow-lg' },
+        didOpen: () => {
+          const c = Swal.getConfirmButton();
+          const x = Swal.getCancelButton();
+          if (c) Object.assign(c.style, { color:'#000', fontWeight:'700', padding:'12px 28px', borderRadius:'8px', fontSize:'1rem' });
+          if (x) Object.assign(x.style, { color:'#475569', fontWeight:'500', padding:'12px 28px', borderRadius:'8px', fontSize:'1rem', backgroundColor:'#f1f5f9', border:'none' });
+        }
+      }).then(r => { if (r.isConfirmed) router.push('/pricing'); });
+      return;
+    }
+    Swal.fire({ icon: 'error', title: 'Erreur', text: 'Échec de la génération' });
   } finally {
     isGenerating.value = false;
   }
@@ -487,6 +555,7 @@ const startGeneration = async () => {
 // SAUVEGARDE
 // ══════════════════════════════════════════════════════════════
 const saveAllQuestions = async () => {
+  const niveauMap = { 'Easy': 0, 'Medium': 1, 'Hard': 2 };
   try {
     for (const q of generatedQuestions.value) {
       await api.post('/Questions', {
@@ -495,17 +564,20 @@ const saveAllQuestions = async () => {
         points:       2,
         theme:        settings.theme,
         sousTheme:    settings.sousTheme || '',
-        choix:        q.options,
-        bonneReponse: q.options[q.answer],
+        choix:        q.options || [],
+        bonneReponse: (q.options || [])[q.answer] || '',
         langue:       settings.langue,
+        niveau:       niveauMap[settings.difficulty] ?? 1,
       });
     }
     Swal.fire({ icon: 'success', title: t('iaGenerator.saveSuccess') });
     generatedQuestions.value = [];
-    // Rafraîchir la banque après sauvegarde
     await fetchBankQuestions();
   } catch (err) {
-    Swal.fire({ icon: 'error', title: 'Error', text: 'Save failed' });
+    console.error('[IAGenerator] Save error:', err);
+    const msg = err.response?.data?.message || err.response?.data?.title || err.message || 'Save failed';
+    const status = err.response?.status ? `(${err.response.status}) ` : '';
+    Swal.fire({ icon: 'error', title: 'Error', text: status + msg });
   }
 };
 
@@ -810,6 +882,17 @@ onMounted(() => fetchBankQuestions());
   letter-spacing: 0;
 }
 
+.required-badge {
+  font-size: 9px;
+  font-weight: 700;
+  background: #fef2f2;
+  color: #ef4444;
+  padding: 2px 8px;
+  border-radius: 20px;
+  letter-spacing: 0;
+  vertical-align: middle;
+}
+
 /* ════════ INPUT ════════ */
 .form-input {
   width: 100%; padding: 12px 16px;
@@ -906,4 +989,57 @@ onMounted(() => fetchBankQuestions());
 .rtl-content { direction: rtl; text-align: right; }
 .rtl-content .section-title-pro { flex-direction: row; text-align: right; }
 .rtl-content .icon-pill { margin-left: 15px; margin-right: 0; }
+
+/* ════════════════════════════════════
+   DARK MODE
+════════════════════════════════════ */
+[data-theme="dark"] .admin-layout { background-color: #0d1117; }
+[data-theme="dark"] .breadcrumb-bar { color: #8b949e; }
+[data-theme="dark"] .bc-sep  { color: #30363d; }
+[data-theme="dark"] .page-title { color: #f0f6fc; }
+[data-theme="dark"] .page-subtitle { color: #8b949e; }
+[data-theme="dark"] .usage-pill { background: #161b22; border-color: rgba(255,255,255,0.08); box-shadow: none; }
+[data-theme="dark"] .ring-val { color: #f0f6fc; }
+[data-theme="dark"] .usage-label { color: #f0f6fc; }
+[data-theme="dark"] .usage-sub   { color: #8b949e; }
+[data-theme="dark"] .glass-card { background: #161b22; border-color: rgba(255,255,255,0.08); box-shadow: none; }
+[data-theme="dark"] .glass-card:hover { box-shadow: none; }
+[data-theme="dark"] .card-section-title { color: #f0f6fc; }
+[data-theme="dark"] .card-section-sub   { color: #8b949e; }
+[data-theme="dark"] .upload-zone { border-color: rgba(255,255,255,0.12); background: rgba(255,255,255,0.02); }
+[data-theme="dark"] .upload-zone:hover { border-color: #eab308; background: rgba(245,158,11,0.08); }
+[data-theme="dark"] .upload-zone-active { border-color: #22c55e; background: rgba(22,163,74,0.08); }
+[data-theme="dark"] .upload-title { color: #f0f6fc; }
+[data-theme="dark"] .setting-label { color: #8b949e; }
+[data-theme="dark"] .custom-range { background: #21262d; }
+[data-theme="dark"] .custom-range::-webkit-slider-thumb { border-color: #161b22; }
+[data-theme="dark"] .range-labels span { color: #30363d; }
+[data-theme="dark"] .form-select-custom { color: #f0f6fc; background: #161b22; border-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .form-select-custom:focus { border-color: #eab308; }
+[data-theme="dark"] .skeleton-select { background: linear-gradient(90deg,#21262d 25%,#30363d 50%,#21262d 75%); background-size: 200% 100%; }
+[data-theme="dark"] .loading-indicator { color: #8b949e; }
+[data-theme="dark"] .empty-bank-hint { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.25); color: #fbbf24; }
+[data-theme="dark"] .sous-theme-pill { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); color: #8b949e; }
+[data-theme="dark"] .sous-theme-pill:hover { border-color: #fde68a; background: rgba(245,158,11,0.1); color: #fbbf24; }
+[data-theme="dark"] .sous-theme-pill.active { border-color: #eab308; background: rgba(245,158,11,0.12); color: #fbbf24; }
+[data-theme="dark"] .selection-summary { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .sel-label { color: #8b949e; }
+[data-theme="dark"] .sel-badge { background: #0d1117; color: #eab308; }
+[data-theme="dark"] .sel-badge-sub { background: rgba(245,158,11,0.1); color: #fbbf24; border-color: rgba(245,158,11,0.25); }
+[data-theme="dark"] .optional-badge { background: rgba(255,255,255,0.05); color: #8b949e; }
+[data-theme="dark"] .required-badge { background: rgba(239,68,68,0.15); color: #fca5a5; }
+[data-theme="dark"] .form-input { background: #161b22; color: #f0f6fc; border-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .form-input::placeholder { color: #30363d; }
+[data-theme="dark"] .lang-pill { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); color: #8b949e; }
+[data-theme="dark"] .lang-pill:hover { border-color: #fde68a; color: #f0f6fc; background: rgba(245,158,11,0.08); }
+[data-theme="dark"] .lang-pill.active { border-color: #eab308; background: rgba(245,158,11,0.12); color: #fbbf24; }
+[data-theme="dark"] .btn-hint { color: #8b949e; }
+[data-theme="dark"] .q-card { background: #161b22; border-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .q-card:hover { border-color: #fde68a; box-shadow: none; }
+[data-theme="dark"] .q-text { color: #f0f6fc; }
+[data-theme="dark"] .opt-item { background: rgba(255,255,255,0.03); color: #8b949e; }
+[data-theme="dark"] .opt-correct { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); color: #34d399; }
+[data-theme="dark"] .opt-letter { border-color: rgba(255,255,255,0.15); color: #8b949e; }
+[data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-thumb { background: #30363d; }
+[data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #484f58; }
 </style>

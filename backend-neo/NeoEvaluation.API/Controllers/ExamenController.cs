@@ -108,8 +108,12 @@ namespace NeoEvaluation.API.Controllers
                     CandidatId = _tenantService.GetUserId()
                 };
                 _context.Evaluations.Add(cand.Evaluation);
-                await _context.SaveChangesAsync();
             }
+            else if (cand.Evaluation.CandidatId == null)
+            {
+                cand.Evaluation.CandidatId = _tenantService.GetUserId();
+            }
+            await _context.SaveChangesAsync();
 
             var qIds = cand.Campagne?.CampagneQuestionnaires
                            .Select(cq => cq.QuestionnaireId).ToList() ?? new List<Guid>();
