@@ -14,12 +14,15 @@ export const aiService = {
     return response.data;
   },
 
-  async sendMessage(message, role, sessionId) {
+  async sendMessage(message, role, sessionId, userName = '', enterpriseName = '', enterprisePlan = '') {
     const fd = new FormData();
     fd.append('message', message);
     fd.append('role', role);
     fd.append('lang', 'auto');
     fd.append('session_id', sessionId);
+    fd.append('user_name', userName);
+    fd.append('enterprise_name', enterpriseName);
+    fd.append('enterprise_plan', enterprisePlan);
     
     const response = await aiApi.post(`/ia/chat`, fd, {
       headers: {

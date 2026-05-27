@@ -178,6 +178,7 @@ namespace NeoEvaluation.API.Controllers
             try {
                 // Version robuste pour éviter les erreurs 500 dues aux jointures ou aux champs NULL
                 var users = await _context.Utilisateurs
+                    .Where(u => u.RoleNom != "SuperAdmin")
                     .Select(u => new PlatformUserDto {
                         Id = u.Id,
                         Name = ((u.Prenom ?? "") + " " + (u.Nom ?? "")).Trim(),
@@ -475,7 +476,7 @@ namespace NeoEvaluation.API.Controllers
                         (e.Secteur != null && e.Secteur.Contains(search)));
 
                 var total = await query.CountAsync();
-                var data = await query
+                var orgs = await query
                     .OrderByDescending(e => e.CreeLe)
                     .Skip((page - 1) * limit)
                     .Take(limit)
@@ -499,6 +500,68 @@ namespace NeoEvaluation.API.Controllers
                             .FirstOrDefault()
                     })
                     .ToListAsync();
+
+                var orgIds = orgs.Select(o => o.Id).ToList();
+
+                // Staff counts per org
+                var staffCounts = await _context.Utilisateurs
+                    .IgnoreQueryFilters()
+                    .Where(u => u.EntrepriseId.HasValue && orgIds.Contains(u.EntrepriseId.Value))
+                    .GroupBy(u => u.EntrepriseId!.Value)
+                    .Select(g => new {
+                        OrgId = g.Key,
+                        Total = g.Count(),
+                        Active = g.Count(u => u.EstActif)
+                    })
+                    .ToListAsync();
+
+                // Evaluation stats per org (via Campagne -> Candidature -> Evaluation)
+                var evalStats = await _context.Evaluations
+                    .IgnoreQueryFilters()
+                    .Where(e => e.Candidature != null && e.Candidature.Campagne != null
+                        && e.Candidature.Campagne.EntrepriseId.HasValue
+                        && orgIds.Contains(e.Candidature.Campagne.EntrepriseId.Value))
+                    .GroupBy(e => e.Candidature!.Campagne!.EntrepriseId!.Value)
+                    .Select(g => new {
+                        OrgId = g.Key,
+                        Total = g.Count(),
+                        Completed = g.Count(e => e.Statut == StatutPassage.TERMINE)
+                    })
+                    .ToListAsync();
+
+                var staffLookup = staffCounts.ToDictionary(s => s.OrgId);
+                var evalLookup  = evalStats.ToDictionary(e => e.OrgId);
+
+                var data = orgs.Select(o => {
+                    var staff = staffLookup.GetValueOrDefault(o.Id);
+                    var evals = evalLookup.GetValueOrDefault(o.Id);
+
+                    // Score components
+                    double staffScore = 0;
+                    if (staff != null && staff.Total > 0)
+                        staffScore = 35.0 * staff.Active / staff.Total;
+
+                    double evalScore = 0;
+                    if (evals != null && evals.Total > 0)
+                        evalScore = 35.0 * evals.Completed / evals.Total;
+
+                    double subScore = 30;
+                    if (o.AbonnementFin.HasValue)
+                    {
+                        var daysLeft = (o.AbonnementFin.Value - DateTime.UtcNow).TotalDays;
+                        if (daysLeft <= 0) subScore = 0;
+                        else if (daysLeft < 30) subScore = 30.0 * daysLeft / 30.0;
+                    }
+
+                    var rawScore = staffScore + evalScore + subScore;
+                    return new {
+                        o.Id, o.Nom, o.Plan,
+                        EstActif = o.AbonnementFin == null || o.AbonnementFin > DateTime.UtcNow,
+                        o.CreeLe, o.CouleurSignature, o.Secteur, o.Ville, o.Pays,
+                        o.Domaine, o.SiteWeb, o.AbonnementFin, o.EmailAdmin,
+                        Score = Math.Round(rawScore, 0)
+                    };
+                }).ToList();
 
                 return Ok(new { total, page, limit, data });
             } catch (Exception ex) {

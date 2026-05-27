@@ -1181,7 +1181,7 @@ const filteredOrgs = computed(() => {
     ...o,
     _rank:  i + 1,
     _color: ORG_COLORS[i % ORG_COLORS.length],
-    _score: o._score || Math.floor(Math.random() * 30 + 65),
+    _score: o.score != null ? Math.round(o.score) : 50,
   }));
 });
 

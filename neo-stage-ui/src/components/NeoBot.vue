@@ -67,7 +67,7 @@
                 {{ msg.source === 'cache' ? '⚡ Cache' : msg.source === 'intent' ? '🧠 Local' : '🤖 IA' }}
               </span>
               <div v-if="msg.role === 'ai'" class="msg-actions">
-                <button @click="speak(msg.text)" class="msg-action-btn" :title="t('chatbot.speak')">
+                <button @click="speak(msg.text, index)" class="msg-action-btn" :title="t('chatbot.speak')">
                   <i class="fa fa-volume-up"></i>
                 </button>
                 <button @click="copyText(msg.text)" class="msg-action-btn" :title="t('chatbot.copy')">
@@ -121,10 +121,6 @@
               <i class="fa fa-paper-plane"></i>
             </button>
           </div>
-          <div class="footer-note">
-            <i class="fa fa-shield-alt"></i>
-            NeoStage · {{ t('chatbot.poweredBy') }}
-          </div>
         </div>
 
       </div>
@@ -136,6 +132,44 @@
 import { ref, computed, watch, inject, nextTick } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import aiService from '@/services/ai.service';
+import MarkdownIt from 'markdown-it';
+import DOMPurify from 'dompurify';
+import hljs from 'highlight.js/lib/core';
+import javascript from 'highlight.js/lib/languages/javascript';
+import python from 'highlight.js/lib/languages/python';
+import java from 'highlight.js/lib/languages/java';
+import sql from 'highlight.js/lib/languages/sql';
+import bash from 'highlight.js/lib/languages/bash';
+import json from 'highlight.js/lib/languages/json';
+import xml from 'highlight.js/lib/languages/xml';
+import css from 'highlight.js/lib/languages/css';
+import php from 'highlight.js/lib/languages/php';
+import ruby from 'highlight.js/lib/languages/ruby';
+import csharp from 'highlight.js/lib/languages/csharp';
+hljs.registerLanguage('javascript', javascript);
+hljs.registerLanguage('python', python);
+hljs.registerLanguage('java', java);
+hljs.registerLanguage('sql', sql);
+hljs.registerLanguage('bash', bash);
+hljs.registerLanguage('json', json);
+hljs.registerLanguage('xml', xml);
+hljs.registerLanguage('css', css);
+hljs.registerLanguage('php', php);
+hljs.registerLanguage('ruby', ruby);
+hljs.registerLanguage('csharp', csharp);
+const md = new MarkdownIt({
+  html: false,
+  linkify: true,
+  typographer: true,
+  highlight(str, lang) {
+    if (lang && hljs.getLanguage(lang)) {
+      try {
+        return `<pre class="hljs"><code>${hljs.highlight(str, { language: lang }).value}</code></pre>`;
+      } catch {}
+    }
+    return `<pre class="hljs"><code>${md.utils.escapeHtml(str)}</code></pre>`;
+  }
+});
 
 const authStore = useAuthStore();
 
@@ -159,8 +193,9 @@ const chatScroll     = ref(null);
 const chatInputRef   = ref(null);
 const chatMessages   = ref([]);
 const unreadCount    = ref(0);
-const startSuggestions = ref([]);
-const sessionId      = ref(`session_${Date.now()}`);
+const startSuggestions   = ref([]);
+const sessionId          = ref(`session_${Date.now()}`);
+const speakingIndex      = ref(-1);
 
 const DEFAULT_SUGGESTIONS = {
   fr: ['Créer un test IA', 'Analyser un CV', 'Voir mes résultats', 'Générer un rapport'],
@@ -170,18 +205,32 @@ const DEFAULT_SUGGESTIONS = {
 
 const chatDir = computed(() => currentLang.value === 'ar' ? 'rtl' : 'ltr');
 
+const greetingText = computed(() => {
+  const name = authStore.user?.name;
+  if (!name) return t('chatbot.welcome');
+  const welcome = t('chatbot.welcome');
+  return welcome.replace(/^(👋\s*)([^!\n]+)(!\s*)/, `$1$2 ${name}$3`);
+});
+
 const formatMessage = (text) => {
   if (!text) return '';
-  return text
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\n/g, '<br>')
-    .replace(/^(\d+\.\s)/gm, '<br>$1');
+  try {
+    return DOMPurify.sanitize(md.render(text));
+  } catch {
+    return text.replace(/\n/g, '<br>');
+  }
 };
 
 const now = () =>
   new Date().toLocaleTimeString(langLocale[currentLang.value] || 'fr-FR', {
     hour: '2-digit', minute: '2-digit'
   });
+
+const MAX_CHAT_MSGS = 100;
+const pushMsg = (msg) => {
+  chatMessages.value.push(msg);
+  if (chatMessages.value.length > MAX_CHAT_MSGS) chatMessages.value.shift();
+};
 
 const scrollToBottom = async () => {
   await nextTick();
@@ -190,7 +239,7 @@ const scrollToBottom = async () => {
 
 const loadStartSuggestions = async () => {
   try {
-    const role = authStore.user?.role || 'Recruteur';
+    const role = authStore.role || 'Recruteur';
     const data = await aiService.getSuggestions(role, currentLang.value);
     startSuggestions.value = data.suggestions || DEFAULT_SUGGESTIONS[currentLang.value];
   } catch {
@@ -205,10 +254,14 @@ const sendSuggestion = (text) => {
 
 const toggleChat = async () => {
   isChatOpen.value = !isChatOpen.value;
+  if (!isChatOpen.value) {
+    window.speechSynthesis.cancel();
+    speakingIndex.value = -1;
+  }
   if (isChatOpen.value) {
     unreadCount.value = 0;
     if (chatMessages.value.length === 0) {
-      chatMessages.value.push({ role: 'ai', text: t('chatbot.welcome'), time: now(), suggestions: [] });
+      pushMsg({ role: 'ai', text: greetingText.value, time: now(), suggestions: [] });
       await loadStartSuggestions();
     }
     await nextTick();
@@ -220,23 +273,24 @@ const toggleChat = async () => {
 const handleChat = async (isVocal = false) => {
   if (!chatInput.value.trim() || isChatLoading.value) return;
   const userText = chatInput.value.trim();
-  chatMessages.value.push({ role: 'user', text: userText, time: now() });
+  pushMsg({ role: 'user', text: userText, time: now() });
   chatInput.value     = '';
   isChatLoading.value = true;
   await scrollToBottom();
   try {
-    const role = authStore.user?.role || 'Recruteur';
-    const data = await aiService.sendMessage(userText, role, sessionId.value);
+    const role = authStore.role || 'Recruteur';
+    const userName = authStore.user?.name || '';
+    const data = await aiService.sendMessage(userText, role, sessionId.value, userName, '', '');
     const reply    = data.response || data.reply || t('chatbot.error');
-    chatMessages.value.push({
+    pushMsg({
       role: 'ai', text: reply, time: now(),
       suggestions: data.suggestions || [],
       source: data.source || ''
     });
-    if (isVocal) speak(reply);
+    if (isVocal) speak(reply, chatMessages.value.length - 1);
     if (!isChatOpen.value) unreadCount.value++;
   } catch {
-    chatMessages.value.push({ role: 'ai', text: t('chatbot.error'), time: now(), suggestions: [] });
+    pushMsg({ role: 'ai', text: t('chatbot.error'), time: now(), suggestions: [] });
   } finally {
     isChatLoading.value = false;
     await scrollToBottom();
@@ -249,17 +303,30 @@ const clearChat = async () => {
   } catch {}
   chatMessages.value = [];
   sessionId.value    = `session_${Date.now()}`;
-  chatMessages.value.push({ role: 'ai', text: t('chatbot.welcome'), time: now(), suggestions: [] });
+  pushMsg({ role: 'ai', text: greetingText.value, time: now(), suggestions: [] });
   await loadStartSuggestions();
 };
 
-const speak = (text) => {
+const speak = (text, index = -1) => {
+  if (!text) return;
+  if (index === speakingIndex.value) {
+    window.speechSynthesis.cancel();
+    speakingIndex.value = -1;
+    return;
+  }
   window.speechSynthesis.cancel();
-  const clean = text.replace(/<[^>]*>/g, '').replace(/\*\*/g, '');
-  const msg   = new SpeechSynthesisUtterance(clean);
-  msg.lang    = langVoice[currentLang.value] || 'fr-FR';
-  msg.rate    = 0.95;
-  window.speechSynthesis.speak(msg);
+  try {
+    const clean = text.replace(/<[^>]*>/g, '').replace(/\*\*/g, '');
+    const msg   = new SpeechSynthesisUtterance(clean);
+    msg.lang    = langVoice[currentLang.value] || 'fr-FR';
+    msg.rate    = 0.95;
+    msg.onend   = () => { speakingIndex.value = -1; };
+    msg.onerror = () => { speakingIndex.value = -1; };
+    speakingIndex.value = index;
+    window.speechSynthesis.speak(msg);
+  } catch {
+    speakingIndex.value = -1;
+  }
 };
 
 const copyText = (text) => {
@@ -287,26 +354,34 @@ const toggleVoiceRecognition = () => {
 watch(currentLang, async () => {
   await loadStartSuggestions();
   if (chatMessages.value.length === 1 && chatMessages.value[0].role === 'ai') {
-    chatMessages.value[0].text = t('chatbot.welcome');
+    chatMessages.value[0].text = greetingText.value;
+  }
+});
+
+// Clear chat on user change (login/logout)
+watch(() => authStore.user, (newUser, oldUser) => {
+  if (oldUser && newUser?.email !== oldUser?.email) {
+    clearChat();
   }
 });
 </script>
 
 <style>
+@import 'highlight.js/styles/github.css';
 /* ════════════════════════════════════════════════════════════
    CHATBOT RTL ISOLÉ
    Le RTL s'applique UNIQUEMENT dans .chat-window[dir="rtl"]
    ════════════════════════════════════════════════════════════ */
 
 .chatbot-wrapper {
-  --bg-card: var(--surface, #fff);
-  --bg-page: var(--surface2, #f8fafc);
-  --bg-input: var(--surface, #fff);
-  --border-color: var(--bdr, #e2e8f0);
-  --text-main: var(--text, #1e293b);
-  --text-muted: var(--text3, #64748b);
-  --text-light: var(--text3, #94a3b8);
-  --primary: var(--amber, #f59e0b);
+  --bg-card: var(--surface);
+  --bg-page: var(--surface2);
+  --bg-input: var(--surface);
+  --border-color: var(--bdr);
+  --text-main: var(--text);
+  --text-muted: var(--text2);
+  --text-light: var(--text3);
+  --primary: var(--amber);
   --primary-light: rgba(245, 158, 11, 0.1);
   --primary-dark: #d97706;
   --danger: #ef4444;
