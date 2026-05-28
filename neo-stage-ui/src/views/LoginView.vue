@@ -190,7 +190,7 @@ onMounted(() => {
 
       if (!_gisInitialized) {
         google.accounts.id.initialize({
-          client_id: '900574679253-6srju48d84teupohd1op1c43g80hdoor.apps.googleusercontent.com',
+          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
           callback: (resp) => _gisCurrentCallback?.(resp),
         });
         _gisInitialized = true;

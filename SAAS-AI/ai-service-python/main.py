@@ -472,8 +472,12 @@ async def read_pdf_async(fb: bytes) -> str:
         return ""
     return await loop.run_in_executor(_gemini_executor, _read)
 
+MAX_UPLOAD_SIZE = 10_000_000
+
 async def extract_text_from_upload(file: UploadFile) -> str:
     fb = await file.read()
+    if len(fb) > MAX_UPLOAD_SIZE:
+        raise HTTPException(status_code=413, detail="Fichier trop volumineux. Maximum 10 Mo.")
     name = (file.filename or "").lower()
     if name.endswith(".pdf"): return _truncate(await read_pdf_async(fb))
     if name.endswith(".csv"):
@@ -1292,6 +1296,7 @@ def _get_local_response(message: str, lang: str, role: str) -> Optional[str]:
         patterns = data["patterns"].get(lang, data["patterns"].get("fr", []))
         for p in patterns:
             p_norm = _normalize(p.lower())
+            if not p_norm: continue
             if re.search(r'\b' + re.escape(p_norm) + r'\b', msg_norm):
                 score += 12
             elif p_norm in msg_norm:
@@ -2283,9 +2288,19 @@ def _get_smart_fallback(message: str, lang: str, role: str) -> str:
     }
     return responses.get(lang, responses["fr"])
 
-def _build_chat_prompt(session: dict, message: str, role: str, lang: str) -> str:
+def _build_chat_prompt(session: dict, message: str, role: str, lang: str, user_name: str = "", enterprise_name: str = "", enterprise_plan: str = "") -> str:
     lang_instr = {"fr":"Réponds en français.","en":"Reply in English.","ar":"أجب بالعربية."}.get(lang,"Réponds en français.")
+    context_parts = []
+    if user_name:
+        context_parts.append(f"Utilisateur: {user_name}")
+    if enterprise_name:
+        context_parts.append(f"Organisation: {enterprise_name}")
+    if enterprise_plan:
+        context_parts.append(f"Plan: {enterprise_plan}")
+    context_str = f"[CONTEXT: {' | '.join(context_parts)}]" if context_parts else ""
     lines = [f"[SYSTEM: {CHAT_SYSTEM} {lang_instr}]", f"[ROLE:{role}][LANG:{lang}]"]
+    if context_str:
+        lines.append(context_str)
     for turn in session["history"][-4:]:
         r = "Utilisateur" if turn.get("role")=="user" else "NeoBot"
         lines.append(f"{r}: {str(turn.get('content',''))[:200]}")
@@ -2300,8 +2315,13 @@ async def chat_interaction(
     history: str = Form("[]"),
     role: str = Form("Recruteur"),
     lang: str = Form("auto"),
-    session_id: str = Form("default")
+    session_id: str = Form("default"),
+    user_name: str = Form(""),
+    enterprise_name: str = Form(""),
+    enterprise_plan: str = Form("")
 ):
+    if not message or not message.strip():
+        return {"status":"EMPTY","response":"Veuillez saisir un message.","reply":"Veuillez saisir un message.","suggestions":[],"lang_detected":"fr","source":"empty"}
     effective_lang = detect_language(message) if lang == "auto" else lang
     session = _get_session(session_id)
     session["lang"] = effective_lang; session["role"] = role
@@ -2309,11 +2329,31 @@ async def chat_interaction(
     AI_METRICS["usage_counts"]["Chat"] += 1
 
     ck = make_cache_key("chat-v10", message[:60], effective_lang, role)
+
+    # Try Gemini First — always attempt before cache/local
+    if _gemini_client:
+        try:
+            prompt = _build_chat_prompt(session, message, role, effective_lang, user_name, enterprise_name, enterprise_plan)
+            AI_METRICS["chat_gemini_calls"] += 1
+            res   = await call_gemini_async(prompt, module="Chat", sem=_sem_chat, retries=1)
+            reply = res.text.strip()
+            if reply:
+                suggestions = _get_suggestions(message, effective_lang, role)
+                _chat_cache.set(ck, {"response":reply,"suggestions":suggestions})
+                session["history"].append({"role":"user","content":message})
+                session["history"].append({"role":"assistant","content":reply})
+                session["history"] = session["history"][-CHAT_CTX_MAX:]
+                return {"status":"SUCCESS","response":reply,"reply":reply,"suggestions":suggestions,"lang_detected":effective_lang,"source":"gemini"}
+        except Exception as ex:
+            print(f"[CHAT GEMINI EXCEPTION] {ex}")
+
+    # Gemini unavailable/failed — try cache
     cached = _chat_cache.get(ck)
     if cached:
         AI_METRICS["chat_cache_hits"] += 1
         return {"status":"SUCCESS","response":cached["response"],"reply":cached["response"],"suggestions":cached.get("suggestions",[]),"lang_detected":effective_lang,"source":"cache"}
 
+    # Fallback to local intents
     local_reply = _get_local_response(message, effective_lang, role)
     if local_reply:
         suggestions = _get_suggestions(message, effective_lang, role)
@@ -2325,21 +2365,9 @@ async def chat_interaction(
         log_activity("Chat", f"Question ({role})", "#3b82f6", "Chat")
         return {"status":"SUCCESS","response":local_reply,"reply":local_reply,"suggestions":suggestions,"lang_detected":effective_lang,"source":"intent"}
 
-    try:
-        prompt = _build_chat_prompt(session, message, role, effective_lang)
-        AI_METRICS["chat_gemini_calls"] += 1
-        res   = await call_gemini_async(prompt, module="Chat", sem=_sem_chat, retries=1)
-        reply = res.text.strip()
-        if not reply: raise QuotaExceeded("Empty")
-        suggestions = _get_suggestions(message, effective_lang, role)
-        _chat_cache.set(ck, {"response":reply,"suggestions":suggestions})
-        session["history"].append({"role":"user","content":message})
-        session["history"].append({"role":"assistant","content":reply})
-        session["history"] = session["history"][-CHAT_CTX_MAX:]
-        return {"status":"SUCCESS","response":reply,"reply":reply,"suggestions":suggestions,"lang_detected":effective_lang,"source":"gemini"}
-    except (QuotaExceeded, Exception):
-        fallback = _get_smart_fallback(message, effective_lang, role)
-        return {"status":"SUCCESS","response":fallback,"reply":fallback,"suggestions":_get_suggestions(message,effective_lang,role),"lang_detected":effective_lang,"source":"fallback"}
+    # Final fallback if both Gemini and local response are unavailable
+    fallback = _get_smart_fallback(message, effective_lang, role)
+    return {"status":"SUCCESS","response":fallback,"reply":fallback,"suggestions":_get_suggestions(message,effective_lang,role),"lang_detected":effective_lang,"source":"fallback"}
 
 
 @app.get("/ia/chat/suggestions")
@@ -2375,38 +2403,55 @@ async def chat_metrics():
     }
 
 @app.post("/ia/chat/stream")
-async def chat_stream(message: str = Form(...), history: str = Form("[]"), session_id: str = Form("default"), role: str = Form("Recruteur")):
+async def chat_stream(message: str = Form(...), history: str = Form("[]"), session_id: str = Form("default"), role: str = Form("Recruteur"), user_name: str = Form(""), enterprise_name: str = Form(""), enterprise_plan: str = Form("")):
+    if not message or not message.strip():
+        async def empty_gen():
+            yield f"data: {json.dumps({'token':'','done':True,'full':'Veuillez saisir un message.','suggestions':[]})}\n\n"
+        return StreamingResponse(empty_gen(), media_type="text/event-stream", headers={"Cache-Control":"no-cache","X-Accel-Buffering":"no"})
     session = _get_session(session_id)
     effective_lang = detect_language(message)
     session_role = role or session.get("role","Recruteur")
-    local_reply = _get_local_response(message, effective_lang, session_role)
-
-    if local_reply:
-        async def local_stream():
-            words = local_reply.split(" ")
-            for i, word in enumerate(words):
-                yield f"data: {json.dumps({'token': word+(' ' if i<len(words)-1 else ''), 'done': False})}\n\n"
-                await asyncio.sleep(0.008)
-            yield f"data: {json.dumps({'token':'','done':True,'full':local_reply,'suggestions':_get_suggestions(message,effective_lang,session_role)})}\n\n"
-        return StreamingResponse(local_stream(), media_type="text/event-stream", headers={"Cache-Control":"no-cache","X-Accel-Buffering":"no"})
 
     async def event_generator() -> AsyncGenerator[str, None]:
         full = ""
+        gemini_success = False
         try:
-            if not _gemini_client: raise QuotaExceeded("Gemini unavailable")
-            loop   = asyncio.get_event_loop()
-            prompt = _build_chat_prompt(session, message, session_role, effective_lang)
-            stream = await loop.run_in_executor(_gemini_executor,
-                lambda: _gemini_client.models.generate_content_stream(model=WORKING_MODEL, contents=prompt))
-            for chunk in stream:
-                if chunk.text:
-                    full += chunk.text
-                    yield f"data: {json.dumps({'token':chunk.text,'done':False})}\n\n"
-            yield f"data: {json.dumps({'token':'','done':True,'full':full,'suggestions':_get_suggestions(message,effective_lang,session_role)})}\n\n"
-        except (QuotaExceeded, Exception):
-            fallback = _get_smart_fallback(message, effective_lang, session_role)
-            yield f"data: {json.dumps({'token':fallback,'done':False})}\n\n"
-            yield f"data: {json.dumps({'token':'','done':True,'full':fallback,'suggestions':_get_suggestions(message,effective_lang,session_role)})}\n\n"
+            if _gemini_client:
+                try:
+                    loop   = asyncio.get_event_loop()
+                    prompt = _build_chat_prompt(session, message, session_role, effective_lang, user_name, enterprise_name, enterprise_plan)
+                    stream = await loop.run_in_executor(_gemini_executor,
+                        lambda: _gemini_client.models.generate_content_stream(model=WORKING_MODEL, contents=prompt))
+                    for chunk in stream:
+                        if chunk.text:
+                            full += chunk.text
+                            yield f"data: {json.dumps({'token':chunk.text,'done':False})}\n\n"
+                    
+                    gemini_success = True
+                    session["history"].append({"role":"user","content":message})
+                    session["history"].append({"role":"assistant","content":full})
+                    session["history"] = session["history"][-CHAT_CTX_MAX:]
+                    
+                    yield f"data: {json.dumps({'token':'','done':True,'full':full,'suggestions':_get_suggestions(message,effective_lang,session_role)})}\n\n"
+                except Exception as ex:
+                    print(f"[STREAM GEMINI EXCEPTION] {ex}. Falling back to local brain.")
+                    gemini_success = False
+
+            if not gemini_success:
+                local_reply = _get_local_response(message, effective_lang, session_role) or _get_smart_fallback(message, effective_lang, session_role)
+                words = local_reply.split(" ")
+                for i, word in enumerate(words):
+                    yield f"data: {json.dumps({'token': word+(' ' if i<len(words)-1 else ''), 'done': False})}\n\n"
+                    await asyncio.sleep(0.008)
+                
+                session["history"].append({"role":"user","content":message})
+                session["history"].append({"role":"assistant","content":local_reply})
+                session["history"] = session["history"][-CHAT_CTX_MAX:]
+                
+                yield f"data: {json.dumps({'token':'','done':True,'full':local_reply,'suggestions':_get_suggestions(message,effective_lang,session_role)})}\n\n"
+        except Exception as ex:
+            print(f"[STREAM FATAL] {ex}")
+            yield f"data: {json.dumps({'token':'','done':True,'full':'⚠️ Désolé, une erreur technique est survenue. Veuillez réessayer.','suggestions':[]})}\n\n"
 
     return StreamingResponse(event_generator(), media_type="text/event-stream", headers={"Cache-Control":"no-cache","X-Accel-Buffering":"no"})
 

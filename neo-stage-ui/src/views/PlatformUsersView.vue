@@ -428,7 +428,7 @@ const platformStats = ref([
     bg: 'rgba(245,158,11,0.1)',
     color: '#f59e0b',
     trend: true,
-    key: 'sessionsIARecentes',
+    key: 'totalTests',
   },
 ]);
 
@@ -506,14 +506,23 @@ const donutSegments = computed(() => {
 });
 
 // ── Bar Chart ─────────────────────────────────────────────────────────────
+const ROLE_LABELS = {
+  SuperAdmin:      'SuperAdmin',
+  AdminEntreprise: 'Admin',
+  Evaluateur:      'Evaluateur',
+  Recruteur:       'Recruteur',
+  RH:              'RH',
+  Formateur:       'Formateur',
+  Candidat:        'Candidat',
+};
 const roleBarData = computed(() => {
-  const roles = ['SuperAdmin', 'AdminEntreprise', 'Evaluateur', 'Candidat'];
+  const roles = [...new Set(users.value.map(u => u.role).filter(Boolean))];
   const max   = users.value.length || 1;
   return roles.map(role => {
     const active   = users.value.filter(u => u.role === role && u.isActive).length;
     const inactive = users.value.filter(u => u.role === role && !u.isActive).length;
     return {
-      label:    role === 'AdminEntreprise' ? 'Admin' : role,
+      label:    ROLE_LABELS[role] || role,
       active:   Math.round((active / max) * 100),
       inactive: Math.round((inactive / max) * 100),
     };

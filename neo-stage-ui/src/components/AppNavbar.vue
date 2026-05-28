@@ -493,6 +493,7 @@ const gererToucheClavier = (e) => {
 
 const fetchUsageStats = async () => {
   if (!authStore.isAuthenticated) return;
+  if (authStore.role !== 'AdminEntreprise') return;
   try {
     const res = await api.get('/Usage/status');
     usageCount.value = res.data.current || 0; 

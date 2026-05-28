@@ -24,7 +24,7 @@ namespace NeoEvaluation.API.Controllers
         public async Task<IActionResult> GetStatus()
         {
             var enterpriseId = _tenantService.GetTenantId();
-            if (enterpriseId == null) return Unauthorized();
+            if (enterpriseId == null) return Forbid();
 
             var status = await _usageService.GetUsageStatusAsync(enterpriseId.Value);
             return Ok(status);
@@ -34,7 +34,7 @@ namespace NeoEvaluation.API.Controllers
         public async Task<IActionResult> ValidateAction()
         {
             var enterpriseId = _tenantService.GetTenantId();
-            if (enterpriseId == null) return Unauthorized();
+            if (enterpriseId == null) return Forbid();
 
             var result = await _usageService.CheckAndIncrementUsageAsync(enterpriseId.Value);
             if (!result.Allowed)
@@ -59,7 +59,7 @@ namespace NeoEvaluation.API.Controllers
         public async Task<IActionResult> CanCreateCampaign()
         {
             var enterpriseId = _tenantService.GetTenantId();
-            if (enterpriseId == null) return Unauthorized();
+            if (enterpriseId == null) return Forbid();
 
             var result = await _usageService.CheckCampaignLimitAsync(enterpriseId.Value);
             if (!result.Allowed)

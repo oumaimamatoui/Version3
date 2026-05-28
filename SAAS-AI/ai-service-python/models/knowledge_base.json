@@ -1,0 +1,398 @@
+[
+  {
+    "intent": "greeting",
+    "lang": "fr",
+    "role": "Candidat",
+    "text": "👋 Bonjour ! Je suis **NeoBot**, votre assistant IA EvaluaTech.\n\n🎯 Je peux vous aider avec :\n- 📝 Vos **tests et évaluations** en attente\n- 📊 Vos **résultats et scores** en temps réel\n- 🎤 **Préparer votre entretien** IA\n- 📄 **Analyser votre CV** (Gemini IA)\n- ✉️ **Générer votre lettre** de motivation (FR/EN/AR)\n- 📈 **Voir vos statistiques** de progression\n\nQue puis-je faire pour vous ?"
+  },
+  {
+    "intent": "greeting",
+    "lang": "fr",
+    "role": "Recruteur",
+    "text": "👋 Bonjour ! Je suis **NeoBot**, votre assistant IA EvaluaTech.\n\n🚀 Je peux vous aider à :\n- ✅ **Créer des tests** QCM IA en 45 secondes\n- 📄 **Analyser des CVs** avec matching Gemini\n- 📋 **Gérer votre pipeline** Kanban candidats\n- 📊 **Voir les statistiques** en temps réel\n- 📩 **Inviter des candidats** (email / CSV)\n- 🤖 **Recommandations IA** personnalisées\n\nQuelle est votre question ?"
+  },
+  {
+    "intent": "greeting",
+    "lang": "fr",
+    "role": "Evaluateur",
+    "text": "👋 Bonjour ! Je suis **NeoBot**, votre assistant IA.\n\n📋 En tant qu'**Évaluateur**, je peux vous aider :\n- 👥 **File d'évaluation** — candidats en attente\n- 📅 **Sessions planifiées** à venir\n- 📊 **Statistiques** de vos évaluations\n- 🤖 **Recommandations IA** sur les profils"
+  },
+  {
+    "intent": "greeting",
+    "lang": "fr",
+    "role": "AdminEntreprise",
+    "text": "👋 Bonjour ! Je suis **NeoBot**, votre assistant IA EvaluaTech.\n\n🏢 En tant qu'**Admin Entreprise**, je peux vous aider avec :\n- 👥 **Gestion de votre équipe** RH/Évaluateurs\n- 📊 **Statistiques et analytics** temps réel\n- 🤖 **Recommandations IA** automatiques\n- 📋 **Rapports automatiques** mensuels"
+  },
+  {
+    "intent": "greeting",
+    "lang": "fr",
+    "role": "SuperAdmin",
+    "text": "👋 Bonjour **SuperAdmin** ! Je suis **NeoBot**.\n\n🛡️ Accès complet à la plateforme :\n- 🏢 **42 organisations** actives\n- ⚙️ **Santé des services** microservices\n- 💰 **Abonnements** et renouvellements\n- ⚠️ **Alerte** : Service Mailer actuellement DOWN"
+  },
+  {
+    "intent": "greeting",
+    "lang": "fr",
+    "role": "RH",
+    "text": "👋 Bonjour ! Je suis **NeoBot**, votre assistant RH IA.\n\n📋 Je peux vous aider avec :\n- 📣 **Campagnes** de recrutement actives\n- 👥 **Candidats** en cours d'évaluation\n- 📊 **Rapports** et analytics RH\n- 🤖 **Recommandations** IA personnalisées"
+  },
+  {
+    "intent": "greeting",
+    "lang": "fr",
+    "role": "default",
+    "text": "👋 Bonjour ! Je suis **NeoBot**, l'assistant IA d'EvaluaTech. Quel est votre rôle pour une aide personnalisée ?"
+  },
+  {
+    "intent": "greeting",
+    "lang": "en",
+    "role": "default",
+    "text": "👋 Hello! I'm **NeoBot**, EvaluaTech's AI assistant.\n\nI can help with tests, CV analysis, cover letters (FR/EN/AR), AI interview prep, statistics, and recommendations."
+  },
+  {
+    "intent": "greeting",
+    "lang": "ar",
+    "role": "default",
+    "text": "👋 مرحباً! أنا **NeoBot**، مساعد الذكاء الاصطناعي لـ EvaluaTech.\n\nيمكنني مساعدتك في الاختبارات وتحليل السيرة وتوليد خطاب التقديم بثلاث لغات والتحضير للمقابلة."
+  },
+  {
+    "intent": "theme_soustheme",
+    "lang": "fr",
+    "role": "Recruteur",
+    "text": "🎯 **Thèmes & Sous-thèmes disponibles pour la génération IA :**\n\n**💻 Développement Web (Frontend)**\n- React, Vue.js, Angular, TypeScript, HTML/CSS\n\n**⚙️ Backend & APIs**\n- Node.js, Python (Django/FastAPI), Java (Spring), PHP, C#, REST API\n\n**🗄️ Bases de données**\n- SQL, PostgreSQL, MySQL, MongoDB, Redis\n\n**☁️ DevOps & Cloud**\n- Docker, Kubernetes, AWS, CI/CD, Linux\n\n**🧠 Soft Skills & RH**\n- Leadership, Communication, Gestion du stress, Travail en équipe\n\n**📊 Data & IA**\n- Machine Learning, Python Data, SQL Analytics, Power BI\n\n**🔐 Sécurité**\n- Cybersécurité, OWASP, Gestion des risques\n\n💡 **Comment utiliser :** Dans *Créer une campagne → Générer avec IA*, saisissez le **Thème** (ex: Backend) et le **Sous-thème** (ex: Node.js) → QCM généré en **45 secondes** !"
+  },
+  {
+    "intent": "theme_soustheme",
+    "lang": "fr",
+    "role": "AdminEntreprise",
+    "text": "🎯 **Thèmes disponibles pour vos campagnes :**\n\n💻 **Frontend :** React · Vue.js · Angular · TypeScript\n⚙️ **Backend :** Node.js · Python · Java · C# · PHP\n🗄️ **BDD :** SQL · MongoDB · Redis · PostgreSQL\n☁️ **DevOps :** Docker · AWS · Kubernetes · CI/CD\n🧠 **Soft Skills :** Leadership · Communication · Gestion stress\n📊 **Data :** Machine Learning · Analytics · Power BI\n\n💡 Entrez un Thème + Sous-thème dans le **Générateur IA** de vos campagnes."
+  },
+  {
+    "intent": "theme_soustheme",
+    "lang": "fr",
+    "role": "default",
+    "text": "🎯 **Thèmes disponibles dans EvaluaTech :**\n\nReact · Vue.js · Angular · Node.js · Python · Java · PHP · C#\nSQL · MongoDB · Docker · AWS · Kubernetes · CI/CD\nMachine Learning · Data Analytics · Cybersécurité\nLeadership · Communication · Soft Skills · Gestion du stress\n\n💡 Dans le **Générateur IA**, renseignez le **Thème** et le **Sous-thème** pour créer votre QCM personnalisé en 45 secondes !"
+  },
+  {
+    "intent": "theme_soustheme",
+    "lang": "en",
+    "role": "default",
+    "text": "🎯 **Available Themes & Sub-themes:**\n\n**Frontend:** React · Vue.js · Angular · TypeScript · HTML/CSS\n**Backend:** Node.js · Python · Java · C# · REST API\n**Database:** SQL · PostgreSQL · MongoDB · Redis\n**DevOps:** Docker · AWS · Kubernetes · CI/CD\n**Soft Skills:** Leadership · Communication · Stress Management\n**Data/AI:** Machine Learning · Analytics · Power BI\n\n💡 In the **AI Generator**, enter a Theme + Sub-theme to generate your QCM in **45 seconds**!"
+  },
+  {
+    "intent": "theme_soustheme",
+    "lang": "ar",
+    "role": "default",
+    "text": "🎯 **المواضيع والتخصصات المتاحة:**\n\n**الواجهة الأمامية:** React · Vue.js · Angular · TypeScript\n**الواجهة الخلفية:** Node.js · Python · Java · C# · REST API\n**قواعد البيانات:** SQL · PostgreSQL · MongoDB · Redis\n**DevOps:** Docker · AWS · Kubernetes · CI/CD\n**المهارات الشخصية:** القيادة · التواصل · إدارة الضغط\n**البيانات والذكاء الاصطناعي:** تعلم الآلة · التحليلات\n\n💡 في **مولّد الذكاء الاصطناعي**، أدخل الموضوع والتخصص لإنشاء اختبارك في **45 ثانية**!"
+  },
+  {
+    "intent": "farewell",
+    "lang": "fr",
+    "role": "default",
+    "text": "🙌 Avec plaisir ! Bonne continuation sur **EvaluaTech** ! 🚀"
+  },
+  {
+    "intent": "farewell",
+    "lang": "en",
+    "role": "default",
+    "text": "🙌 You're welcome! Good luck on **EvaluaTech**! 🚀"
+  },
+  {
+    "intent": "farewell",
+    "lang": "ar",
+    "role": "default",
+    "text": "🙌 بكل سرور! بالتوفيق على **EvaluaTech**! 🚀"
+  },
+  {
+    "intent": "about_platform",
+    "lang": "fr",
+    "role": "default",
+    "text": "🚀 **EvaluaTech** est une plateforme SaaS d'**évaluation technique et comportementale**.\n\n**5 piliers IA :**\n1. 🎯 **QCM IA** — tests FR/EN/AR en 45 secondes\n2. 📄 **Analyse CV Neural** — matching PDF + détection automatique si non-CV\n3. 🎤 **Entretien IA** — questions par poste et niveau\n4. ✉️ **Lettre Motivation** — Gemini en FR/EN/AR avec langue stricte\n5. 📊 **Dashboard Temps Réel** — KPIs + recommandations\n\nPropulsé par **Google Gemini AI**."
+  },
+  {
+    "intent": "about_platform",
+    "lang": "en",
+    "role": "default",
+    "text": "🚀 **EvaluaTech** — SaaS platform for technical and behavioral assessment.\n\n5 AI pillars: Tests | CV Analysis (with non-CV detection) | AI Interview | Cover Letter (strict language) | Dashboard\n\nPowered by **Google Gemini AI**."
+  },
+  {
+    "intent": "about_platform",
+    "lang": "ar",
+    "role": "default",
+    "text": "🚀 **EvaluaTech** منصة SaaS للتقييم التقني والسلوكي.\n\n5 ركائز: اختبارات | تحليل السيرة (كشف غير السيرة) | مقابلة | خطاب (لغة صارمة) | لوحة تحكم\n\nمدعومة بـ Google Gemini."
+  },
+  {
+    "intent": "dashboard",
+    "lang": "fr",
+    "role": "Candidat",
+    "text": "📊 **Votre Dashboard :**\n\n📝 **2 tests** en attente · ⭐ **Score : 76%** · 🧠 **Aura : 82**\n\nSections : Tests en cours · Progression · Résultats · CV IA · Lettre motivation · Recommandations"
+  },
+  {
+    "intent": "dashboard",
+    "lang": "fr",
+    "role": "AdminEntreprise",
+    "text": "📊 **Dashboard Admin :** 124 talents · 88% réussite · 12 sessions · Aura 94\n\nSections : KPIs · Équipe · Candidats · Top skills · Recommandations IA"
+  },
+  {
+    "intent": "dashboard",
+    "lang": "fr",
+    "role": "SuperAdmin",
+    "text": "📊 **Dashboard SuperAdmin :** 42 orgs · 1247 users · 99.9% uptime · ⚠️ Mailer DOWN"
+  },
+  {
+    "intent": "dashboard",
+    "lang": "fr",
+    "role": "default",
+    "text": "Le **Dashboard** affiche vos KPIs temps réel, adapté à votre rôle, actualisé toutes les 60 secondes."
+  },
+  {
+    "intent": "dashboard",
+    "lang": "en",
+    "role": "default",
+    "text": "📊 Your **Dashboard** shows real-time KPIs, adapted to your role, updated every 60 seconds."
+  },
+  {
+    "intent": "dashboard",
+    "lang": "ar",
+    "role": "default",
+    "text": "📊 **لوحة التحكم** تعرض مؤشرات أدائك الفورية كل 60 ثانية."
+  },
+  {
+    "intent": "cv_analysis",
+    "lang": "fr",
+    "role": "Recruteur",
+    "text": "📄 **Analyser un CV avec Gemini IA :**\n\n1. Section **Scan CV Neural** sur votre dashboard\n2. Glissez le **PDF ou DOCX** du candidat\n3. Optionnel : ajoutez la fiche de poste\n4. Cliquez **Analyser**\n\n**Résultat en 10 secondes :**\n- 🎯 Score de matching (0-100%)\n- ✅ Points forts + points faibles\n- 💡 Conseils personnalisés\n- 🏷️ Compétences détectées\n\n⚠️ **Nouveau v10.1 :** Si le fichier n'est pas un CV, une **alerte** s'affiche automatiquement avec un message d'explication."
+  },
+  {
+    "intent": "cv_analysis",
+    "lang": "fr",
+    "role": "Candidat",
+    "text": "📄 **Analyser votre CV :**\n\n1. Section **Analyse CV IA** dans votre dashboard\n2. Glissez votre CV (**PDF ou DOCX**)\n3. Optionnel : fiche de poste\n\n⚠️ Si le fichier uploadé n'est pas un CV, un message d'alerte s'affiche pour vous demander de changer de fichier."
+  },
+  {
+    "intent": "cv_analysis",
+    "lang": "fr",
+    "role": "default",
+    "text": "📄 Glissez votre PDF dans **Scan CV Neural**. Gemini analyse en 10 secondes.\n⚠️ Si le document n'est pas un CV → alerte automatique."
+  },
+  {
+    "intent": "cv_analysis",
+    "lang": "en",
+    "role": "default",
+    "text": "📄 **Neural CV Scan:** Drop PDF/DOCX → Gemini analysis in 10s.\n⚠️ If the file is not a CV → automatic alert with guidance."
+  },
+  {
+    "intent": "cv_analysis",
+    "lang": "ar",
+    "role": "default",
+    "text": "📄 اسحب PDF/DOCX في **تحليل السيرة**. Gemini يحلل في 10 ثوانٍ.\n⚠️ إذا لم تكن الوثيقة سيرة ذاتية → تنبيه تلقائي."
+  },
+  {
+    "intent": "lettre_motivation",
+    "lang": "fr",
+    "role": "Candidat",
+    "text": "✉️ **Générer votre Lettre de Motivation IA :**\n\nDashboard → **Lettre de Motivation IA** :\n\n1. **Nom** + **Poste visé** + **Entreprise**\n2. **Compétences clés** (optionnel)\n3. **Style** : Professionnel / Créatif / Concis\n4. **Langue** : 🇫🇷 Français / 🇬🇧 English / 🇸🇦 العربية\n5. Cliquez **Générer avec Gemini**\n\n✅ **Nouveau v10.1** : La langue choisie est **strictement respectée**.\n- 🇫🇷 → lettre 100% en français\n- 🇬🇧 → letter 100% in English\n- 🇸🇦 → الخطاب كاملاً بالعربية\n\n⚡ Lettre professionnelle en **10 secondes** !"
+  },
+  {
+    "intent": "lettre_motivation",
+    "lang": "fr",
+    "role": "default",
+    "text": "✉️ **Lettre de Motivation IA** : choisissez la langue (FR/EN/AR) et le style → Gemini génère une lettre **strictement dans la langue choisie**."
+  },
+  {
+    "intent": "lettre_motivation",
+    "lang": "en",
+    "role": "default",
+    "text": "✉️ **AI Cover Letter:** Choose language (FR/EN/AR) + style → Gemini generates a letter **strictly in the chosen language**. Language enforcement is guaranteed."
+  },
+  {
+    "intent": "lettre_motivation",
+    "lang": "ar",
+    "role": "default",
+    "text": "✉️ **خطاب التقديم الذكي:** اختر اللغة (FR/EN/AR) والأسلوب → Gemini يولّد خطاباً **بالكامل باللغة المختارة** مع ضمان اللغة."
+  },
+  {
+    "intent": "recommandations_ia",
+    "lang": "fr",
+    "role": "Candidat",
+    "text": "🤖 **Recommandations IA :** Tests prioritaires · Entretien IA · Conseils CV · Progression\n\nCliquez **Actualiser** dans le dashboard pour rafraîchir via Gemini."
+  },
+  {
+    "intent": "recommandations_ia",
+    "lang": "fr",
+    "role": "AdminEntreprise",
+    "text": "🤖 **Recommandations Admin :** 8 candidats sans analyse · Rapport à générer · 2 membres RH à inviter"
+  },
+  {
+    "intent": "recommandations_ia",
+    "lang": "fr",
+    "role": "SuperAdmin",
+    "text": "🤖 **SuperAdmin :** Mailer DOWN urgent · 3 abonnements expirant · Audit sécurité recommandé"
+  },
+  {
+    "intent": "recommandations_ia",
+    "lang": "fr",
+    "role": "default",
+    "text": "🤖 **Recommandations IA** dans votre dashboard. Cliquez **Actualiser** pour de nouvelles recommandations Gemini."
+  },
+  {
+    "intent": "recommandations_ia",
+    "lang": "en",
+    "role": "default",
+    "text": "🤖 **AI Recommendations** in your dashboard. Click **Refresh** for fresh Gemini insights."
+  },
+  {
+    "intent": "recommandations_ia",
+    "lang": "ar",
+    "role": "default",
+    "text": "🤖 **التوصيات الذكية** في لوحة التحكم. انقر **تحديث**."
+  },
+  {
+    "intent": "creation_test",
+    "lang": "fr",
+    "role": "Recruteur",
+    "text": "✅ **Créer un test QCM IA :**\n\n**Campagnes → Nouvelle Campagne** → Poste + Niveau + Langue → **Générer avec IA** → 45 secondes !\n\n🎯 Domaines : React, Vue, Python, Node.js, Java, SQL, Docker, AWS, ML, Soft Skills...\n\n💡 Vous ne savez pas quel thème choisir ? Tapez **« quels thèmes disponibles »** pour voir la liste complète !"
+  },
+  {
+    "intent": "creation_test",
+    "lang": "fr",
+    "role": "default",
+    "text": "✅ **Campagnes → Nouvelle Campagne** → Rôle + Niveau + Langue → IA génère en 45 secondes.\n\n💡 Tapez **« quels thèmes disponibles »** pour voir tous les domaines."
+  },
+  {
+    "intent": "creation_test",
+    "lang": "en",
+    "role": "default",
+    "text": "✅ **Campaigns → New Campaign** → Role + Level + Language → AI generates in 45s.\n\n💡 Type **\"available themes\"** to see all domains."
+  },
+  {
+    "intent": "creation_test",
+    "lang": "ar",
+    "role": "default",
+    "text": "✅ **الحملات → حملة جديدة** → المنصب + المستوى + اللغة → توليد في 45 ثانية.\n\n💡 اكتب **'المواضيع المتاحة'** لرؤية القائمة الكاملة."
+  },
+  {
+    "intent": "scores_results",
+    "lang": "fr",
+    "role": "Candidat",
+    "text": "🎯 **Vos résultats :**\n\n🟢 MBTI : **91%** · 🟡 Excel : **74%** · 🔴 Communication : **62%** · 🟢 Logique : **88%**\n\n📊 Moyenne : **76%** (+8%) · 🧠 Aura : **82/100**\n\nConsultez **Mon Espace → Résultats**."
+  },
+  {
+    "intent": "scores_results",
+    "lang": "fr",
+    "role": "default",
+    "text": "📊 Scores dans **Dashboard → Résultats**."
+  },
+  {
+    "intent": "scores_results",
+    "lang": "en",
+    "role": "default",
+    "text": "📊 Scores in **Dashboard → Results**. Updated real-time."
+  },
+  {
+    "intent": "scores_results",
+    "lang": "ar",
+    "role": "default",
+    "text": "🎯 الدرجات في **لوحة التحكم → النتائج**."
+  },
+  {
+    "intent": "proctoring",
+    "lang": "fr",
+    "role": "default",
+    "text": "🔍 **Proctoring IA :** Vidéo · Audio · Comportemental · Biométrique · Alertes · Rapport automatique\n\n**Activation :** Campagnes → Paramètres → Proctoring → ON"
+  },
+  {
+    "intent": "proctoring",
+    "lang": "en",
+    "role": "default",
+    "text": "🔍 **AI Proctoring:** Video + audio + behavioral + biometric. Enable in Campaign Settings."
+  },
+  {
+    "intent": "proctoring",
+    "lang": "ar",
+    "role": "default",
+    "text": "🔍 **المراقبة الذكية:** فيديو + صوت + سلوكي + بيومتري. فعّل في إعدادات الحملة."
+  },
+  {
+    "intent": "technical_support",
+    "lang": "fr",
+    "role": "default",
+    "text": "🛠️ **Support :** Rechargez (Ctrl+F5) · Chrome · Déconnectez/reconnectez · Videz le cache\n\nToujours bloqué ? → 📧 **support@evaluatech.com** (2-4h)"
+  },
+  {
+    "intent": "technical_support",
+    "lang": "en",
+    "role": "default",
+    "text": "🛠️ **Support:** Reload (Ctrl+F5) | Chrome | logout/login | clear cache. Still broken? support@evaluatech.com"
+  },
+  {
+    "intent": "technical_support",
+    "lang": "ar",
+    "role": "default",
+    "text": "🛠️ **الدعم:** إعادة التحميل | Chrome | تسجيل الخروج. support@evaluatech.com"
+  },
+  {
+    "intent": "auth",
+    "lang": "fr",
+    "role": "default",
+    "text": "🔐 **Connexion :**\n- Oublié → *Mot de passe oublié* sur la page login\n- Bloqué → Contactez votre administrateur\n- Email non reçu → Vérifiez vos spams\n\n📧 **support@evaluatech.com**"
+  },
+  {
+    "intent": "auth",
+    "lang": "en",
+    "role": "default",
+    "text": "🔐 **Login:** Forgot → reset link | Blocked → admin | Check spam | support@evaluatech.com"
+  },
+  {
+    "intent": "auth",
+    "lang": "ar",
+    "role": "default",
+    "text": "🔐 **تسجيل الدخول:** نسيت → إعادة تعيين | محظور → المسؤول | البريد العشوائي | support@evaluatech.com"
+  },
+  {
+    "intent": "interview",
+    "lang": "fr",
+    "role": "Candidat",
+    "text": "🎤 **Entretien IA :** Module dashboard → Poste + Niveau → 5-10 questions (Comportemental · Technique · Situationnel) + tips STAR"
+  },
+  {
+    "intent": "interview",
+    "lang": "fr",
+    "role": "default",
+    "text": "🎤 **Entretien IA** : questions personnalisées par poste et niveau avec tips STAR."
+  },
+  {
+    "intent": "interview",
+    "lang": "en",
+    "role": "default",
+    "text": "🎤 **AI Interview:** Role + level → 5-10 tailored questions (behavioral, technical, situational) with STAR tips."
+  },
+  {
+    "intent": "interview",
+    "lang": "ar",
+    "role": "default",
+    "text": "🎤 **المقابلة الذكية:** المنصب + المستوى → 5-10 أسئلة مع نصائح STAR."
+  },
+  {
+    "intent": "superadmin_specific",
+    "lang": "fr",
+    "role": "SuperAdmin",
+    "text": "🛡️ **SuperAdmin :**\n\n🏢 42 organisations · 1247 utilisateurs\n🟢 API Gateway (12ms) · 🟢 Auth (8ms) · 🟢 IA Engine (34ms)\n🔴 **Mailer DOWN** ⚠️ (47 emails bloqués)\n💰 82 200 DT/mois · 3 abonnements expirant dans 7j"
+  },
+  {
+    "intent": "superadmin_specific",
+    "lang": "fr",
+    "role": "default",
+    "text": "Cette section est réservée aux **SuperAdmins**."
+  },
+  {
+    "intent": "superadmin_specific",
+    "lang": "en",
+    "role": "default",
+    "text": "🛡️ **SuperAdmin:** 42 organizations | 1247 users | 7/8 services UP | Mailer DOWN | $82K/month"
+  },
+  {
+    "intent": "superadmin_specific",
+    "lang": "ar",
+    "role": "default",
+    "text": "🛡️ **SuperAdmin:** 42 منظمة | 1247 مستخدم | 7/8 خدمات تعمل | خدمة البريد متوقفة"
+  }
+]

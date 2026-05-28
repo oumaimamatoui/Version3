@@ -12,7 +12,6 @@ export default {
   'chatbot.copy': 'Copier',
   'chatbot.speak': 'Lire à voix haute',
   'chatbot.clear': 'Effacer la conversation',
-  'chatbot.poweredBy': 'Propulsé par Gemini IA',
   'chatbot.copied': '✅ Copié !',
   'nav.dashboard': 'Tableau de bord',
   'nav.tests': 'Tests',

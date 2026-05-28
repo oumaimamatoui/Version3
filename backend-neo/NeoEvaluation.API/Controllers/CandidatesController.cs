@@ -196,7 +196,7 @@ namespace NeoEvaluation.API.Controllers
         public async Task<IActionResult> DeleteCandidate(Guid id)
         {
             var tenantId = _tenantService.GetTenantId();
-            if (tenantId == null) return Unauthorized();
+            if (tenantId == null) return Forbid();
 
             // Trouve l'utilisateur qui a le rôle de candidat et appartient au même tenant
             var cand = await _context.Utilisateurs
@@ -255,7 +255,7 @@ namespace NeoEvaluation.API.Controllers
         public async Task<IActionResult> ResendInvitation(Guid id)
         {
             var tenantId = _tenantService.GetTenantId();
-            if (tenantId == null) return Unauthorized();
+            if (tenantId == null) return Forbid();
 
             var cand = await _context.Utilisateurs
                 .IgnoreQueryFilters()

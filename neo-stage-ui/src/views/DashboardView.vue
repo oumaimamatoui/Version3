@@ -2503,7 +2503,7 @@ const iaServices       = ref([]);
 const recentActivities = ref([]);
 
 // ── ROLE ──
-const role = computed(() => authStore.role || 'AdminEntreprise');
+const role = computed(() => authStore.role || 'Recruteur');
 
 const roleConfig = computed(() => ({
   Candidat:        { label: t('dashboard.roleLabels.Candidat'),       icon: 'fa-solid fa-user-graduate',   accent: '#3b82f6', accentLight: '#60a5fa', insightIcon: 'fa-solid fa-trophy',               insightLabel: t('dashboard.roleInsights.Candidat'),       botIcon: 'fa-user-graduate',  tagBg: 'rgba(59,130,246,0.1)',  tagBorder: 'rgba(59,130,246,0.25)',  tagColor: '#3b82f6' },

@@ -631,14 +631,14 @@ const editForm = reactive({
 
 /* ─── COMPUTED ────────────────────────────────────────────── */
 const isAdmin = computed(() =>
-  (authStore.user?.role || authStore.role || '').toLowerCase().includes('admin')
+  (authStore.role || '').toLowerCase().includes('admin')
 );
 
 const filteredRolesList = computed(() =>
   rolesList.value.filter(role => {
     const notSuper    = role.nom !== 'SuperAdmin';
     const sameCompany =
-      authStore.user?.role === 'SuperAdmin' ||
+      authStore.role === 'SuperAdmin' ||
       role.entrepriseId === authStore.user?.entrepriseId;
     return notSuper && sameCompany;
   })

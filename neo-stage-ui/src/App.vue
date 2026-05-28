@@ -7,7 +7,7 @@
     </router-view>
 
     <!-- NEOBOT — ASSISTANT IA UNIVERSEL (Extracted Component) -->
-    <NeoBot />
+    <NeoBot v-if="authStore.isAuthenticated && route.meta?.requiresAuth" />
   </div>
 </template>
 
@@ -155,6 +155,26 @@ html, body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+/* ─── DESIGN TOKENS GLOBAUX ─── */
+:root {
+  --surface: #ffffff;
+  --surface2: #f8fafc;
+  --bdr: #e2e8f0;
+  --text: #1e293b;
+  --text2: #475569;
+  --text3: #94a3b8;
+  --amber: #f59e0b;
+}
+[data-theme="dark"] :root {
+  --surface: #161b22;
+  --surface2: #1c2128;
+  --bdr: rgba(255,255,255,0.08);
+  --text: #f0f6fc;
+  --text2: #8b949e;
+  --text3: #6e7681;
+  --amber: #f59e0b;
 }
 
 /* Thème sombre global pour le body */

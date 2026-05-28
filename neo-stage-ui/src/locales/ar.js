@@ -12,7 +12,6 @@ export default {
   'chatbot.copy': 'نسخ',
   'chatbot.speak': 'قراءة بصوت عالٍ',
   'chatbot.clear': 'مسح المحادثة',
-  'chatbot.poweredBy': 'مدعوم من Gemini AI',
   'chatbot.copied': '✅ تم النسخ!',
   'nav.dashboard': 'لوحة التحكم',
   'nav.tests': 'الاختبارات',
