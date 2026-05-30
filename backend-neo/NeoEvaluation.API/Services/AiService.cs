@@ -18,6 +18,10 @@ namespace NeoEvaluation.API.Services
             _db = db;
             var baseUrl = config["FastApi:BaseUrl"] ?? "http://127.0.0.1:8000";
             _http.BaseAddress = new Uri(baseUrl);
+            
+            // Add internal API key for secure endpoints
+            var apiKey = config["AiInternalApiKey"] ?? "fallback_secret_for_demo";
+            _http.DefaultRequestHeaders.Add("X-API-KEY", apiKey);
         }
 
         public async Task<CvAnalysisResult> AnalyzeCvAsync(IFormFile file, string jobDesc, string lang, Guid? candidatId, string? userId)

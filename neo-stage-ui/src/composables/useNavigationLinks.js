@@ -41,7 +41,7 @@ export function useNavigationLinks() {
         vers: '/groups',
         icone: 'fa-solid fa-layer-group',
         iconeClasse: 'ic-blue',
-        visible: estEntreprise && authStore.hasPermission('view_can'),
+        visible: estEntreprise && authStore.hasPermission('inv_can'),
       },
       // ── Entreprise : Évaluations ──
       {

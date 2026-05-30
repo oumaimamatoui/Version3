@@ -15,11 +15,21 @@ namespace NeoEvaluation.API.Controllers
     {
         private readonly AppDbContext _context;
         private readonly ITenantService _tenantService;
+        private readonly AiService _aiService;
 
-        public DashboardController(AppDbContext context, ITenantService tenantService)
+        public DashboardController(AppDbContext context, ITenantService tenantService, AiService aiService)
         {
             _context = context;
             _tenantService = tenantService;
+            _aiService = aiService;
+        }
+
+        [HttpPost("analyze-cv")]
+        public async Task<IActionResult> AnalyzeCv([FromForm] CvAnalysisRequest req)
+        {
+            var userId = _tenantService.GetUserId()?.ToString();
+            var result = await _aiService.AnalyzeCvAsync(req.File, req.JobDescription, req.Lang, req.CandidatId, userId);
+            return Ok(result);
         }
 
         [HttpGet("global-stats")]

@@ -619,7 +619,7 @@
             <div class="d-flex align-items-center gap-3">
               <div class="icon-box-v2 amber"><i class="fa-solid fa-building"></i></div>
               <div>
-                <h5 class="fw-900 m-0">{{ t('create') }} {{ t('dashboard.sections.companies') }}</h5>
+                <h5 class="fw-900 m-0">Créer une Organisation</h5>
                 <p class="m-0 text-muted small">{{ t('dashboard.superAdmin.newSignups') }}</p>
               </div>
             </div>
@@ -682,7 +682,7 @@
               <div class="col-md-6">
                 <div class="enigma-input-wrap">
                   <label>PAYS</label>
-                  <input type="text" v-model="newOrg.country" class="enigma-field" placeholder="Tunisie, France...">
+                  <input type="text" list="countries-list" v-model="newOrg.country" class="enigma-field" placeholder="Rechercher ou sélectionner...">
                 </div>
               </div>
               <div class="col-md-6">
@@ -945,7 +945,7 @@
               <div class="col-md-6">
                 <div class="enigma-input-wrap">
                   <label>PAYS</label>
-                  <input type="text" v-model="editOrgData.pays" class="enigma-field" placeholder="Tunisie, France...">
+                  <input type="text" list="countries-list" v-model="editOrgData.pays" class="enigma-field" placeholder="Rechercher ou sélectionner...">
                 </div>
               </div>
               <div class="col-12">
@@ -985,6 +985,39 @@
         <div class="t-body"><strong>{{ t('dashboard.toast.systemMessage') }}</strong><p class="m-0 small">{{ globalToast.message }}</p></div>
       </div>
     </transition>
+
+    <datalist id="countries-list">
+      <option value="Tunisie"></option>
+      <option value="Algérie"></option>
+      <option value="Maroc"></option>
+      <option value="Libye"></option>
+      <option value="Mauritanie"></option>
+      <option value="Égypte"></option>
+      <option value="France"></option>
+      <option value="Suisse"></option>
+      <option value="Belgique"></option>
+      <option value="Canada"></option>
+      <option value="États-Unis"></option>
+      <option value="Royaume-Uni"></option>
+      <option value="Allemagne"></option>
+      <option value="Espagne"></option>
+      <option value="Italie"></option>
+      <option value="Sénégal"></option>
+      <option value="Côte d'Ivoire"></option>
+      <option value="Cameroun"></option>
+      <option value="Mali"></option>
+      <option value="Émirats Arabes Unis"></option>
+      <option value="Arabie Saoudite"></option>
+      <option value="Qatar"></option>
+      <option value="Bahreïn"></option>
+      <option value="Koweït"></option>
+      <option value="Oman"></option>
+      <option value="Chine"></option>
+      <option value="Japon"></option>
+      <option value="Inde"></option>
+      <option value="Brésil"></option>
+      <option value="Australie"></option>
+    </datalist>
 
   </div>
 </template>

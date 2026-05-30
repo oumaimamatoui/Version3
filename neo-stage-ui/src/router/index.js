@@ -141,7 +141,7 @@ const routes = [
    * ESPACE ADMINISTRATION ENTREPRISE
    */
   { path: '/roles', name: 'roles', component: RolesManagementView, meta: { requiresAuth: true, permission: 'view_rol' } },
-  { path: '/groups', name: 'groups', component: GroupsView, meta: { requiresAuth: true, permission: 'view_can' } },
+  { path: '/groups', name: 'groups', component: GroupsView, meta: { requiresAuth: true, permission: 'inv_can' } },
   { path: '/gestion-groupes', name: 'gestion-groupes', component: GestionGroupesView, meta: { requiresAuth: true, permission: 'view_can' } },
   { path: '/candidates-list', name: 'candidates-list', component: ListeCandidatsView, meta: { requiresAuth: true, permission: 'view_can' } },
   { path: '/details-candidat/:id', name: 'details-candidat', component: DetailsCandidatView, meta: { requiresAuth: true, permission: 'view_can' } },

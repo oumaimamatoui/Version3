@@ -256,8 +256,9 @@ namespace NeoEvaluation.API.Controllers
 
         [HttpGet("campagnes")]
         public async Task<IActionResult> GetCampagnes() {
-            // Fix: On renvoie "Nom" et "Id" clairement pour le select
+            var now = DateTime.UtcNow;
             return Ok(await _context.Campagnes
+                .Where(c => c.DateFin > now && (c.Statut == StatutCampagne.EN_COURS || c.Statut == StatutCampagne.PLANIFIEE))
                 .OrderByDescending(c => c.CreeLe)
                 .Select(c => new { c.Id, Nom = c.Nom })
                 .ToListAsync());

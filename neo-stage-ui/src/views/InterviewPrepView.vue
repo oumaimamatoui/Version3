@@ -116,7 +116,7 @@
             </div>
             <h5 class="m-0">Lecture Comportementale Prédictive</h5>
           </div>
-          <span class="neural-badge-reco">Propulsé par Gemini AI</span>
+          <span class="neural-badge-reco">Propulsé par AI</span>
         </div>
 
         <!-- Erreur d'analyse -->
