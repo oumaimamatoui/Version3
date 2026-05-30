@@ -333,7 +333,7 @@
                     <div class="kpi-icon" style="background:#ede9fe;color:#8b5cf6;"><i class="fa-solid fa-envelope-open-text"></i></div>
                     <div>
                       <h6 class="panel-title m-0">{{ $t('dashboard.lettre.title') }}</h6>
-                      <span class="neural-badge" style="background:rgba(139,92,246,0.15);color:#7c3aed;">Generative AI · Gemini</span>
+                      <span class="neural-badge" style="background:rgba(139,92,246,0.15);color:#7c3aed;">{{ $t('dashboard.lettre.badge') }}</span>
                     </div>
                   </div>
                 </div>
@@ -393,7 +393,7 @@
                         {{ { fr: '🇫🇷 Français', en: '🇬🇧 English', ar: '🇸🇦 العربية' }[lettreData.langue] }}
                       </span>
                       <span class="result-style-badge">{{ lettreData.style || 'professionnel' }}</span>
-                      <span class="source-gemini">✨ Gemini IA</span>
+                      <span class="source-gemini">✨ EvaluaTech IA</span>
                     </div>
                     <div class="lettre-header-row d-flex justify-content-between align-items-center mb-3">
                       <span class="lettre-label"><i class="fa-solid fa-check-circle me-2" style="color:#10b981"></i>{{ $t('dashboard.lettre.generated') }}</span>
@@ -1742,7 +1742,7 @@ const RECO_BY_ROLE = {
       priorityBg: 'rgba(16,185,129,0.12)', priorityColor: '#10b981',
       color: '#10b981',
       icon: 'fa-solid fa-file-pdf',
-      title: 'Analysez votre CV avec Gemini',
+      title: "Analysez votre CV avec l'IA",
       description: 'Obtenez des conseils personnalisés pour augmenter votre score de matching.',
       actionLabel: 'Analyser mon CV',
       route: null,
@@ -1851,7 +1851,7 @@ const RECO_BY_ROLE = {
       color: '#10b981',
       icon: 'fa-solid fa-file-pdf',
       title: 'Analyser un CV candidat',
-      description: 'Utilisez Gemini pour scorer automatiquement les CVs reçus.',
+      description: "Utilisez l'IA pour scorer automatiquement les CVs reçus.",
       actionLabel: 'Analyser un CV',
       route: null,
       scrollTo: 'cv-scan-section',
@@ -2632,9 +2632,10 @@ const runCvAnalysis = async () => {
   cvResult.value = null;
   try {
     const fd = new FormData();
-    fd.append('file', selectedFile.value);
-    fd.append('job_description', jobDescription.value || 'Poste générique');
-    const res = await axios.post(`${API_IA}/ia/match-cv`, fd);
+    fd.append('File', selectedFile.value);
+    fd.append('JobDescription', jobDescription.value || 'Poste générique');
+    fd.append('Lang', locale.value.toLowerCase());
+    const res = await axios.post(`${API_NET}/Dashboard/analyze-cv`, fd, { headers: getAuthHeaders() });
     cvResult.value = res.data;
     showToast(t('dashboard.toast.cvSuccess', { score: res.data.score }), 'success', 'fa-solid fa-check');
   } catch (e) { showToast(t('dashboard.toast.cvError'), 'error', 'fa-solid fa-x'); }
@@ -2698,7 +2699,7 @@ const loadIaServices = async () => {
     const res = await axios.get(`${API_IA}/ia/health`);
     iaServices.value = [
       { key: 'gateway',  name: 'API Gateway .NET',    latency: '~',   up: true },
-      { key: 'iaEngine', name: 'IA Engine (Gemini)',  latency: `${res.data.avg_latency_ms || 0}ms`, up: res.data.circuit_state === 'CLOSED' },
+      { key: 'iaEngine', name: t('dashboard.health.iaEngine') || 'IA Engine (EvaluaTech)',  latency: `${res.data.avg_latency_ms || 0}ms`, up: res.data.circuit_state === 'CLOSED' },
       { key: 'auth',     name: 'Auth Service',        latency: '~',   up: true },
     ];
   } catch { iaServices.value = [{ key: 'gateway', name: 'API Gateway .NET', up: false }]; }

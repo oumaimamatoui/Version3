@@ -152,10 +152,10 @@
               </div>
             </div>
             <div v-else v-for="c in filteredCampaigns" :key="c.id" class="col-xl-4 col-md-6 animate__animated animate__fadeInUp">
-              <div class="campaign-card-modern" @click="previewCampaign(c)">
+              <div class="campaign-card-modern" :class="{ 'card-expired': isCampaignExpired(c) }" @click="previewCampaign(c)">
                 <div class="card-header-modern mb-3 d-flex justify-content-between align-items-start">
-                  <span class="status-badge" :class="'status-' + c.statut">
-                    <span class="status-dot"></span> {{ getStatusLabel(c.statut) }}
+                  <span class="status-badge" :class="getDisplayStatusClass(c)">
+                    <span class="status-dot"></span> {{ getDisplayStatusLabel(c) }}
                   </span>
                   <div class="d-flex gap-2 align-items-center">
                     <button class="btn-icon-sm" @click.stop="duplicateCampaign(c)" :title="t('campaigns.duplicate')"><i class="fa-regular fa-copy"></i></button>
@@ -188,6 +188,13 @@
                   <div class="progress-fill" :style="{ width: getCampaignProgress(c) + '%', background: getProgressColor(getCampaignProgress(c)) }"></div>
                 </div>
 
+                <!-- Time remaining / expired indicator -->
+                <div v-if="c.dateFin" class="campaign-time-indicator mb-3" :class="isCampaignExpired(c) ? 'time-expired' : 'time-active'">
+                  <i :class="isCampaignExpired(c) ? 'fa-solid fa-clock-rotate-left' : 'fa-solid fa-hourglass-half'"></i>
+                  <span v-if="isCampaignExpired(c)" class="time-label">Expirée depuis {{ getTimeAgo(c.dateFin) }}</span>
+                  <span v-else class="time-label">{{ getTimeRemaining(c.dateFin) }}</span>
+                </div>
+
                 <div class="card-footer-modern d-flex justify-content-between pt-3 border-top border-light">
                   <div class="meta-item small text-muted"><i class="fa-regular fa-calendar me-2"></i>{{ formatDate(c.dateDebut) }}</div>
                   <div class="meta-item small text-muted">
@@ -210,9 +217,9 @@
             </div>
             <div v-if="loading" class="text-center py-4"><div class="spinner-pro-premium"></div></div>
             <div v-else-if="filteredCampaigns.length === 0" class="text-center py-4 text-muted">Aucune campagne trouvée.</div>
-            <div v-else v-for="c in filteredCampaigns" :key="c.id" class="list-row-item d-flex align-items-center px-4 py-3 mb-2">
+            <div v-else v-for="c in filteredCampaigns" :key="c.id" class="list-row-item d-flex align-items-center px-4 py-3 mb-2" :class="{ 'list-row-expired': isCampaignExpired(c) }">
               <div style="width:200px">
-                <span class="status-badge" :class="'status-' + c.statut"><span class="status-dot"></span> {{ getStatusLabel(c.statut) }}</span>
+                <span class="status-badge" :class="getDisplayStatusClass(c)"><span class="status-dot"></span> {{ getDisplayStatusLabel(c) }}</span>
               </div>
               <div class="flex-grow-1">
                 <div class="fw-800 small">{{ c.nom }}</div>
@@ -1623,6 +1630,50 @@ const changeStatus        = (c, s) => { c.statut = s; showPulseToast(t('success'
 const getCampaignProgress = (c)    => ({ 0: 10, 1: 60, 2: 100 }[c.statut] ?? 0);
 const getProgressColor    = (p)    => p >= 100 ? '#10b981' : p >= 50 ? '#f59e0b' : '#6366f1';
 
+/* ─── EXPIRED / TIMEOUT HELPERS ──────────────────────────────── */
+const isCampaignExpired = (c) => {
+  if (!c.dateFin) return false;
+  return new Date(c.dateFin) < new Date();
+};
+
+const getDisplayStatusClass = (c) => {
+  if (isCampaignExpired(c) && c.statut === 1) return 'status-expired';
+  return 'status-' + c.statut;
+};
+
+const getDisplayStatusLabel = (c) => {
+  if (isCampaignExpired(c) && c.statut === 1) return 'Expirée';
+  return getStatusLabel(c.statut);
+};
+
+const getTimeRemaining = (dateFin) => {
+  if (!dateFin) return '';
+  const now = new Date();
+  const end = new Date(dateFin);
+  const diff = end - now;
+  if (diff <= 0) return 'Temps écoulé';
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  if (days > 0) return `${days}j ${hours}h restant`;
+  if (hours > 0) return `${hours}h ${mins}min restant`;
+  return `${mins}min restant`;
+};
+
+const getTimeAgo = (dateFin) => {
+  if (!dateFin) return '';
+  const now = new Date();
+  const end = new Date(dateFin);
+  const diff = now - end;
+  if (diff <= 0) return '';
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  if (days > 0) return `${days}j ${hours}h`;
+  if (hours > 0) return `${hours}h ${mins}min`;
+  return `${mins}min`;
+};
+
 const previewTimeline = computed(() => [
   { id: 1, title: t('campaigns.preview.timeline_events.created'),  desc: t('campaigns.preview.timeline_events.created_desc'),  color: '#6366f1', time: formatDate(previewData.value?.dateDebut) },
   { id: 2, title: t('campaigns.preview.timeline_events.notified'), desc: t('campaigns.preview.timeline_events.notified_desc'), color: '#f59e0b', time: t('campaigns.preview.timeline_events.dayPlus1') },
@@ -1884,9 +1935,84 @@ onUnmounted(() => {
 }
 @keyframes statusPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } 50% { box-shadow: 0 0 0 4px rgba(16,185,129,0.1); } }
 .status-2 { background: #f1f5f9; color: #64748b; border: 1px solid rgba(100,116,139,0.15); }
+.status-expired {
+  background: linear-gradient(135deg, #fef2f2, #fff1f2);
+  color: #dc2626;
+  border: 1px solid rgba(220,38,38,0.2);
+  animation: expiredPulse 2.5s ease-in-out infinite;
+}
+@keyframes expiredPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(220,38,38,0); }
+  50% { box-shadow: 0 0 0 5px rgba(220,38,38,0.08); }
+}
+.status-expired .status-dot {
+  background: #dc2626;
+  animation: expiredBlink 1s ease-in-out infinite;
+}
+@keyframes expiredBlink { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.7); } }
 .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; margin-right: 6px; }
 .status-1 .status-dot { animation: blink 1.5s ease-in-out infinite; }
 @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+/* Campaign card expired state */
+.card-expired {
+  border-color: rgba(220,38,38,0.15) !important;
+  background: linear-gradient(135deg, #ffffff, #fffbfb) !important;
+}
+.card-expired::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ef4444, #dc2626, #f87171);
+  border-radius: 24px 24px 0 0;
+  opacity: 0.8;
+}
+
+/* Time indicator strip */
+.campaign-time-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  transition: all 0.3s ease;
+}
+.campaign-time-indicator i {
+  font-size: 0.75rem;
+}
+.time-active {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid rgba(22,163,74,0.12);
+}
+.time-active i {
+  animation: hourglassSpin 2s ease-in-out infinite;
+}
+@keyframes hourglassSpin {
+  0%,100% { transform: rotate(0deg); }
+  50% { transform: rotate(180deg); }
+}
+.time-expired {
+  background: linear-gradient(135deg, #fef2f2, #fff5f5);
+  color: #dc2626;
+  border: 1px solid rgba(220,38,38,0.15);
+  animation: expiredFlash 3s ease-in-out infinite;
+}
+@keyframes expiredFlash {
+  0%,100% { background: linear-gradient(135deg, #fef2f2, #fff5f5); }
+  50% { background: linear-gradient(135deg, #fee2e2, #fecaca); }
+}
+.time-expired i {
+  animation: expiredIconPulse 1.5s ease-in-out infinite;
+}
+@keyframes expiredIconPulse {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
 
 .pin-badge { font-size: 0.6rem; font-weight: 800; color: #f59e0b; background: #fffbeb; padding: 2px 8px; border-radius: 8px; margin-bottom: 8px; display: inline-block; }
 .progress-slim { height: 5px; background: #f1f5f9; border-radius: 10px; overflow: hidden; }
@@ -1949,6 +2075,8 @@ onUnmounted(() => {
 .list-col-label { font-size: 0.6rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
 .list-row-item { background: white; border-radius: 16px; border: 1px solid #eef2f6; transition: all 0.2s; cursor: pointer; }
 .list-row-item:hover { border-color: #f59e0b; transform: translateX(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+.list-row-expired { border-left: 3px solid #dc2626; background: #fffbfb; }
+.list-row-expired:hover { border-color: #dc2626; }
 .slot-badge { background: #fffbeb; color: #f59e0b; font-weight: 800; font-size: 0.75rem; padding: 3px 10px; border-radius: 8px; }
 .empty-state-pro { background: white; border-radius: 30px; padding: 40px; border: 2px dashed #e2e8f0; transition: border-color 0.3s; }
 .empty-state-pro:hover { border-color: #f59e0b; }

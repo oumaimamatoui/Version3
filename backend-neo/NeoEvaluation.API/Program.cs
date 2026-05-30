@@ -13,6 +13,23 @@ using NeoEvaluation.API.Hubs; // Assurez-vous que ce namespace correspond à vot
 
 var builder = WebApplication.CreateBuilder(args);
 
+// --- 0. LOAD .ENV FILE (SECRETS MANAGEMENT) ---
+var rootDir = Directory.GetCurrentDirectory();
+var dotenvPath = Path.Combine(rootDir, ".env");
+if (System.IO.File.Exists(dotenvPath))
+{
+    foreach (var line in System.IO.File.ReadAllLines(dotenvPath))
+    {
+        if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#")) continue;
+        var parts = line.Split('=', 2, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 2)
+            Environment.SetEnvironmentVariable(parts[0].Trim(), parts[1].Trim());
+    }
+}
+
+// Add Environment Variables to configuration overriding appsettings
+builder.Configuration.AddEnvironmentVariables();
+
 // --- 1. CONFIGURATION DES SERVICES ---
 StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 

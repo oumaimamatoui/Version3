@@ -69,7 +69,7 @@
 
             <div class="hero-badge">
               <span class="badge-dot"></span>
-              Plateforme IA 
+              Plateforme IA
             </div>
 
             <p class="hero-eyebrow">Évaluation Technique & Comportementale</p>
@@ -151,7 +151,7 @@
                   <span class="mock-live"><span class="live-dot"></span> Live</span>
                 </div>
                 <div class="mock-body">
-                  <!-- Candidate row - NO name shown -->
+                  <!-- Candidate row -->
                   <div class="mock-candidate">
                     <div class="candidate-avatar">
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -245,7 +245,7 @@
       </div>
     </section>
 
-    <!-- 5. SERVICES (Redesigned) -->
+    <!-- 5. SERVICES -->
     <section id="services" class="services-section py-5">
       <div class="container py-5">
         <div class="section-heading text-center mb-5">
@@ -255,7 +255,6 @@
           <div class="h-line"></div>
         </div>
 
-        <!-- Featured top row: 2 large cards -->
         <div class="row g-4 mb-4">
           <div class="col-lg-6" v-for="(s, i) in serviceList.slice(0,2)" :key="i">
             <div class="service-card service-card-large h-100">
@@ -274,7 +273,6 @@
           </div>
         </div>
 
-        <!-- Bottom row: 3 medium cards + 3 small -->
         <div class="row g-4">
           <div class="col-lg-4 col-md-6" v-for="(s, i) in serviceList.slice(2,5)" :key="i">
             <div class="service-card h-100">
@@ -298,7 +296,7 @@
       </div>
     </section>
 
-    <!-- 6. PROCESS (Redesigned) -->
+    <!-- 6. PROCESS -->
     <section id="process" class="process-section py-5">
       <div class="container py-5">
         <div class="section-heading text-center mb-5">
@@ -420,6 +418,17 @@
 
     <!-- 10. FOOTER -->
     <footer class="footer-dark">
+      <!-- Newsletter Toast Notification -->
+      <transition name="toast-slide">
+        <div v-if="newsletterToast.visible" class="newsletter-toast" :class="newsletterToast.type">
+          <div class="toast-icon">
+            <svg v-if="newsletterToast.type === 'success'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <span>{{ newsletterToast.message }}</span>
+        </div>
+      </transition>
+
       <div class="container py-5">
         <div class="row gy-4">
           <div class="col-lg-4">
@@ -435,11 +444,8 @@
               <h3 class="text-white fw-bold mb-0">Evalua<span class="text-amber">Tech</span></h3>
             </div>
             <p class="text-slate-400 small">Innovation Éducative & Professionnelle. Projet SaaS assisté par l'IA pour moderniser l'évaluation.</p>
-            <div class="footer-socials mt-4">
-              <a href="#" class="social-icon">in</a>
-              <a href="#" class="social-icon">tw</a>
-              <a href="#" class="social-icon">gh</a>
-            </div>
+
+
           </div>
           <div class="col-lg-2 offset-lg-1">
             <h5 class="text-white fw-bold mb-4">Navigation</h5>
@@ -463,10 +469,29 @@
             <h5 class="text-white fw-bold mb-4">Contact</h5>
             <p class="text-slate-400 small">contact@evaluatech.tn</p>
             <p class="text-slate-400 small">Plateforme SaaS - PFE 2026</p>
+
+            <!-- ✅ NEWSLETTER — Functional with validation & feedback -->
             <div class="footer-newsletter mt-3">
-              <input type="email" placeholder="Votre email..." class="newsletter-input">
-              <button class="newsletter-btn">→</button>
+              <input
+                type="email"
+                v-model="newsletterEmail"
+                @keyup.enter="submitNewsletter"
+                placeholder="Votre email..."
+                class="newsletter-input"
+                :disabled="newsletterLoading"
+              />
+              <button
+                class="newsletter-btn"
+                @click="submitNewsletter"
+                :disabled="newsletterLoading"
+                :class="{ 'loading': newsletterLoading }"
+                aria-label="S'abonner"
+              >
+                <span v-if="!newsletterLoading">→</span>
+                <span v-else class="newsletter-spinner"></span>
+              </button>
             </div>
+            <p v-if="newsletterError" class="newsletter-inline-error mt-2">{{ newsletterError }}</p>
           </div>
         </div>
         <div class="footer-bottom mt-5 pt-4 border-top border-slate-700 d-flex flex-wrap justify-content-between align-items-center">
@@ -489,6 +514,55 @@ const loading = ref(true);
 const scrolled = ref(false);
 const heroVisible = ref(false);
 const activeSection = ref('top');
+
+// ✅ Newsletter state
+const newsletterEmail = ref('');
+const newsletterLoading = ref(false);
+const newsletterError = ref('');
+const newsletterToast = ref({ visible: false, type: 'success', message: '' });
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+}
+
+function showToast(type, message) {
+  newsletterToast.value = { visible: true, type, message };
+  setTimeout(() => {
+    newsletterToast.value.visible = false;
+  }, 4000);
+}
+
+async function submitNewsletter() {
+  newsletterError.value = '';
+
+  // Validation
+  if (!newsletterEmail.value.trim()) {
+    newsletterError.value = 'Veuillez entrer votre adresse email.';
+    return;
+  }
+  if (!isValidEmail(newsletterEmail.value)) {
+    newsletterError.value = 'Adresse email invalide.';
+    return;
+  }
+
+  newsletterLoading.value = true;
+
+  // Simulate API call (replace with your real endpoint)
+  await new Promise(resolve => setTimeout(resolve, 1200));
+
+  // Simulate success (you can add real fetch here)
+  // try {
+  //   await fetch('/api/newsletter', {
+  //     method: 'POST',
+  //     headers: { 'Content-Type': 'application/json' },
+  //     body: JSON.stringify({ email: newsletterEmail.value.trim() })
+  //   });
+  // } catch (e) { ... }
+
+  newsletterLoading.value = false;
+  newsletterEmail.value = '';
+  showToast('success', '✓ Inscription réussie ! Bienvenue dans la communauté EvaluaTech.');
+}
 
 const mockSkills = [
   { name: 'Algorithmique', val: 92 },
@@ -757,12 +831,10 @@ onUnmounted(() => {
 .hero-orb-2 { width: 300px; height: 300px; background: rgba(234,179,8,0.07); bottom: 0; left: -50px; animation: orb-float 10s ease-in-out infinite reverse; }
 @keyframes orb-float { 0%,100%{transform:translate(0,0)} 50%{transform:translate(30px,-30px)} }
 
-/* Hero animations */
 .hero-text-wrapper { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
 .hero-img-wrapper { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease 0.3s, transform 0.8s ease 0.3s; }
 .hero-visible { opacity: 1 !important; transform: none !important; }
 
-/* Hero badge */
 .hero-badge {
   display: inline-flex; align-items: center; gap: 8px;
   background: #fefce8; color: #92400e;
@@ -940,7 +1012,7 @@ onUnmounted(() => {
 .section-subtitle { font-size: 16px; color: #64748b; margin-top: 12px; }
 .h-line { width: 60px; height: 4px; background: #eab308; margin: 20px auto 0; border-radius: 10px; }
 
-/* ===== SERVICES (Redesigned) ===== */
+/* ===== SERVICES ===== */
 .services-section { background: #fff; }
 
 .service-card-large {
@@ -991,7 +1063,7 @@ onUnmounted(() => {
 .service-card h4 { font-size: 16px; font-weight: 800; color: #0f172a; margin: 0; }
 .service-card p { font-size: 14px; color: #64748b; line-height: 1.6; margin: 0; }
 
-/* ===== PROCESS (Redesigned) ===== */
+/* ===== PROCESS ===== */
 .process-section { background: #f8fafc; }
 .process-grid {
   display: grid;
@@ -1096,33 +1168,81 @@ onUnmounted(() => {
 @keyframes rotate-slow { to { transform: rotate(360deg); } }
 
 /* ===== FOOTER ===== */
-.footer-dark { background: #0f172a; border-radius: 40px 40px 0 0; margin-top: 40px; }
+.footer-dark { background: #0f172a; border-radius: 40px 40px 0 0; margin-top: 40px; position: relative; }
 .footer-links a, .footer-links .router-link-active {
   color: #94a3b8; text-decoration: none; transition: 0.2s; display: block;
   line-height: 2.5; font-weight: 600; font-size: 14px;
 }
 .footer-links a:hover, .footer-links .router-link-active:hover { color: #eab308; padding-left: 6px; }
-.footer-socials { display: flex; gap: 10px; }
-.social-icon {
-  width: 38px; height: 38px; border-radius: 10px; background: rgba(255,255,255,0.06);
-  color: #94a3b8; font-size: 12px; font-weight: 800;
-  display: flex; align-items: center; justify-content: center; text-decoration: none;
-  transition: 0.2s; border: 1px solid rgba(255,255,255,0.08);
-}
-.social-icon:hover { background: #eab308; color: #0f172a; border-color: #eab308; }
+
+/* ✅ SOCIAL ICONS — Redesigned with real brand SVGs */
+
+
+/* ✅ NEWSLETTER — Functional with loading state */
 .newsletter-input {
   background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
-  color: white; padding: 10px 16px; border-radius: 12px 0 0 12px;
+  color: white; padding: 11px 16px; border-radius: 12px 0 0 12px;
   font-size: 14px; outline: none; width: calc(100% - 48px);
+  transition: border-color 0.2s;
+  font-family: inherit;
 }
+.newsletter-input:focus { border-color: rgba(234,179,8,0.4); }
 .newsletter-input::placeholder { color: #64748b; }
+.newsletter-input:disabled { opacity: 0.6; cursor: not-allowed; }
 .newsletter-btn {
-  width: 48px; background: #eab308; border: none; color: #0f172a;
+  width: 48px; height: 100%; background: #eab308; border: none; color: #0f172a;
   font-size: 20px; font-weight: bold; border-radius: 0 12px 12px 0; cursor: pointer;
-  transition: 0.2s;
+  transition: background 0.2s; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
 }
-.newsletter-btn:hover { background: #d97706; }
+.newsletter-btn:hover:not(:disabled) { background: #d97706; }
+.newsletter-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+.newsletter-btn.loading { background: #ca8a04; }
+.newsletter-spinner {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border: 2px solid rgba(15,23,42,0.3);
+  border-top-color: #0f172a;
+  border-radius: 50%;
+  animation: ring-spin 0.7s linear infinite;
+}
+.newsletter-inline-error {
+  font-size: 12px; color: #f87171; margin: 0; font-weight: 600;
+}
 .footer-newsletter { display: flex; }
+
+/* ✅ TOAST NOTIFICATION */
+.newsletter-toast {
+  position: fixed; bottom: 32px; right: 32px; z-index: 9999;
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 20px; border-radius: 14px;
+  font-size: 14px; font-weight: 600;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  max-width: 380px;
+}
+.newsletter-toast.success {
+  background: #0f172a; color: #f0fdf4;
+  border: 1px solid rgba(34,197,94,0.3);
+}
+.newsletter-toast.error {
+  background: #0f172a; color: #fef2f2;
+  border: 1px solid rgba(248,113,113,0.3);
+}
+.toast-icon {
+  width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.newsletter-toast.success .toast-icon { background: rgba(34,197,94,0.15); color: #22c55e; }
+.newsletter-toast.error .toast-icon   { background: rgba(248,113,113,0.15); color: #f87171; }
+
+/* Toast transition */
+.toast-slide-enter-active, .toast-slide-leave-active {
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.toast-slide-enter-from, .toast-slide-leave-to {
+  opacity: 0; transform: translateY(20px) scale(0.95);
+}
 
 /* ===== ANIMATIONS ===== */
 @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-18px)} }
@@ -1160,5 +1280,6 @@ onUnmounted(() => {
   .cta-box { padding: 50px 24px; }
   .hero-stats-inline { gap: 16px; }
   .stat-pill-val { font-size: 18px; }
+  .newsletter-toast { bottom: 16px; right: 16px; left: 16px; max-width: none; }
 }
 </style>

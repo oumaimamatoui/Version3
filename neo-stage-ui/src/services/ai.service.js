@@ -1,9 +1,13 @@
 import axios from 'axios';
 
 const AI_BASE = import.meta.env.VITE_AI_URL || import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000';
+const AI_INTERNAL_KEY = import.meta.env.VITE_AI_INTERNAL_API_KEY || 'fallback_secret_for_demo';
 
 const aiApi = axios.create({
-  baseURL: AI_BASE
+  baseURL: AI_BASE,
+  headers: {
+    'X-API-KEY': AI_INTERNAL_KEY
+  }
 });
 
 export const aiService = {

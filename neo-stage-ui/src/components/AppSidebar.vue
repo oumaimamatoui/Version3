@@ -155,7 +155,7 @@
                 <span class="sb-lien-icone ic-cyan"><i class="fa-solid fa-envelope-open-text"></i></span>
                 <span class="sb-lien-texte">{{ t('sidebar.links.invitations') }}</span>
               </router-link>
-              <router-link v-if="authStore.hasPermission('view_can')" to="/groups" class="sb-lien" :title="t('sidebar.links.groups')">
+              <router-link v-if="authStore.hasPermission('inv_can')" to="/groups" class="sb-lien" :title="t('sidebar.links.groups')">
                 <span class="sb-lien-icone ic-blue"><i class="fa-solid fa-layer-group"></i></span>
                 <span class="sb-lien-texte">{{ t('sidebar.links.groups') }}</span>
               </router-link>
@@ -168,13 +168,13 @@
               <div class="sb-groupe-label">
                 <span class="point-label" style="background:#F59E0B"></span>Évaluations
               </div>
-              <router-link v-if="authStore.hasPermission('view_tests') || authStore.hasPermission('inv_can')" to="/campaigns" class="sb-lien" :title="t('sidebar.links.campaigns')">
-                <span class="sb-lien-icone ic-amber"><i class="fa-solid fa-clipboard-list"></i></span>
-                <span class="sb-lien-texte">{{ t('sidebar.links.campaigns') }}</span>
-              </router-link>
               <router-link v-if="authStore.hasPermission('edit_bank')" to="/questions" class="sb-lien" :title="t('sidebar.links.bank')">
                 <span class="sb-lien-icone ic-gold"><i class="fa-solid fa-vault"></i></span>
                 <span class="sb-lien-texte">{{ t('sidebar.links.bank') }}</span>
+              </router-link>
+              <router-link v-if="authStore.hasPermission('view_tests') || authStore.hasPermission('inv_can')" to="/campaigns" class="sb-lien" :title="t('sidebar.links.campaigns')">
+                <span class="sb-lien-icone ic-amber"><i class="fa-solid fa-clipboard-list"></i></span>
+                <span class="sb-lien-texte">{{ t('sidebar.links.campaigns') }}</span>
               </router-link>
               <router-link v-if="authStore.hasPermission('edit_bank')" to="/ai-generator" class="sb-lien" :title="t('sidebar.links.ai')">
                 <span class="sb-lien-icone ic-violet"><i class="fa-solid fa-wand-magic-sparkles"></i></span>

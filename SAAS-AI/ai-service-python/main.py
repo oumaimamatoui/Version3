@@ -28,7 +28,7 @@ from typing import Optional, AsyncGenerator, List, Dict, Any
 from datetime import datetime, timedelta
 from pydantic import BaseModel
 
-from fastapi import FastAPI, Form, File, UploadFile, HTTPException, Request, Query
+from fastapi import FastAPI, Form, File, UploadFile, HTTPException, Request, Query, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
@@ -71,6 +71,12 @@ except ImportError:
     pass
 
 API_KEY = os.getenv("GEMINI_API_KEY", "")
+INTERNAL_API_KEY = os.getenv("AI_INTERNAL_API_KEY", "fallback_secret_for_demo")
+
+def verify_api_key(x_api_key: str = Header(None)):
+    if x_api_key != INTERNAL_API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid or missing X-API-KEY")
+
 WORKING_MODEL = "gemini-1.5-flash"
 _START_TIME = time.time()
 _gemini_client = None
@@ -399,7 +405,7 @@ async def _prewarm_chat_cache():
 # ─────────────────────────────────────────────────
 app = FastAPI(title="EvaluaTech AI Engine v10.1", lifespan=lifespan)
 app.add_middleware(GZipMiddleware, minimum_size=200)
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5172", "http://127.0.0.1:5172"], allow_methods=["*"], allow_headers=["*"])
 
 @app.middleware("http")
 async def request_middleware(request: Request, call_next):
@@ -1671,7 +1677,7 @@ def _local_conseils(score: int) -> list:
     ]
 
 
-@app.post("/ia/match-cv")
+@app.post("/ia/match-cv", dependencies=[Depends(verify_api_key)])
 async def match_cv(
     file: UploadFile = File(...),
     job_description: str = Form(...),
@@ -2728,7 +2734,7 @@ JSON: {{"questions":[{{"question":"...","options":["...","...","...","..."],"ans
         return _fallback_qcm(theme, sousTheme, n, langue, type)
 
 
-@app.post("/ia/generate-ultra")
+@app.post("/ia/generate-ultra", dependencies=[Depends(verify_api_key)])
 async def generate_ultra(
     theme: str = Form(...),
     sousTheme: str = Form(...),
@@ -2795,7 +2801,7 @@ async def analyze_candidate(nom: str = Form(...), scores_techniques: str = Form(
         data["ai_insight"] = f"Score {avg}/100 — Profil {data['profile_type']}. Recommandé pour l'étape suivante."
     return data
 
-@app.post("/ia/reports/generate")
+@app.post("/ia/reports/generate", dependencies=[Depends(verify_api_key)])
 async def generate_report(report_type: str = Form("org"), period: str = Form("month"), user_role: str = Form("AdminEntreprise"), context: str = Form("")):
     try:
         prompt = f"Rapport RH JSON. Type:{report_type} Période:{period} Rôle:{user_role}.\nJSON: title,summary,sections[{{title,content}}],kpis[{{label,value,trend}}],recommendations[]. Français."
@@ -2855,7 +2861,7 @@ async def transcribe_audio(file: UploadFile = File(...), langue: str = Form("fr"
         logger.error(f"Transcription error: {e}")
         return {"transcript": None, "error": "Erreur lors de la transcription, réessayez"}
 
-@app.post("/ia/interview/analyze")
+@app.post("/ia/interview/analyze", dependencies=[Depends(verify_api_key)])
 async def interview_analyze(request: Request):
     if not _gemini_client:
         raise HTTPException(status_code=503, detail="Gemini non disponible")
@@ -2982,7 +2988,7 @@ async def radar_analysis_standalone(file: UploadFile = File(...)):
 
 
 # ─────────────────────────────────────────────────
-@app.post("/ia/evaluate-exam")
+@app.post("/ia/evaluate-exam", dependencies=[Depends(verify_api_key)])
 async def evaluate_exam(request: Request):
     try:
         data = await request.json()

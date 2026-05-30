@@ -443,11 +443,7 @@
               <h3 class="text-white fw-bold mb-0">Evalua<span class="text-amber">Tech</span></h3>
             </div>
             <p class="text-slate-400 small">Innovation Éducative & Professionnelle. Projet SaaS assisté par l'IA pour moderniser l'évaluation.</p>
-            <div class="footer-socials mt-4">
-              <a href="#" class="social-icon">in</a>
-              <a href="#" class="social-icon">tw</a>
-              <a href="#" class="social-icon">gh</a>
-            </div>
+
           </div>
           <div class="col-lg-2 offset-lg-1">
             <h5 class="text-white fw-bold mb-4">Navigation</h5>
@@ -989,14 +985,7 @@ const handleSubscription = async (planName, price) => {
   line-height: 2.5; font-weight: 600; font-size: 14px;
 }
 .footer-links a:hover { color: #eab308; padding-left: 6px; }
-.footer-socials { display: flex; gap: 10px; }
-.social-icon {
-  width: 38px; height: 38px; border-radius: 10px; background: rgba(255,255,255,0.06);
-  color: #94a3b8; font-size: 12px; font-weight: 800;
-  display: flex; align-items: center; justify-content: center; text-decoration: none;
-  transition: 0.2s; border: 1px solid rgba(255,255,255,0.08);
-}
-.social-icon:hover { background: #eab308; color: #0f172a; border-color: #eab308; }
+
 .newsletter-input {
   background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
   color: white; padding: 10px 16px; border-radius: 12px 0 0 12px;
