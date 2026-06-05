@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace NeoEvaluation.API.Controllers
 {
@@ -29,6 +30,18 @@ namespace NeoEvaluation.API.Controllers
         public async Task<IActionResult> Register([FromBody] RegisterCompanyDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            // Vérifier si l'email existe déjà dans InscriptionsEntreprises
+            if (await _context.InscriptionsEntreprises.AnyAsync(i => i.EmailResponsable.ToLower() == dto.EmailResponsable.ToLower()))
+            {
+                return BadRequest(new { message = "Cet email est déjà utilisé pour une inscription en cours ou validée." });
+            }
+
+            // Vérifier si l'email existe déjà dans Utilisateurs
+            if (await _context.Utilisateurs.AnyAsync(u => u.Email.ToLower() == dto.EmailResponsable.ToLower()))
+            {
+                return BadRequest(new { message = "Cet email est déjà associé à un compte existant. Veuillez vous connecter." });
+            }
 
             // Splitting logic pour obtenir un prénom par défaut si possible
             var fullName = dto.NomResponsable ?? "Responsable";
