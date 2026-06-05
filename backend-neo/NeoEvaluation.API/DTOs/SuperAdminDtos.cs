@@ -264,9 +264,6 @@ namespace NeoEvaluation.API.DTOs
         [JsonPropertyName("matriculeFiscale")]
         public string? MatriculeFiscale { get; set; }
 
-        [JsonPropertyName("couleurSignature")]
-        public string? CouleurSignature { get; set; }
-
         [JsonPropertyName("description")]
         public string? Description { get; set; }
 
@@ -290,5 +287,53 @@ namespace NeoEvaluation.API.DTOs
 
         [JsonPropertyName("os")]
         public string? Os { get; set; }
+    }
+
+    public class SuperAdminCampagnesPerformanceDto
+    {
+        [JsonPropertyName("campagnes")]
+        public List<SuperAdminCampagneScoreDto> Campagnes { get; set; } = new();
+
+        [JsonPropertyName("talentsDetectes")]
+        public List<SuperAdminTalentDetecteDto> TalentsDetectes { get; set; } = new();
+    }
+
+    public class SuperAdminCampagneScoreDto
+    {
+        [JsonPropertyName("nom")]
+        public string Nom { get; set; } = string.Empty;
+
+        [JsonPropertyName("scoreMoyen")]
+        public double ScoreMoyen { get; set; }
+
+        [JsonPropertyName("nbEvaluations")]
+        public int NbEvaluations { get; set; }
+    }
+
+    public class SuperAdminTalentDetecteDto
+    {
+        [JsonPropertyName("nomComplet")]
+        public string NomComplet { get; set; } = string.Empty;
+
+        [JsonPropertyName("score")]
+        public double Score { get; set; }
+
+        [JsonPropertyName("campagne")]
+        public string Campagne { get; set; } = string.Empty;
+    }
+
+    public class MonthlyEvalStatsDto
+    {
+        [JsonPropertyName("label")]
+        public string Label { get; set; } = string.Empty;
+
+        [JsonPropertyName("sessions")]
+        public int Sessions { get; set; }
+
+        [JsonPropertyName("users")]
+        public int Users { get; set; }
+
+        [JsonPropertyName("score")]
+        public double Score { get; set; }
     }
 }

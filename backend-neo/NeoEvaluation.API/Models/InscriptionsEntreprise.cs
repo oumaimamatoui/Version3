@@ -26,6 +26,8 @@ public class InscriptionsEntreprise
     public string? Description { get; set; }
 
     public string? Plan { get; set; }
+    public string? StripeSessionId { get; set; }
+    public int PaymentStatus { get; set; } = 0;
 
     public int Statut { get; set; } = 0;
     public DateTime CreeLe { get; set; } = DateTime.UtcNow;

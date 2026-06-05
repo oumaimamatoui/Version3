@@ -1402,7 +1402,6 @@ const editOrgData = reactive({
   pays: '',
   adresse: '',
   matriculeFiscale: '',
-  couleurSignature: '',
   description: '',
   estActif: true
 });
@@ -1425,7 +1424,6 @@ const editOrg = (org) => {
     pays: org.pays || '',
     adresse: org.adresse || '',
     matriculeFiscale: org.matriculeFiscale || '',
-    couleurSignature: org.couleurSignature || org._color || '#6366f1',
     description: org.description || '',
     estActif: org.estActif !== false
   });
@@ -1446,7 +1444,6 @@ const handleUpdateOrg = async () => {
       ville: editOrgData.ville,
       pays: editOrgData.pays,
       matriculeFiscale: editOrgData.matriculeFiscale,
-      couleurSignature: editOrgData.couleurSignature,
       description: editOrgData.description,
       estActif: editOrgData.estActif
     };

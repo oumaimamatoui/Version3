@@ -83,6 +83,17 @@ namespace NeoEvaluation.API.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
+
+        [HttpDelete("sub/{subId}")]
+        public async Task<IActionResult> DeleteSubCategory(Guid subId)
+        {
+            var sub = await _context.SousCategories.FindAsync(subId);
+            if (sub == null) return NotFound();
+
+            _context.SousCategories.Remove(sub);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
     }
 
     public class CategoryRequest { public string Nom { get; set; } = string.Empty; }

@@ -112,12 +112,11 @@ namespace NeoEvaluation.API.Controllers
                 var user = await _context.Utilisateurs.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
                 
                 if (user == null || user.EntrepriseId == null)
-                    return Ok(new BrandingDto { CompanyName = "NeoEvaluation", Color = "#6366f1" });
+                    return Ok(new BrandingDto { CompanyName = "NeoEvaluation" });
 
                 var entreprise = await _context.Entreprises.FindAsync(user.EntrepriseId);
                 return Ok(new BrandingDto {
                     CompanyName = entreprise?.Nom ?? "NeoEvaluation",
-                    Color = entreprise?.CouleurSignature ?? "#6366f1",
                     LogoUrl = entreprise?.LogoUrl,
                     Domaine = entreprise?.Domaine,
                     Secteur = entreprise?.Secteur,
@@ -132,7 +131,7 @@ namespace NeoEvaluation.API.Controllers
                     ConnectedEmail = entreprise?.GmailEmail
                 });
             } catch {
-                return Ok(new BrandingDto { CompanyName = "NeoEvaluation", Color = "#6366f1" });
+                return Ok(new BrandingDto { CompanyName = "NeoEvaluation" });
             }
         }
 
@@ -149,7 +148,6 @@ namespace NeoEvaluation.API.Controllers
             if (entreprise == null) return NotFound();
 
             entreprise.Nom = dto.CompanyName;
-            entreprise.CouleurSignature = dto.Color;
             entreprise.Domaine = dto.Domaine;
             entreprise.Secteur = dto.Secteur;
             entreprise.SiteWeb = dto.SiteWeb;

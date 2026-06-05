@@ -339,6 +339,7 @@ namespace NeoEvaluation.API.Controllers
         //      deux questions créées — une FR et une EN
         // ══════════════════════════════════════════════════════════════
         [HttpPost("seed-demo")]
+        [Authorize(Roles = "SuperAdmin")]
         public async Task<IActionResult> SeedDemo()
         {
             try

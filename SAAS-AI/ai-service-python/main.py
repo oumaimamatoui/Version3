@@ -77,7 +77,7 @@ def verify_api_key(x_api_key: str = Header(None)):
     if x_api_key != INTERNAL_API_KEY:
         raise HTTPException(status_code=401, detail="Invalid or missing X-API-KEY")
 
-WORKING_MODEL = "gemini-1.5-flash"
+WORKING_MODEL = "gemini-3.5-flash"
 _START_TIME = time.time()
 _gemini_client = None
 
@@ -323,6 +323,7 @@ async def lifespan(app: FastAPI):
             selected_model = None
             # Check candidates, testing their actual working availability (quota)
             candidates = [
+                "models/gemini-3.5-flash",
                 "models/gemini-2.5-flash", 
                 "models/gemini-2.0-flash", 
                 "models/gemini-flash-latest", 
@@ -2959,9 +2960,18 @@ async def get_ia_performance_report():
     total  = sum(AI_METRICS["usage_counts"].values()) or 1
     colors = {"Évaluations":"#6366f1","Analyses CV":"#f97316","Entretiens IA":"#10b981","Rapports":"#8b5cf6","Chat":"#3b82f6","Dashboard":"#0ea5e9","Recommandations":"#f59e0b","Lettres":"#ec4899","Vocal":"#14b8a6"}
     usage_data = [{"name":k,"pct":int(v/total*100),"color":colors.get(k,"#888")} for k,v in AI_METRICS["usage_counts"].items() if v>0]
+    
+    t_val = AI_METRICS["total_tokens"]
+    if t_val >= 1_000_000:
+        tokens_str = f"{t_val/1_000_000:.2f}M"
+    elif t_val >= 1_000:
+        tokens_str = f"{t_val/1_000:.1f}k"
+    else:
+        tokens_str = f"{t_val}"
+
     return {
         "performance":{
-            "charge":charge or 5,"tokens":f"{AI_METRICS['total_tokens']/1_000_000:.2f}M",
+            "charge":charge or 5,"tokens":tokens_str,
             "responseTime":f"{int(avg_l)}ms","requestsPerSecond":AI_METRICS["active_requests"],
             "circuit_state":_circuit.state,"error_count":AI_METRICS["error_count"],
             "dashboard_requests":AI_METRICS["dashboard_requests"],

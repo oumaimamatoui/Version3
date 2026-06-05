@@ -153,20 +153,40 @@ namespace NeoEvaluation.API.Controllers
 
         private async Task HandleSubscriptionSuccess(Session session)
         {
-            if (session?.Metadata == null || !session.Metadata.ContainsKey("EntrepriseId")) return;
+            if (session?.Metadata == null) return;
 
-            var enterpriseIdStr = session.Metadata["EntrepriseId"];
             var planName = session.Metadata.ContainsKey("PlanName") ? session.Metadata["PlanName"] : "Business IA";
 
-            if (Guid.TryParse(enterpriseIdStr, out Guid enterpriseId))
+            // Cas 1 : Inscription d'une nouvelle entreprise
+            if (session.Metadata.ContainsKey("RegistrationId"))
             {
-                var enterprise = await _context.Entreprises.FindAsync(enterpriseId);
-                if (enterprise != null)
+                var registrationIdStr = session.Metadata["RegistrationId"];
+                if (Guid.TryParse(registrationIdStr, out Guid registrationId))
                 {
-                    enterprise.Plan = planName;
-                    enterprise.AbonnementDebut ??= DateTime.UtcNow;
-                    enterprise.AbonnementFin = (enterprise.AbonnementFin ?? DateTime.UtcNow).AddDays(30);
-                    await _context.SaveChangesAsync();
+                    var inscription = await _context.InscriptionsEntreprises.FindAsync(registrationId);
+                    if (inscription != null)
+                    {
+                        inscription.PaymentStatus = 1; // Payé
+                        await _context.SaveChangesAsync();
+                    }
+                }
+                return;
+            }
+
+            // Cas 2 : Upgrade d'une entreprise existante
+            if (session.Metadata.ContainsKey("EntrepriseId"))
+            {
+                var enterpriseIdStr = session.Metadata["EntrepriseId"];
+                if (Guid.TryParse(enterpriseIdStr, out Guid enterpriseId))
+                {
+                    var enterprise = await _context.Entreprises.FindAsync(enterpriseId);
+                    if (enterprise != null)
+                    {
+                        enterprise.Plan = planName;
+                        enterprise.AbonnementDebut ??= DateTime.UtcNow;
+                        enterprise.AbonnementFin = (enterprise.AbonnementFin ?? DateTime.UtcNow).AddDays(30);
+                        await _context.SaveChangesAsync();
+                    }
                 }
             }
         }

@@ -52,7 +52,7 @@ namespace NeoEvaluation.API.Controllers
                     TotalUtilisateurs = await _context.Utilisateurs
                         .IgnoreQueryFilters()
                         .CountAsync(u => u.RoleNom != "SuperAdmin"),
-                    DemandesEnAttente = await _context.InscriptionsEntreprises.CountAsync(i => i.Statut == 0),
+                    DemandesEnAttente = await _context.InscriptionsEntreprises.CountAsync(i => i.Statut == 0 && i.PaymentStatus == 1),
                     TotalTests = await _context.Evaluations.IgnoreQueryFilters().CountAsync()
                 };
 
@@ -98,7 +98,7 @@ namespace NeoEvaluation.API.Controllers
                         Price = e.Plan.ToLower() == "startup" ? 79.0 : 
                                 (e.Plan.ToLower() == "business" || e.Plan.ToLower() == "business ia" ? 199.0 : 
                                 (e.Plan.ToLower() == "enterprise" || e.Plan.ToLower() == "entreprise" || e.Plan.ToLower() == "enterprise ia" ? 499.0 : 0.0)),
-                        Color = e.CouleurSignature ?? "#6366f1"
+                        Color = "#6366f1"
                     })
                     .ToListAsync();
 
@@ -303,12 +303,11 @@ namespace NeoEvaluation.API.Controllers
             return Ok();
         }
 
-        // --- ORGANIZATION MANAGEMENT (REUSING InscriptionsEntreprises) ---
         [HttpGet("pending")]
         public async Task<ActionResult> GetPending()
         {
             var list = await _context.InscriptionsEntreprises
-                .Where(i => i.Statut == 0)
+                .Where(i => i.Statut == 0 && i.PaymentStatus == 1)
                 .OrderByDescending(i => i.CreeLe)
                 .ToListAsync();
             return Ok(list);
@@ -486,7 +485,7 @@ namespace NeoEvaluation.API.Controllers
                         e.Plan,
                         EstActif = e.AbonnementFin == null || e.AbonnementFin > DateTime.UtcNow,
                         e.CreeLe,
-                        e.CouleurSignature,
+                        CouleurSignature = "#6366f1",
                         e.Secteur,
                         e.Ville,
                         e.Pays,
@@ -763,7 +762,6 @@ namespace NeoEvaluation.API.Controllers
                 ent.Ville = dto.Ville;
                 ent.Pays = dto.Pays;
                 ent.MatriculeFiscale = dto.MatriculeFiscale;
-                ent.CouleurSignature = dto.CouleurSignature ?? "#6366f1";
                 ent.Description = dto.Description;
 
                 if (dto.EstActif)
@@ -1244,6 +1242,104 @@ namespace NeoEvaluation.API.Controllers
             }).ToList();
 
             return Ok(weekData);
+        }
+
+        [HttpGet("campaign-performance")]
+        public async Task<IActionResult> GetCampaignPerformance([FromQuery] string period = "7j")
+        {
+            var since = period switch
+            {
+                "24h" => DateTime.UtcNow.AddHours(-24),
+                "7j"  => DateTime.UtcNow.AddDays(-7),
+                "30j" => DateTime.UtcNow.AddDays(-30),
+                _     => DateTime.UtcNow.AddDays(-7)
+            };
+
+            var campagnes = await _context.Campagnes
+                .IgnoreQueryFilters()
+                .Where(c => c.Candidatures
+                    .Any(ca => ca.Evaluation != null
+                        && ca.Evaluation.DateFin >= since
+                        && ca.Evaluation.Statut == StatutPassage.TERMINE))
+                .Select(c => new SuperAdminCampagneScoreDto
+                {
+                    Nom = c.Nom,
+                    ScoreMoyen = c.Candidatures
+                        .Where(ca => ca.Evaluation != null
+                            && ca.Evaluation.DateFin >= since
+                            && ca.Evaluation.Statut == StatutPassage.TERMINE)
+                        .Average(ca => (double?)ca.Evaluation!.ScorePourcentage) ?? 0,
+                    NbEvaluations = c.Candidatures
+                        .Count(ca => ca.Evaluation != null
+                            && ca.Evaluation.DateFin >= since
+                            && ca.Evaluation.Statut == StatutPassage.TERMINE)
+                })
+                .OrderByDescending(c => c.ScoreMoyen)
+                .ToListAsync();
+
+            var talents = await _context.Evaluations
+                .IgnoreQueryFilters()
+                .Where(e => e.DateFin >= since
+                    && e.Statut == StatutPassage.TERMINE
+                    && e.ScorePourcentage >= 80
+                    && e.Candidat != null)
+                .Include(e => e.Candidat)
+                .Include(e => e.Candidature)
+                    .ThenInclude(ca => ca.Campagne)
+                .Select(e => new SuperAdminTalentDetecteDto
+                {
+                    NomComplet = e.Candidat!.Prenom + " " + e.Candidat.Nom,
+                    Score = e.ScorePourcentage,
+                    Campagne = e.Candidature!.Campagne.Nom
+                })
+                .OrderByDescending(t => t.Score)
+                .Take(10)
+                .ToListAsync();
+
+            return Ok(new SuperAdminCampagnesPerformanceDto
+            {
+                Campagnes = campagnes,
+                TalentsDetectes = talents
+            });
+        }
+
+        [HttpGet("monthly-eval-stats")]
+        public async Task<IActionResult> GetMonthlyEvalStats()
+        {
+            var twelveMonthsAgo = DateTime.UtcNow.AddMonths(-11);
+            var startDate = new DateTime(twelveMonthsAgo.Year, twelveMonthsAgo.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+
+            var monthlyData = await _context.Evaluations
+                .IgnoreQueryFilters()
+                .Where(e => e.DateFin >= startDate && e.Statut == StatutPassage.TERMINE)
+                .GroupBy(e => new { e.DateFin!.Value.Year, e.DateFin!.Value.Month })
+                .Select(g => new
+                {
+                    Year = g.Key.Year,
+                    Month = g.Key.Month,
+                    Sessions = g.Count(),
+                    Users = g.Select(e => e.CandidatId).Distinct().Count(),
+                    AvgScore = g.Average(e => (double?)e.ScorePourcentage) ?? 0
+                })
+                .OrderBy(x => x.Year).ThenBy(x => x.Month)
+                .ToListAsync();
+
+            var culture = new CultureInfo("fr-FR");
+            var result = new List<MonthlyEvalStatsDto>();
+            for (int i = 11; i >= 0; i--)
+            {
+                var target = DateTime.UtcNow.AddMonths(-i);
+                var match = monthlyData.FirstOrDefault(d => d.Year == target.Year && d.Month == target.Month);
+                result.Add(new MonthlyEvalStatsDto
+                {
+                    Label = target.ToString("MMM", culture),
+                    Sessions = match?.Sessions ?? 0,
+                    Users = match?.Users ?? 0,
+                    Score = match != null ? Math.Round(match.AvgScore, 1) : 0
+                });
+            }
+
+            return Ok(result);
         }
     }
 }

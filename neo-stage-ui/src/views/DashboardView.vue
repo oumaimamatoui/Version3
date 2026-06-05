@@ -465,7 +465,7 @@
                     <i class="fa-solid fa-users-gear text-amber me-2"></i>
                     {{ $t('dashboard.sections.evalQueue') }}
                   </h5>
-                  <button class="btn-see-all" @click="router.push('/evaluations')">
+                  <button class="btn-see-all" @click="router.push('/analyse-comportementale')">
                     {{ $t('dashboard.buttons.seeAll') }} <i class="fa-solid fa-arrow-right ms-1"></i>
                   </button>
                 </div>
@@ -1759,7 +1759,7 @@ const RECO_BY_ROLE = {
       title: '8 candidats sans analyse depuis 48h',
       description: 'Traitez-les avant expiration des liens.',
       actionLabel: 'Voir le pipeline',
-      route: '/evaluations',
+      route: '/analyse-comportementale',
       scrollTo: null,
     },
     {
@@ -1795,7 +1795,7 @@ const RECO_BY_ROLE = {
       title: '8 candidats sans analyse depuis 48h',
       description: 'Traitez-les avant expiration des liens.',
       actionLabel: 'Voir le pipeline',
-      route: '/evaluations',
+      route: '/analyse-comportementale',
       scrollTo: null,
     },
     {
@@ -1831,7 +1831,7 @@ const RECO_BY_ROLE = {
       title: '8 candidats sans analyse depuis 48h',
       description: 'Traitez-les avant expiration des liens.',
       actionLabel: 'Voir le pipeline',
-      route: '/evaluations',
+      route: '/analyse-comportementale',
       scrollTo: null,
     },
     {
