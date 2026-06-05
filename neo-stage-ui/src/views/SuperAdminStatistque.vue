@@ -23,15 +23,17 @@
           <header class="d-flex justify-content-between align-items-end mb-5 flex-wrap gap-3">
             <div>
               <div class="breadcrumb-pro mb-2">
-                <span class="root">{{ t('statistiquesView.breadcrumb') }}</span>
+                <span class="root">Super Admin</span>
                 <i class="fa-solid fa-chevron-right mx-2 separator"></i>
-                <span class="current">{{ t('statistiquesView.breadcrumbCurrent') }}</span>
+                <span class="current">Statistiques</span>
               </div>
               <h2 class="premium-title">
-                {{ t('statistiquesView.titlePrefix') }}
-                <span class="gradient-text">{{ t('statistiquesView.titleHighlight') }}</span>
+                Performance des Flux d'Évaluation
               </h2>
-              <div class="d-flex gap-3 mt-2 flex-wrap">
+              <p class="text-muted small fw-700 mt-1 mb-0" style="font-size:0.78rem;">
+                Scores moyens par campagne
+              </p>
+              <div class="d-flex gap-3 mt-3 flex-wrap">
                 <div class="status-pill live">
                   <span class="pill-dot"></span>
                   <span>{{ t('statistiquesView.liveDatastream') }}</span>
@@ -48,7 +50,6 @@
             </div>
 
             <div class="d-flex gap-3 align-items-center flex-wrap">
-              <!-- AI COMPANION -->
               <div class="ai-companion-box">
                 <div class="ai-robot-terminal">
                   <svg viewBox="0 0 60 60" fill="none" width="38">
@@ -127,7 +128,7 @@
           ═══════════════════════════════════════════ -->
           <div v-if="viewMode === 'overview'" class="animate__animated animate__fadeIn">
 
-            <!-- CHART + RESOURCES -->
+            <!-- CHART + TALENTS -->
             <div class="row g-4 mb-4">
               <div class="col-lg-8">
                 <div class="enigma-card p-4 h-100">
@@ -152,20 +153,20 @@
                   <div class="chart-stage">
                     <div class="stage-grid-bg"></div>
                     <div v-if="loading" class="chart-loader"><div class="spinner-pro-premium"></div></div>
-                    <div v-else-if="apiChartData.length === 0" class="chart-empty text-center text-muted py-5">
+                    <div v-else-if="campagnes.length === 0" class="chart-empty text-center text-muted py-5">
                       <i class="fa-solid fa-chart-bar fa-2x mb-2"></i>
                       <p class="small fw-700">{{ t('statistiquesView.overview.noData') }}</p>
                     </div>
                     <div v-else class="glow-pillars-container">
-                      <div v-for="(item, i) in apiChartData" :key="i" class="pillar-group">
-                        <div class="pillar-value">{{ item.score }}%</div>
+                      <div v-for="(item, i) in campagnes" :key="i" class="pillar-group">
+                        <div class="pillar-value">{{ Math.round(item.scoreMoyen) }}%</div>
                         <div class="pillar-vessel">
                           <div class="pillar-fill"
-                            :style="{ height: item.score + '%', background: getPillarColor(item.score) }">
+                            :style="{ height: item.scoreMoyen + '%', background: getPillarColor(item.scoreMoyen) }">
                             <div class="pillar-light-beam"></div>
                           </div>
                         </div>
-                        <span class="pillar-label" :title="item.name">{{ item.name }}</span>
+                        <span class="pillar-label" :title="item.nom">{{ item.nom }}</span>
                       </div>
                     </div>
                   </div>
@@ -173,7 +174,7 @@
               </div>
 
               <div class="col-lg-4">
-                <div class="enigma-card p-4 h-100">
+                <div class="enigma-card p-4 mb-4">
                   <h6 class="fw-800 mb-4">{{ t('statistiquesView.overview.infra') }}</h6>
                   <div class="resource-gauges">
                     <div class="gauge-item-pro mb-4" v-for="res in resources" :key="res.nameKey">
@@ -187,30 +188,32 @@
                       </div>
                     </div>
                   </div>
+                </div>
 
-                  <div class="talent-stream mt-4">
-                    <h6 class="fw-800 mb-3" style="font-size:0.7rem;letter-spacing:1px;color:#94a3b8;">
-                      {{ t('statistiquesView.overview.topTalents') }}
-                    </h6>
-                    <div v-if="loading">
-                      <div v-for="i in 3" :key="i" class="skeleton-talent mb-2"></div>
+                <div class="enigma-card p-4">
+                  <h6 class="fw-800 mb-3">
+                    <i class="fa-solid fa-trophy me-2 text-amber"></i>
+                    {{ t('statistiquesView.overview.topTalents') }}
+                  </h6>
+                  <div v-if="loading">
+                    <div v-for="i in 3" :key="i" class="skeleton-talent mb-2"></div>
+                  </div>
+                  <div v-else-if="talentsDetectes.length === 0"
+                    class="text-center text-muted py-5 small">
+                    <i class="fa-solid fa-user-slash fa-2x mb-3 opacity-50 d-block"></i>
+                    {{ t('statistiquesView.overview.noTalents') }}
+                  </div>
+                  <div v-else class="talent-row-pro"
+                    v-for="(talent, idx) in talentsDetectes.slice(0, 5)" :key="idx">
+                    <div class="talent-rank"
+                      :class="idx === 0 ? 'rank-gold' : idx === 1 ? 'rank-silver' : 'rank-bronze'">
+                      {{ idx + 1 }}
                     </div>
-                    <div v-else-if="leaders.length === 0"
-                      class="text-center text-muted py-3 small">
-                      {{ t('statistiquesView.overview.noTalents') }}
+                    <div class="talent-details">
+                      <span class="t-name">{{ talent.nomComplet }}</span>
+                      <span class="t-meta">{{ talent.campagne }}</span>
                     </div>
-                    <div v-else class="talent-row-pro"
-                      v-for="(leader, idx) in leaders.slice(0, 5)" :key="idx">
-                      <div class="talent-rank"
-                        :class="idx === 0 ? 'rank-gold' : idx === 1 ? 'rank-silver' : 'rank-bronze'">
-                        {{ idx + 1 }}
-                      </div>
-                      <div class="talent-details">
-                        <span class="t-name">{{ leader.name }}</span>
-                        <span class="t-meta">{{ t('statistiquesView.overview.talentVerif') }}</span>
-                      </div>
-                      <div class="t-score-badge">{{ leader.score }}</div>
-                    </div>
+                    <div class="t-score-badge">{{ Math.round(talent.score) }}%</div>
                   </div>
                 </div>
               </div>
@@ -433,8 +436,6 @@
                 </div>
               </div>
 
-
-
               <!-- AUDIT TABLE -->
               <div class="col-12">
                 <div class="enigma-card p-4">
@@ -512,59 +513,49 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import api from '@/services/api';
 import AppSidebar from '../components/AppSidebar.vue';
 import AppNavbar from '../components/AppNavbar.vue';
 
-// ─── i18n ──────────────────────────────────────────────────────────────────
 const { t } = useI18n();
 
-/* ─── STATE ─────────────────────────────────────────────────────── */
-const loading      = ref(true);
-const refreshing   = ref(false);
-const viewMode     = ref('overview');
-const timeRange    = ref('7j');
-const lastSyncTime = ref('');
-const systemStatus  = ref('');
-const responseTime  = ref(12);
-const systemUptime  = ref('99.8');
-const auditSearch   = ref('');
+const loading       = ref(true);
+const refreshing    = ref(false);
+const viewMode      = ref('overview');
+const timeRange     = ref('7j');
+const lastSyncTime  = ref('');
+const systemStatus   = ref('');
+const responseTime   = ref(12);
+const systemUptime   = ref('99.8');
+const auditSearch    = ref('');
 
-const statsData    = ref({});
-const apiChartData = ref([]);
-const leaders      = ref([]);
-const auditLogs    = ref([]);
-const mousePos     = reactive({ x: 0, y: 0 });
-const globalToast  = reactive({ active: false, message: '', type: '', icon: '' });
-const lastAudit    = ref(null);
+const statsData      = ref({});
+const leaders        = ref([]);
+const auditLogs      = ref([]);
+const mousePos       = reactive({ x: 0, y: 0 });
+const globalToast    = reactive({ active: false, message: '', type: '', icon: '' });
+const lastAudit      = ref(null);
 
-/* ─── KPI ────────────────────────────────────────────────────────── */
+const campagnes      = ref([]);
+const talentsDetectes = ref([]);
+
+const weekActivityData = ref([]);
+
+const analyticsChartData = ref([]);
+
 const masterKpis = ref([
-  {
-    labelKey: 'statistiquesView.kpis.orgsActives',
-    value: '—', icon: 'fa-solid fa-building-shield',
-    color: '#f59e0b', bg: '#fffbeb', trend: 12,
-  },
-  {
-    labelKey: 'statistiquesView.kpis.talentsAi',
-    value: '—', icon: 'fa-solid fa-microchip',
-    color: '#6366f1', bg: '#eef2ff', trend: 8,
-  },
-  {
-    labelKey: 'statistiquesView.kpis.sessionsFlow',
-    value: '—', icon: 'fa-solid fa-wave-square',
-    color: '#10b981', bg: '#ecfdf5', trend: -2,
-  },
-  {
-    labelKey: 'statistiquesView.kpis.securite',
-    value: 'MAX', icon: 'fa-solid fa-shield-halved',
-    color: '#f43f5e', bg: '#fff1f2', trend: 5,
-  },
+  { labelKey: 'statistiquesView.kpis.orgsActives', value: '—', icon: 'fa-solid fa-building-shield',
+    color: '#f59e0b', bg: '#fffbeb', trend: 12 },
+  { labelKey: 'statistiquesView.kpis.talentsAi',   value: '—', icon: 'fa-solid fa-microchip',
+    color: '#6366f1', bg: '#eef2ff', trend: 8 },
+  { labelKey: 'statistiquesView.kpis.sessionsFlow', value: '—', icon: 'fa-solid fa-wave-square',
+    color: '#10b981', bg: '#ecfdf5', trend: -2 },
+  { labelKey: 'statistiquesView.kpis.securite',     value: 'MAX', icon: 'fa-solid fa-shield-halved',
+    color: '#f43f5e', bg: '#fff1f2', trend: 5 },
 ]);
 
-/* ─── RESSOURCES ─────────────────────────────────────────────────── */
 const resources = ref([
   { nameKey: 'statistiquesView.system.resources.cpu',     usage: 0 },
   { nameKey: 'statistiquesView.system.resources.ram',     usage: 0 },
@@ -579,47 +570,17 @@ const extendedResources = ref([
   { nameKey: 'statistiquesView.system.resources.uptime',  usage: 0,  icon: 'fa-solid fa-server' },
 ]);
 
-/* ─── CHART DATA ─────────────────────────────────────────────────── */
-const weekActivityData = ref([]);
-
-const analyticsChartData = ref(
-  ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'].map(l => ({
-    label:    l,
-    sessions: Math.floor(Math.random() * 90 + 10),
-    users:    Math.floor(Math.random() * 70 + 10),
-    score:    Math.floor(Math.random() * 80 + 20),
-  }))
-);
-
-/* ─── DETAILED METRICS ───────────────────────────────────────────── */
 const detailedMetrics = computed(() => [
-  {
-    labelKey: 'statistiquesView.analytics.metrics.tauxReussite',
-    value: statsData.value.tauxReussite    || '—',
-    pct:   statsData.value.tauxReussite    || 74,
-    icon: 'fa-solid fa-chart-line', color: '#10b981', bg: '#ecfdf5',
-  },
-  {
-    labelKey: 'statistiquesView.analytics.metrics.candidatsActifs',
-    value: statsData.value.candidatsActifs || '—',
-    pct:   Math.min((statsData.value.candidatsActifs / 500) * 100, 100) || 60,
-    icon: 'fa-solid fa-user-tie', color: '#6366f1', bg: '#eef2ff',
-  },
-  {
-    labelKey: 'statistiquesView.analytics.metrics.totalQuestions',
-    value: statsData.value.totalQuestions  || '—',
-    pct:   Math.min((statsData.value.totalQuestions / 1000) * 100, 100) || 45,
-    icon: 'fa-solid fa-database', color: '#f59e0b', bg: '#fffbeb',
-  },
-  {
-    labelKey: 'statistiquesView.analytics.metrics.sessionsTermin',
-    value: statsData.value.sessionsTermin  || '—',
-    pct:   statsData.value.sessionsTermin  || 82,
-    icon: 'fa-solid fa-flag-checkered', color: '#f43f5e', bg: '#fff1f2',
-  },
+  { labelKey: 'statistiquesView.analytics.metrics.tauxReussite', value: statsData.value.tauxReussite || '—',
+    pct: statsData.value.tauxReussite || 74, icon: 'fa-solid fa-chart-line', color: '#10b981', bg: '#ecfdf5' },
+  { labelKey: 'statistiquesView.analytics.metrics.candidatsActifs', value: statsData.value.candidatsActifs || '—',
+    pct: Math.min((statsData.value.candidatsActifs / 500) * 100, 100) || 60, icon: 'fa-solid fa-user-tie', color: '#6366f1', bg: '#eef2ff' },
+  { labelKey: 'statistiquesView.analytics.metrics.totalQuestions', value: statsData.value.totalQuestions || '—',
+    pct: Math.min((statsData.value.totalQuestions / 1000) * 100, 100) || 45, icon: 'fa-solid fa-database', color: '#f59e0b', bg: '#fffbeb' },
+  { labelKey: 'statistiquesView.analytics.metrics.sessionsTermin', value: statsData.value.sessionsTermin || '—',
+    pct: statsData.value.sessionsTermin || 82, icon: 'fa-solid fa-flag-checkered', color: '#f43f5e', bg: '#fff1f2' },
 ]);
 
-/* ─── DONUT SEGMENTS ─────────────────────────────────────────────── */
 const orgDonutSegments = computed(() => {
   const total = statsData.value.totalEntreprises || 4;
   const circ  = 283;
@@ -637,7 +598,6 @@ const orgDonutSegments = computed(() => {
   });
 });
 
-/* ─── AUDIT LOGS FILTERED ────────────────────────────────────────── */
 const filteredAuditLogs = computed(() => {
   if (!auditSearch.value) return auditLogs.value;
   const q = auditSearch.value.toLowerCase();
@@ -648,31 +608,36 @@ const filteredAuditLogs = computed(() => {
   );
 });
 
-/* ─── DATA FETCHING ──────────────────────────────────────────────── */
 const fetchData = async () => {
   loading.value = true;
-  const start   = Date.now();
+  const start = Date.now();
   try {
-    const [statsRes, globalRes, auditRes, healthRes, activityRes] = await Promise.allSettled([
+    const [statsRes, perfRes, auditRes, healthRes, activityRes, monthlyRes] = await Promise.allSettled([
       api.get('/SuperAdmin/stats'),
-      api.get('/Dashboard/global-stats'),
+      api.get('/SuperAdmin/campaign-performance', { params: { period: timeRange.value } }),
       api.get('/SuperAdmin/audit-logs'),
       api.get('/SuperAdmin/system-health'),
       api.get('/SuperAdmin/recent-activity'),
+      api.get('/SuperAdmin/monthly-eval-stats'),
     ]);
 
     if (statsRes.status === 'fulfilled') {
       statsData.value = statsRes.value.data;
-      masterKpis.value[0].value = statsRes.value.data.activeCount  || '0';
+      masterKpis.value[0].value = statsRes.value.data.activeCount || '0';
       masterKpis.value[1].value = statsRes.value.data.totalUtilisateurs || '0';
-      masterKpis.value[2].value = statsRes.value.data.totalTests        || '0';
+      masterKpis.value[2].value = statsRes.value.data.totalTests || '0';
     }
 
-    if (globalRes.status === 'fulfilled') {
-      apiChartData.value = globalRes.value.data.chart   || generateMockChart();
-      leaders.value      = globalRes.value.data.leaders || [];
+    if (perfRes.status === 'fulfilled') {
+      campagnes.value = perfRes.value.data.campagnes || [];
+      talentsDetectes.value = perfRes.value.data.talentsDetectes || [];
     } else {
-      apiChartData.value = generateMockChart();
+      campagnes.value = [];
+      talentsDetectes.value = [];
+    }
+
+    if (monthlyRes.status === 'fulfilled') {
+      analyticsChartData.value = monthlyRes.value.data || [];
     }
 
     if (auditRes.status === 'fulfilled') {
@@ -705,19 +670,14 @@ const fetchData = async () => {
     responseTime.value = Date.now() - start;
     systemStatus.value = t('statistiquesView.status.optimal');
 
-    if (statsRes.status === 'rejected' && globalRes.status === 'rejected') {
+    if (statsRes.status === 'rejected' && perfRes.status === 'rejected') {
       systemStatus.value = t('statistiquesView.status.degraded');
-      showPulseToast(
-        t('statistiquesView.toast.offlineMode'),
-        'warn',
-        'fa-solid fa-plug-circle-xmark'
-      );
-      generateAllMocks();
+      showPulseToast(t('statistiquesView.toast.offlineMode'), 'warn', 'fa-solid fa-plug-circle-xmark');
     }
   } catch (err) {
     console.error('Critical Sync Failure', err);
     systemStatus.value = t('statistiquesView.status.degraded');
-    generateAllMocks();
+    showPulseToast('Erreur de chargement des données', 'error', 'fa-solid fa-circle-exclamation');
   } finally {
     loading.value    = false;
     refreshing.value = false;
@@ -730,69 +690,13 @@ const fetchData = async () => {
 const refreshData = async () => {
   refreshing.value = true;
   await fetchData();
-  showPulseToast(
-    t('statistiquesView.toast.refreshed'),
-    'success',
-    'fa-solid fa-rotate'
-  );
+  showPulseToast(t('statistiquesView.toast.refreshed'), 'success', 'fa-solid fa-rotate');
 };
 
-/* ─── MOCKS ──────────────────────────────────────────────────────── */
-const generateMockChart = () => [
-  { name: 'Vue.js Pro',  score: 82 },
-  { name: 'React Audit', score: 67 },
-  { name: 'SQL Expert',  score: 91 },
-  { name: 'DevOps',      score: 55 },
-  { name: 'AI Logic',    score: 78 },
-  { name: 'Cyber',       score: 43 },
-];
+watch(timeRange, () => {
+  fetchData();
+});
 
-const generateAllMocks = () => {
-  masterKpis.value[0].value = '8';
-  masterKpis.value[1].value = '348';
-  masterKpis.value[2].value = '87';
-  statsData.value = {
-    totalEntreprises: 12, activeCount: 8, inactiveCount: 4, demandesEnAttente: 3, totalUtilisateurs: 348, totalTests: 87,
-    tauxReussite: 74, candidatsActifs: 210,
-  };
-  apiChartData.value = generateMockChart();
-  leaders.value = [
-    { name: 'Alice Dupont', score: 98 },
-    { name: 'Mehdi Karim',  score: 95 },
-    { name: 'Sara Ndiaye',  score: 92 },
-  ];
-  auditLogs.value = [
-    { id: 1, utilisateur: 'admin@evalua.io', action: 'LOGIN',  details: 'Connexion réussie',          timestamp: new Date().toISOString() },
-    { id: 2, utilisateur: 'hr@acme.com',     action: 'CREATE', details: 'Campagne "Frontend Senior"', timestamp: new Date().toISOString() },
-    { id: 3, utilisateur: 'cto@startup.io',  action: 'DEPLOY', details: 'Déploiement questionnaire',  timestamp: new Date().toISOString() },
-    { id: 4, utilisateur: 'admin@evalua.io', action: 'DELETE', details: 'Suppression candidat #12',   timestamp: new Date().toISOString() },
-    { id: 5, utilisateur: 'rh@corp.fr',      action: 'EXPORT', details: 'Export JSON campagne #5',    timestamp: new Date().toISOString() },
-  ];
-  lastAudit.value = auditLogs.value[auditLogs.value.length - 1];
-  resources.value = [
-    { nameKey: 'statistiquesView.system.resources.cpu',     usage: 38 },
-    { nameKey: 'statistiquesView.system.resources.ram',     usage: 62 },
-    { nameKey: 'statistiquesView.system.resources.disk',    usage: 45 },
-    { nameKey: 'statistiquesView.system.resources.uptime',  usage: 97 },
-  ];
-  extendedResources.value = [
-    { nameKey: 'statistiquesView.system.resources.cpu',     usage: 38,  icon: 'fa-solid fa-microchip' },
-    { nameKey: 'statistiquesView.system.resources.ram',     usage: 62,  icon: 'fa-solid fa-memory' },
-    { nameKey: 'statistiquesView.system.resources.disk',    usage: 45,  icon: 'fa-solid fa-hard-drive' },
-    { nameKey: 'statistiquesView.system.resources.uptime',  usage: 97,  icon: 'fa-solid fa-server' },
-  ];
-  weekActivityData.value = [
-    { label: 'Lun', sessions: 45, users: 22 },
-    { label: 'Mar', sessions: 62, users: 31 },
-    { label: 'Mer', sessions: 38, users: 18 },
-    { label: 'Jeu', sessions: 71, users: 35 },
-    { label: 'Ven', sessions: 53, users: 27 },
-    { label: 'Sam', sessions: 12, users: 8 },
-    { label: 'Dim', sessions: 8,  users: 4 },
-  ];
-};
-
-/* ─── HELPERS ────────────────────────────────────────────────────── */
 const getPillarColor     = (s) => s >= 80 ? '#10b981' : s >= 60 ? '#f59e0b' : '#f43f5e';
 const getGaugeColor      = (p) => p >= 90 ? '#f43f5e' : p >= 70 ? '#f59e0b' : '#10b981';
 const getAuditColor      = (a) => ({ LOGIN:'#10b981', CREATE:'#6366f1', DEPLOY:'#f59e0b', DELETE:'#f43f5e', EXPORT:'#06b6d4' }[a] || '#94a3b8');
@@ -834,8 +738,7 @@ onMounted(() => {
 .canvas-engine { height: calc(100vh - 64px); }
 
 /* HEADER */
-.premium-title { font-weight: 800; font-size: 2.2rem; letter-spacing: -1px; }
-.gradient-text { background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.premium-title { font-weight: 800; font-size: 2.2rem; letter-spacing: -1px; color: #0f172a; }
 .breadcrumb-pro { font-size: 0.72rem; font-weight: 700; color: #94a3b8; }
 .breadcrumb-pro .separator { font-size: 0.55rem; opacity: 0.5; }
 .breadcrumb-pro .current { color: #0f172a; font-weight: 800; }
@@ -878,7 +781,7 @@ onMounted(() => {
 .enigma-card { background: white; border-radius: 32px; border: 1px solid #eef2f6; }
 
 /* PILLAR CHART */
-.chart-stage { height: 280px; position: relative; overflow: hidden; display: flex; align-items: flex-end; padding: 30px 20px 20px; }
+.chart-stage { height: 300px; position: relative; overflow: hidden; display: flex; align-items: flex-end; padding: 30px 20px 20px; }
 .stage-grid-bg { position: absolute; inset: 0; background-image: linear-gradient(#eef2f6 1px,transparent 1px),linear-gradient(90deg,#eef2f6 1px,transparent 1px); background-size: 30px 30px; opacity: 0.5; }
 .chart-loader  { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
 .chart-empty   { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; z-index:2; }
@@ -965,17 +868,6 @@ onMounted(() => {
 .sys-stat-val   { font-size: 1.1rem; font-weight: 900; color: #0f172a; }
 .sys-stat-label { font-size: 0.55rem; font-weight: 900; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase; }
 
-.services-list { display: flex; flex-direction: column; gap: 10px; }
-.service-row   { display: flex; align-items: center; gap: 14px; padding: 12px 16px; background: #f8fafc; border-radius: 16px; border: 1px solid #eef2f6; transition: 0.2s; }
-.service-row:hover { border-color: #f59e0b; background: white; }
-.service-status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.dot-ok  { background: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.2); }
-.dot-err { background: #f43f5e; box-shadow: 0 0 0 3px rgba(244,63,94,0.2); }
-.service-info .fw-700 { color: #0f172a; }
-.service-badge { font-size: 0.6rem; font-weight: 900; padding: 3px 10px; border-radius: 8px; }
-.badge-ok  { background: #ecfdf5; color: #10b981; }
-.badge-err { background: #fff1f2; color: #f43f5e; }
-
 /* AUDIT BADGES */
 .audit-action-badge { font-size: 0.62rem; font-weight: 900; padding: 3px 10px; border-radius: 8px; text-transform: uppercase; }
 .audit-login  { background: #ecfdf5; color: #10b981; }
@@ -1010,7 +902,6 @@ onMounted(() => {
 .fw-800 { font-weight: 800 !important; }
 .fw-900 { font-weight: 900 !important; }
 .text-amber  { color: #f59e0b !important; }
-.text-indigo { color: #6366f1 !important; }
 .text-success{ color: #10b981 !important; }
 .opacity-50  { opacity: 0.5; }
 
@@ -1031,7 +922,6 @@ onMounted(() => {
    DARK MODE
 ════════════════════════════════════════════ */
 [data-theme="dark"] .enigma-master-root { background: #0d1117; color: #f0f6fc; }
-[data-theme="dark"] .canvas-engine { background: #0d1117; }
 [data-theme="dark"] .premium-title { color: #f0f6fc; }
 [data-theme="dark"] .breadcrumb-pro .current { color: #f0f6fc; }
 [data-theme="dark"] .stat-card-premium { background: rgba(22,27,34,0.7); border-color: rgba(255,255,255,0.05); }
@@ -1078,9 +968,6 @@ onMounted(() => {
 [data-theme="dark"] .health-icon-ring { background: rgba(255,255,255,0.05); }
 [data-theme="dark"] .sys-stat-box { background: #0d1117; border-color: rgba(255,255,255,0.08); }
 [data-theme="dark"] .sys-stat-val { color: #f0f6fc; }
-[data-theme="dark"] .service-row { background: #0d1117; border-color: rgba(255,255,255,0.06); }
-[data-theme="dark"] .service-row:hover { background: rgba(255,255,255,0.03); border-color: #d97706; }
-[data-theme="dark"] .service-info .fw-700 { color: #f0f6fc; }
 [data-theme="dark"] .list-header-row { background: rgba(255,255,255,0.03); }
 [data-theme="dark"] .list-col-label  { color: #8b949e; }
 [data-theme="dark"] .list-row-item   { background: #161b22; border-color: rgba(255,255,255,0.06); color: #f0f6fc; }
@@ -1094,7 +981,6 @@ onMounted(() => {
 [data-theme="dark"] .skeleton-val,
 [data-theme="dark"] .skeleton-talent { background: linear-gradient(90deg,#21262d 25%,#30363d 50%,#21262d 75%); background-size: 200% 100%; }
 
-/* ANIMATIONS */
 .animate__animated { animation-fill-mode: both; }
 .animate__fadeIn { animation: fadeIn 0.4s ease; }
 @keyframes fadeIn { from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none} }

@@ -17,9 +17,14 @@ namespace NeoEvaluation.API.Models
 
         public string ModeleRole { get; set; } = "Personnalise";
 
+        [NotMapped]
         public string? Prenom { get; set; }
+
+        [NotMapped]
         public string? NomFamille { get; set; }
+
         public string? Email { get; set; }
+        
         public string Description { get; set; } = string.Empty;
         
         public List<string> Permissions { get; set; } = new List<string>();

@@ -87,10 +87,10 @@
                 </div>
               </div>
 
-              <button type="submit" class="btn-sunburst" :disabled="isLoading">
+              <button type="submit" class="btn-sunburst" :class="{ 'btn-paid': isPaidPlan }" :disabled="isLoading">
                 <div class="btn-label" v-if="!isLoading">
-                  <span>DÉPLOYER L'ACCÈS</span>
-                  <i class="fa-solid fa-arrow-right"></i>
+                  <span>{{ isPaidPlan ? 'PAYER &amp; DÉPLOYER' : 'DÉPLOYER L\'ACCÈS' }}</span>
+                  <i class="fa-solid" :class="isPaidPlan ? 'fa-credit-card' : 'fa-arrow-right'"></i>
                 </div>
                 <div v-else class="btn-loader"><span></span><span></span><span></span></div>
                 <div class="shine-sweep"></div>
@@ -112,36 +112,42 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import axios from 'axios';
 import Swal from 'sweetalert2';
 import api from '@/services/api';
 
 const router = useRouter();
+const route = useRoute();
 const isLoading = ref(false);
 const requestSent = ref(false);
 const errorMessage = ref("");
-
-const route = useRoute();
 
 const form = reactive({
   nomEntreprise: '',
   nomResponsable: '',
   emailResponsable: '',
   matriculeFiscale: '',
-  plan: route.query.plan || ''
+  plan: ''
 });
 
+const isPaidPlan = computed(() => form.plan && form.plan !== 'Starter');
+
 onMounted(() => {
-  const pendingPlan = localStorage.getItem('pending_plan');
-  if (pendingPlan) {
-    const planData = JSON.parse(pendingPlan);
-    form.plan = planData.name;
-    console.log("Plan récupéré depuis localStorage :", form.plan);
-  } else if (route.query.plan) {
+  if (route.query.plan) {
+    // URL query param = source de vérité (ex: ?plan=Starter depuis Tarification)
     form.plan = route.query.plan;
-    console.log("Plan détecté via URL :", form.plan);
+    // Nettoyer un éventuel localStorage stale qui pourrait écraser
+    localStorage.removeItem('pending_plan');
+  } else {
+    // Fallback : localStorage (cas plan payant via TarificationView)
+    const pendingPlan = localStorage.getItem('pending_plan');
+    if (pendingPlan) {
+      try {
+        const planData = JSON.parse(pendingPlan);
+        form.plan = planData.name || '';
+      } catch {}
+    }
   }
 });
 
@@ -151,40 +157,30 @@ const handleRegister = async () => {
   errorMessage.value = "";
   isLoading.value = true;
   try {
-    // 1. Enregistrement de l'entreprise via notre service API
-    await api.post('/Registration', form);
-    
-    // 2. Vérifier si un paiement est requis (Plan payant)
-    const pendingPlan = localStorage.getItem('pending_plan');
-    if (pendingPlan && form.plan && form.plan !== 'Starter') {
-      const planData = JSON.parse(pendingPlan);
-      
+    // Un seul appel : le backend gère le plan (gratuit ou Stripe)
+    const response = await api.post('/Registration', form);
+    const data = response.data;
+
+    // Plan payant → le backend retourne une URL Stripe
+    if (data.stripeUrl) {
+      localStorage.removeItem('pending_plan');
       Swal.fire({
-        title: 'Inscription réussie !',
-        text: 'Redirection vers le paiement Stripe...',
+        title: 'Inscription enregistrée !',
+        text: 'Redirection vers le paiement sécurisé...',
         icon: 'success',
-        timer: 2000,
+        timer: 1800,
         showConfirmButton: false
       });
-
-      // Appel au backend pour Stripe
-      const response = await api.post('/payments/create-checkout-session', {
-        planName: planData.name,
-        price: planData.price,
-        email: form.emailResponsable // Optionnel: pour pré-remplir Stripe
-      });
-
-      if (response.data.url) {
-        localStorage.removeItem('pending_plan'); // Nettoyage
-        window.location.href = response.data.url;
-        return;
-      }
+      setTimeout(() => { window.location.href = data.stripeUrl; }, 1800);
+      return;
     }
 
-    // Si pas de plan payant ou erreur Stripe
+    // Plan gratuit → afficher le message de succès
+    localStorage.removeItem('pending_plan');
     requestSent.value = true;
   } catch (err) {
-    errorMessage.value = err.response?.data || "Une erreur technique est survenue.";
+    const msg = err.response?.data?.message || err.response?.data || "Une erreur technique est survenue.";
+    errorMessage.value = msg;
   } finally {
     isLoading.value = false;
   }
@@ -235,6 +231,19 @@ const handleRegister = async () => {
 .brand-tagline { color: #94a3b8; font-size: 11px; font-weight: 800; text-align: center; letter-spacing: 2px; margin-top: 5px; }
 .header-line { width: 45px; height: 5px; background: #fbbf24; border-radius: 5px; margin: 18px auto 32px; }
 
+/* PLAN BADGE */
+.plan-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: linear-gradient(135deg, #fef3c7, #fffbeb);
+  border: 1.5px solid #fde68a; border-radius: 50px;
+  padding: 8px 18px; font-size: 13px; font-weight: 600; color: #92400e;
+  margin: -8px auto 24px; width: fit-content;
+  animation: badgeIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.plan-badge i { color: #f59e0b; }
+.plan-badge strong { color: #78350f; }
+@keyframes badgeIn { from { opacity: 0; transform: scale(0.8) translateY(-8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
 /* INPUTS */
 .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .field-premium { margin-bottom: 20px; }
@@ -261,6 +270,12 @@ const handleRegister = async () => {
   box-shadow: 0 15px 35px rgba(251, 191, 36, 0.3); margin-top: 6px;
 }
 .btn-sunburst:hover { transform: translateY(-4px); box-shadow: 0 20px 45px rgba(251, 191, 36, 0.45); }
+.btn-paid {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+  color: white !important;
+  box-shadow: 0 15px 35px rgba(99, 102, 241, 0.35) !important;
+}
+.btn-paid:hover { box-shadow: 0 20px 45px rgba(99, 102, 241, 0.5) !important; }
 .shine-sweep {
   position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);

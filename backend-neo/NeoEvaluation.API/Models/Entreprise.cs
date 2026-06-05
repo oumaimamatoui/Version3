@@ -31,7 +31,6 @@ namespace NeoEvaluation.API.Models
 
         // Champs existants conservés (pas dans le diagramme mais utiles)
         public string? MatriculeFiscale { get; set; }
-        public string CouleurSignature { get; set; } = "#6366f1";
         public string? LogoUrl { get; set; }
  
         // --- CONFIGURATION GMAIL OAUTH (Optionnelle par entreprise) ---

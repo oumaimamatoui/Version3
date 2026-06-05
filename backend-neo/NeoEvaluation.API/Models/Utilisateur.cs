@@ -36,7 +36,6 @@ namespace NeoEvaluation.API.Models
         // Fields for Personnel/Candidat
         public string? IdEmploye { get; set; }
         public string? Departement { get; set; }
-        public string? Telephone { get; set; }
         public string? Adresse { get; set; }
         public bool? ProfilComplet { get; set; } = false;
 

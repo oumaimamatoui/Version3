@@ -24,7 +24,6 @@ namespace NeoEvaluation.API.Dtos
     public class BrandingDto
     {
         public string CompanyName { get; set; } = string.Empty;
-        public string Color { get; set; } = "#6366f1";
         public string? LogoUrl { get; set; }
 
         // Champs Profil Entreprise
@@ -48,7 +47,6 @@ namespace NeoEvaluation.API.Dtos
     public class BrandingUpdateDto
     {
         public string CompanyName { get; set; } = string.Empty;
-        public string Color { get; set; } = "#6366f1";
         
         public string? Domaine { get; set; }
         public string? Secteur { get; set; }

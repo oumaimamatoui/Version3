@@ -158,7 +158,7 @@
               </li>
             </ul>
 
-            <router-link to="/register" class="btn-plan btn-plan-outline">
+            <router-link to="/register?plan=Starter" class="btn-plan btn-plan-outline">
               Commencer gratuitement
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>
             </router-link>

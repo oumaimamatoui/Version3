@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NeoEvaluation.API.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NeoEvaluation.API.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260604205941_RemoveCouleurSignature")]
+    partial class RemoveCouleurSignature
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -388,9 +391,6 @@ namespace NeoEvaluation.API.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("PaymentStatus")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Pays")
                         .HasColumnType("text");
 
@@ -409,9 +409,6 @@ namespace NeoEvaluation.API.Data.Migrations
 
                     b.Property<int>("Statut")
                         .HasColumnType("integer");
-
-                    b.Property<string>("StripeSessionId")
-                        .HasColumnType("text");
 
                     b.Property<string>("Ville")
                         .HasColumnType("text");
@@ -677,8 +674,14 @@ namespace NeoEvaluation.API.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("NomFamille")
+                        .HasColumnType("text");
+
                     b.Property<string>("Permissions")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Prenom")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -824,6 +827,9 @@ namespace NeoEvaluation.API.Data.Migrations
 
                     b.Property<string>("RoleNom")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Telephone")
                         .HasColumnType("text");
 
                     b.Property<string>("ThemePreference")

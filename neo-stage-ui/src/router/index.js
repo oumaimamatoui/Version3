@@ -162,7 +162,8 @@ const routes = [
   {
     path: '/super-admin/statistiques',
     name: 'SuperAdminStatistque',
-    component: SuperAdminStatistque
+    component: SuperAdminStatistque,
+    meta: { requiresAuth: true, role: 'SuperAdmin' }
   },
 
   /**
