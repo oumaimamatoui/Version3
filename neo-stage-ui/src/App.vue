@@ -2,7 +2,7 @@
   <div id="app-container" :class="['app-root', isDark ? 'theme-dark' : 'theme-light']">
     <router-view v-slot="{ Component }">
       <transition name="page-fade" mode="out-in">
-        <component :is="Component" />
+        <component :is="Component" :key="route.path" />
       </transition>
     </router-view>
 

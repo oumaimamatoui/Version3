@@ -7,7 +7,8 @@
       <h1 class="display-5 fw-800 text-navy mb-3">Paiement Réussi !</h1>
       <p class="text-muted mb-4">
         Merci pour votre confiance. Votre abonnement <strong>Premium</strong> est maintenant actif.
-        Vous pouvez commencer à utiliser toutes les fonctionnalités IA.
+        Vous pouvez commencer à utiliser toutes les fonctionnalités IA.<br><br>
+        <span class="text-amber fw-bold"><i class="fa-solid fa-envelope me-2"></i> Veuillez vérifier votre boîte mail, vous allez recevoir un lien d'activation pour votre compte.</span>
       </p>
       <div class="action-buttons d-flex flex-column gap-3">
         <router-link :to="authStore.isAuthenticated ? '/dashboard' : '/login'" class="btn-amber-premium px-5">

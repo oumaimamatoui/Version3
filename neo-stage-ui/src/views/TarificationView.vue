@@ -285,7 +285,7 @@
               </li>
             </ul>
 
-            <button class="btn-plan btn-plan-navy">
+            <button class="btn-plan btn-plan-navy" @click="showContactModal = true">
               Contacter un expert
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>
             </button>
@@ -483,19 +483,100 @@
       </div>
     </footer>
 
+    <!-- CONTACT MODAL -->
+    <Teleport to="body">
+      <Transition name="modal-fade">
+        <div v-if="showContactModal" class="contact-modal-overlay" @click.self="showContactModal = false">
+          <div class="contact-modal-box">
+            <button class="modal-close" @click="showContactModal = false">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+
+            <div class="modal-header">
+              <div class="modal-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              </div>
+              <div>
+                <div class="modal-badge">Enterprise</div>
+                <h3 class="modal-title">Contactez notre équipe</h3>
+                <p class="modal-subtitle">Remplissez le formulaire, nous vous répondons sous 24h.</p>
+              </div>
+            </div>
+
+            <form @submit.prevent="submitContactForm" class="modal-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Votre nom *</label>
+                  <input v-model="contactForm.nom" type="text" placeholder="Ex: Nom Prenom " required />
+                </div>
+                <div class="form-group">
+                  <label>Votre email *</label>
+                  <input v-model="contactForm.email" type="email" placeholder="nom@entreprise.tn" required />
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Nom de l'entreprise / Projet *</label>
+                <input v-model="contactForm.entreprise" type="text" placeholder="Ex: TechMakers ou MonStartup" required />
+              </div>
+              <div class="form-group">
+                <label>Votre message</label>
+                <textarea v-model="contactForm.message" rows="4" placeholder="Décrivez vos besoins, votre volume d'utilisateurs, vos attentes..."></textarea>
+              </div>
+
+              <button type="submit" class="btn-submit-modal" :disabled="contactSending">
+                <span v-if="contactSent">✅ Message envoyé ! Nous vous recontactons bientôt.</span>
+                <span v-else-if="contactSending">Envoi en cours...</span>
+                <span v-else>
+                  Envoyer ma demande
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>
+                </span>
+              </button>
+            </form>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
   </div>
 </template>
 
 <script setup>
 import { ref, reactive } from 'vue';
 import api from '@/services/api';
-import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
 import Swal from 'sweetalert2';
+import { useAuthStore } from '@/stores/auth';
 
-const authStore = useAuthStore();
 const router = useRouter();
+const authStore = useAuthStore();
 const isRedirecting = ref(false);
+const showContactModal = ref(false);
+const contactSending = ref(false);
+const contactSent = ref(false);
+const contactForm = reactive({ nom: '', email: '', entreprise: '', message: '' });
+
+const submitContactForm = async () => {
+  contactSending.value = true;
+  try {
+    await api.post('/Contact', {
+      nom: contactForm.nom,
+      email: contactForm.email,
+      entreprise: contactForm.entreprise,
+      message: contactForm.message
+    });
+    contactSent.value = true;
+    setTimeout(() => {
+      showContactModal.value = false;
+      contactSent.value = false;
+      Object.assign(contactForm, { nom: '', email: '', entreprise: '', message: '' });
+    }, 3000);
+  } catch (err) {
+    console.error('[Contact] Erreur:', err);
+    Swal.fire('Erreur', 'Impossible d\'envoyer le message. Réessayez plus tard.', 'error');
+  } finally {
+    contactSending.value = false;
+  }
+};
 const openFaq = ref(null);
 
 const toggleFaq = (i) => {
@@ -584,18 +665,22 @@ const handleSubscription = async (planName, price) => {
         allowOutsideClick: false,
         didOpen: () => Swal.showLoading()
       });
+
       const response = await api.post('/Payments/create-checkout-session', {
         planName,
-        price
+        price,
+        successUrl: window.location.origin + '/dashboard/billing?success=true',
+        cancelUrl: window.location.origin + '/pricing?canceled=true'
       });
+
       if (response.data && response.data.url) {
         window.location.href = response.data.url;
       } else {
-        throw new Error('URL de redirection Stripe introuvable');
+        throw new Error('URL de paiement non reçue');
       }
-    } catch (err) {
-      console.error('Erreur Stripe :', err);
-      Swal.fire('Erreur', 'Impossible d\'initier le paiement. Veuillez réessayer.', 'error');
+    } catch (error) {
+      console.error('Erreur Stripe:', error);
+      Swal.fire('Erreur', 'Impossible de démarrer le paiement.', 'error');
     } finally {
       isRedirecting.value = false;
     }
@@ -1019,5 +1104,76 @@ const handleSubscription = async (planName, price) => {
   .pricing-hero { padding: 100px 0 40px; }
   .hero-title { font-size: 30px; }
   .billing-toggle { flex-wrap: wrap; justify-content: center; }
+}
+
+/* ===== CONTACT MODAL ===== */
+.contact-modal-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(15,23,42,0.55);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.contact-modal-box {
+  background: #fff;
+  border-radius: 28px;
+  padding: 40px 36px;
+  width: 100%; max-width: 560px;
+  position: relative;
+  box-shadow: 0 32px 80px rgba(15,23,42,0.18);
+  animation: modal-pop 0.3s cubic-bezier(0.175,0.885,0.32,1.275);
+}
+@keyframes modal-pop { from { opacity:0; transform:scale(0.92) translateY(20px); } to { opacity:1; transform:scale(1) translateY(0); } }
+.modal-close {
+  position: absolute; top: 18px; right: 18px;
+  background: #f1f5f9; border: none; border-radius: 10px;
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #64748b; transition: 0.2s;
+}
+.modal-close:hover { background: #e2e8f0; color: #0f172a; }
+.modal-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 28px; }
+.modal-icon {
+  width: 52px; height: 52px; border-radius: 16px;
+  background: #e0f2fe; color: #0369a1; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal-badge {
+  display: inline-block; background: #e0f2fe; color: #0369a1;
+  padding: 3px 12px; border-radius: 8px; font-size: 11px;
+  font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;
+}
+.modal-title { font-size: 22px; font-weight: 800; color: #0f172a; margin: 0 0 4px; }
+.modal-subtitle { font-size: 14px; color: #64748b; margin: 0; }
+.modal-form { display: flex; flex-direction: column; gap: 16px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group label { font-size: 13px; font-weight: 700; color: #374151; }
+.form-group input, .form-group textarea {
+  border: 1.5px solid #e2e8f0; border-radius: 12px;
+  padding: 12px 14px; font-size: 14px; color: #0f172a;
+  font-family: inherit; outline: none; transition: 0.2s;
+  resize: none;
+}
+.form-group input:focus, .form-group textarea:focus {
+  border-color: #0369a1; box-shadow: 0 0 0 3px rgba(3,105,161,0.1);
+}
+.btn-submit-modal {
+  background: #0f172a; color: #fff;
+  border: none; border-radius: 14px; padding: 15px 24px;
+  font-size: 15px; font-weight: 700; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: 0.2s; margin-top: 4px;
+}
+.btn-submit-modal:hover:not(:disabled) { background: #1e293b; transform: translateY(-2px); }
+.btn-submit-modal:disabled { opacity: 0.7; cursor: not-allowed; }
+
+/* Modal transition */
+.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.25s; }
+.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
+
+@media (max-width: 575px) {
+  .contact-modal-box { padding: 28px 20px; }
+  .form-row { grid-template-columns: 1fr; }
 }
 </style>
