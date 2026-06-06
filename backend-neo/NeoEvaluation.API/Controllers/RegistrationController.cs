@@ -34,7 +34,7 @@ namespace NeoEvaluation.API.Controllers
             // Vérifier si l'email existe déjà dans InscriptionsEntreprises
             if (await _context.InscriptionsEntreprises.AnyAsync(i => i.EmailResponsable.ToLower() == dto.EmailResponsable.ToLower()))
             {
-                return BadRequest(new { message = "Cet email est déjà utilisé pour une inscription en cours ou validée." });
+                return BadRequest(new { message = "Cet email est déjà utilisé pour une inscription en cours." });
             }
 
             // Vérifier si l'email existe déjà dans Utilisateurs
