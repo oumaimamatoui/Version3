@@ -60,8 +60,8 @@ export const superAdminApi = {
   toggleUserStatus: (id) => api.post(`/SuperAdmin/users/${id}/toggle-status`),
 
   // Gestion dynamique du Mailer System, Abonnements et Sécurité
-  getMailerDiagnostics: () => api.get('/SuperAdmin/mailer-diagnostics'),
-  retriggerMailer: () => api.post('/SuperAdmin/mailer-retrigger'),
+  getMailerDiagnostics: () => api.get('/Settings/mailer-diag'),
+  retriggerMailer: () => api.post('/Settings/mailer-resend'),
   getExpiringSubscriptions: () => api.get('/SuperAdmin/expiring-subscriptions'),
   notifyRenewal: (id) => api.post(`/SuperAdmin/notify-renewal/${id}`),
   getSecurityStatus: () => api.get('/SuperAdmin/security-status'),

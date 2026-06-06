@@ -586,11 +586,20 @@ const fetchInitialData = async () => {
       authStore.user.photoUrl = resUser.data.photoUrl;
       localStorage.setItem('user', JSON.stringify(authStore.user));
     }
-    if (role.value.toLowerCase() === 'adminentreprise') {
+
+    const currentRole = role.value.toLowerCase();
+    
+    // Fetch branding only for AdminEntreprise
+    if (currentRole === 'adminentreprise') {
       const resBrand = await api.get('/Settings/branding');
       brandForm.value = resBrand.data;
-      integrationStats.value.isGoogleConnected = resBrand.data.isGoogleConnected;
-      integrationStats.value.connectedEmail = resBrand.data.connectedEmail;
+    }
+
+    // Fetch integration stats for both AdminEntreprise and SuperAdmin
+    if (currentRole === 'adminentreprise' || currentRole === 'superadmin') {
+      const resDiag = await api.get('/Settings/mailer-diag');
+      integrationStats.value.isGoogleConnected = resDiag.data.isGoogleConnected;
+      integrationStats.value.connectedEmail = resDiag.data.email;
     }
   } catch (error) {
     console.error(error);

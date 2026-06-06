@@ -5,6 +5,7 @@ using NeoEvaluation.API.Dtos;
 using NeoEvaluation.API.Models;
 using System.Security.Claims;
 using BCrypt.Net;
+using NeoEvaluation.API.Services;
 
 namespace NeoEvaluation.API.Controllers
 {
@@ -13,10 +14,14 @@ namespace NeoEvaluation.API.Controllers
     public class SettingsController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IFailedEmailQueue _failedQueue;
+        private readonly IEmailService _emailService;
 
-        public SettingsController(AppDbContext context)
+        public SettingsController(AppDbContext context, IFailedEmailQueue failedQueue, IEmailService emailService)
         {
             _context = context;
+            _failedQueue = failedQueue;
+            _emailService = emailService;
         }
 
         private Guid GetCurrentUserId()
@@ -183,6 +188,77 @@ namespace NeoEvaluation.API.Controllers
             user.PhotoUrl = $"/uploads/profiles/{fileName}";
             await _context.SaveChangesAsync();
             return Ok(new { photoUrl = user.PhotoUrl });
+        }
+
+        [HttpGet("mailer-diag")]
+        public async Task<IActionResult> GetMailerDiag()
+        {
+            var userId = GetCurrentUserId();
+            var user = await _context.Utilisateurs.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
+            
+            var email = "admin@evaluatech.tn";
+            var isGoogleConnected = false;
+
+            if (user?.EntrepriseId != null)
+            {
+                var entreprise = await _context.Entreprises.IgnoreQueryFilters().FirstOrDefaultAsync(e => e.Id == user.EntrepriseId);
+                if (entreprise != null && !string.IsNullOrEmpty(entreprise.GmailRefreshToken))
+                {
+                    isGoogleConnected = true;
+                    email = entreprise.GmailEmail ?? "Entreprise Gmail";
+                }
+            }
+            
+            if (!isGoogleConnected)
+            {
+                var systemOrg = await _context.Entreprises.IgnoreQueryFilters().FirstOrDefaultAsync(e => e.Nom == "SYSTEM_PLATFORM");
+                if (systemOrg != null && !string.IsNullOrEmpty(systemOrg.GmailRefreshToken))
+                {
+                    isGoogleConnected = true;
+                    email = systemOrg.GmailEmail ?? "Plateforme Système Gmail";
+                }
+            }
+
+            var logs = new List<string>
+            {
+                $"[INFO] {DateTime.Now:HH:mm:ss} Début du diagnostic SMTP / Gmail API...",
+                "[INFO] Vérification de la configuration d'arrière-plan...",
+                isGoogleConnected ? "[SUCCESS] Connexion SMTP / OAuth2 : OK" : "[ERROR] Configuration manquante ou Token expiré.",
+                $"[INFO] Invitations bloquées détectées en RAM : {_failedQueue.Count}",
+                $"[INFO] {DateTime.Now:HH:mm:ss} Diagnostic mailer terminé."
+            };
+
+            return Ok(new {
+                isGoogleConnected = isGoogleConnected,
+                email = email,
+                pendingInvitesCount = _failedQueue.Count,
+                diagnosticsLogs = logs
+            });
+        }
+
+        [HttpPost("mailer-resend")]
+        public async Task<IActionResult> ResendFailedEmails()
+        {
+            var failedEmails = _failedQueue.GetAll();
+            if (failedEmails.Count == 0) return Ok(new { success = true, count = 0 });
+
+            int successCount = 0;
+            _failedQueue.Clear(); // On vide d'abord, si ça rate on les remettra (ou SendEmailAsync s'en chargera via le catch)
+
+            foreach (var msg in failedEmails)
+            {
+                try
+                {
+                    await _emailService.SendEmailAsync(msg.To, msg.Subject, msg.Body);
+                    successCount++;
+                }
+                catch (Exception)
+                {
+                    // L'erreur est déjà recatchée dans GmailApiService et rajoutée à _failedQueue
+                }
+            }
+
+            return Ok(new { success = true, count = successCount, pendingLeft = _failedQueue.Count });
         }
     }
 }

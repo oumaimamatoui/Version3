@@ -16,45 +16,59 @@ namespace NeoEvaluation.API.Services
         private readonly IConfiguration _config;
         private readonly AppDbContext _context;
         private readonly ITenantService _tenantService;
+        private readonly IFailedEmailQueue _failedEmailQueue;
 
-        public GmailApiService(IConfiguration config, AppDbContext context, ITenantService tenantService)
+        public GmailApiService(IConfiguration config, AppDbContext context, ITenantService tenantService, IFailedEmailQueue failedEmailQueue)
         {
             _config = config;
             _context = context;
             _tenantService = tenantService;
+            _failedEmailQueue = failedEmailQueue;
         }
 
         public async Task SendEmailAsync(string to, string subject, string body)
         {
-            var tenantId = _tenantService.GetTenantId();
-
-            // 1. Tenter d'utiliser le Gmail de l'entreprise si on est dans un contexte entreprise
-            if (tenantId != null)
+            try 
             {
-                var entreprise = await _context.Entreprises.IgnoreQueryFilters()
-                    .FirstOrDefaultAsync(e => e.Id == tenantId.Value);
-                
-                if (entreprise != null && !string.IsNullOrEmpty(entreprise.GmailRefreshToken))
+                var tenantId = _tenantService.GetTenantId();
+
+                // 1. Tenter d'utiliser le Gmail de l'entreprise si on est dans un contexte entreprise
+                if (tenantId != null)
                 {
-                    Console.WriteLine($"[EMAIL STRATEGY] Enterprise context -> Using Company Gmail ({entreprise.Nom})");
-                    await SendUsingGmailApi(entreprise, to, subject, body);
-                    return; // Succès
+                    var entreprise = await _context.Entreprises.IgnoreQueryFilters()
+                        .FirstOrDefaultAsync(e => e.Id == tenantId.Value);
+                    
+                    if (entreprise != null && !string.IsNullOrEmpty(entreprise.GmailRefreshToken))
+                    {
+                        Console.WriteLine($"[EMAIL STRATEGY] Enterprise context -> Using Company Gmail ({entreprise.Nom})");
+                        await SendUsingGmailApi(entreprise, to, subject, body);
+                        return; // Succès
+                    }
+                }
+
+                // 2. Fallback ou Contexte Système : Utiliser le Master Gmail de la plateforme
+                var systemOrg = await _context.Entreprises.IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(e => e.Nom == "SYSTEM_PLATFORM");
+
+                if (systemOrg != null && !string.IsNullOrEmpty(systemOrg.GmailRefreshToken))
+                {
+                    Console.WriteLine($"[EMAIL STRATEGY] Fallback -> Using Master Platform Gmail account");
+                    await SendUsingGmailApi(systemOrg, to, subject, body);
+                }
+                else
+                {
+                    // Échec ultime si même le Master n'est pas là
+                    throw new InvalidOperationException("CRITICAL: Aucun compte Gmail n'est connecté (ni Entreprise, ni Système). Envoi impossible.");
                 }
             }
-
-            // 2. Fallback ou Contexte Système : Utiliser le Master Gmail de la plateforme
-            var systemOrg = await _context.Entreprises.IgnoreQueryFilters()
-                .FirstOrDefaultAsync(e => e.Nom == "SYSTEM_PLATFORM");
-
-            if (systemOrg != null && !string.IsNullOrEmpty(systemOrg.GmailRefreshToken))
+            catch (Exception ex)
             {
-                Console.WriteLine($"[EMAIL STRATEGY] Fallback -> Using Master Platform Gmail account");
-                await SendUsingGmailApi(systemOrg, to, subject, body);
-            }
-            else
-            {
-                // Échec ultime si même le Master n'est pas là
-                throw new InvalidOperationException("CRITICAL: Aucun compte Gmail n'est connecté (ni Entreprise, ni Système). Envoi impossible.");
+                Console.WriteLine($"[GMAIL API ERROR] Echec d'envoi à {to}. Mise en file d'attente (FailedEmailQueue). Erreur: {ex.Message}");
+                _failedEmailQueue.Add(new FailedEmailMessage { To = to, Subject = subject, Body = body });
+                // We rethrow so the caller knows it failed, or we can swallow if we want.
+                // It's better to swallow here if we want the system to continue working without showing a 500.
+                // But let's rethrow to keep existing behavior, the controller catches it anyway.
+                throw;
             }
         }
 
