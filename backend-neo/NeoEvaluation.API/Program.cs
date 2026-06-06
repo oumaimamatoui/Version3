@@ -56,6 +56,7 @@ builder.Services.AddSendGrid(options => {
 builder.Services.AddScoped<IEmailService, GmailApiService>();
 builder.Services.AddScoped<INotificationService, NotificationService>(); 
 builder.Services.AddScoped<IUsageService, UsageService>(); 
+builder.Services.AddSingleton<IFailedEmailQueue, FailedEmailQueue>();
 
 builder.Services.AddSingleton<IAuditLogService, AuditLogService>();
 builder.Services.AddHostedService<PlanResetService>();

@@ -95,7 +95,7 @@
                   <div class="bot-glow-ring ring2" :style="{'border-color': roleAccent + '22'}"></div>
                   <i :class="['fa-solid', roleBotIcon, 'bot-icon']" :style="{color: roleAccent}"></i>
                 </div>
-                <div class="hero-stats-mini">
+                <div class="hero-stats-mini" v-if="role !== 'SuperAdmin'">
                   <div class="mini-stat" v-for="ms in miniStats" :key="ms.label">
                     <span class="ms-val" :style="{color: ms.color}">{{ loading ? '—' : ms.value }}</span>
                     <span class="ms-lbl">{{ ms.label }}</span>

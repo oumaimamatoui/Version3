@@ -254,7 +254,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useNotificationStore } from '@/stores/notification';
@@ -504,6 +504,48 @@ const fetchUsageStats = async () => {
 };
 
 // ════════════════════════════════════════════════════════════
+//  SUPERADMIN — Polling Demandes en Attente
+// ════════════════════════════════════════════════════════════
+const SA_PENDING_KEY = 'sa_last_pending_count';
+let _pendingInterval = null;
+
+const fetchPendingRequests = async () => {
+  if (!authStore.isAuthenticated) return;
+  if (authStore.role !== 'SuperAdmin') return;
+  try {
+    const res = await api.get('/SuperAdmin/stats');
+    const count = res.data?.demandesEnAttente ?? 0;
+    const lastCount = parseInt(sessionStorage.getItem(SA_PENDING_KEY) ?? '-1', 10);
+
+    // Si on a plus de demandes qu'avant (NOUVELLE inscription)
+    if (count > lastCount && lastCount !== -1) {
+      notifStore.add({
+        type: 'alert',
+        title: '🎉 Nouvelle Inscription !',
+        message: `Une nouvelle entreprise vient de s'inscrire. Total: ${count} en attente.`,
+        link: '/super-admin',
+      });
+    } 
+    // Au premier chargement (s'il y en a)
+    else if (count > 0 && lastCount === -1) {
+      notifStore.add({
+        type: 'info',
+        title: '🔔 Rappel : Demandes en attente',
+        message: `Vous avez ${count} demande${count > 1 ? 's' : ''} d'inscription en attente.`,
+        link: '/super-admin',
+      });
+    }
+    
+    // Si l'admin a accepté/rejeté (count < lastCount), on ne fait rien ! 
+    // Le Toast de succès s'occupe déjà d'afficher "Entreprise Acceptée".
+
+    sessionStorage.setItem(SA_PENDING_KEY, count);
+  } catch (err) {
+    console.error('[SuperAdmin] Erreur fetch pending:', err);
+  }
+};
+
+// ════════════════════════════════════════════════════════════
 //  LIFECYCLE
 // ════════════════════════════════════════════════════════════
 onMounted(() => {
@@ -523,6 +565,12 @@ onMounted(() => {
   // Usage Stats
   fetchUsageStats();
 
+  // SuperAdmin : Polling des demandes en attente (toutes les 30s)
+  if (authStore.role === 'SuperAdmin') {
+    fetchPendingRequests();
+    _pendingInterval = setInterval(fetchPendingRequests, 30000);
+  }
+
   // Listeners
   window.addEventListener('keydown', gererToucheClavier);
   window.addEventListener('storage', onStorageChange);   // cross-tab sync
@@ -538,6 +586,7 @@ onUnmounted(() => {
   window.removeEventListener('keydown', gererToucheClavier);
   window.removeEventListener('storage', onStorageChange);
   document.removeEventListener('click', handleClickOutside);
+  if (_pendingInterval) clearInterval(_pendingInterval);
 });
 </script>
 

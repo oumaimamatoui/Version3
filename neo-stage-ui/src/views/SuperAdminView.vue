@@ -493,7 +493,7 @@
               <span style="width:130px" class="list-col-label d-none d-lg-block">Plan</span>
               <span style="width:130px" class="list-col-label d-none d-lg-block">{{ t('settings.labels.companyName').toUpperCase().split('(')[0] }}</span>
               <span style="width:100px" class="list-col-label text-center">{{ t('status').toUpperCase() }}</span>
-              <span style="width:90px"  class="list-col-label text-center">SCORE</span>
+              <span style="width:90px"  class="list-col-label text-center">PERFORMANCE</span>
               <span style="width:100px" class="list-col-label text-end pe-2">{{ t('actions').toUpperCase() }}</span>
             </div>
 
@@ -1186,13 +1186,24 @@ const moduleUsage = ref([
 const pendingRequests = ref([]);
 const filteredPendingRequests = computed(() => {
   const q = searchQuery.value.toLowerCase().trim();
-  if (!q) return pendingRequests.value;
-  return pendingRequests.value.filter(r =>
-    r.nomEntreprise?.toLowerCase().includes(q) ||
-    r.emailResponsable?.toLowerCase().includes(q) ||
-    r.nomResponsable?.toLowerCase().includes(q) ||
-    r.matriculeFiscale?.toLowerCase().includes(q)
-  );
+  const days = parseInt(periodFilter.value) || 30;
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+
+  return pendingRequests.value.filter(r => {
+    // Filtre par période
+    const date = r.creeLe ? new Date(r.creeLe) : null;
+    if (date && date < cutoff) return false;
+
+    // Filtre par recherche texte
+    if (!q) return true;
+    return (
+      r.nomEntreprise?.toLowerCase().includes(q) ||
+      r.emailResponsable?.toLowerCase().includes(q) ||
+      r.nomResponsable?.toLowerCase().includes(q) ||
+      r.matriculeFiscale?.toLowerCase().includes(q)
+    );
+  });
 });
 
 // ─── ORGANISATIONS ─────────────────────────────────────────────────
