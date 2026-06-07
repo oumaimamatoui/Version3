@@ -799,7 +799,7 @@ const deleteMemberConfirm = (member) => {
 const getPhotoUrl = (url) => {
   if (!url) return null;
   if (url.startsWith('http')) return url;
-  return `http://localhost:5172/${url.replace(/\\/g, '/')}`;
+  return `${import.meta.env.VITE_BASE_URL || 'http://localhost:5172'}/${url.replace(/\\/g, '/')}`;
 };
 
 const formatDate = (d) => {

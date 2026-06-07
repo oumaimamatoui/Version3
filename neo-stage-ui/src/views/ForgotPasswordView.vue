@@ -97,7 +97,7 @@ const handleForgotPassword = async () => {
   isLoading.value = true;
   errorMessage.value = '';
   try {
-    await axios.post('http://localhost:5172/api/Auth/forgot-password', { email: email.value });
+    await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5172/api'}/Auth/forgot-password`, { email: email.value });
     requestSent.value = true;
   } catch (err) {
     errorMessage.value = err.response?.data?.message || "Une erreur est survenue.";

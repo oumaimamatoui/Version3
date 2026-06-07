@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using NeoEvaluation.API.Data;
 using NeoEvaluation.API.DTOs;
 using NeoEvaluation.API.Models;
@@ -18,13 +19,15 @@ namespace NeoEvaluation.API.Controllers
         private readonly IEmailService _emailService;
         private readonly ITenantService _tenantService;
         private readonly INotificationService _notificationService;
+        private readonly IConfiguration _config;
 
-        public CandidatesController(AppDbContext context, IEmailService emailService, ITenantService tenantService, INotificationService notificationService)
+        public CandidatesController(AppDbContext context, IEmailService emailService, ITenantService tenantService, INotificationService notificationService, IConfiguration config)
         {
             _context = context;
             _emailService = emailService;
             _tenantService = tenantService;
             _notificationService = notificationService;
+            _config = config;
         }
 
         // URL: GET http://localhost:5172/api/Candidates/campagnes
@@ -145,7 +148,7 @@ namespace NeoEvaluation.API.Controllers
                     PostuleLe = DateTime.UtcNow, Statut = ApplicationStatus.POSTULE 
                 });
 
-                string link = "http://localhost:5173/login";
+                string link = $"{_config["AppSettings:FrontendUrl"]}/login";
 
                 if (!cand.EstActif)
                 {
@@ -156,7 +159,7 @@ namespace NeoEvaluation.API.Controllers
                     };
                     _context.TokensActivation.Add(token);
                     await _context.SaveChangesAsync();
-                    link = $"http://localhost:5173/activate-role?token={token.Token}";
+                    link = $"{_config["AppSettings:FrontendUrl"]}/activate-role?token={token.Token}";
                 }
                 else 
                 {
@@ -273,7 +276,7 @@ namespace NeoEvaluation.API.Controllers
 
             if (candidature == null) return BadRequest("Aucune candidature trouvée pour ce candidat.");
 
-            string link = "http://localhost:5173/login";
+            string link = $"{_config["AppSettings:FrontendUrl"]}/login";
 
             if (!cand.EstActif)
             {
@@ -294,7 +297,7 @@ namespace NeoEvaluation.API.Controllers
                     await _context.SaveChangesAsync();
                 }
 
-                link = $"http://localhost:5173/activate-role?token={token.Token}";
+                link = $"{_config["AppSettings:FrontendUrl"]}/activate-role?token={token.Token}";
             }
 
             try {

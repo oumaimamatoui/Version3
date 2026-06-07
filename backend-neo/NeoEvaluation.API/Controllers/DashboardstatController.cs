@@ -27,9 +27,16 @@ namespace NeoEvaluation.API.Controllers
         [HttpPost("analyze-cv")]
         public async Task<IActionResult> AnalyzeCv([FromForm] CvAnalysisRequest req)
         {
-            var userId = _tenantService.GetUserId()?.ToString();
-            var result = await _aiService.AnalyzeCvAsync(req.File, req.JobDescription, req.Lang, req.CandidatId, userId);
-            return Ok(result);
+            try
+            {
+                var userId = _tenantService.GetUserId()?.ToString();
+                var result = await _aiService.AnalyzeCvAsync(req.File, req.JobDescription, req.Lang, req.CandidatId, userId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message, detail = ex.ToString() });
+            }
         }
 
         [HttpGet("global-stats")]

@@ -1007,7 +1007,7 @@ import { useRouter } from 'vue-router';
 const router = useRouter();
 const { t }  = useI18n();
 
-const AI_BASE = 'http://127.0.0.1:8000';
+const AI_BASE = import.meta.env.VITE_AI_URL || 'http://localhost:5600';
 
 // ══════════════════════════════════════════════════════════════
 // CONSTANTES

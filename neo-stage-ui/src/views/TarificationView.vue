@@ -221,13 +221,10 @@
               </li>
             </ul>
 
-            <button
-              @click="handleSubscription('EvaluaTech Go', 99)"
-              class="btn-plan btn-plan-amber shadow-amber"
-            >
+            <router-link to="/register?plan=EvaluaTech%20Go" class="btn-plan btn-plan-amber shadow-amber">
               Passer à EvaluaTech Go
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>
-            </button>
+            </router-link>
 
             <p class="plan-guarantee">
               <i class="fa-solid fa-lock me-1"></i>
@@ -543,13 +540,7 @@
 <script setup>
 import { ref, reactive } from 'vue';
 import api from '@/services/api';
-import { useRouter } from 'vue-router';
 import Swal from 'sweetalert2';
-import { useAuthStore } from '@/stores/auth';
-
-const router = useRouter();
-const authStore = useAuthStore();
-const isRedirecting = ref(false);
 const showContactModal = ref(false);
 const contactSending = ref(false);
 const contactSent = ref(false);

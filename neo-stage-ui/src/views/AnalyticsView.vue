@@ -648,7 +648,7 @@ const fetchAnalyses = async () => {
     const fd = new FormData();
     fd.append('nom', 'Candidat');
     fd.append('scores_techniques', 'Logique: 85, Tech: 70, Soft: 80');
-    const response = await axios.post('http://127.0.0.1:8000/ia/analyze-candidate', fd);
+    const response = await axios.post(`${import.meta.env.VITE_AI_URL || 'http://localhost:5600'}/ia/analyze-candidate`, fd);
     if (Array.isArray(response.data)) {
       analyses.value = response.data;
     } else if (response.data) {

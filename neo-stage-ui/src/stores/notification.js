@@ -25,7 +25,7 @@ export const useNotificationStore = defineStore('notification', {
       const token = authStore.token  // adaptez selon votre store auth
 
       this.connection = new signalR.HubConnectionBuilder()
-        .withUrl('http://localhost:5172/hubs/notifications', {
+        .withUrl(`${import.meta.env.VITE_BASE_URL || 'http://localhost:5172'}/hubs/notifications`, {
           accessTokenFactory: () => token,
         })
         .withAutomaticReconnect([0, 2000, 5000, 10000])

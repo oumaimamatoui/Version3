@@ -1,0 +1,61 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: evaluanet
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5433:5432" 
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend-neo/NeoEvaluation.API
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Host=db;Database=evaluanet;Username=postgres;Password=postgres123
+      - FastApi__BaseUrl=http://ai-service:5600
+      - AiInternalApiKey=${AI_INTERNAL_API_KEY:-Ev@lu@Tech_Int3rnal_Secur!ty_Key_9x$2K}
+      - GoogleAuthSettings__RedirectUri=http://localhost:3000/google-callback
+      - AppSettings__FrontendUrl=http://localhost:3000
+    volumes:
+      - aspnet-data:/root/.aspnet/DataProtection-Keys
+
+  frontend:
+    build:
+      context: ./neo-stage-ui
+      args:
+        VITE_API_URL: http://localhost:8080/api
+        VITE_AI_URL: http://localhost:5600
+        VITE_BASE_URL: http://localhost:8080
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-900574679253-6srju48d84teupohd1op1c43g80hdoor.apps.googleusercontent.com}
+        VITE_AI_INTERNAL_API_KEY: ${AI_INTERNAL_API_KEY:-Ev@lu@Tech_Int3rnal_Secur!ty_Key_9x$2K}
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+  ai-service:
+    build: ./SAAS-AI/ai-service-python
+    ports:
+      - "5600:5600"
+    depends_on:
+      - backend
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-AIzaSyA3ZMxjIhaRnZaNSRX7YrPCXbUV1wn-0Ro}
+      - AI_INTERNAL_API_KEY=${AI_INTERNAL_API_KEY:-Ev@lu@Tech_Int3rnal_Secur!ty_Key_9x$2K}
+
+volumes:
+  pgdata:
+  aspnet-data:

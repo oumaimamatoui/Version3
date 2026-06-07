@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using NeoEvaluation.API.Data;
 using NeoEvaluation.API.Models;
 using NeoEvaluation.API.Services;
@@ -15,14 +16,16 @@ namespace NeoEvaluation.API.Controllers
     public class InvitationsController : ControllerBase
     {
         private readonly AppDbContext _context;
-        private readonly IEmailService _emailService; // Injection du service
+        private readonly IEmailService _emailService;
         private readonly ITenantService _tenantService;
+        private readonly IConfiguration _config;
 
-        public InvitationsController(AppDbContext context, IEmailService emailService, ITenantService tenantService)
+        public InvitationsController(AppDbContext context, IEmailService emailService, ITenantService tenantService, IConfiguration config)
         {
             _context = context;
             _emailService = emailService;
             _tenantService = tenantService;
+            _config = config;
         }
 
         [HttpPost("invite-candidates")]
@@ -83,7 +86,7 @@ namespace NeoEvaluation.API.Controllers
                     if (candidat.EstActif)
                     {
                         // Le candidat est déjà enregistré et actif. Pas besoin de recréer de mot de passe.
-                        activationLink = "http://localhost:5173/login";
+                        activationLink = $"{_config["AppSettings:FrontendUrl"]}/login";
                     }
                     else
                     {
@@ -101,7 +104,7 @@ namespace NeoEvaluation.API.Controllers
                         await _context.SaveChangesAsync();
 
                         // 4. Préparation du lien
-                        activationLink = $"http://localhost:5173/activate-account?token={token.Token}";
+                        activationLink = $"{_config["AppSettings:FrontendUrl"]}/activate-account?token={token.Token}";
                     }
                     
                     //  DEBUG TERMINAL (Pour toi en VS Code)

@@ -157,7 +157,7 @@ const activeTab = ref('Toutes');
 const showCreateModal = ref(false);
 const isSaving = ref(false);
 
-const API_BASE = 'http://localhost:5172/api/Campagnes';
+const API_BASE = `${import.meta.env.VITE_API_URL || 'http://localhost:5172/api'}/Campagnes`;
 
 // Formulaire nouvelle campagne
 const newCampagne = ref({
@@ -189,7 +189,7 @@ const getAuthHeaders = () => {
 // Récupérer les questionnaires pour le dropdown
 const fetchQuestionnaires = async () => {
     try {
-        const res = await axios.get('http://localhost:5172/api/Questionnaire', getAuthHeaders());
+        const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5172/api'}/Questionnaire`, getAuthHeaders());
         questionnaires.value = res.data;
     } catch (e) {
         console.error("Erreur chargement questionnaires:", e);

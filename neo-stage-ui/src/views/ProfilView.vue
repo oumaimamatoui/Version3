@@ -458,7 +458,7 @@ const canNativeShare = computed(() => !!navigator.share);
 
 /* ── Computed ── */
 const profileDisplayUrl = computed(() => {
-  if (user.value.photoUrl) return `http://localhost:5172${user.value.photoUrl}`;
+  if (user.value.photoUrl) return `${import.meta.env.VITE_BASE_URL || 'http://localhost:5172'}${user.value.photoUrl}`;
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.value.prenom + ' ' + user.value.nom)}&background=0f172a&color=eab308&size=256&bold=true`;
 });
 

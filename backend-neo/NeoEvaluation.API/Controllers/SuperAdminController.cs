@@ -257,7 +257,7 @@ namespace NeoEvaluation.API.Controllers
 
             await _auditLogService.LogActionAsync("INVITE_ADMIN", "SuperAdmin", $"Invitation d'un nouvel administrateur : {dto.Email}");
 
-            var link = $"http://localhost:5173/definir-mot-de-passe?token={token.Token}";
+            var link = $"{_config["AppSettings:FrontendUrl"]}/definir-mot-de-passe?token={token.Token}";
             
             //  PROFESSIONAL HTML TEMPLATE Email Button
             var htmlBody = $@"
@@ -344,7 +344,7 @@ namespace NeoEvaluation.API.Controllers
             await _auditLogService.LogActionAsync("APPROVE_ORG", "SuperAdmin", $"Approbation de l'entreprise : {reg.NomEntreprise}");
 
             try {
-                var link = $"http://localhost:5173/definir-mot-de-passe?token={token.Token}";
+                var link = $"{_config["AppSettings:FrontendUrl"]}/definir-mot-de-passe?token={token.Token}";
                 
                 // ✅ PROFESSIONAL HTML TEMPLATE
                 var htmlBody = $@"
@@ -429,7 +429,7 @@ namespace NeoEvaluation.API.Controllers
             await _auditLogService.LogActionAsync("CREATE_ORG", "SuperAdmin", $"Création manuelle de l'organisation : {dto.Name}");
 
             try {
-                var link = $"http://localhost:5173/definir-mot-de-passe?token={token.Token}";
+                                var link = $"{_config["AppSettings:FrontendUrl"]}/definir-mot-de-passe?token={token.Token}";
 
                 // ✅ PROFESSIONAL HTML TEMPLATE
                 var htmlBody = $@"
@@ -437,6 +437,8 @@ namespace NeoEvaluation.API.Controllers
                         <div style='text-align: center; margin-bottom: 20px;'>
                             <h2 style='color: #f59e0b;'>NeoEvaluation</h2>
                         </div>
+
+                
                         <h3 style='color: #0f172a;'>Bienvenue parmi nous !</h3>
                         <p>Une organisation a été créée pour vous sur la plateforme <strong>NeoEvaluation</strong>.</p>
                         <p>Veuillez cliquer sur le bouton ci-dessous pour finaliser la création de votre accès :</p>
@@ -903,7 +905,7 @@ namespace NeoEvaluation.API.Controllers
                         await _context.SaveChangesAsync();
                     }
 
-                    string activationLink = $"http://localhost:5173/activate-account?token={token.Token}";
+                    string activationLink = $"{_config["AppSettings:FrontendUrl"]}/activate-account?token={token.Token}";
                     string subject = $"[Rappel] Votre compte EvaluaTech est prêt";
                     
                     string htmlBody = $@"
@@ -996,7 +998,7 @@ namespace NeoEvaluation.API.Controllers
                 var adminEmail = admin?.Email ?? "contact@" + (org.Domaine ?? "evaluatech.tn");
                 var adminName = admin != null ? $"{admin.Prenom} {admin.Nom}".Trim() : "Responsable";
 
-                var link = "http://localhost:5173/gestion-abonnements"; // Lien de renouvellement
+                var link = $"{_config["AppSettings:FrontendUrl"]}/gestion-abonnements"; // Lien de renouvellement
                 var expirationStr = org.AbonnementFin.HasValue ? org.AbonnementFin.Value.ToString("dd MMM yyyy") : "très bientôt";
 
                 var htmlBody = $@"

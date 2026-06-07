@@ -491,7 +491,7 @@ const startGeneration = async () => {
     fd.append('difficulte', settings.difficulty);
     fd.append('langue',     settings.langue);
 
-    const res = await axios.post('http://127.0.0.1:8000/ia/generate-pro', fd);
+    const res = await axios.post(`${import.meta.env.VITE_AI_URL || 'http://localhost:5600'}/ia/generate-pro`, fd);
     if (res.data.status === 'IA_SUCCESS') {
       generatedQuestions.value = res.data.questions;
     }
