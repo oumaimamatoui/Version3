@@ -96,7 +96,7 @@ import axios from 'axios';
 import AppSidebar from '../components/AppSidebar.vue';
 import AppNavbar from '../components/AppNavbar.vue';
 
-const API_BASE = "http://localhost:5172/api";
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5172/api';
 
 // États
 const listCampagnes = ref([]);

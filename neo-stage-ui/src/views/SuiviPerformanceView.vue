@@ -31,7 +31,7 @@ const statsIA = ref(null);
 
 onMounted(async () => {
   // On récupère les détails de l'évaluation calculée par le backend
-  const res = await axios.get(`http://localhost:5172/api/Candidatures/${route.params.id}`);
+  const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5172/api'}/Candidatures/${route.params.id}`);
   statsIA.value = res.data.evaluation;
   // Ici, tu peux injecter statsIA.value.score dans ton graphique Radar
 });

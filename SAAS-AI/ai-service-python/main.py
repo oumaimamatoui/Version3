@@ -406,7 +406,7 @@ async def _prewarm_chat_cache():
 # ─────────────────────────────────────────────────
 app = FastAPI(title="EvaluaTech AI Engine v10.1", lifespan=lifespan)
 app.add_middleware(GZipMiddleware, minimum_size=200)
-app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5172", "http://127.0.0.1:5172"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5172", "http://127.0.0.1:5172", "http://localhost:3000", "http://127.0.0.1:3000"], allow_methods=["*"], allow_headers=["*"])
 
 @app.middleware("http")
 async def request_middleware(request: Request, call_next):
@@ -3140,4 +3140,4 @@ Retourne STRICTEMENT le résultat en JSON sous cette forme exacte :
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=5600, reload=True)

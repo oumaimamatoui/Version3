@@ -17,14 +17,11 @@ namespace NeoEvaluation.API.Data.Migrations
                 nullable: false,
                 defaultValue: 0);
 
-            // Column StripeSessionId already exists in database
-            /*
             migrationBuilder.AddColumn<string>(
                 name: "StripeSessionId",
                 table: "InscriptionsEntreprises",
                 type: "text",
                 nullable: true);
-            */
         }
 
         /// <inheritdoc />
@@ -34,11 +31,9 @@ namespace NeoEvaluation.API.Data.Migrations
                 name: "PaymentStatus",
                 table: "InscriptionsEntreprises");
 
-            /*
             migrationBuilder.DropColumn(
                 name: "StripeSessionId",
                 table: "InscriptionsEntreprises");
-            */
         }
     }
 }

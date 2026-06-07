@@ -35,6 +35,12 @@
           <div class="header-line"></div>
         </div>
 
+        <!-- PLAN BADGE -->
+        <div v-if="form.plan" class="plan-badge">
+          <i class="fa-solid fa-crown"></i>
+          Forfait <strong>{{ form.plan }}</strong>
+        </div>
+
         <!-- SUCCÈS -->
         <Transition name="fade-slide" mode="out-in">
           <div v-if="requestSent" class="success-portal" key="success">

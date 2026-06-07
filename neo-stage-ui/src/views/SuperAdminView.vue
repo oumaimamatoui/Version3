@@ -1330,7 +1330,7 @@ const fetchData = async () => {
     }
 
     try {
-      const r = await axios.post('http://127.0.0.1:8000/ia/performance-report');
+      const r = await axios.post(`${import.meta.env.VITE_AI_URL || 'http://localhost:5600'}/ia/performance-report`);
       if (r.data?.performance) Object.assign(iaPerformance, r.data.performance);
       if (r.data?.usage)       moduleUsage.value = r.data.usage;
     } catch {}

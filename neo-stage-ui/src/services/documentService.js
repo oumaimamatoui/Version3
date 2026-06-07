@@ -14,6 +14,6 @@ export default {
 
   // Télécharger un fichier
   getLienFichier(nomFichier) {
-    return `http://localhost:5172/api/Documents/telecharger/${nomFichier}`;
+    return `${import.meta.env.VITE_API_URL || 'http://localhost:5172/api'}/Documents/telecharger/${nomFichier}`;
   }
 };

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "set CI=true && set FORCE_COLOR=0 && set NO_COLOR=1 && tsc -b --pretty false && vite build --logLevel info",
+    "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {

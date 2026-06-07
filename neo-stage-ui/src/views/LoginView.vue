@@ -135,7 +135,7 @@ const handleClassicLogin = async () => {
   isLoading.value = true;
   errorMessage.value = "";
   try {
-    const res = await axios.post('http://localhost:5172/api/Auth/login', loginForm);
+    const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5172/api'}/Auth/login`, loginForm);
     handleAuthSuccess(res.data);
   } catch (err) {
     errorMessage.value = err.response?.data?.message || "Identifiants invalides.";
@@ -161,7 +161,7 @@ const handleGoogleLogin = async (response) => {
   isLoading.value = true;
   errorMessage.value = "";
   try {
-    const res = await axios.post('http://localhost:5172/api/Auth/google-login', { idToken: response.credential });
+    const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5172/api'}/Auth/google-login`, { idToken: response.credential });
     handleAuthSuccess(res.data);
   } catch (err) {
     errorMessage.value = "Échec de l'identification Google.";
@@ -188,12 +188,13 @@ onMounted(() => {
       if (!window.google?.accounts?.id) return;
       clearInterval(_gisPoll); _gisPoll = null;
 
-      if (!_gisInitialized) {
+      if (!_gisInitialized && !window.__gsiInitialized) {
         google.accounts.id.initialize({
           client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
           callback: (resp) => _gisCurrentCallback?.(resp),
         });
         _gisInitialized = true;
+        window.__gsiInitialized = true;
       }
 
       const el = document.getElementById('google-signin-btn');

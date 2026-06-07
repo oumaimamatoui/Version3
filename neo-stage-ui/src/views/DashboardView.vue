@@ -1609,7 +1609,7 @@ import { superAdminApi, enterpriseApi } from '@/services/api';
 const { t, locale } = useI18n();
 
 const API_NET = import.meta.env.VITE_API_URL || 'http://localhost:5172/api';
-const API_IA  = import.meta.env.VITE_IA_URL  || 'http://localhost:8000';
+const API_IA  = import.meta.env.VITE_IA_URL  || 'http://localhost:5600';
 
 const authStore   = useAuthStore();
 const router      = useRouter();

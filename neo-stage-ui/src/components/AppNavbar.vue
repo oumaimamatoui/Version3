@@ -427,7 +427,7 @@ const affichageRole = computed(() => ({
 
 const urlPhotoProfil = computed(() => {
   if (authStore.user?.photoUrl)
-    return `http://localhost:5172${authStore.user.photoUrl}`;
+    return `${import.meta.env.VITE_BASE_URL || 'http://localhost:5172'}${authStore.user.photoUrl}`;
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(
     authStore.user?.name || 'User'
   )}&background=0f172a&color=fff&bold=true`;
@@ -521,7 +521,7 @@ const fetchPendingRequests = async () => {
     if (count > lastCount && lastCount !== -1) {
       notifStore.add({
         type: 'alert',
-        title: '🎉 Nouvelle Inscription !',
+        title: ' Nouvelle Inscription !',
         message: `Une nouvelle entreprise vient de s'inscrire. Total: ${count} en attente.`,
         link: '/super-admin',
       });
