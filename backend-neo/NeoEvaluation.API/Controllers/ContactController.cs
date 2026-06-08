@@ -69,8 +69,7 @@ namespace NeoEvaluation.API.Controllers
 
             try
             {
-                var recipients = new[] { "ahmedmhenni473@gmail.com", "oumaimamatoui@gmail.com" };
-                await Task.WhenAll(recipients.Select(r => _emailService.SendEmailAsync(r, subject, body)));
+                await _emailService.SendEmailAsync("contactevaluatech@gmail.com", subject, body);
                 return Ok(new { message = "Message envoyé avec succès." });
             }
             catch (Exception ex)

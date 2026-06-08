@@ -7,3 +7,4 @@ pymupdf==1.24.14
 python-multipart==0.0.12
 python-dotenv==1.0.1
 edge-tts==6.1.12
+google-genai==1.2.0
