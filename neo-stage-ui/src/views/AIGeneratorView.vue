@@ -7,7 +7,7 @@
     <div class="content-right flex-grow-1">
       <AppNavbar />
 
-      <main class="p-4 pt-2" :class="{ 'rtl-content': locale === 'ar' || locale === 'AR' }">
+      <main class="p-4 pt-2" :class="{ 'rtl-content': locale === 'ar' || locale === 'AR' }" style="height: calc(100vh - 64px); overflow-y: auto;">
         <div class="ai-generator-container animate-fade-in">
 
           <!-- ══ BREADCRUMB ══ -->
@@ -949,7 +949,7 @@ onMounted(() => fetchBankQuestions());
 }
 
 /* ════════ QUESTION CARDS ════════ */
-.questions-list { max-height: 60vh; overflow-y: auto; padding-right: 4px; }
+.questions-list { overflow-y: auto; padding-right: 4px; height: calc(100vh - 340px); }
 .custom-scrollbar::-webkit-scrollbar { width: 4px; }
 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
